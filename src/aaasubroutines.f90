@@ -183,50 +183,6 @@ end if
 return
 end subroutine pressure
 
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE PRESSURE_BLOCK
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: To calculate pressure from other values.
-
-subroutine pressure_block(lf)
-
- use grid,only:is,js,ks
- use physval,only:gamma
- use amr_templates
- use amr_module,only:ib,jb,kb
-
- implicit none
-
- integer i,j,k
- type(leaf_contents),intent(inout)::lf
- real*8 vsq, bsq
-
-!-----------------------------------------------------------------------------
-
-!$omp parallel do private(i,j,k,vsq,bsq)
-  do k = ks-2, kb+2
-   do j = js-2, jb+2
-    do i = is-2, ib+2
-     vsq            = lf%v1(i,j,k)*lf%v1(i,j,k) &
-                    + lf%v2(i,j,k)*lf%v2(i,j,k) &
-                    + lf%v3(i,j,k)*lf%v3(i,j,k)
-     bsq            = lf%b1(i,j,k)*lf%b1(i,j,k) &
-                    + lf%b2(i,j,k)*lf%b2(i,j,k) &
-                    + lf%b3(i,j,k)*lf%b3(i,j,k)
-     lf%p(i,j,k)    = ( gamma-1.d0 ) &
-                    * ( lf%e(i,j,k) - 5.d-1*lf%d(i,j,k)*vsq - 5.d-1*bsq )
-     lf%ptot(i,j,k) = lf%p(i,j,k) + 5.d-1*bsq
-!if(lf%p(i,j,k)<0.and.j==js.and.k==ks.and.i>=is.and.i<=ib)print *,i,j,k,lf%xi1(i-1),lf%p(i,j,k)
-    end do
-   end do
-  end do
-!$omp end parallel do 
-
-return
-end subroutine pressure_block
-
 end module pressure_mod
 
 
@@ -250,12 +206,6 @@ subroutine minmod(mm,u,dx)
   z = (u(3)-u(1))*dx(1)*dx(2)/sum(dx)
 
   mm = sign(1.d0,x) * max(0.d0,min(abs(x),sign(1.d0,x)*y,sign(1.d0,x)*z))
-!!$
-!!$
-!!$  x = (u(3)-u(2))*dx(2)
-!!$  y = (u(2)-u(1))*dx(1)
-!!$
-!!$  mm = (sign(0.5d0,x)+sign(0.5d0,y))*min(abs(x),abs(y))
 
 return
 end subroutine minmod

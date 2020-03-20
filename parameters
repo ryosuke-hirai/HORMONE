@@ -37,8 +37,3 @@ c gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 	 gis=1 gie=600 gjs=1 gje=100 gks=1 gke=1 /
 
 &partcon include_particles=.true. maxptc=749248 /
-
-c ib,jb,kb : Grids in a block
-c maxamr   : Maximum level of AMR refining (0=>Non-AMR mode)
-c cuts     : Number of cuts when refining
-&amr_con ib= 8 jb=1 kb=1 maxamr=0 cuts=2 /

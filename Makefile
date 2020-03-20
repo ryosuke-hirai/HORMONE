@@ -1,8 +1,10 @@
-FC  = ifort #gfortran
-#-J for gfortran, -module for ifort
-MODFLAG = -module 
-#FCFLAG = -fopenmp -ffree-line-length-512 #-fmax-stack-var-size=32768 # for gfortran
-FCFLAG =  -openmp #-heap-arrays #-traceback -fpe0 -CB #-pg -check all # for ifort
+#FC  = ifort
+#MODFLAG = -module
+#FCFLAG =  -openmp #-heap-arrays #-traceback -fpe0 -CB #-pg -check all # for ifort
+
+FC = gfortran
+MODFLAG = -J
+FCFLAG = -fopenmp -ffree-line-length-512 #-fmax-stack-var-size=32768 # for gfortran
 
 OBJ_DIR = obj
 SRC_DIR = src

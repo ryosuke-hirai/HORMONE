@@ -22,12 +22,7 @@ program hormone
   use grid
   use physval
   use constants
-  use amr_module
   use pressure_mod
-  use amr_timestep_mod
-  use amr_evolve_mod
-  use amr_regridding_mod
-  use amr_boundary_mod
   use particle_mod
   use merger_mod
   use funcs
@@ -53,7 +48,6 @@ program hormone
   namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, &
                      include_extgrv, gis, gie, gjs, gje, gks, gke
   namelist /partcon/ include_particles, maxptc
-  namelist /amr_con/ ib, jb, kb, maxamr, cuts
 
 
 !############################## start program ################################
@@ -74,7 +68,6 @@ program hormone
   read(1,NML=bouncon)
   read(1,NML=gravcon)
   read(1,NML=partcon)
-  read(1,NML=amr_con)
   close(1)
 
   call checksetup
@@ -84,21 +77,19 @@ program hormone
   call metric
   call gravsetup
 
-  if(maxamr==0)then ! non-AMR mode
+  call initialcondition
+  call boundarycondition
+  call meanmolweight
+  call conserve
+  call pressure
+  
+  if(time==inifile)then
+   open(unit=60,file='data/angmom.dat',status='replace')
+  else
+   open(unit=60,file='data/angmom.dat',status='old',position='append')
+  end if
+  allocate(Edist(js:je),Edistorg(js:je),heatV(js:je))
 
-   call initialcondition
-   call boundarycondition
-   call meanmolweight
-   call conserve
-   call pressure
-
-   if(time==inifile)then
-    open(unit=60,file='data/angmom.dat',status='replace')
-   else
-    open(unit=60,file='data/angmom.dat',status='old',position='append')
-   end if
-   allocate(Edist(js:je),Edistorg(js:je),heatV(js:je))
-   
 ! Initial output
   if(bc3os==9)call dirichletbound ! for ejecta
   if(include_particles.and.tn==0)call particles_setup
@@ -114,7 +105,7 @@ program hormone
    call output
 
    k = ks
-  
+
    Iinertia = 0d0;Jinitial=0d0;Einitial=0d0;Mtot=0d0
    do j = js, je
     do i = is, ie
@@ -203,11 +194,11 @@ program hormone
     do k = ks, ke
      do j = js, je
       do i = is, ie
- !      if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0)then
+       !      if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0)then
        curEtot = curEtot + (0.5d0*grvphi(i,j,k)*d(i,j,k)+e(i,j,k))&
-                              *dvol(i,j,k)*2d0
+        *dvol(i,j,k)*2d0
        curJtot = curJtot + d(i,j,k)*v3(i,j,k)*x1(i)*sinc(j)*dvol(i,j,k)*2d0
- !      end if
+       !      end if
       end do
      end do
     end do
@@ -235,14 +226,14 @@ program hormone
      do k = ks, ke
       do j = js, je
        do i = is, ie
-!        if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0)then
-!        if(x1(i)>sep*0.5d0.and.x1(i)<sep*1d0)then
+        !        if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0)then
+        !        if(x1(i)>sep*0.5d0.and.x1(i)<sep*1d0)then
         if(d(i,j,k)<=din.and.d(i,j,k)>=dout)then
          heatV(j) = heatV(j) + d(i,j,k)*dvol(i,j,k)*2d0          
         end if
-!        Erot=Erot+0.5d0*d(i,j,k)*v2(i,j,k)*v2(i,j,k)*dvol(i,j,k)*2d0
+        !        Erot=Erot+0.5d0*d(i,j,k)*v2(i,j,k)*v2(i,j,k)*dvol(i,j,k)*2d0
         curEtot = curEtot + (0.5d0*grvphi(i,j,k)*d(i,j,k)+e(i,j,k))&
-                               *dvol(i,j,k)*2d0
+         *dvol(i,j,k)*2d0
        end do
       end do
      end do
@@ -251,12 +242,12 @@ program hormone
      do k = ks, ke
       do j = js, je
        do i = is, ie
-!        if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0)then
-!        if(x1(i)>sep*0.5d0.and.x1(i)<sep*1d0)then
+        !        if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0)then
+        !        if(x1(i)>sep*0.5d0.and.x1(i)<sep*1d0)then
         if(d(i,j,k)<=din.and.d(i,j,k)>=dout)then
          !         e(i,j,k) = e(i,j,k) + (Einject-Einitial-curEtot+iniEtot)*d(i,j,k)/heatV
          e(i,j,k) = e(i,j,k)+((Einject-Einitial)/dble(je)-Edist(j)+Edistorg(j))&
-                  * d(i,j,k)/heatV(j)
+          * d(i,j,k)/heatV(j)
         end if
        end do
       end do
@@ -296,39 +287,6 @@ program hormone
 ! End integration ------------------------------------------------------------
 
   call output ! To see final state
-
-! ############################################################################
- else ! AMR mode #############################################################
-! ############################################################################
-
-  call amr_settings
-
-  call amr_output
-
-  do
-
-   call amr_timestep
-
-   call amr_evolve
-
-   time = time + dt ; tn = tn + 1
-
-! Output sequence ------------------- !
-   if(tn/=0.and.mod(tn,10)==0)then   !
-    call amr_output                   !
-!    t_out = t_out + dt_out           !
-   end if                             !
-! ----------------------------------- !
-
-   if(tn==tnlim)exit
-
-   if(mod(tn,10)==0)call amr_regridding
-
-  end do
-
-  call amr_output
-
- end if
 
 !------------------------------- end program ---------------------------------
 
