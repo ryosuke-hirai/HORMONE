@@ -12,8 +12,10 @@ SRC_DIR = src
 TARGET = hormone
 
 # compile modules first
-MODF= modules.f90
-SRC = $(SRC_DIR)/$(MODF) $(filter-out $(SRC_DIR)/$(MODF), \
+MOD = modules.f90 merger.f90
+MODF= $(patsubst %,$(SRC_DIR)/%,$(MOD))
+SRC = $(MODF) $(filter-out $(MODF), $(sort $(wildcard $(SRC_DIR)/*.f90)))
+#SRC = $(SRC_DIR)/$(MODF) $(filter-out $(SRC_DIR)/$(MODF), \
       $(sort $(wildcard $(SRC_DIR)/*.f90)))
 OBJ = $(patsubst $(SRC_DIR)/%.f90,%.o,$(SRC))
 OBJ_F = $(patsubst %.o,$(OBJ_DIR)/%.o,$(OBJ))

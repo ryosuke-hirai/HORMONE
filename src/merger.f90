@@ -1,8 +1,8 @@
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 module merger_mod
 
  use constants
-
+ 
  implicit none
  real*8,parameter:: sep = 20d0*rsun
  real*8,allocatable:: spin_coeffr(:), spin_coefft(:)
@@ -27,9 +27,12 @@ contains
 
  subroutine merger_setup
 
+  use funcs
   use grid
   use physval
-  
+  use gravmod
+  use pressure_mod
+
   implicit none
 
 !-----------------------------------------------------------------------------
@@ -98,6 +101,8 @@ contains
 
 subroutine merger
 
+ use funcs
+ use grid
  use physval
  use gravmod
 
