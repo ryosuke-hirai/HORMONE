@@ -1,0 +1,97 @@
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE MEANMOLWEIGHT
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Evolve chemical composition distribution.
+
+subroutine meanmolweight
+
+ use settings
+ use grid
+ use physval
+ use gravmod,only:mc
+
+ implicit none
+
+!-----------------------------------------------------------------------------
+
+ if(compswitch==0)then ! for uniform mu
+  return
+
+ elseif(compswitch==1)then ! for fixed mu distribution
+  k = ks
+  do i = is, ie
+   mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )
+  end do
+
+  do i = is, ie
+   if(mc(i)<mudata(1,0))then
+    imu(i,js,ks) = 1d0/mudata(1,1)
+   elseif(mc(i)<mudata(musize,0))then
+    do j = 1, musize-1
+     if(mudata(j+1,0)>mc(i).and.mudata(j,0)<=mc(i))then
+      imu(i,js,ks) = ( (mudata(j+1,0)-mc(i)) * mudata(j,1)     &
+                     + (mc(i)-mudata(  j,0)) * mudata(j+1,1) ) &
+                   / (mudata(j+1,0)-mudata(j,0))
+      imu(i,js,ks) = 1d0/imu(i,js,ks)
+     end if
+    end do
+   else
+    imu(i,js,ks) = 1d0/muconst
+   end if
+  end do
+  imu(is-2:is-1,js,ks) = imu(is,js,ks)
+  imu(ie+1:ie+2,js,ks) = imu(ie,js,ks)
+
+ elseif(compswitch==2)then ! for composition advection
+!$omp parallel
+!$omp do private(i,j,k)
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     imu(i,j,k) = 0.25d0*(6d0*spc(1,i,j,k)+spc(2,i,j,k)+2d0)
+    end do
+   end do
+  end do
+!$omp end do
+!$omp do private(i,j,k)
+  do k = ks, ke
+   do j = js-2, js-1
+    do i = is, ie
+     imu(i,j,k) = imu(i,js,k)
+    end do
+   end do
+   do j = js, je
+    do i = is-2, is-1
+     imu(i,j,k) = imu(is,j,k)
+    end do
+    do i = ie+1, ie+2
+     imu(i,j,k) = imu(ie,j,k)
+    end do
+   end do
+   do j = je+1, je+2
+    do i = is, ie
+     imu(i,j,k) = imu(i,je,k)     
+    end do
+   end do
+  end do
+!$omp end do
+!$omp do private(i,j)
+  do j = js, je
+   do i = is, ie
+    imu(i,j,ks-2:ks-1) = imu(i,j,ks)
+    imu(i,j,ke+1:ke+2) = imu(i,j,ke)
+   end do
+  end do
+!$omp end do
+!$omp end parallel
+
+ else
+  print *, 'Error in compswitch',compswitch
+  stop
+ end if
+
+return
+end subroutine meanmolweight

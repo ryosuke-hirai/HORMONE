@@ -1,0 +1,44 @@
+----------------------------- parameters --------------------------------
+c i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
+c sphrn : Central sphrn cells will be treated in 1D (spherical coord.)
+c         sphrn==0 to do full multi-D. Keep it small (sphrn<<ie) anyway.
+c trnsn1/2/3 : Number of cells in transition layer from fully 1D to multi-D.
+c              Every 8/4/2 cells will be grouped up.
+&gridcon  xi1s=0d6 xi1e=2.1d14 xi2s=-1.d0 xi2e=1.d0 xi3s=0d13 xi3e=2.1d14
+	  is=1 ie=900 js=1 je=200 ks=1 ke=1
+	  imesh=1 jmesh=2 kmesh=0
+	  sphrn=10 trnsn1=10 trnsn2=20 trnsn3=20 /
+
+&geoscon  x1min=4d9 x2min=0 x3min=2d9 /
+c outstyle/endstyle : time=1, timestep=2
+&timecon  outstyle=1 endstyle=1
+	  tnlim=100000000 t_end=1d7 dt_out=1.d3 tn_out=1 /
+
+c eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
+c compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
+c muconst : mean molecular weight (if compswitch=0 or background)
+c spn : number of species (3 if X,Y,Z)
+&eos_con eostype = 1 eoserr=1d-10 compswitch=2 muconst=0.62d0 spn=8 /
+
+c crdnt : cartesian:0,cylindrical:1,spherical:2
+c rktype: order of Runge-Kutta (1 is for Euler method)
+c start : Start from this file
+&simucon  crdnt=2 courant=0.9d0 rktype=3 start=700000 /
+
+c periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
+c Dirichlet:9(provide in dirichlet.f90)
+c eq_sym : Set to .true. for equatorial symmetry
+&bouncon  bc1is=1 bc1os=3 bc2is=1 bc2os=1 bc3is=0 bc3os=0
+	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.true. /
+
+c gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
+&gravcon gravswitch=3 grverr=1.d-5 cgerr=1.d-5 HGfac=3d0 hgcfl=0.9d0
+	 include_extgrv=.false. 
+	 gis=1 gie=600 gjs=1 gje=100 gks=1 gke=1 /
+
+&partcon include_particles=.true. maxptc=749248 /
+
+c ib,jb,kb : Grids in a block
+c maxamr   : Maximum level of AMR refining (0=>Non-AMR mode)
+c cuts     : Number of cuts when refining
+&amr_con ib= 8 jb=1 kb=1 maxamr=0 cuts=2 /
