@@ -242,20 +242,3 @@ module particle_mod
  
 end module particle_mod
 
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-module merger_mod
-
- use constants
-
- implicit none
-! real*8,parameter:: Mtot = 70d0*msun, M1 = 50d0*msun, sep = 30d0*rsun
- real*8,parameter:: sep = 20d0*rsun
-! real*8,parameter:: Einject = -G*M1*(Mtot-M1)/(2d0*sep), &
-!                    Jinject = M1*(Mtot-M1)/Mtot*sqrt(G*Mtot*sep), &
-!                    Tinject = 2d0*pi*sqrt(sep**3d0/G/Mtot)*5d0
- real*8,allocatable:: spin_coeffr(:), spin_coefft(:)
- real*8 Mtot, M1, Einject, Jinject, Tinject
- real*8 Iinertia, Jinitial, Einitial
- real*8 domega_dt, de_dt, iniEtot, iniJtot, curEtot, curJtot, inifile, inifile2
-
-end module merger_mod
