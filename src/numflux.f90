@@ -72,8 +72,6 @@ subroutine numflux
 
      Tl = T(i,j,k) ; Tr = T(i+1,j,k)
 
-!if(er-0.5d0*dr*(v1r*v1r+v2r*v2r)<0d0)print *,i,j,dr,v1r,v2r,v3r,b1r,b2r,b3r,er,Tr,imur,ptr,cfr,er-0.5d0*dr*(v1r*v1r+v2r*v2r)
-!if(rungen==2)print *,i,k,dr,er,v1r,v3r,imur,Tr,ptr,cfr,er-0.5d0*(v1r*v1r+v3r*v3r)*dr
      select case (eostype)
      case(0:1) ! without recombination
       imul = 1d0/imu(i  ,j,k) + dx(1) * dmu(i  ,j,k,1)
@@ -345,12 +343,6 @@ b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
 !!$     phil = phi(i,j,k  ) + dx(1) * dphi(i,j,k  ,3)
 !!$     phir = phi(i,j,k+1) - dx(2) * dphi(i,j,k+1,3)
 b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
-!!$     ptl = (gamma-1d0)*(el - 0.5d0*dl*(v1l*v1l+v2l*v2l+v3l*v3l) &
-!!$                           - 0.5d0*   (b1l*b1l+b2l*b2l+b3l*b3l) )
-!!$     ptr = (gamma-1d0)*(er - 0.5d0*dr*(v1r*v1r+v2r*v2r+v3r*v3r) &
-!!$                           - 0.5d0*   (b1r*b1r+b2r*b2r+b3r*b3r) )
-
-!!$     cfl = sqrt(gamma*(ptl/dl)) ; cfr = sqrt(gamma*(ptr/dr))
 
      Tl = T(i,j,k) ; Tr = T(i,j,k+1)
 
@@ -465,47 +457,5 @@ if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 
 !$omp end parallel
 return
-
-contains
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!
-!                           SUBROUTINE CONSERVE
-!
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: To convert physical values to conserved values
-
-subroutine conserve
-
-  use grid
-  use physval
-  use ninewave
-
-  implicit none
-
-!---------------------------------------------------------------------------
-
-  ! set U
-!$omp parallel do private(i,j,k)
-  do k = ks,ke
-   do j = js,je
-    do i = is,ie
-     u(i,j,k,1) = d(i,j,k)
-     u(i,j,k,2) = d(i,j,k) * v1(i,j,k)
-     u(i,j,k,3) = d(i,j,k) * v2(i,j,k)
-     u(i,j,k,4) = d(i,j,k) * v3(i,j,k)
-     u(i,j,k,5) = b1(i,j,k)
-     u(i,j,k,6) = b2(i,j,k)
-     u(i,j,k,7) = b3(i,j,k)
-     u(i,j,k,8) = e(i,j,k)
-     u(i,j,k,9) = phi(i,j,k)
-    end do
-   end do
-  end do
-!$omp end parallel do
-
-return
-end subroutine conserve
 
 end subroutine numflux

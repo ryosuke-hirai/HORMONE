@@ -19,7 +19,7 @@ subroutine gravity
   integer flgcg
   real*8 rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind
   real*8,dimension(1:lmax):: gsrc, pp, absrob
-  real*8,allocatable,dimension(:,:,:):: newphi!, fric
+  real*8,allocatable,dimension(:,:,:):: newphi
   real*8,allocatable,dimension(:):: intphi
 
 !-----------------------------------------------------------------------------

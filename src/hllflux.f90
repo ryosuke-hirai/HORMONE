@@ -16,7 +16,6 @@ subroutine hllflux(fflux,fl,fr,ul,ur,cfl,cfr,vl,vr)
   real*8,intent(in) :: fl, fr, ul, ur, cfl, cfr, vl, vr
   real*8 sl, sr
   real*8,intent(inout)::fflux
-!  integer,intent(in):: ufn
 
 !--------------------------------------------------------------------
 
