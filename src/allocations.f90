@@ -13,12 +13,11 @@ subroutine allocations
  use physval
  use gravmod
  use dirichlet
+ use recombination_mod
 
  implicit none
 
 !-----------------------------------------------------------------------------
-
-ie=1200;gie=ie!temp
 
  in = ie + 2 ; jn = je + 2 ; kn = ke + 2
  gin = gie + 2 ; gjn = gje + 2 ; gkn = gke + 2
@@ -26,16 +25,17 @@ ie=1200;gie=ie!temp
  lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
 
  allocate( &
-  x1(-1:in),xi1(-1:in),dx1(-1:in),dxi1(-1:in),idx1(-1:in),idxi1(-1:in), &
-  x2(-1:jn),xi2(-1:jn),dx2(-1:jn),dxi2(-1:jn),idx2(-1:jn),idxi2(-1:jn), &
-  x3(-1:kn),xi3(-1:kn),dx3(-1:kn),dxi3(-1:kn),idx3(-1:kn),idxi3(-1:kn), &
+  x1(-1:gin),xi1(-1:gin),dx1(-1:gin),dxi1(-1:gin),idx1(-1:gin),idxi1(-1:gin), &
+  x2(-1:gjn),xi2(-1:gjn),dx2(-1:gjn),dxi2(-1:gjn),idx2(-1:gjn),idxi2(-1:gjn), &
+  x3(-1:gkn),xi3(-1:gkn),dx3(-1:gkn),dxi3(-1:gkn),idx3(-1:gkn),idxi3(-1:gkn), &
 
   d (-1:in,-1:jn,-1:kn), p (-1:in,-1:jn,-1:kn), e (-1:in,-1:jn,-1:kn), &
   v1(-1:in,-1:jn,-1:kn), v2(-1:in,-1:jn,-1:kn), v3(-1:in,-1:jn,-1:kn), &
   b1(-1:in,-1:jn,-1:kn), b2(-1:in,-1:jn,-1:kn), b3(-1:in,-1:jn,-1:kn), &
   ptot(-1:in,-1:jn,-1:kn), cf(-1:in,-1:jn,-1:kn), phi(-1:in,-1:jn,-1:kn), &
   T(-1:in,-1:jn,-1:kn), eint(-1:in,-1:jn,-1:kn), imu (-1:in,-1:jn,-1:kn), &
-
+  shock(-1:in,-1:jn,-1:kn),&
+  
   dd (-1:in,-1:jn,-1:kn,1:3), de(-1:in,-1:jn,-1:kn,1:3), dphi(-1:in,-1:jn,-1:kn,1:3),&
   dm1(-1:in,-1:jn,-1:kn,1:3), dm2(-1:in,-1:jn,-1:kn,1:3), dm3(-1:in,-1:jn,-1:kn,1:3),&
   db1(-1:in,-1:jn,-1:kn,1:3), db2(-1:in,-1:jn,-1:kn,1:3), db3(-1:in,-1:jn,-1:kn,1:3),&
@@ -78,7 +78,6 @@ ie=1200;gie=ie!temp
    d0 (-1:in,-1:jn,-1:kn), p0 (-1:in,-1:jn,-1:kn), &
    b10(-1:in,-1:jn,-1:kn), b20(-1:in,-1:jn,-1:kn), b30(-1:in,-1:jn,-1:kn), &
    v10(-1:in,-1:jn,-1:kn), v20(-1:in,-1:jn,-1:kn), v30(-1:in,-1:jn,-1:kn)  &
-
   )
  end if
 
@@ -88,21 +87,20 @@ ie=1200;gie=ie!temp
    spc(1:spn,-1:in,-1:jn,-1:kn), spcorg(1:spn,is:ie,js:je,ks:ke), &
    dspc  (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
    spcflx(1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3)  )
+  if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
+     bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
+   allocate( spc0(1:spn,-1:in,-1:jn,-1:kn) )
+  end if
  end if
 
 ! allocate external gravitational field if necessary
  if(include_extgrv)then
-  allocate( extgrv(-1:in,-1:jn,-1:kn) )
+  allocate( extgrv(gis-2:gin,gjs-2:gjn,gks-2:gkn) )
  end if
-
+ 
  d = 1d0  ! set for numerical reasons
  T = 1d3  ! initial guess for temperature
+ cf = 1d0
  b1 = 0d0; b2 = 0d0; b3 = 0d0
-
-!ie=900;gie=900!temp
- in = ie + 2
- gin = gie + 2
- lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
-
 return
 end subroutine allocations

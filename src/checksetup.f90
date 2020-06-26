@@ -10,7 +10,6 @@ subroutine checksetup
   use settings
   use grid
   use physval
-  use amr_module
   use gravmod
   
   implicit none
@@ -77,6 +76,13 @@ subroutine checksetup
    bc3os=1
   end if
 
+! Set flag if any boundary is set to Dirichlet boundary condition
+  dirichlet_on = .false.
+  if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or.&
+     bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
+   dirichlet_on = .true.
+  end if
+  
 ! check CFL condition
   if(courant>1.d0)then
    print *,"Error from courant number, courant = ",courant
@@ -105,31 +111,24 @@ subroutine checksetup
   gis = min(gis,is) ; gjs = min(gjs,js) ; gks = min(gks,ks)
   gie = max(gie,ie) ; gje = max(gje,je) ; gke = max(gke,ke)
 
-! Check for AMR mode only
-  if(maxamr/=0)then
-! check grid
-   if(mod(ie,ib)/=0)then
-    print *,"Error from i mesh",ie, ib
-    print *,"ie should be a multiple of ib"
-    stop
-   elseif(mod(je,jb)/=0)then
-    print *,"Error from j mesh",je, jb
-    print *,"je should be a multiple of jb"
-    stop
-   elseif(mod(ke,kb)/=0)then
-    print *,"Error from k mesh",ke, kb
-    print *,"ke should be a multiple of kb"
-    stop
-   end if
-  end if
-
 !  if(gravswitch==3)courant = courant / HGfac
   t_out = dt_out
 
-! Sperical composition only for spherical coordinates
+! Spherical composition only for spherical coordinates
   if(compswitch==1.and.crdnt/=2)then
    print *,"compswitch is not consistent with coordinate", compswitch
+   stop
   end if
 
-return  
+! Cooling only for ideal gas EoS
+  if(include_cooling.and.eostype>0)then
+   stop "Cooling is only for optically thin equation of state"
+  end if
+
+! Recombination only if composition is provided
+  if(compswitch<=1.and.eostype==2)then
+   print *,'Provide composition to use recombination module'
+  end if
+  
+return
 end subroutine checksetup

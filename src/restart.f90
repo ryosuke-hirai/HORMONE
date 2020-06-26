@@ -16,13 +16,11 @@ subroutine restart
  use pressure_mod
  use ejtfilemod,only:inimass
  use particle_mod
- use merger_mod
- use constants
-
+ 
  implicit none
 
  character*30 startfile, bptfile
-real*8 dfac, Mdot, vinf, mmm
+
 !-----------------------------------------------------------------------------
 
  if(outstyle==1)then
@@ -33,7 +31,7 @@ real*8 dfac, Mdot, vinf, mmm
 
  open(unit=11,file=startfile,status='old',form='unformatted')
 
-  read(11)tn,time,iniEtot,inimass,de_dt,domega_dt
+  read(11)tn,time,mc(is-1)!,de_dt,domega_dt
   read(11) d (is:ie,js:je,ks:ke), &
            v1(is:ie,js:je,ks:ke), &
            v2(is:ie,js:je,ks:ke), &
@@ -46,7 +44,7 @@ real*8 dfac, Mdot, vinf, mmm
            grvphi(gis:gie,gjs:gje,gks:gke)
   if(gravswitch==3)then
    read(11)grvphiold(gis:gie,gjs:gje,gks:gke), &
-           dt_old
+            dt_old
   end if
   if(compswitch>=2)then
    read(11)spc(1:spn,is:ie,js:je,ks:ke)
@@ -54,87 +52,11 @@ real*8 dfac, Mdot, vinf, mmm
 
  close(11)
 
-!temp
- if(start==int(inifile2))then 
-  ie=1200;gie=ie
-  in = ie + 2 ; jn = je + 2 ; kn = ke + 2
-  gin = gie + 2 ; gjn = gje + 2 ; gkn = gke + 2
-! lmax = ie*je*ke
-  lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
 
-  dfac = dxi1(is+1)/dxi1(is)
-  do i = 901, ie+2
-   dxi1(i) = dxi1(i-1)*dfac
-   idxi1(i) = 1d0/dxi1(i)
-   xi1(i) = xi1(i-1) + dxi1(i)
-   x1(i) = 0.75d0*(xi1(i)+xi1(i-1))*(xi1(i)*xi1(i)+xi1(i-1)*xi1(i-1)) &
-                 /(xi1(i)*xi1(i)+xi1(i)*xi1(i-1)+xi1(i-1)*xi1(i-1))
-   dx1(i) = x1(i) - x1(i-1)
-   idx1(i) = 1d0/dx1(i)
-  end do
-  xi1e = xi1(ie)
-
-  Mdot = 1d-5*msun/year
-  vinf = 4d7
-  mmm  = sum(d(is:900,js:je,ks:ke)*dvol(is:900,js:je,ks:ke))*2d0
-
-  k = ks
-  do j = js, je
-   do i = 901, ie
-    d (i,j,k) = Mdot/(4d0*pi*x1(i)*x1(i)*vinf)
-    v1(i,j,k) = vinf
-    v2(i,j,k) = 0d0
-    v3(i,j,k) = 0d0
-    grvphi(i,j,k) = -G*mmm/x1(i)
-    grvphiold(i,j,k) = -G*mmm/x1(i)
-    p (i,j,k) = -d(i,j,k)*grvphi(i,j,k)
-    spc(1:spn,i,j,k) = spc(1:spn,900,j,k)
-    imu(i,j,k) = 0.25d0*(6d0*spc(1,i,j,k)+spc(2,i,j,k)+2d0)
-    eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
-    e (i,j,k) = eint(i,j,k) + 0.5d0*d(i,j,k)*vinf*vinf
-   end do
-  end do
-  deallocate(spin_coeffr,spin_coefft)
-  call metric
-  deallocate( hg11,hg12,hg21,hg22,hg123 )
-  call gravsetup
-
-  open(unit=40,file='data/gridfile2.bin',status='replace',form='unformatted')
-
-  write(40) x1  (gis-2:gie+2), xi1(gis-2:gie+2), &
-       dxi1(gis-2:gie+2), dx1(gis-2:gie+2), &
-       x2  (gjs-2:gje+2), xi2(gjs-2:gje+2), &
-       dxi2(gjs-2:gje+2), dx2(gjs-2:gje+2), &
-       x3  (gks-2:gke+2), xi3(gks-2:gke+2), &
-       dxi3(gks-2:gke+2), dx3(gks-2:gke+2)
-  close(40)
-
-  open(unit=50,file='data/gridfile2.dat',status='replace')
-  write(50,'()')
-  write(50,'(2(a5),3(a15))')'#  i','j','x1(3)','x2(4)','dvol(5)'
-
-  if(crdnt==2)then
-   k=ks;j=js-1
-   do i = is, ie,2
-    write(50,'(2(i5),3(1x,1PE14.6e2))')i,j,x1(i),0d0,dvol(i,j,k)
-   end do
-   write(50,*)
-  end if
-  do k = ks,ke
-   do j = js,je
-    do i = is,ie,2
-     write(50,'(2(i5),3(1x,1PE14.6e2))')i,j,x1(i),x2(j),dvol(i,j,k)
-    end do
-    if(ie/=1)write(50,*)
-   end do
-  !   if(ie==1)write(30,*)
-  end do
-  close(50)
- end if
-
+ call dirichletbound
 
 !bptfile----------------------------------------------------------------
- if(include_particles.and.time>inifile)then
+ if(include_particles)then
   if(outstyle==1)then
    write(bptfile,'(a8,i11.11,a5)')'data/bpt',start,'s.dat'
   elseif(outstyle==2)then
@@ -152,6 +74,14 @@ real*8 dfac, Mdot, vinf, mmm
 
  t_out = time + dt_out
  if(gravswitch==3)grvtime = time
-! call readejecta
+
+!extgrvfile-------------------------------------------------------------
+ if(include_extgrv)then
+  extgrv = 0d0
+  open(unit=9191,file='data/extgrv.bin',status='old',form='unformatted')
+  read(9191)coremass
+  read(9191)extgrv(gis-2:gie+2,gjs:gje,gks-2:gke+2)
+  close(9191)
+ end if
 
 end subroutine restart

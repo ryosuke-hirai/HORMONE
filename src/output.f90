@@ -2,7 +2,8 @@ module ejtfilemod
 
   implicit none
 
-  real*8 t_ejt_out, dt_ejt_out, remmass, inimass, belmass, totmass, totangmom, totangmoma, totangmomb, totenergy, totenergya, totenergyb, ToW, ToWb, ToWt, totintene, totinteneb, totintenet, totgrvene,totgrveneb,totgrvenet,totkinene,totkineneb,totkinenet
+  character*30 ejtfile,ejtfilebin
+  real*8 t_ejt_out, dt_ejt_out, remmass, inimass, belmass, totmass, totangmom, totangmoma, totangmomb, totenergy, totenergya, totenergyb, ToW, ToWb, ToWt, totintene, totinteneb, totintenet, totgrvene,totgrveneb,totgrvenet,totkinene,totkineneb,totkinenet, centre_of_mass,centre_of_massb,vel,velb
 
 end module ejtfilemod
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -15,14 +16,13 @@ end module ejtfilemod
 
 subroutine output
 
-  use settings,only:outstyle,gravswitch,compswitch,spn
+  use settings,only:outstyle,gravswitch,compswitch,spn,eq_sym
   use grid
   use physval
   use constants
   use gravmod
   use ejtfilemod
   use particle_mod
-  use merger_mod
 
   implicit none
 
@@ -35,7 +35,7 @@ subroutine output
 
 
 !gridfile---------------------------------------------------------------
-  if(tn==0.or.time==inifile)then
+  if(tn==0)then
    open(unit=40,file='data/gridfile.bin',status='replace',form='unformatted')
 
    write(40) x1  (gis-2:gie+2), xi1(gis-2:gie+2), &
@@ -48,25 +48,40 @@ subroutine output
 
    open(unit=50,file='data/gridfile.dat',status='replace')
    write(50,'()')
-   write(50,'(2(a5),3(a15))')'#  i','j','x1(3)','x2(4)','dvol(5)'
+   write(50,'(2(a5),3(a15))')'#  i','k','x1(3)','x3(4)','dvol(5)'
 
    if(crdnt==2)then
     k=ks;j=js-1
-    do i = is, ie,2
+    do i = is, ie
      write(50,'(2(i5),3(1x,1PE14.6e2))')i,j,x1(i),0d0,dvol(i,j,k)
     end do
     write(50,*)
    end if
-   do k = ks,ke
+
+   do k = ks,ke,2
     do j = js,je
      do i = is,ie,2
-      write(50,'(2(i5),3(1x,1PE14.6e2))')i,j,x1(i),x2(j),dvol(i,j,k)
+      write(50,'(2(i5),3(1x,1PE14.6e2))')i,k,x1(i),x3(k),dvol(i,j,k)
      end do
      if(ie/=1)write(50,*)
     end do
     !   if(ie==1)write(30,*)
    end do
+
+   if(crdnt==2)then
+    k=ks;j=je+1
+    do i = is, ie
+     if(eq_sym)then
+      write(50,'(2(i5),3(1x,1PE14.6e2))')i,j,x1(i),0.5d0*pi,dvol(i,j,k)
+     else
+      write(50,'(2(i5),3(1x,1PE14.6e2))')i,j,x1(i),pi,dvol(i,j,k)
+     end if
+    end do
+    write(50,*)
+   end if
+
   end if
+
 
   close(50)
 
@@ -74,6 +89,9 @@ subroutine output
 !pltfile---------------------------------------------------------------------
   if(outstyle==1)then
    write(pltfile,'(a8,i11.11,a5)')'data/plt',int(time),'s.dat'
+   if(time>2147483647d0)then
+    write(pltfile,'(a8,i9.9,a7)')'data/plt',int(time*0.01d0),'00s.dat'
+   end if
   elseif(outstyle==2)then
    write(pltfile,'(a8,i8.8,a4)')'data/plt',tn,'.dat'
   end if
@@ -81,78 +99,71 @@ subroutine output
   open(unit=30,file = pltfile, status='replace')
 
   write(30,'(a,i7,2(a,1PE12.4e2))') '#tn =',tn,'  time= ',time
-  write(30,'(18(a15))')'d(6)','e(7)','p(8)','v1(9)','v2(10)','v3(11)','phi(12)','T(13)','mu(14)','H1(15)','He4(16)','He3(17)','C12(18)','N14(19)','O16(20)','Ne20(21)','Mg24(22)'
+  write(30,'(19(a15))')'d(6)','e(7)','p(8)','v1(9)','v2(10)','phi(11)','T(12)','mu(13)','X_h1(14)','X_He4(15)','X_He3(16)','X_C12(17)','X_N14(18)','X_O16(19)','X_Ne20(20)','X_Mg(21)','shock(22)'
 
   if(gravswitch==1)then
    j = js ; k = ks
    do i = is, ie-1
-    grvphi(i,j,k) = 0d0
+    grvphi(i,js:je,k) = 0d0
     do n = i+1, ie
-     grvphi(i,j,k) = grvphi(i,j,k) - d(n,j,k)*x1(n)*dxi1(n)
+     grvphi(i,js:je,k) = grvphi(i,js:je,k) - sum(d(n,js:je,k)*dvol(n,js:je,k))/sum(dvol(n,js:je,k))*x1(n)*dxi1(n)
     end do
-    grvphi(i,j,k) = G*(-mc(i)/x1(i)+4d0*pi*grvphi(i,j,k))
+    grvphi(i,js:je,k) = G*(-mc(i)/x1(i)+4d0*pi*grvphi(i,js:je,k))
    end do
-   grvphi(ie,j,k) = -G*mc(ie)/x1(ie)
+   grvphi(ie,js:je,k) = -G*mc(ie)/x1(ie)
   end if
 
-!!$  allocate(lapphi(is:ie,js:je,ks:ke))
-!!$  do k = ks, ke
-!!$   do j = js, je
-!!$    do i = is, ie
-!!$     h = min(dx1(i),dx1(i+1),dx3(k),dx3(k+1))
-!!$     lapphi(i,j,k) =((sum(lag11(-1:1,i,j,k)*grvphi(i-1:i+1,j,k)) + &
-!!$                     sum(lag12(-1:1,i,j,k)*grvphi(i-1:i+1,j,k)) + &
-!!$                     sum(lag31(-1:1,i,j,k)*grvphi(i,j,k-1:k+1)) + &
-!!$                     sum(lag32(-1:1,i,j,k)*grvphi(i,j,k-1:k+1)) + &
-!!$                     sum(lag21(-1:1,i,j,k)*grvphi(i-1:i+1,j,k))*2d0 - &
-!!$                     6d0*grvphi(i,j,k))/(h*h) - &
-!!$                     4d0*pi*G*d(i,j,k))/ &
-!!$                     ((sum(lag11(-1:1,i,j,k)*grvphi(i-1:i+1,j,k)) + &
-!!$                     sum(lag12(-1:1,i,j,k)*grvphi(i-1:i+1,j,k)) + &
-!!$                     sum(lag31(-1:1,i,j,k)*grvphi(i,j,k-1:k+1)) + &
-!!$                     sum(lag32(-1:1,i,j,k)*grvphi(i,j,k-1:k+1)) + &
-!!$                     sum(lag21(-1:1,i,j,k)*grvphi(i-1:i+1,j,k))*2d0 - &
-!!$                     6d0*grvphi(i,j,k))/(h*h) + &
-!!$                     4d0*pi*G*d(i,j,k))
-!!$    end do
-!!$   end do
-!!$  end do
+  call shockfind
+  
   if(crdnt==2)then
    j =js;k=ks
-   do i = is, ie,2
-    write(30,'(18(1x,1PE14.6e2))')&
-         d(i,j,k),e(i,j,k),p(i,j,k),v1(i,j,k),v2(i,j,k),v3(i,j,k), &
-         grvphi(i,j,k),T(i,j,k),1d0/imu(i,j,k),spc(1:8,i,j,k)
+   do i = is, ie
+    write(30,'(16(1x,1PE14.6e2),i2)')&
+         d(i,j,k),e(i,j,k),p(i,j,k),v1(i,j,k),v2(i,j,k), &
+         grvphi(i,j,k)+extgrv(i,j,k),T(i,j,k),1d0/imu(i,j,k),spc(1:spn,i,j,k),shock(i,j,k)
    end do
    write(30,'()')
   end if
 
-  do k = ks,ke
+  do k = ks,ke,2
    do j = js,je
     do i = is,ie,2
-     write(30,'(18(1x,1PE14.6e2))')&
-          d(i,j,k),e(i,j,k),p(i,j,k),v1(i,j,k),v2(i,j,k),v3(i,j,k), &
-          grvphi(i,j,k),T(i,j,k),1d0/imu(i,j,k),spc(1:8,i,j,k)
+     write(30,'(16(1x,1PE14.6e2),i9)')&
+          d(i,j,k),e(i,j,k),p(i,j,k),v1(i,j,k),v3(i,j,k), &
+          grvphi(i,j,k)+extgrv(i,j,k),T(i,j,k),1d0/imu(i,j,k),spc(1:spn,i,j,k),shock(i,j,k)!,lapphi(i,j,k)
     end do
     if(ie/=1)write(30,*)
    end do
 !   if(ie==1)write(30,*)
   end do
 
+  if(crdnt==2)then
+   j =je;k=ks
+   do i = is, ie
+    write(30,'(16(1x,1PE14.6e2),i9)')&
+         d(i,j,k),e(i,j,k),p(i,j,k),v1(i,j,k),v2(i,j,k), &
+         grvphi(i,j,k)+extgrv(i,j,k),T(i,j,k),1d0/imu(i,j,k),spc(1:spn,i,j,k),shock(i,j,k)
+   end do
+   write(30,'()')
+  end if
+
+
   close(30)
 
 
 !binfile----------------------------------------------------------------
-if(time>inifile)then
- if(outstyle==1)then
+  if(outstyle==1)then
    write(binfile,'(a8,i11.11,a5)')'data/bin',int(time),'s.dat'
+   if(time>2147483647d0)then
+    write(binfile,'(a8,i9.9,a7)')'data/bin',int(time*0.01d0),'00s.dat'
+   end if
   elseif(outstyle==2)then
    write(binfile,'(a8,i8.8,a4)')'data/bin',tn,'.dat'   
   end if
 
   open(unit=10,file=binfile,status='replace',form='unformatted')
 
-  write(10)tn,time,iniEtot,inimass,de_dt,domega_dt
+  write(10)tn,time,mc(is-1)!,de_dt,domega_dt
   write(10) d (is:ie,js:je,ks:ke), &
             v1(is:ie,js:je,ks:ke), &
             v2(is:ie,js:je,ks:ke), &
@@ -172,11 +183,14 @@ if(time>inifile)then
   end if
 
   close(10)
- end if
+
   if(include_particles)then
 !ptcfile----------------------------------------------------------------
   if(outstyle==1)then
    write(ptcfile,'(a8,i11.11,a5)')'data/ptc',int(time),'s.dat'
+   if(time>2147483647d0)then
+    write(ptcfile,'(a8,i9.9,a7)')'data/ptc',int(time*0.01d0),'00s.dat'
+   end if
   elseif(outstyle==2)then
    write(ptcfile,'(a8,i8.8,a4)')'data/ptc',tn,'.dat'
   end if
@@ -240,6 +254,9 @@ if(time>inifile)then
 !bptfile----------------------------------------------------------------
   if(outstyle==1)then
    write(bptfile,'(a8,i11.11,a5)')'data/bpt',int(time),'s.dat'
+   if(time>2147483647d0)then
+    write(bptfile,'(a8,i9.9,a7)')'data/bpt',int(time*0.01d0),'00s.dat'
+   end if
   elseif(outstyle==2)then
    write(bptfile,'(a8,i8.8,a4)')'data/bpt',tn,'.dat'
   end if
@@ -253,93 +270,42 @@ if(time>inifile)then
 
   end if
 
-!angmomfile---------------------------------------------------------------
-  if(time==inifile)then
+!remmassfile---------------------------------------------------------------
+  if(tn==0)then
+   open(unit=60,file='data/remmass.dat',status='replace')
    inimass = 0d0
    do k = ks, ke ; do j = js, je ; do i = is, ie
-    if(e(i,j,k)+d(i,j,k)*(grvphi(i,j,k))<=0d0)then
-     inimass = inimass + dvol(i,j,k)*d(i,j,k)
+    if(e(i,j,k)+d(i,j,k)*grvphi(i,j,k)<=0d0)then
+     inimass = inimass + dvol(i,j,k)*d(i,j,k) + coremass
     end if
    end do ; end do ; end do
-   write(60,'(a,1PE16.8e2)')'initial_mass = ',inimass*2d0/msun
-   write(60,'(24a16)')'time(1)','totmass(2)','remmass(3)','bermass(4)','totangmom(5)','totangmoma(6)','totangmomb(7)','totenergy(8)','totenergya(9)','totenergyb(10)','tot_T/W(11)','T/W(12)','T/Wb(13)','Eint(14)','Einta(15)','Eintb(16)','Egrav(17)','Egrava(18)','Egravb(19)','Ekin(20)','Ekina(21)','Ekinb(22)','domega_dt(23)'
+   write(60,'(a,1PE16.8e2,a15,1PE16.8e2)') &
+    'initial_env_mass = ',inimass/msun,'core_mass = ',coremass/msun
+   write(60,'(7a16)')'time','remmass','belmass','v_kick','v_kickb'
+  else
+   open(unit=60,file='data/remmass.dat',status='old',position='append')
   end if
 
-  remmass = 0d0 ; belmass = 0d0 ; totmass = 0d0
-  totangmom = 0d0 ; totangmoma = 0d0 ; totangmomb = 0d0
-  totenergy = 0d0 ; totenergya = 0d0 ; totenergyb = 0d0
-  ToW = 0d0 ; ToWb = 0d0 ; ToWt = 0d0
-  totintene=0d0; totinteneb=0d0; totintenet=0d0
-  totgrvene=0d0; totgrveneb=0d0; totgrvenet=0d0
-  totkinene=0d0; totkineneb=0d0; totkinenet=0d0
-! for cylindrical coordinates
-  if(crdnt==1)then
-   do k = ks, ke
-    do j = js, je
-     do i = is, ie
-      totmass = totmass + d(i,j,k) * dvol(i,j,k)
-      totangmom = totangmom + d(i,j,k)*v2(i,j,k)*dvol(i,j,k)*x1(i)
-      totenergy = totenergy + (e(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)
-      vsq = v1(i,j,k)*v1(i,j,k)+v2(i,j,k)*v2(i,j,k)+v3(i,j,k)*v3(i,j,k)
-      totintene = totintene + (e(i,j,k)-0.5d0*d(i,j,k)*vsq)*dvol(i,j,k)
-      totgrvene = totgrvene + 0.5d0*d(i,j,k)*grvphi(i,j,k)*dvol(i,j,k)
-      totkinene = totkinene + 0.5d0*d(i,j,k)*vsq*dvol(i,j,k)
-      ToWt = ToWt + 0.5d0*d(i,j,k)*dvol(i,j,k)*v2(i,j,k)*v2(i,j,k)
-      if(e(i,j,k)+d(i,j,k)*grvphi(i,j,k)<=0d0)then
-       remmass = remmass + d(i,j,k)*dvol(i,j,k)
-       totangmoma = totangmoma + d(i,j,k)*v2(i,j,k)*dvol(i,j,k)*x1(i)
-       totenergya = totenergya + (e(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)
-       ToW = ToW + 0.5d0*d(i,j,k)*dvol(i,j,k)*v2(i,j,k)*v2(i,j,k)
-      end if
-      if(e(i,j,k)+p(i,j,k)+d(i,j,k)*grvphi(i,j,k)<=0d0)then
-       belmass = belmass + d(i,j,k)*dvol(i,j,k)
-       totangmomb= totangmomb+ d(i,j,k)*v2(i,j,k)*dvol(i,j,k)*x1(i)
-       totenergyb= totenergyb+ (e(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)
-       ToWb= ToWb+ 0.5d0*d(i,j,k)*dvol(i,j,k)*v2(i,j,k)*v2(i,j,k)
-      end if
-     end do
+  remmass = coremass ; belmass = coremass
+  centre_of_mass = 0d0 ; centre_of_massb = 0d0
+  vel = 0d0 ; velb = 0d0
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     if(e(i,j,k)+d(i,j,k)*(grvphi(i,j,k)+extgrv(i,j,k))<=0d0)then
+      remmass = remmass + d(i,j,k)*dvol(i,j,k)
+      vel = vel + d(i,j,k)*dvol(i,j,k)*v3(i,j,k)
+     end if
+     if(v1(i,j,k)**2d0+v3(i,j,k)**2d0+(grvphi(i,j,k)+extgrv(i,j,k))<=0d0)then
+      belmass = belmass + d(i,j,k)*dvol(i,j,k)
+      velb = velb + d(i,j,k)*dvol(i,j,k)*v3(i,j,k)
+     end if
     end do
    end do
-! for spherical coordinates
-  elseif(crdnt==2)then
-   do k = ks, ke
-    do j = js, je
-     do i = is, ie
-      totmass = totmass + d(i,j,k) * dvol(i,j,k)
-      totangmom = totangmom + d(i,j,k)*v3(i,j,k)*dvol(i,j,k)*spin_coeffr(i)*spin_coefft(j)
-      totenergy = totenergy + (e(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)
-      vsq = v1(i,j,k)*v1(i,j,k)+v2(i,j,k)*v2(i,j,k)+v3(i,j,k)*v3(i,j,k)
-      totintenet = totintenet + (e(i,j,k)-0.5d0*d(i,j,k)*vsq)*dvol(i,j,k)
-      totgrvenet = totgrvenet + 0.5d0*d(i,j,k)*grvphi(i,j,k)*dvol(i,j,k)
-      totkinenet = totkinenet + 0.5d0*d(i,j,k)*vsq*dvol(i,j,k)
-      ToWt = ToWt + 0.5d0*d(i,j,k)*dvol(i,j,k)*v3(i,j,k)*v3(i,j,k)
-      if(e(i,j,k)+d(i,j,k)*grvphi(i,j,k)<=0d0)then
-       remmass = remmass + d(i,j,k)*dvol(i,j,k)
-       totangmoma = totangmoma + d(i,j,k)*v3(i,j,k)*dvol(i,j,k)*spin_coeffr(i)*spin_coefft(j)
-       totenergya = totenergya + (e(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)
-       totintene = totintene + (e(i,j,k)-0.5d0*d(i,j,k)*vsq)*dvol(i,j,k)
-       totgrvene = totgrvene + 0.5d0*d(i,j,k)*grvphi(i,j,k)*dvol(i,j,k)
-       totkinene = totkinene + 0.5d0*d(i,j,k)*vsq*dvol(i,j,k)
-       ToW = ToW + 0.5d0*d(i,j,k)*dvol(i,j,k)*v3(i,j,k)*v3(i,j,k)
-      end if
-      if(e(i,j,k)+p(i,j,k)+d(i,j,k)*grvphi(i,j,k)<=0d0)then
-       belmass = belmass + d(i,j,k)*dvol(i,j,k)
-       totangmomb= totangmomb+ d(i,j,k)*v3(i,j,k)*dvol(i,j,k)*spin_coeffr(i)*spin_coefft(j)
-       totenergyb= totenergyb+ (e(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)
-       totinteneb = totinteneb + (e(i,j,k)-0.5d0*d(i,j,k)*vsq)*dvol(i,j,k)
-       totgrveneb = totgrveneb + 0.5d0*d(i,j,k)*grvphi(i,j,k)*dvol(i,j,k)
-       totkineneb = totkineneb + 0.5d0*d(i,j,k)*vsq*dvol(i,j,k)
-       ToWb= ToWb+ 0.5d0*d(i,j,k)*dvol(i,j,k)*v3(i,j,k)*v3(i,j,k)
-      end if
-     end do
-    end do
-   end do
-  end if
-
-  write(60,'(24(1PE16.8e2))') time-inifile, totmass*2d0/msun, remmass/msun*2d0, belmass/msun*2d0, totangmom*2d0, totangmoma*2d0, totangmomb*2d0, totenergy*2d0, totenergya*2d0, totenergyb*2d0, ToWt/totenergy, ToW/totenergya, ToWb/totenergyb, totintenet*2d0, totintene*2d0, totinteneb*2d0, totgrvenet*2d0, totgrvene*2d0, totgrveneb*2d0, totkinenet*2d0, totkinene*2d0, totkineneb*2d0, domega_dt
-
+  end do
+  write(60,'(7(1PE16.8e2))') time, remmass/msun, belmass/msun, vel/remmass, velb/belmass
   call flush(60)
-  
+
 return
 end subroutine output
 

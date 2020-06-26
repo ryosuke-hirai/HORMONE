@@ -17,10 +17,11 @@ subroutine meanmolweight
 
 !-----------------------------------------------------------------------------
 
- if(compswitch==0)then ! for uniform mu
+ composition_type: select case (compswitch)
+ case(0) composition_type ! for uniform mu
   return
 
- elseif(compswitch==1)then ! for fixed mu distribution
+ case(1) composition_type ! for fixed mu distribution
   k = ks
   do i = is, ie
    mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )
@@ -45,7 +46,7 @@ subroutine meanmolweight
   imu(is-2:is-1,js,ks) = imu(is,js,ks)
   imu(ie+1:ie+2,js,ks) = imu(ie,js,ks)
 
- elseif(compswitch==2)then ! for composition advection
+ case(2) composition_type ! for composition advection
 !$omp parallel
 !$omp do private(i,j,k)
   do k = ks, ke
@@ -73,7 +74,7 @@ subroutine meanmolweight
    end do
    do j = je+1, je+2
     do i = is, ie
-     imu(i,j,k) = imu(i,je,k)     
+     imu(i,j,k) = imu(i,je,k)
     end do
    end do
   end do
@@ -88,10 +89,10 @@ subroutine meanmolweight
 !$omp end do
 !$omp end parallel
 
- else
+ case default composition_type
   print *, 'Error in compswitch',compswitch
   stop
- end if
+ end select composition_type
 
 return
 end subroutine meanmolweight

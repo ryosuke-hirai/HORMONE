@@ -173,11 +173,11 @@
     do j = gjs,gje
      phiio(i,j) = 0.0d0
      do ll=0,llmax
-      dphiio = -G*Pl(ll,j)*ml(ll)/x1(ie+1)
+      dphiio = -G*Pl(ll,j)*ml(ll)/x1(i)
       if(ll/=0.and.abs(dphiio/phiio(i,j)) < grverr) exit
       phiio(i,j) = phiio(i,j) + dphiio
      end do !ll-loop
-     phiio(i,j) = phiio(i,j) - G*mc(is-1)/x1(ie+1)
+     phiio(i,j) = phiio(i,j) - G*mc(is-1)/x1(i)
      if(ll>=llmax) error1=1
     end do
 
@@ -194,37 +194,28 @@
     end do
    end do
 
-!!$   error1=0
-!!$   do j = js,je
-!!$    gii(i,j) = G*mc(is-1)/xi1s**2.d0
-!!$   end do ! for Neumann boundary
+   if(xi1s>0d0)then
+    error1=0
+    do i = gis-2, gis-1
+     do j = gjs, gje
+      phiii(i,j) = 0.0d0
+      do ll=0,llmax
+       call multipoleinner
+       dphiii = -G*Pl(ll,j)*ml(ll)/x1(is-1)
+       if(ll/=0.and.abs(dphiii/phiii(i,j)) < grverr) exit
+       phiii(i,j) = phiii(i,j) + dphiii
+      end do !ll-loop
+      phiii(i,j) = phiii(i,j) - G*mc(is-1)/x1(is-1)
+      if(ll>=llmax) error1=1
+     end do
 
-   error1=0
-   do i = gis-2, gis-1
-    do j = gjs, gje
-     phiii(i,j) = 0.0d0
-     do ll=0,llmax
-      call multipoleinner
-      dphiii = -G*Pl(ll,j)*ml(ll)/x1(is-1)
-      if(ll/=0.and.abs(dphiii/phiii(i,j)) < grverr) exit
-      phiii(i,j) = phiii(i,j) + dphiii
-     end do !ll-loop
-     phiii(i,j) = phiii(i,j) - G*mc(is-1)/x1(is-1)
-     if(ll>=llmax) error1=1
+     if(error1==1)then
+      write(6,*)"Error from gravbound i: Number of terms in inner multipole &
+           & expansion is not enough. Computation stopped. tn=",tn,"i=",i
+      stop
+     end if
     end do
-
-    if(error1==1)then
-     write(6,*)"Error from gravbound i: Number of terms in inner multipole &
-         & expansion is not enough. Computation stopped. tn=",tn,"i=",i
-     stop
-    end if
-   end do
-
-   do i = gie+1, gie+2
-    do j = gjs, gje
-     grvphi(i,j,ks) = phiio(i,j)
-    end do
-   end do
+   end if
 
 
    if(mc(is-1)==0.d0.and.xi1s/=0.d0)error1=1

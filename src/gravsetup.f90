@@ -72,37 +72,39 @@ if(gravswitch==2.or.gravswitch==3)then
 
    call mic
 
- elseif(ke==1.and.crdnt==2.and.dim==2.and.gravswitch==2)then
+ elseif(ke==1.and.crdnt==2.and.dim==2)then
   
    do l = 1,lmax-gin ! calculating diagonal elements
     i = modlimax(l) +gis-1
     j = (l-modlimax(l))/gin + gjs
-    a1(l) = -( ( xi1(i)**2.d0/dx1(i+1) + xi1(i-1)**2.d0/dx1(i) ) &
+    a1(l) = -( ( xi1(i)**2d0/dx1(i+1) + xi1(i-1)**2d0/dx1(i) ) &
             * sinc(j)*dxi2(j) &
             +( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
-    a2(l) = xi1(i)**2.d0 *sinc(j)*dxi2(j)/dx1(i+1)
+    a2(l) = xi1(i)**2d0 *sinc(j)*dxi2(j)/dx1(i+1)
     a3(l) = sini(j)*dxi1(i)/dx2(j+1)
-    if(mod(l,gin)==0)a2(l)=0.0d0
+    if(i==gis.and.xi1s>0d0)a1(l)=a1(l)+xi1(i-1)**2d0*sinc(j)*dxi2(j)/dx1(i)
+    if(i==gie)a2(l)=0d0
    end do
 
-   do l=lmax-ie+1,lmax-1 ! k+1 line disappears
+   do l=lmax-gin+1,lmax-1 ! j+1 line disappears
     i = modlimax(l) +gis-1
     j = (l-modlimax(l))/gin + gjs
-    a1(l) = -( ( xi1(i)**2.d0/dx1(i+1) + xi1(i-1)**2.d0/dx1(i) ) &
+    a1(l) = -( ( xi1(i)**2d0/dx1(i+1) + xi1(i-1)**2d0/dx1(i) ) &
             * sinc(j)*dxi2(j) &
             +( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
     a2(l) = xi1(i)**2.d0 *sinc(j)*dxi2(j)/dx1(i+1)
-    a3(l) = 0.0d0
-    if(mod(l,gin)==0)a2(l)=0.0d0
+    a3(l) = 0d0
+    if(i==gis.and.xi1s>0d0)a1(l)=a1(l)+xi1(i-1)**2d0*sinc(j)*dxi2(j)/dx1(i)
+    if(i==gie)a2(l)=0d0
    end do
 
     i = modlimax(lmax) +gis-1 ! i+1 line disappears
     j = (lmax-modlimax(lmax))/gin + gjs
-    a1(lmax) = -( ( xi1(i)**2.d0/dx1(i+1) + xi1(i-1)**2.d0/dx1(i) ) &
+    a1(lmax) = -( ( xi1(i)**2d0/dx1(i+1) + xi1(i-1)**2d0/dx1(i) ) &
                * sinc(j)*dxi2(j) &
                +( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
-    a2(lmax) = 0.0d0
-    a3(lmax) = 0.0d0
+    a2(lmax) = 0d0
+    a3(lmax) = 0d0
 
    call mic
 

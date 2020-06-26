@@ -4,44 +4,23 @@
 
 ! Modules
 
-module funcs
- implicit none
- 
- contains
-
-  real*8 function pw(p,a)
-   implicit none
-   integer:: i
-   integer,intent(in):: p
-   real*8,intent(inout):: a
-
-   pw = a
-   do i = 2, p
-    pw = pw * a
-   end do
-  end function pw
- 
-end module funcs
-
-
-
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module settings
 
-  implicit none
+ implicit none
 
 ! boundary conditions
-  integer bc1is, bc1os, bc2is, bc2os, bc3is, bc3os
-  integer bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov
-  logical eq_sym
+ integer bc1is, bc1os, bc2is, bc2os, bc3is, bc3os
+ integer bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov
+ logical eq_sym, dirichlet_on
 ! numerical setups
-  integer rktype, crdnt, tnlim, gravswitch, start, tn_out, outstyle, endstyle
-  integer eostype, spn, compswitch
-  real*8 courant, t_end, dt_out
-  real*8 grverr, cgerr, eoserr
-  integer imesh, jmesh, kmesh
+ integer rktype, crdnt, tnlim, gravswitch, start, tn_out, outstyle, endstyle
+ integer eostype, spn, compswitch
+ real*8 courant, t_end, dt_out
+ real*8 grverr, cgerr, eoserr
+ integer imesh, jmesh, kmesh
 ! switches
-  logical include_extgrv, include_particles
+ logical include_extgrv, include_particles, include_cooling
 
 end module settings
 
@@ -81,7 +60,8 @@ module constants
   real*8,parameter:: msun = 1.989d33, rsun = 6.963d10, &
                      msolar = msun, rsolar = rsun
   real*8,parameter:: kbol = 1.38064852d-16, amu = 1.6605402d-24
-  real*8,parameter:: arad = 7.5646d-15, year = 24d0*36d2*365.25d0
+  real*8,parameter:: arad = 7.5646d-15
+  real*8,parameter:: year = 3600d0*24d0*365.25d0
   real*8:: fac_pgas, fac_egas
 
 end module constants
@@ -109,6 +89,8 @@ module physval
   real*8,allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
   real*8,allocatable,dimension(:,:):: detg2, idetg2, g33
   real*8,allocatable,dimension(:,:,:):: idetg3, dvol
+
+  integer,allocatable,dimension(:,:,:):: shock
 
 end module physval
 
@@ -151,6 +133,7 @@ module gravmod
 !experimental
   real*8 h
   real*8,allocatable,dimension(:,:,:,:):: lag11,lag12,lag21,lag22,lag31,lag32
+  real*8 coremass
 
 end module gravmod
 
@@ -163,70 +146,33 @@ module dirichlet
   implicit none
 
   real*8,allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30
+  real*8,allocatable,dimension(:,:,:,:):: spc0
 
 end module dirichlet
-
-
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-module amr_templates
-
-  implicit none
-
-  type amr_header
-   integer :: parnt, level
-   integer,allocatable,dimension(:):: child, neigh, ldif
-   integer :: ref_deref
-  end type amr_header
-
-  type leaf_contents
-   real*8,allocatable,dimension(:):: x1, xi1, dx1, idx1!dxi1, idxi1
-   real*8,allocatable,dimension(:):: x2, xi2, dx2, idx2!dxi2, idxi2
-   real*8,allocatable,dimension(:):: x3, xi3, dx3, idx3!dxi3, idxi3
-   real*8,allocatable,dimension(:):: detg1, idetg1, g22, sx1, scot, sisin
-   real*8,allocatable,dimension(:,:):: detg2, idetg2, g33
-   real*8,allocatable,dimension(:,:,:):: dvol, idetg3
-   real*8,allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3
-   real*8,allocatable,dimension(:,:,:):: ptot, cf, phi, gphi
-   real*8,allocatable,dimension(:,:,:,:):: u, uorg, flux1, flux2, flux3, src
-   real*8,allocatable,dimension(:,:,:,:):: tflx1, tflx2, tflx3
-   real*8,allocatable,dimension(:,:,:,:):: midu1, midu2, midu3
-  end type leaf_contents
-
-end module amr_templates
-
-
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-module amr_module
-
-  use amr_templates
-  use grid,only: dim
-
-  implicit none
-
-  integer maxamr, cuts, cib, face
-  integer ib, jb, kb, bkn, totbloks, lfn, totleafs, lid, curlvl, lvl
-  integer,allocatable,dimension(:):: regrid
-  type(amr_header),allocatable,dimension(:):: bk, obk
-  type(leaf_contents),allocatable,dimension(:):: lf, olf
-  integer,dimension(8,6)::localneigh
-  real*8,allocatable,dimension(:):: schedule
-  real*8 dt_local
-  logical sync
-
-end module amr_module
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module ejectamod
 
   implicit none
 
-  integer count, ejdatnum, tstartn
-  real*8,allocatable,dimension(:):: t_ej, d_ej, p_ej, e_ej, v_ej
+  integer count, ejdatnum, tstartn, compsize, j_ejmax
+  real*8,allocatable,dimension(:):: t_ej, d_ej, p_ej, e_ej, v_ej, m_ej
+  real*8,allocatable,dimension(:,:):: comp_ej
   real*8,allocatable,dimension(:,:,:):: nsdis, nsdfr, nssin, nscos
   real*8 tstart, pmax, psmass, ejectadistance, sep
   character*40 ejtbinfile
 
 end module ejectamod
+
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+module cooling_mod
+ implicit none
+
+ integer,parameter:: NN = 5
+ real*8:: Yint(0:NN), Tint(0:NN), lint(0:NN), alph(0:NN-1), tcool, lambda, Y
+ real*8,parameter:: Tref = 1d8
+
+end module cooling_mod
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module particle_mod
@@ -241,4 +187,6 @@ module particle_mod
  real*8,allocatable:: ptcx(:,:), cosiptc(:), sincptc(:), coscptc(:)
  
 end module particle_mod
+
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

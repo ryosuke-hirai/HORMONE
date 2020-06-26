@@ -4,7 +4,7 @@
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To set dt
+! PURPOSE: To set dt.
 
  subroutine timestep
 
@@ -18,7 +18,7 @@
 
   real*8,allocatable:: dtdist(:,:,:,:)
   real*8 cfmax
-
+  
 !-------------------------------------------------------------------------
 
   call eigen
@@ -79,29 +79,31 @@
   end do
 
 ! Temporary (for workaround mesh)
-  do i = is, is+2
-   dtdist(i,js:je,ks:ke,2) = sum( dtdist(i,js:je,ks:ke,2) )
-  end do
-  do i = is+3, sphrn
-   do j = js, je,40
-    dtdist(i,j:j+39,ks:ke,2) = sum( dtdist(i,j:j+39,ks:ke,2) )
+  if(sphrn>0.and.crdnt==2)then
+   do i = is, is+2
+    dtdist(i,js:je,ks:ke,2) = sum( dtdist(i,js:je,ks:ke,2) )
    end do
-  end do
-  do i = sphrn+1, sphrn+trnsn1
-   do j = js, je,8
-    dtdist(i,j:j+7,ks:ke,2) = sum( dtdist(i,j:j+7,ks:ke,2) )    
+   do i = is+3, sphrn
+    do j = js, je,40
+     dtdist(i,j:j+39,ks:ke,2) = sum( dtdist(i,j:j+39,ks:ke,2) )
+    end do
    end do
-  end do
-  do i = sphrn+trnsn1+1, sphrn+trnsn1+trnsn2
-   do j = js, je,4
-    dtdist(i,j:j+3,ks:ke,2) = sum( dtdist(i,j:j+3,ks:ke,2) )
+   do i = sphrn+1, sphrn+trnsn1
+    do j = js, je,8
+     dtdist(i,j:j+7,ks:ke,2) = sum( dtdist(i,j:j+7,ks:ke,2) )    
+    end do
    end do
-  end do
-  do i = sphrn+trnsn1+trnsn2+1, sphrn+trnsn1+trnsn2+trnsn3
-   do j = js, je,2
-    dtdist(i,j:j+1,ks:ke,2) = sum( dtdist(i,j:j+1,ks:ke,2) )
+   do i = sphrn+trnsn1+1, sphrn+trnsn1+trnsn2
+    do j = js, je,4
+     dtdist(i,j:j+3,ks:ke,2) = sum( dtdist(i,j:j+3,ks:ke,2) )
+    end do
    end do
-  end do
+   do i = sphrn+trnsn1+trnsn2+1, sphrn+trnsn1+trnsn2+trnsn3
+    do j = js, je,2
+     dtdist(i,j:j+1,ks:ke,2) = sum( dtdist(i,j:j+1,ks:ke,2) )
+    end do
+   end do
+  end if
 
   dt = minval( dtdist(is:ie,js:je,ks:ke,1:3) )
 

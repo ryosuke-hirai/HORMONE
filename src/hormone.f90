@@ -24,10 +24,9 @@ program hormone
   use constants
   use pressure_mod
   use particle_mod
-  use merger_mod
-  use funcs
 
   use gravmod
+  use ejectamod,only:nssin,nscos
 
   implicit none
 
@@ -36,7 +35,7 @@ program hormone
                      is, ie, js, je, ks, ke, imesh, jmesh, kmesh, &
                      sphrn, trnsn1, trnsn2, trnsn3
   namelist /timecon/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out
-  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
+  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, include_cooling
   namelist /simucon/ crdnt,courant, rktype, start
   namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                      bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
@@ -50,9 +49,6 @@ program hormone
 ! Initial setups -------------------------------------------------------------
 
   time = 0.d0; tn = 0
-  heatdone = .true.
-  inifile = 7d5
-  inifile2= 7d5
 
   ! Reading parameters
   open(unit=1,file='parameters',status='old')
@@ -73,29 +69,33 @@ program hormone
   call gravsetup
 
   call initialcondition
+  if(dirichlet_on)call dirichletbound
   call boundarycondition
   call meanmolweight
   call conserve
   call pressure
-  
+
 ! Initial output
-  if(bc3os==9)call dirichletbound ! for ejecta
   if(include_particles.and.tn==0)call particles_setup
-  if(include_particles.and.time==inifile)call particles_setup
+!  if(include_particles.and.time==inifile)call particles_setup
   call boundarycondition
   call timestep
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
 
-  call merger_setup
+  if(tn==0)then
+   call gravity
+   call output
+  end if
 
 ! Start integration ----------------------------------------------------------
-  if(tnlim/=0)then
+  if(tnlim/=0)then ! tnlim=0 to just output initial condition
    do while(time < t_end.and.tn<=tnlim)
 
     call timestep
 
     if(tn>0)call gravity
-    if(bc3os==9)call dirichletbound ! for ejecta
+    if(dirichlet_on)call dirichletbound
+    call shockfind
 
     do rungen = 1, rktype
      call boundarycondition
@@ -104,10 +104,8 @@ program hormone
      call rungekutta
     end do
 
-
+    if(include_cooling)  call cooling
     if(include_particles)call particles
-
-    call merger
 
     time = time + dt ; tn = tn + 1
 ! Output sequence ---------------------- !
@@ -128,11 +126,14 @@ program hormone
     end if                               !
 ! -------------------------------------- !
 
-    if(endstyle==1)then
-     if(time>=t_end)exit
-    elseif(endstyle==2)then
-     if(tn>=tnlim)exit
-    end if
+! End sequence -------------!
+    select case (endstyle)  ! 
+    case(1) ! time up       ! 
+     if(time>=t_end)exit    ! 
+    case(2) ! timestep up   !
+     if(tn>=tnlim)exit      ! 
+    end select              ! 
+! --------------------------!
 
    end do
   end if

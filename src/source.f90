@@ -13,8 +13,6 @@ subroutine source
  use physval
  use constants
  use gravmod
- use minmod_mod
- use merger_mod,only:domega_dt,de_dt,sep,spin_coeffr,spin_coefft
  
  implicit none
 
@@ -29,23 +27,32 @@ subroutine source
 
   elseif(gravswitch==1.and.crdnt==2.and.dim<=2)then ! point-source
    k = ks
-   do i = is, ie
-    mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )
-   end do
+   if(eq_sym)then
+    do i = is, ie
+     mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )*2d0
+    end do
+   else
+    do i = is, ie
+     mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )
+    end do
+   end if
+
 
 !$omp parallel do private(i,ul)
    do i = is, ie
-    ul = 1d0/(xi1(i)*(xi1(i)+xi1(i-1))+xi1(i-1)*xi1(i-1))
+!    ul = 1d0/(xi1(i)*(xi1(i)+xi1(i-1))+xi1(i-1)*xi1(i-1))
 !    grv1(i,js,k) = - (mc(i-1)*dxi1(i)+0.25d0*(mc(i)-mc(i-1))*&
 !                   (xi1(i)-3d0*xi1(i-1)*xi1(i-1)*xi1(i-1)*ul))&
 !                  *3d0*ul * idxi1(i)
 
 !    grv1(i,js,k) = -(mc(i-1)*dxi1(i) + pi/3d0*d(i,js,k)*(3d0*xi1(i-1)**4d0+xi1(i)**4d0-4d0*xi1(i-1)**3d0*xi1(i)))*ul*idxi1(i)*3d0*d(i,js,k)*G
 !    grv1(i,js,k) = -(mc(i-1)+d(i,js,k)*4d0/3d0*pi*(x1(i)**3d0-xi1(i-1)**3d0))/(x1(i)*x1(i))*d(i,js,k)*G
-    grv1(i,js,k) = -G*d(i,js,k)*mc(i)/x1(i)**2d0
+    grv1(i,js:je,k) = -G*d(i,js:je,k)*mc(i)/x1(i)**2d0
 
    end do
 !$omp end parallel do
+   grv2 = 0d0 ; grv3 = 0d0
+   grv1(is,js:je,k) = 0d0
 
 !$omp workshare
 !  grv1(is:ie,js:je,k) = spread(grv1(is:ie,js,k),2,je) *G* d(is:ie,js:je,k)
@@ -53,7 +60,8 @@ subroutine source
 !$omp end workshare
 
   elseif(gravswitch==2.or.gravswitch==3)then
-!$omp parallel do private (i,j,k)
+!$omp parallel
+!$omp do private (i,j,k)
    do k = ks, ke
     do j = js, je
      do i = is, ie
@@ -76,14 +84,18 @@ subroutine source
      end do
     end do
    end do
-!$omp end parallel do
+!$omp end do
+!$omp end parallel
    if(eq_sym.and.crdnt==1)grv3(is:ie,js:je,ks) = 0d0
-   if(eq_sym.and.crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
+  ! if(crdnt==2)grv2(is:ie,js,ks:ke) = 0d0
+  ! if(crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
 !   if(crdnt==1.or.crdnt==2)grv1(is,js,ks:ke) = 0d0
 
    if(include_extgrv)call externalfield
 
    if(ie==1)grv1 = 0d0; if(je==1)grv2 = 0d0; if(ke==1)grv3 = 0d0
+   if(crdnt==2)grv2(is:ie,js,ks:ke) = 0d0
+   if(crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
   else
    print *,"Error from gravswitch (source.f90)"
    stop
@@ -124,15 +136,6 @@ subroutine source
      src(i,j,k,8) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k)*sx1(i) &
                   + grv3(i,j,k)*v3(i,j,k)
 
-! injection
-!     if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0.and.imu(i,j,k)*0.7d0>1d0)then
-!      src(i,j,k,8) = src(i,j,k,8) + de_dt*d(i,j,k)
-!     end if
-     if(-grvphi(i,j,k)>v2(i,j,k)*v2(i,j,k).and.x1(i)*x1(i)+x3(k)*x3(k)<0.25d0*sep*sep)then
-      src(i,j,k,3) = src(i,j,k,3) + domega_dt *spin_coeffr(i)*d(i,j,k)
-      src(i,j,k,8) = src(i,j,k,8) + v2(i,j,k)*domega_dt*spin_coeffr(i)*d(i,j,k)
-     end if
-
     end do
    end do
   end do
@@ -140,6 +143,8 @@ subroutine source
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  elseif(crdnt==2)then
+!$omp parallel
+!$omp do private (i,j,k)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -166,15 +171,11 @@ subroutine source
      src(i,j,k,8) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k)*sx1(i) &
                   + grv3(i,j,k)*v3(i,j,k) * sx1(i)*sisin(j)
 
-     if(-grvphi(i,j,k)>v3(i,j,k)*v3(i,j,k).and.x1(i)<60d0*rsun.and.x1(i)>sep*0.25d0)then
-      src(i,j,k,4) = src(i,j,k,4) + domega_dt*spin_coeffr(i)*spin_coefft(j)*d(i,j,k)
-      src(i,j,k,8) = src(i,j,k,8) + domega_dt*spin_coeffr(i)*spin_coefft(j)*d(i,j,k)*v3(i,j,k)
-     end if
-
-
     end do
    end do
   end do
+!$omp end do
+!$omp end parallel
  else
   print *,'Error from source.f90'
   stop

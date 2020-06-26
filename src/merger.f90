@@ -27,7 +27,6 @@ contains
 
  subroutine merger_setup
 
-  use funcs
   use grid
   use physval
   use gravmod
@@ -52,7 +51,7 @@ contains
    do j = js, je
     do i = is, ie
      if(x1(i)<0.5d0*sep)then
-      Iinertia = Iinertia + d(i,j,k)*(0.4d0*pi*(pw(5,xi1(i))-pw(5,xi1(i-1)))*((pw(3,cosi(j))-pw(3,cosi(j-1)))/3d0-cosi(j)+cosi(j-1)))*2d0
+      Iinertia = Iinertia + d(i,j,k)*(0.4d0*pi*(xi1(i)**5-xi1(i-1)**5)*((cosi(j)**3-cosi(j-1)**3)/3d0-cosi(j)+cosi(j-1)))*2d0
       Jinitial = Jinitial + d(i,j,k)*v3(i,j,k)*x1(i)*sinc(j)*dvol(i,j,k)*2d0
       Einitial = Einitial + (0.5d0*grvphi(i,j,k)*d(i,j,k)+e(i,j,k))*dvol(i,j,k)*2d0
       Mtot = Mtot + d(i,j,k)*dvol(i,j,k)*2d0
@@ -101,7 +100,6 @@ contains
 
 subroutine merger
 
- use funcs
  use grid
  use physval
  use gravmod

@@ -13,7 +13,6 @@ subroutine gravity
   use constants
   use physval
   use gravmod
-  use merger_mod,only:inifile
 
   implicit none
 
@@ -29,6 +28,7 @@ gin = gie - gis + 1
 if(gravswitch==0.or.gravswitch==1)then
  grvphi = 0.d0
 elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+!elseif(gravswitch==2)then
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
  call gravbound
@@ -37,7 +37,7 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
  if(je==1.and.crdnt==1.and.dim==2)then
 
 ! calculating b for Ax=b
-  mind = minval(d)
+  mind = minval(d(is:ie,js:je,ks:ke))
   do l = 1, lmax
    i = modlimax(l) +gis-1
    k = (l-modlimax(l))/gin + gks
@@ -55,19 +55,20 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
  elseif(ke==1.and.crdnt==2.and.dim==2)then
 
 ! calculating b for Ax=b
-  mind = minval(d)
+  mind = minval(d(is:ie,js:je,ks:ke))
   do l=1,lmax
    i = modlimax(l) +gis-1
    j = (l-modlimax(l))/gin + gjs
-   x(l) = grvphi(i,j,ks)
-   gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*5d-1)
+   k = ks
+   x(l) = grvphi(i,j,k)
+   gsrc(l) = 4d0*pi*G*mind*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
-    gsrc(l) = 4d0*pi*G*d(i,j,ks)*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
+    gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
    end if;end if;end if;end if
    if(i==gie) gsrc(l)= gsrc(l) - xi1(i)*xi1(i)*sinc(j)*dxi2(j)*idx1(i+1)&
         *phiio(i+1,j)
-   if(i==gis) gsrc(l)= gsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
-        *phiii(i-1,j)
+!   if(i==gis) gsrc(l)= gsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
+!        *phiii(i-1,j)
   end do
 
  end if
@@ -86,19 +87,6 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
 ! start iteration --------------------------------------------------------
 
  do n = 1, lmax
-
-!!$  if(eq_sym.and.dim==2.and.crdnt==1)then ! for Neumann boundary
-!!$   do l=1,lmax
-!!$    i = modlimax(l)
-!!$    k = (l-modlimax(l))/ie + 1
-!!$    if(k==ks)then
-!!$!     gsrcold(j) = gsrc(l)
-!!$     gsrc(l) = 4.d0*pi*G*d(i,js,k)*dxi1(i)*((dx3(k)+dx3(k+1))*5.d-1) &
-!!$          - x1(i)*dxi1(i)*idx3(k)*x(l)
-!!$     !    r(l) = r(l) - gsrcold(j) + gsrc(l)
-!!$    end if
-!!$   end do
-!!$  end if
 
    call Avec(pp)
 
@@ -196,14 +184,12 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
                    ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
 
+  grvphiold = grvphi
+
  end if
 endif
 if(gravswitch==3.and.tn/=0)then
 ! Hyperbolic Self-Gravity $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
- !if(tn==0)gphidt = 1d0
- !fric = 0d0
-! if(tn==0)fric = maxval(d(is:ie,js,ks:ke))*0.5d0
-!!!fric = maxval(d(is:ie,js,ks:ke))*0.5d0*4d0*pi*G;gphidt = 0d0;grvtime=0d0
 
  if(crdnt==1.and.je==1)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates
@@ -310,11 +296,9 @@ if(gravswitch==3.and.tn/=0)then
 
   deallocate(newphi,intphi)
 
- elseif(crdnt==2.and.ke==1.and.eq_sym)then
+ elseif(crdnt==2.and.ke==1)then
 ! Axisymmetric spherical coordinates
   allocate( newphi(gis:gie,gjs:gje,gks:gke) )
-
-!  if(time-inifile>5d4)HGfac=3d0
 
   cgrav2 = HGfac*max(maxval(cf(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
                      maxval(cf(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))) )
@@ -328,19 +312,19 @@ if(gravswitch==3.and.tn/=0)then
 !  do n = 1, int(HGfac)
   do while (grvtime<time+dt)
 !$omp parallel
+   k = gks
 !$omp workshare
-   grvphi(gis-1,gjs:gje,gks) = grvphi(gis,gjs:gje,gks)
-   grvphi(gis:gie,gjs-1,gks) = grvphi(gis:gie,gjs,gks)
-   grvphi(gis:gie,gje+1,gks) = grvphi(gis:gie,gje,gks)
-   grvphi(gis:gie,gje+1,gks) = grvphi(gis:gie,gje,gks)
+   grvphi(gis-1,gjs:gje,k) = grvphi(gis,gjs:gje,k)
+   grvphi(gis:gie,gjs-1,k) = grvphi(gis:gie,gjs,k)
+   grvphi(gis:gie,gje+1,k) = grvphi(gis:gie,gje,k)
 !$omp end workshare
 
 !$omp do private(j)
    do j = gjs, gje
-    grvphi(gie+1,j,gks) = x1(ie)/x1(ie+1) * grvphi(gie,j,gks)
+    grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
    end do
 !$omp end do
-   k = gks
+
 !$omp do private(i,j)
    do j = gjs, gje
     do i = gis, gie
@@ -361,7 +345,7 @@ if(gravswitch==3.and.tn/=0)then
 !$omp end workshare
 !$omp do private(j)
    do j = gjs, gje
-    grvphi(gie+1,j,gks) = x1(ie)/x1(ie+1) * grvphi(gie,j,gks)
+    grvphi(gie+1,j,gks) = x1(gie)/x1(gie+1) * grvphi(gie,j,gks)
    end do
 !$omp end do
 !$omp end parallel
@@ -405,7 +389,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-    aw(1) = a1(1)*w(1) + a2(1)*w(2) + a3(1)*w(1+ie)
+    aw(1) = a1(1)*w(1) + a2(1)*w(2) + a3(1)*w(1+gin)
 
    do l = 2,gin
     aw(l) = a2(l-1)*w(l-1) + a1(l)*w(l) + a2(l)*w(l+1) + a3(l)*w(l+gin)

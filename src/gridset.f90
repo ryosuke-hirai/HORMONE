@@ -12,7 +12,6 @@ subroutine gridset
   use grid
   use constants,only:pi
   use gravmod
-  use merger_mod,only:inifile2
 
   implicit none
 
@@ -22,7 +21,7 @@ subroutine gridset
   namelist /geoscon/ x1min, x2min, x3min
 
 !-------------------------------------------------------------------------
-gie=1200!temp
+
  if(gravswitch/=0)then
   deallocate(x1, xi1, dx1, dxi1, idx1, idxi1, &
              x2, xi2, dx2, dxi2, idx2, idxi2, &
@@ -36,10 +35,11 @@ gie=1200!temp
    idx3(gks-2:gke+2), idxi3(gks-2:gke+2) &
   )
  end if
-gie=900!temp
+
  if(start==0)then
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  if(crdnt==0)then
+  coordinate_system: select case (crdnt)
+  case(0) coordinate_system
 
    ! set x direction
    if(imesh==0)then ! uniform mesh
@@ -159,7 +159,7 @@ gie=900!temp
    end if
 
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  else if(crdnt==1)then
+  case(1) coordinate_system
    xi2s = 0.d0 ; xi2e = 2.d0*pi
    ! set r direction
    if(imesh==0)then ! uniform mesh
@@ -190,12 +190,12 @@ gie=900!temp
 
 
 ! temp: for volumetric centre
-!!$   do i = is-1, ie+2
-!!$    x1(i)  = sqrt( (xi1(i-1)*xi1(i-1)+xi1(i)*xi1(i)) *5d-1 )
-!!$    if(i==is-1)x1(i)=-x1(i)
-!!$    dx1(i) = x1(i) - x1(i-1)
-!!$    idx1(i) = 1d0 / dx1(i)
-!!$   end do
+   do i = is-1, ie+2
+    x1(i)  = sqrt( (xi1(i-1)*xi1(i-1)+xi1(i)*xi1(i)) *5d-1 )
+    if(i==is-1)x1(i)=-x1(i)
+    dx1(i) = x1(i) - x1(i-1)
+    idx1(i) = 1d0 / dx1(i)
+   end do
 
    if(gravswitch/=0)then
     do i = ie+1, gie+2
@@ -291,7 +291,7 @@ gie=900!temp
 
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  else if(crdnt==2)then
+  case(2) coordinate_system
    xi2s = 0.d0 ; xi2e = pi ; if(je==1.or.eq_sym) xi2e = pi * 0.5d0
    xi3s = 0.d0 ; xi3e = 2.d0*pi
    ! set r direction
@@ -323,13 +323,26 @@ gie=900!temp
 
 !temp
 ! for volumetric centre
-   do i = is-1, is+2
+   do i = is-1, ie+2
     x1(i) = 0.75d0*(xi1(i)+xi1(i-1))*(xi1(i)*xi1(i)+xi1(i-1)*xi1(i-1)) &
-                  /(xi1(i)*xi1(i)+xi1(i)*xi1(i-1)*xi1(i-1)*xi1(i-1))
+                  /(xi1(i)*xi1(i)+xi1(i)*xi1(i-1)+xi1(i-1)*xi1(i-1))
     if(i==is)x1(i-1)=-x1(i)
     dx1(i) = x1(i) - x1(i-1)
     idx1(i) = 1d0 / dx1(i)
    end do
+
+   if(gravswitch/=0)then
+    do i = ie+1, gie+2
+     dxi1(i) = dxi1(i-1) * dxi1(ie)/dxi1(ie-1)
+     idxi1(i) = 1d0/dxi1(i)
+     xi1(i) = xi1(i-1) + dxi1(i)
+     x1(i) = 0.75d0*(xi1(i)+xi1(i-1))*(xi1(i)*xi1(i)+xi1(i-1)*xi1(i-1)) &
+                   /(xi1(i)*xi1(i)+xi1(i)*xi1(i-1)+xi1(i-1)*xi1(i-1))
+     dx1(i) = x1(i) - x1(i-1)
+     idx1(i) = 1d0 / dx1(i)
+    end do
+    dx1(gis-2) = dxi1(gis-2) ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
+   end if
 
 !!$   if(gravswitch/=0)then
 !!$    dx1 = dxi1 ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
@@ -398,32 +411,13 @@ gie=900!temp
    end do
    xi3e = xi3(ke)
 
-!hirai
-!!$    open(55,file='gridhirai.bin',form='unformatted')
-!!$    do i = is-1,ie
-!!$     read(55)dummy,xi1(i),dxi1(i+1)
-!!$    end do
-!!$    close(55)
-!!$    dxi1(is-1) = dxi1(is) ; dxi1(is-2) = dxi1(is+1)
-!!$    xi1(is-2) = xi1(is-1) - dxi1(is-1)
-!!$    dxi1(ie+1) = dxi1(ie) ; dxi1(ie+2) = dxi1(ie)
-!!$    dx1(is-2) = dxi1(is-2) ; x1(is-2) = xi1(is-2) - 0.5d0*dxi1(is-2)
-!!$    do i = is-1,ie+2
-!!$     idxi1(i)  = 1.0d0/dxi1(i)
-!!$     x1(i)     = xi1(i) - 0.5d0*dxi1(i)
-!!$     dx1(i)    = x1(i) - x1(i-1)
-!!$     idx1(i)   = 1.0d0/dx1(i)
-!!$    end do
-
-  else
+  case default coordinate_system
    print *,"Error from crdnt",crdnt
-  end if
+  end select coordinate_system
 
- elseif(start>int(inifile2))then
+ else
 
-  gie=1200
-
-  open(unit=41,file='data/gridfile2.bin',status='old',form='unformatted')
+  open(unit=41,file='data/gridfile.bin',status='old',form='unformatted')
   read(41)x1(gis-2:gie+2),xi1(gis-2:gie+2),dxi1(gis-2:gie+2),dx1(gis-2:gie+2), &
           x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dxi2(gjs-2:gje+2),dx2(gjs-2:gje+2), &
           x3(gks-2:gke+2),xi3(gks-2:gke+2),dxi3(gks-2:gke+2),dx3(gks-2:gke+2)
@@ -436,20 +430,8 @@ gie=900!temp
   idxi3(gks-1:gke+2)=1d0/dxi3(gks-1:gke+2)
   idx3 (gks-1:gke+2)=1d0/dx3 (gks-1:gke+2)
 
- elseif(start>0)then
-  gie=900;ie=gie
-  open(unit=41,file='data/gridfile_old.bin',status='old',form='unformatted')
-  read(41)x1(gis-2:gie+2),xi1(gis-2:gie+2),dxi1(gis-2:gie+2),dx1(gis-2:gie+2), &
-          x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dxi2(gjs-2:gje+2),dx2(gjs-2:gje+2), &
-          x3(gks-2:gke+2),xi3(gks-2:gke+2),dxi3(gks-2:gke+2),dx3(gks-2:gke+2)
-  close(41)
-
-  idxi1(gis-1:gie+2)=1d0/dxi1(gis-1:gie+2)
-  idx1 (gis-1:gie+2)=1d0/dx1 (gis-1:gie+2)
-  idxi2(gjs-1:gje+2)=1d0/dxi2(gjs-1:gje+2)
-  idx2 (gjs-1:gje+2)=1d0/dx2 (gjs-1:gje+2)
-  idxi3(gks-1:gke+2)=1d0/dxi3(gks-1:gke+2)
-  idx3 (gks-1:gke+2)=1d0/dx3 (gks-1:gke+2)
+  xi1e = xi1(ie)
+  xi1s = xi1(is-1)
 
  end if
 
@@ -538,7 +520,54 @@ subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
 
 !-----------------------------------------------------------------------------
 
+ integer i
+ real*8 xrng, irng, xr, xrnew, xrmax, err, maxerr, fx, dfx, xmin
+ real*8 radstar
+
+!-----------------------------------------------------------------------------
+
+ xrmax = 1.015d0
+ maxerr = 1d-10
+ radstar = 5.6d13
  
+ xr = 1.01d0
+ xrng = radstar - xi1s ; irng = dble(400 - is + 1)
+ xmin = 9d10
+ 
+ if(xrng/irng<xmin)then
+  print *,"Error from geometrical_series ;"
+  print *,"xmin should be smaller or uniform mesh should be chosen",xmin
+  stop
+ end if
+
+ do i = 1, 10000000
+  fx = (xr-1d0)*xrng - xmin * (xr**irng-1d0)
+  dfx = xrng - irng * xmin * xr**(irng-1d0)
+
+  xrnew = xr - fx/dfx
+
+  if(abs((xrnew-xr)/xr)<maxerr)then
+   xr = xrnew ; exit
+  end if
+  if(xrnew<1d0)xrnew = 2d0
+
+  xr = xrnew
+ end do
+
+ if(xr>xrmax)then
+  print *,"xmin too small", xmin, xr
+  stop
+ end if
+
+ dxi1(is) = xmin
+ do i = is+1, 400
+  dxi1(i) = dxi1(i-1) * xr
+ end do
+ dxi1(is-1) = dxi1(is) ; dxi1(is-2) = dxi1(is+1)
+ dxi1(401:ie+2) = (xi1e-radstar)/dble(ie-400)
+
+ if(xr-1d0<maxerr) dxi1 = (xi1e-xi1s) / irng
+
 
 return
 end subroutine other_imesh
@@ -567,13 +596,33 @@ subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
 
 ! for equal spacing in cos(theta)
  allocate( xi2(js-2:je+2) )
- dcos = (cos(xi2e)-cos(xi2s))/dble(je-js+1)
+! dcos = (cos(xi2e)-cos(xi2s))/dble((je-js+1))
+ dcos = (cos(xi2e)-cos(xi2s))/dble(80)
 
  xi2(js-1) = 1d0
- do j = js, je
+ do j = js, 40
+  xi2(j) = xi2(j-1) + dcos*0.125d0
+ end do
+ do j = 41, 60
+  xi2(j) = xi2(j-1) + dcos*0.25d0
+ end do
+ do j = 61, 80
+  xi2(j) = xi2(j-1) + dcos*0.5d0
+ end do
+ do j = 81, 120
   xi2(j) = xi2(j-1) + dcos
  end do
- xi2(je) = 0d0
+ do j = 121, 140
+  xi2(j) = xi2(j-1) + dcos*0.5d0
+ end do
+ do j = 141, 160
+  xi2(j) = xi2(j-1) + dcos*0.25d0
+ end do
+ do j = 161, 200
+  xi2(j) = xi2(j-1) + dcos*0.125d0
+ end do
+ xi2(je) = -1d0
+
  do j = js-1, je
   xi2(j) = acos(xi2(j))
  end do
@@ -584,6 +633,8 @@ subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
  dxi2(js-2) = dxi2(js+1)
  dxi2(je+1) = dxi2(je)
  dxi2(je+2) = dxi2(je-1)
+
+
 
 return
 end subroutine other_jmesh
