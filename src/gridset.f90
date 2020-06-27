@@ -41,17 +41,18 @@ subroutine gridset
   coordinate_system: select case (crdnt)
   case(0) coordinate_system
 
-   ! set x direction
-   if(imesh==0)then ! uniform mesh
+! set x direction
+   mesh_car1: select case (imesh)
+   case(0) mesh_car1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie-is+1)
-   elseif(imesh==1)then ! geometrical series
+   case(1) mesh_car1 ! geometrical series
     open(unit=1,file='parameters',status='old')
     read(1,NML=geoscon)
     close(1)
     call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
-   elseif(imesh==2)then ! user specified mesh
+   case(2) mesh_car1 ! user specified mesh
     call other_imesh(dxi1,is,ie,xi1s,xi1e)
-   end if
+   end select mesh_car1
 
    do i = is-1,ie+2
     dx1(i)  = 0.5d0 * ( dxi1(i-1) + dxi1(i) )
@@ -68,6 +69,7 @@ subroutine gridset
     xi1(i) = xi1(i-1) + dxi1(i)
    end do
 
+! extend grid for gravitational potential
    if(gravswitch/=0)then
     dx1 = dxi1 ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
     do i = is-1, gis-2, -1
@@ -80,17 +82,18 @@ subroutine gridset
     end do
    end if
 
-   ! set y direction
-   if(jmesh==0)then ! uniform mesh
+! set y direction
+   mesh_car2: select case (jmesh)
+   case(0) mesh_car2 ! uniform mesh
     dxi2 = (xi2e-xi2s) / dble(je-js+1)
-   elseif(jmesh==1)then ! geometrical series
+   case(1) mesh_car2 ! geometrical series
     open(unit=1,file='parameters',status='old')
     read(1,NML=geoscon)
     close(1)
     call geometrical_series(dxi2,x2min,js,je,xi2s,xi2e)
-   elseif(jmesh==2)then ! user specified mesh
+   case(2) mesh_car2 ! user specified mesh
     call other_jmesh(dxi2,js,je,xi2s,xi2e)
-   end if
+   end select mesh_car2
 
    do j = js-1,je+2
     dx2(j)  = 0.5d0 * ( dxi2(j-1) + dxi2(j) )
@@ -107,6 +110,7 @@ subroutine gridset
     xi2(j) = xi2(j-1) + dxi2(j)
    end do
 
+! extend grid for gravitational potential
    if(gravswitch/=0)then
     dx2 = dxi2 ; idx2 = 1d0 / dx2 ; idxi2 = 1d0 / dxi2
     do j = js-1, gjs-2, -1
@@ -119,17 +123,18 @@ subroutine gridset
     end do
    end if
 
-   ! set z direction
-   if(kmesh==0)then ! uniform mesh
+! set z direction
+   mesh_car3: select case (kmesh)
+   case(0) mesh_car3 ! uniform mesh
     dxi3 = (xi3e-xi3s) / dble(ke-ks+1)
-   elseif(kmesh==1)then ! geometrical series
+   case(1) mesh_car3 ! geometrical series
     open(unit=1,file='parameters',status='old')
     read(1,NML=geoscon)
     close(1)
     call geometrical_series(dxi3,x3min,ks,ke,xi3s,xi3e)
-   elseif(kmesh==3)then ! user specified mesh
+   case(2) mesh_car3 ! user specified mesh
     call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
-   end if
+   end select mesh_car3
 
    do k = ks-1,ke+2
     dx3(k)  = 0.5d0 * ( dxi3(k-1) + dxi3(k) )
@@ -146,6 +151,7 @@ subroutine gridset
     xi3(k) = xi3(k-1) + dxi3(k)
    end do
 
+! extend grid for gravitational potential
    if(gravswitch/=0)then
     dx3 = dxi3 ; idx3 = 1d0 / dx3 ; idxi3 = 1d0 / dxi3
     do k = ks-1, gks-2, -1
@@ -161,17 +167,18 @@ subroutine gridset
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   case(1) coordinate_system
    xi2s = 0.d0 ; xi2e = 2.d0*pi
-   ! set r direction
-   if(imesh==0)then ! uniform mesh
+! set r direction
+   mesh_cyl1: select case (imesh)
+   case(0) mesh_cyl1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie-is+1)
-   elseif(imesh==1)then ! geometrical series
+   case(1) mesh_cyl1 ! geometrical series
     open(unit=1,file='parameters',status='old')
     read(1,NML=geoscon)
     close(1)
     call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
-   elseif(imesh==2)then ! user specified mesh
+   case(2) mesh_cyl1 ! user specified mesh
     call other_imesh(dxi1,is,ie,xi1s,xi1e)
-   end if
+   end select mesh_cyl1
 
    do i = is-1,ie+2
     dx1(i)  = 0.5d0 * ( dxi1(i-1) + dxi1(i) )
@@ -189,7 +196,7 @@ subroutine gridset
    end do
 
 
-! temp: for volumetric centre
+! for volumetric centre
    do i = is-1, ie+2
     x1(i)  = sqrt( (xi1(i-1)*xi1(i-1)+xi1(i)*xi1(i)) *5d-1 )
     if(i==is-1)x1(i)=-x1(i)
@@ -197,6 +204,7 @@ subroutine gridset
     idx1(i) = 1d0 / dx1(i)
    end do
 
+! extend grid for gravitational potential
    if(gravswitch/=0)then
     do i = ie+1, gie+2
      dxi1(i) = dxi1(i-1) * dxi1(ie)/dxi1(ie-1)
@@ -208,10 +216,14 @@ subroutine gridset
     dx1(gis-2) = dxi1(gis-2) ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
    end if
 
-   ! set theta direction
-   if    (je==1)then;jetmp=4
-   elseif(je>=4)then;jetmp=je
-   else ;print *,"Error from je",je;endif
+! set theta direction
+   if    (je==1)then
+    jetmp=4
+   elseif(je>=4)then
+    jetmp=je
+   else
+    print *,"Error from je",je
+   endif
    do j = js-1,je+2
     dxi2(j) = 2.d0*pi / dble(jetmp)
     dx2(j)  = 0.5d0 * ( dxi2(j-1) + dxi2(j) )
@@ -229,17 +241,18 @@ subroutine gridset
    end do
    xi2e = xi2(je)
 
-   ! set z direction
-   if(kmesh==0)then ! uniform mesh
+! set z direction
+   mesh_cyl3: select case (kmesh)
+   case(0) mesh_cyl3 ! uniform mesh
     dxi3 = (xi3e-xi3s) / dble(ke-ks+1)
-   elseif(kmesh==1)then ! geometrical series
+   case(1) mesh_cyl3 ! geometrical series
     open(unit=1,file='parameters',status='old')
     read(1,NML=geoscon)
     close(1)
     call geometrical_series(dxi3,x3min,ks,ke,xi3s,xi3e)
-   elseif(kmesh==2)then ! user specified mesh
+   case(2) mesh_cyl3 ! user specified mesh
     call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
-   end if
+   end select mesh_cyl3
 
    do k = ks-1,ke+2
     dx3(k)  = 0.5d0 * ( dxi3(k-1) + dxi3(k) )
@@ -256,6 +269,7 @@ subroutine gridset
     xi3(k) = xi3(k-1) + dxi3(k)
    end do
 
+! extend grid for gravitational potential
    if(gravswitch/=0)then
 !    dx3 = dxi3 ; idx3 = 1d0 / dx3 ; idxi3 = 1d0 / dxi3
     do k = ks-1, gks-2, -1
@@ -294,17 +308,18 @@ subroutine gridset
   case(2) coordinate_system
    xi2s = 0.d0 ; xi2e = pi ; if(je==1.or.eq_sym) xi2e = pi * 0.5d0
    xi3s = 0.d0 ; xi3e = 2.d0*pi
-   ! set r direction
-   if(imesh==0)then ! uniform mesh
+! set r direction
+   mesh_sph1: select case (imesh)
+   case(0) mesh_sph1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie-is+1)
-   elseif(imesh==1)then ! geometrical series
+   case(1) mesh_sph1 ! geometrical series
     open(unit=1,file='parameters',status='old')
     read(1,NML=geoscon)
     close(1)
     call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
-   elseif(imesh==2)then ! user specified mesh
+   case(2) mesh_sph1 ! user specified mesh
     call other_imesh(dxi1,is,ie,xi1s,xi1e)
-   end if
+   end select mesh_sph1
 
    do i = is-1,ie+2
     dx1(i)  = 0.5d0 * ( dxi1(i-1) + dxi1(i) )
@@ -321,7 +336,6 @@ subroutine gridset
     xi1(i) = xi1(i-1) + dxi1(i)
    end do
 
-!temp
 ! for volumetric centre
    do i = is-1, ie+2
     x1(i) = 0.75d0*(xi1(i)+xi1(i-1))*(xi1(i)*xi1(i)+xi1(i-1)*xi1(i-1)) &
@@ -331,6 +345,7 @@ subroutine gridset
     idx1(i) = 1d0 / dx1(i)
    end do
 
+! extend grid for gravitational potential
    if(gravswitch/=0)then
     do i = ie+1, gie+2
      dxi1(i) = dxi1(i-1) * dxi1(ie)/dxi1(ie-1)
@@ -354,14 +369,18 @@ subroutine gridset
 !!$    end do
 !!$   end if
 
-   ! set theta direction
-   if(jmesh==0)then
-    if    (je==1)then;jetmp=1
-    elseif(je>=2)then;jetmp=je;endif
+! set theta direction
+   mesh_sph2: select case (jmesh)
+   case(0) mesh_sph2 ! uniform theta
+    if    (je==1)then
+     jetmp=1
+    elseif(je>=2)then
+     jetmp=je
+    endif
     dxi2(js-2:je+2) = xi2e / dble(jetmp)
-   elseif(jmesh==2)then
+   case(2) mesh_sph2 ! user specified mesh
     call other_jmesh(dxi2,js,je,xi2s,xi2e)
-   end if
+   end select mesh_sph2
 
    do j = js-1,je+2
     dx2(j)  = 0.5d0 * ( dxi2(j-1) + dxi2(j) )
@@ -379,7 +398,6 @@ subroutine gridset
    end do
    xi2e = xi2(je)
 
-!temp
 ! for volumetric centre
    do j = js-1, je+2
     x2(j) = ( xi2(j-1)*cos(xi2(j-1))-xi2(j)*cos(xi2(j)) &
@@ -390,10 +408,14 @@ subroutine gridset
     idx2(j) = 1d0 / dx2(j)
    end do
 
-   ! set phi direction
-   if    (ke==1)then;ketmp=4
-   elseif(ke>=4)then;ketmp=je
-   else ;print *,"Error from ke",ke;endif
+! set phi direction
+   if    (ke==1)then
+    ketmp=4
+   elseif(ke>=4)then
+    ketmp=je
+   else
+    print *,"Error from ke",ke
+   endif
    do k = ks-1,ke+2
     dxi3(k) = xi3e / dble(ketmp)
     dx3(k)  = 0.5d0 * ( dxi3(k-1) + dxi3(k) )
@@ -417,6 +439,7 @@ subroutine gridset
 
  else
 
+! Read from previous gridfile if not first time step
   open(unit=41,file='data/gridfile.bin',status='old',form='unformatted')
   read(41)x1(gis-2:gie+2),xi1(gis-2:gie+2),dxi1(gis-2:gie+2),dx1(gis-2:gie+2), &
           x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dxi2(gjs-2:gje+2),dx2(gjs-2:gje+2), &

@@ -10,7 +10,7 @@ subroutine primitive
 
   use grid
   use physval
-  use pressure_mod
+  use pressure_mod,only:pressure
 
   implicit none
 
