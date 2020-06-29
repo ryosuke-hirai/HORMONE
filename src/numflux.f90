@@ -8,7 +8,7 @@
 
 subroutine numflux
 
-  use settings,only:compswitch,spn,eq_sym,eostype
+  use settings,only:compswitch,spn,eq_sym,eostype,mag_on
   use grid
   use physval
   use ninewave
@@ -17,8 +17,9 @@ subroutine numflux
 
   implicit none
 
-  real*8 cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur
-  real*8 b1l, b1r, b2l, b2r, b3l, b3r, v2l, v2r, v3l, v3r, phil, phir, fix
+  real*8:: cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
+           b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
+           v2l, v2r, v3l, v3r, fix
   real*8,dimension(1:9)::tmpflux
   real*8,dimension(1:2):: dx
   real*8,dimension(1:spn):: spcl,spcr
@@ -57,18 +58,19 @@ subroutine numflux
      v3l = ( d(i  ,j,k)*v3(i  ,j,k) + dx(1)*dm3(i  ,j,k,1) ) / dl
      v3r = ( d(i+1,j,k)*v3(i+1,j,k) - dx(2)*dm3(i+1,j,k,1) ) / dr
 
-!!$     b1l = b1(i  ,j,k) + dx(1) * db1(i  ,j,k,1)
-!!$     b1r = b1(i+1,j,k) - dx(2) * db1(i+1,j,k,1)
-!!$
-!!$     b2l = b2(i  ,j,k) + dx(1) * db2(i  ,j,k,1)
-!!$     b2r = b2(i+1,j,k) - dx(2) * db2(i+1,j,k,1)
-!!$
-!!$     b3l = b3(i  ,j,k) + dx(1) * db3(i  ,j,k,1)
-!!$     b3r = b3(i+1,j,k) - dx(2) * db3(i+1,j,k,1)
-!!$
-!!$     phil = phi(i  ,j,k) + dx(1) * dphi(i  ,j,k,1)
-!!$     phir = phi(i+1,j,k) - dx(2) * dphi(i+1,j,k,1)
-     b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
+     if(mag_on)then
+      b1l = b1(i  ,j,k) + dx(1) * db1(i  ,j,k,1)
+      b1r = b1(i+1,j,k) - dx(2) * db1(i+1,j,k,1)
+
+      b2l = b2(i  ,j,k) + dx(1) * db2(i  ,j,k,1)
+      b2r = b2(i+1,j,k) - dx(2) * db2(i+1,j,k,1)
+
+      b3l = b3(i  ,j,k) + dx(1) * db3(i  ,j,k,1)
+      b3r = b3(i+1,j,k) - dx(2) * db3(i+1,j,k,1)
+
+      phil = phi(i  ,j,k) + dx(1) * dphi(i  ,j,k,1)
+      phir = phi(i+1,j,k) - dx(2) * dphi(i+1,j,k,1)
+     end if
 
      Tl = T(i,j,k) ; Tr = T(i+1,j,k)
 
@@ -113,30 +115,32 @@ subroutine numflux
        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
        tmpflux(4) = rinji
 
-       fl = phil;fr = phir ; ul = b1l ; ur = b1r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(5) = rinji
-
-       fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
-       ul = b2l ; ur = b2r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(6) = rinji
-
-       fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
-       ul = b3l ; ur = b3r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(7) = rinji
-
        fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
        fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
        ul = el ; ur = er
        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
        tmpflux(8) = rinji
 
-       fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(9) = rinji
+       if(mag_on)then
+        fl = phil;fr = phir ; ul = b1l ; ur = b1r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(5) = rinji
 
+        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
+        ul = b2l ; ur = b2r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(6) = rinji
+
+        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
+        ul = b3l ; ur = b3r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(7) = rinji
+
+        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(9) = rinji
+       end if
+       
       end if
      end if
 
@@ -190,18 +194,19 @@ if(je/=1)then
      v3l = ( d(i,j  ,k)*v1(i,j  ,k) + dx(1)*dm1(i,j  ,k,2) ) / dl
      v3r = ( d(i,j+1,k)*v1(i,j+1,k) - dx(2)*dm1(i,j+1,k,2) ) / dr
 
-!!$     b1l = b1(i,j  ,k) + dx(1) * db1(i,j  ,k,2)
-!!$     b1r = b1(i,j+1,k) - dx(2) * db1(i,j+1,k,2)
-!!$
-!!$     b2l = b2(i,j  ,k) + dx(1) * db2(i,j  ,k,2)
-!!$     b2r = b2(i,j+1,k) - dx(2) * db2(i,j+1,k,2)
-!!$
-!!$     b3l = b3(i,j  ,k) + dx(1) * db3(i,j  ,k,2)
-!!$     b3r = b3(i,j+1,k) - dx(2) * db3(i,j+1,k,2)
-!!$
-!!$     phil = phi(i,j  ,k) + dx(1) * dphi(i,j  ,k,2)
-!!$     phir = phi(i,j+1,k) - dx(2) * dphi(i,j+1,k,2)
-b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
+     if(mag_on)then
+      b1l = b1(i,j  ,k) + dx(1) * db1(i,j  ,k,2)
+      b1r = b1(i,j+1,k) - dx(2) * db1(i,j+1,k,2)
+
+      b2l = b2(i,j  ,k) + dx(1) * db2(i,j  ,k,2)
+      b2r = b2(i,j+1,k) - dx(2) * db2(i,j+1,k,2)
+
+      b3l = b3(i,j  ,k) + dx(1) * db3(i,j  ,k,2)
+      b3r = b3(i,j+1,k) - dx(2) * db3(i,j+1,k,2)
+
+      phil = phi(i,j  ,k) + dx(1) * dphi(i,j  ,k,2)
+      phir = phi(i,j+1,k) - dx(2) * dphi(i,j+1,k,2)
+     end if
 
      Tl = T(i,j,k) ; Tr = T(i,j+1,k)
 
@@ -247,32 +252,34 @@ b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
        tmpflux(4) = rinji
 
-       fl = phil;fr = phir ; ul = b1l ; ur = b1r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(5) = rinji
-
-       fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
-       ul = b2l ; ur = b2r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(6) = rinji
-
-       fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
-       ul = b3l ; ur = b3r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(7) = rinji
-
        fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
        fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
        ul = el ; ur = er
        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
        tmpflux(8) = rinji
 
-       fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil; ur=phir
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(9) = rinji
+       if(mag_on)then
+        fl = phil;fr = phir ; ul = b1l ; ur = b1r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(5) = rinji
+
+        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
+        ul = b2l ; ur = b2r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(6) = rinji
+ 
+        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
+        ul = b3l ; ur = b3r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(7) = rinji
+
+        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil; ur=phir
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(9) = rinji
+       end if
+
       end if
      end if
-
 
      flux2(i,j,k,1) = tmpflux(1)
      flux2(i,j,k,2) = tmpflux(4)
@@ -283,7 +290,6 @@ b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
      flux2(i,j,k,7) = tmpflux(6)
      flux2(i,j,k,8) = tmpflux(8)
      flux2(i,j,k,9) = tmpflux(9)
-!print *,flux2(i,j,k,9),flux2(i,j,k,7),flux2(i,j,k,8)
 
      if(compswitch>=2)then
       do n = 1, spn
@@ -331,18 +337,19 @@ b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
      v3l = ( d(i,j,k  )*v2(i,j,k  ) + dx(1)*dm2(i,j,k  ,3) ) / dl
      v3r = ( d(i,j,k+1)*v2(i,j,k+1) - dx(2)*dm2(i,j,k+1,3) ) / dr
 
-!!$     b1l = b1(i,j,k  ) + dx(1) * db1(i,j,k  ,3)
-!!$     b1r = b1(i,j,k+1) - dx(2) * db1(i,j,k+1,3)
-!!$
-!!$     b2l = b2(i,j,k  ) + dx(1) * db2(i,j,k  ,3)
-!!$     b2r = b2(i,j,k+1) - dx(2) * db2(i,j,k+1,3)
-!!$
-!!$     b3l = b3(i,j,k  ) + dx(1) * db3(i,j,k  ,3)
-!!$     b3r = b3(i,j,k+1) - dx(2) * db3(i,j,k+1,3)
-!!$
-!!$     phil = phi(i,j,k  ) + dx(1) * dphi(i,j,k  ,3)
-!!$     phir = phi(i,j,k+1) - dx(2) * dphi(i,j,k+1,3)
-b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
+     if(mag_on)then
+      b1l = b1(i,j,k  ) + dx(1) * db1(i,j,k  ,3)
+      b1r = b1(i,j,k+1) - dx(2) * db1(i,j,k+1,3)
+
+      b2l = b2(i,j,k  ) + dx(1) * db2(i,j,k  ,3)
+      b2r = b2(i,j,k+1) - dx(2) * db2(i,j,k+1,3)
+
+      b3l = b3(i,j,k  ) + dx(1) * db3(i,j,k  ,3)
+      b3r = b3(i,j,k+1) - dx(2) * db3(i,j,k+1,3)
+
+      phil = phi(i,j,k  ) + dx(1) * dphi(i,j,k  ,3)
+      phir = phi(i,j,k+1) - dx(2) * dphi(i,j,k+1,3)
+     end if
 
      Tl = T(i,j,k) ; Tr = T(i,j,k+1)
 
@@ -387,29 +394,31 @@ b1l=0d0;b2l=0d0;b3l=0d0;phil=0d0;b1r=0d0;b2r=0d0;b3r=0d0;phir=0d0
        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
        tmpflux(4) = rinji
 
-       fl = phil;fr = phir ; ul = b1l ; ur = b1r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(5) = rinji
-
-       fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
-       ul = b2l ; ur = b2r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(6) = rinji
-
-       fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
-       ul = b3l ; ur = b3r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(7) = rinji
-
        fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
        fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
        ul = el ; ur = er
        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
        tmpflux(8) = rinji
 
-       fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(9) = rinji
+       if(mag_on)then
+        fl = phil;fr = phir ; ul = b1l ; ur = b1r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(5) = rinji
+
+        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
+        ul = b2l ; ur = b2r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(6) = rinji
+
+        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
+        ul = b3l ; ur = b3r
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(7) = rinji
+
+        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
+        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+        tmpflux(9) = rinji
+       end if
 
       end if
      end if

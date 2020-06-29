@@ -36,7 +36,7 @@ program hormone
                      sphrn, trnsn1, trnsn2, trnsn3
   namelist /timecon/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out
   namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, include_cooling
-  namelist /simucon/ crdnt,courant, rktype, start
+  namelist /simucon/ crdnt,courant, rktype, start, mag_on, flux_limiter
   namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                      bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
   namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, &

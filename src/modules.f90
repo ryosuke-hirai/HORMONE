@@ -20,7 +20,8 @@ module settings
  real*8 grverr, cgerr, eoserr
  integer imesh, jmesh, kmesh
 ! switches
- logical include_extgrv, include_particles, include_cooling
+ logical include_extgrv, include_particles, include_cooling, mag_on
+ character*30 flux_limiter
 
 end module settings
 

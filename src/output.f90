@@ -16,7 +16,7 @@ end module ejtfilemod
 
 subroutine output
 
-  use settings,only:outstyle,gravswitch,compswitch,spn,eq_sym
+  use settings,only:outstyle,gravswitch,compswitch,spn,eq_sym,mag_on
   use grid
   use physval
   use constants
@@ -168,19 +168,20 @@ subroutine output
             v1(is:ie,js:je,ks:ke), &
             v2(is:ie,js:je,ks:ke), &
             v3(is:ie,js:je,ks:ke), &
-!            b1(is:ie,js:je,ks:ke), &
-!            b2(is:ie,js:je,ks:ke), &
-!            b3(is:ie,js:je,ks:ke), &
-            e (is:ie,js:je,ks:ke), &
-!            phi(is:ie,js:je,ks:ke), &
-            grvphi(gis:gie,gjs:gje,gks:gke)
+            e (is:ie,js:je,ks:ke)
+  if(gravswitch>=2)write(10)grvphi(gis:gie,gjs:gje,gks:gke)
   if(gravswitch==3)then
    write(10)grvphiold(gis:gie,gjs:gje,gks:gke), &
             dt_old
   end if
-  if(compswitch>=2)then
-   write(10)spc(1:spn,is:ie,js:je,ks:ke)
+  if(compswitch>=2)write(10)spc(1:spn,is:ie,js:je,ks:ke)
+  if(mag_on)then
+   write(10) b1(is:ie,js:je,ks:ke), &
+             b2(is:ie,js:je,ks:ke), &
+             b3(is:ie,js:je,ks:ke), &
+             phi(is:ie,js:je,ks:ke)
   end if
+
 
   close(10)
 

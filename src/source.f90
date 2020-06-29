@@ -40,24 +40,11 @@ subroutine source
 
 !$omp parallel do private(i,ul)
    do i = is, ie
-!    ul = 1d0/(xi1(i)*(xi1(i)+xi1(i-1))+xi1(i-1)*xi1(i-1))
-!    grv1(i,js,k) = - (mc(i-1)*dxi1(i)+0.25d0*(mc(i)-mc(i-1))*&
-!                   (xi1(i)-3d0*xi1(i-1)*xi1(i-1)*xi1(i-1)*ul))&
-!                  *3d0*ul * idxi1(i)
-
-!    grv1(i,js,k) = -(mc(i-1)*dxi1(i) + pi/3d0*d(i,js,k)*(3d0*xi1(i-1)**4d0+xi1(i)**4d0-4d0*xi1(i-1)**3d0*xi1(i)))*ul*idxi1(i)*3d0*d(i,js,k)*G
-!    grv1(i,js,k) = -(mc(i-1)+d(i,js,k)*4d0/3d0*pi*(x1(i)**3d0-xi1(i-1)**3d0))/(x1(i)*x1(i))*d(i,js,k)*G
-    grv1(i,js:je,k) = -G*d(i,js:je,k)*mc(i)/x1(i)**2d0
-
+    grv1(i,js:je,k) = -G*d(i,js:je,k)*mc(i)/x1(i)**2
    end do
 !$omp end parallel do
    grv2 = 0d0 ; grv3 = 0d0
    grv1(is,js:je,k) = 0d0
-
-!$omp workshare
-!  grv1(is:ie,js:je,k) = spread(grv1(is:ie,js,k),2,je) *G* d(is:ie,js:je,k)
-!   grv1(is,js:je,k) = 0d0 ; grv2 = 0.d0 ; grv3 = 0.d0
-!$omp end workshare
 
   elseif(gravswitch==2.or.gravswitch==3)then
 !$omp parallel
@@ -87,9 +74,6 @@ subroutine source
 !$omp end do
 !$omp end parallel
    if(eq_sym.and.crdnt==1)grv3(is:ie,js:je,ks) = 0d0
-  ! if(crdnt==2)grv2(is:ie,js,ks:ke) = 0d0
-  ! if(crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
-!   if(crdnt==1.or.crdnt==2)grv1(is,js,ks:ke) = 0d0
 
    if(include_extgrv)call externalfield
 

@@ -31,23 +31,23 @@ subroutine restart
 
  open(unit=11,file=startfile,status='old',form='unformatted')
 
-  read(11)tn,time,mc(is-1)!,de_dt,domega_dt
-  read(11) d (is:ie,js:je,ks:ke), &
-           v1(is:ie,js:je,ks:ke), &
-           v2(is:ie,js:je,ks:ke), &
-           v3(is:ie,js:je,ks:ke), &
-!!$           b1(is:ie,js:je,ks:ke), &
-!!$           b2(is:ie,js:je,ks:ke), &
-!!$           b3(is:ie,js:je,ks:ke), &
-           e (is:ie,js:je,ks:ke), &
-!           phi(is:ie,js:je,ks:ke), &
-           grvphi(gis:gie,gjs:gje,gks:gke)
+ read(11)tn,time,mc(is-1)!,de_dt,domega_dt
+ read(11) d (is:ie,js:je,ks:ke), &
+          v1(is:ie,js:je,ks:ke), &
+          v2(is:ie,js:je,ks:ke), &
+          v3(is:ie,js:je,ks:ke), &
+          e (is:ie,js:je,ks:ke)
+  if(gravswitch>=2)read(11)grvphi(gis:gie,gjs:gje,gks:gke)
   if(gravswitch==3)then
    read(11)grvphiold(gis:gie,gjs:gje,gks:gke), &
             dt_old
   end if
-  if(compswitch>=2)then
-   read(11)spc(1:spn,is:ie,js:je,ks:ke)
+  if(compswitch>=2)read(11)spc(1:spn,is:ie,js:je,ks:ke)
+  if(mag_on)then
+   read(11) b1(is:ie,js:je,ks:ke), &
+            b2(is:ie,js:je,ks:ke), &
+            b3(is:ie,js:je,ks:ke), &
+            phi(is:ie,js:je,ks:ke)
   end if
 
  close(11)

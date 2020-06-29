@@ -23,7 +23,9 @@ c spn : number of species (3 if X,Y,Z)
 c crdnt : cartesian:0,cylindrical:1,spherical:2
 c rktype: order of Runge-Kutta (1 is for Euler method)
 c start : Start from this file
-&simucon  crdnt=2 courant=0.9d0 rktype=3 start=700000 /
+c flux_limiter: 'modified_mc' or 'minmod'
+&simucon  crdnt=2 courant=0.9d0 rktype=3 start=700000 mag_on=.false.
+          flux_limiter='modified_mc' /
 
 c periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
 c Dirichlet:9(provide in dirichlet.f90)
