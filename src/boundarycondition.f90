@@ -101,9 +101,7 @@ subroutine boundarycondition
   do j = js, je
    do i = is-2, is-1
     ptot(i,j,k) = p(i,j,k) &
-                + 0.5d0*(b1(i,j,k)*b1(i,j,k) &
-                        +b2(i,j,k)*b2(i,j,k) &
-                        +b3(i,j,k)*b3(i,j,k) )
+                + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
     select case (eostype)
     case(0:1) ! without recombination
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(is,j,k),imu(i,j,k))
@@ -114,12 +112,8 @@ subroutine boundarycondition
     end select
     e   (i,j,k) = eint(i,j,k) &
                 + 0.5d0*( d(i,j,k)*&
-                         (v1(i,j,k)*v1(i,j,k)  &
-                         +v2(i,j,k)*v2(i,j,k)  &
-                         +v3(i,j,k)*v3(i,j,k) )&
-                         +b1(i,j,k)*b1(i,j,k)  &
-                         +b2(i,j,k)*b2(i,j,k)  &
-                         +b3(i,j,k)*b3(i,j,k) )
+                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
+                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
    end do
   end do
  end do
@@ -241,9 +235,7 @@ subroutine boundarycondition
   do j = js, je
    do i = ie+1, ie+2
     ptot(i,j,k) = p(i,j,k) &
-                + 0.5d0*(b1(i,j,k)*b1(i,j,k) &
-                        +b2(i,j,k)*b2(i,j,k) &
-                        +b3(i,j,k)*b3(i,j,k) )
+                + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
     select case (eostype)
     case(0:1) ! without recombination
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(ie,j,k),imu(i,j,k))
@@ -254,12 +246,8 @@ subroutine boundarycondition
     end select
     e   (i,j,k) = eint(i,j,k) &
                 + 0.5d0*( d(i,j,k)*&
-                         (v1(i,j,k)*v1(i,j,k)  &
-                         +v2(i,j,k)*v2(i,j,k)  &
-                         +v3(i,j,k)*v3(i,j,k) )&
-                         +b1(i,j,k)*b1(i,j,k)  &
-                         +b2(i,j,k)*b2(i,j,k)  &
-                         +b3(i,j,k)*b3(i,j,k) )
+                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
+                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
    end do
   end do
  end do
@@ -347,9 +335,7 @@ subroutine boundarycondition
   do j = js-2, js-1
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
-                + 0.5d0*(b1(i,j,k)*b1(i,j,k) &
-                        +b2(i,j,k)*b2(i,j,k) &
-                        +b3(i,j,k)*b3(i,j,k) )
+                + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
     select case (eostype)
     case(0:1) ! without recombination
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,js,k),imu(i,j,k))
@@ -360,12 +346,8 @@ subroutine boundarycondition
     end select
     e   (i,j,k) = eint(i,j,k) &
                 + 0.5d0*( d(i,j,k)*&
-                         (v1(i,j,k)*v1(i,j,k)  &
-                         +v2(i,j,k)*v2(i,j,k)  &
-                         +v3(i,j,k)*v3(i,j,k) )&
-                         +b1(i,j,k)*b1(i,j,k)  &
-                         +b2(i,j,k)*b2(i,j,k)  &
-                         +b3(i,j,k)*b3(i,j,k) )
+                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
+                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
    end do
   end do
  end do
@@ -452,9 +434,7 @@ subroutine boundarycondition
   do j = je+1, je+2
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
-                + 0.5d0*(b1(i,j,k)*b1(i,j,k) &
-                        +b2(i,j,k)*b2(i,j,k) &
-                        +b3(i,j,k)*b3(i,j,k) )
+                + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
     select case (eostype)
     case(0:1) ! without recombination
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,je,k),imu(i,j,k))
@@ -465,12 +445,8 @@ subroutine boundarycondition
     end select
     e   (i,j,k) = eint(i,j,k) &
                 + 0.5d0*( d(i,j,k)*&
-                         (v1(i,j,k)*v1(i,j,k)  &
-                         +v2(i,j,k)*v2(i,j,k)  &
-                         +v3(i,j,k)*v3(i,j,k) )&
-                         +b1(i,j,k)*b1(i,j,k)  &
-                         +b2(i,j,k)*b2(i,j,k)  &
-                         +b3(i,j,k)*b3(i,j,k) )
+                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
+                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
    end do
   end do
  end do
@@ -590,9 +566,7 @@ subroutine boundarycondition
   do j = js, je
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
-                + 0.5d0*(b1(i,j,k)*b1(i,j,k) &
-                        +b2(i,j,k)*b2(i,j,k) &
-                        +b3(i,j,k)*b3(i,j,k) )
+                + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
     select case (eostype)
     case(0:1) ! without recombination
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,ks),imu(i,j,k))
@@ -603,12 +577,8 @@ subroutine boundarycondition
     end select
      e   (i,j,k) = eint(i,j,k) &
                 + 0.5d0*( d(i,j,k)*&
-                         (v1(i,j,k)*v1(i,j,k)  &
-                         +v2(i,j,k)*v2(i,j,k)  &
-                         +v3(i,j,k)*v3(i,j,k) )&
-                         +b1(i,j,k)*b1(i,j,k)  &
-                         +b2(i,j,k)*b2(i,j,k)  &
-                         +b3(i,j,k)*b3(i,j,k) )
+                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
+                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
    end do
   end do
  end do
@@ -725,9 +695,7 @@ subroutine boundarycondition
   do j = js, je
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
-                + 0.5d0*(b1(i,j,k)*b1(i,j,k) &
-                        +b2(i,j,k)*b2(i,j,k) &
-                        +b3(i,j,k)*b3(i,j,k) )
+                + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
     select case (eostype)
     case(0:1) ! without recombination
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
@@ -738,12 +706,8 @@ subroutine boundarycondition
     end select
     e   (i,j,k) = eint(i,j,k) &
                 + 0.5d0*( d(i,j,k)*&
-                         (v1(i,j,k)*v1(i,j,k)  &
-                         +v2(i,j,k)*v2(i,j,k)  &
-                         +v3(i,j,k)*v3(i,j,k) )&
-                         +b1(i,j,k)*b1(i,j,k)  &
-                         +b2(i,j,k)*b2(i,j,k)  &
-                         +b3(i,j,k)*b3(i,j,k) )
+                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
+                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
    end do
   end do
  end do
