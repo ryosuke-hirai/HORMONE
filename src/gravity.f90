@@ -26,7 +26,7 @@ subroutine gravity
 gin = gie - gis + 1
 
 if(gravswitch==0.or.gravswitch==1)then
- grvphi = 0.d0
+ grvphi = 0d0
 elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
 !elseif(gravswitch==2)then
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -42,9 +42,9 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
    i = modlimax(l) +gis-1
    k = (l-modlimax(l))/gin + gks
    x(l) = grvphi(i,js,k)
-   gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*5d-1)
+   gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
    if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
-    gsrc(l) = 4d0*pi*G*d(i,js,k)*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*5d-1)
+    gsrc(l) = 4d0*pi*G*d(i,js,k)*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
    end if;end if;end if;end if
    if(k==gks) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
    if(i==gie) gsrc(l) = gsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
@@ -204,7 +204,7 @@ if(gravswitch==3.and.tn/=0)then
                      maxval(cf(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
   dtgrav = min(minval(dxi1(gis:gie)),minval(dxi3(gks:gke)))/cgrav2
   dtgrav = dtgrav*hgcfl
-  cgrav2 = cgrav2*cgrav2
+  cgrav2 = cgrav2**2
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
 !  do n = 1, int(HGfac)
@@ -305,7 +305,7 @@ if(gravswitch==3.and.tn/=0)then
 
   dtgrav = min(minval(dxi1(gis:gie)),x1(is)*minval(dxi2(gjs:gje)))/cgrav2
   dtgrav = dtgrav*hgcfl
-  cgrav2 = cgrav2*cgrav2
+  cgrav2 = cgrav2**2
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
 

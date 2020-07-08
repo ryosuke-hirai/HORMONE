@@ -23,7 +23,7 @@ subroutine source
 
 ! To calculate gravitational forces ********************************************
   if(gravswitch==0)then ! gravity off
-   grv1 = 0.d0 ; grv2 = 0.d0 ; grv3 = 0.d0
+   grv1 = 0d0 ; grv2 = 0d0 ; grv3 = 0d0
 
   elseif(gravswitch==1.and.crdnt==2.and.dim<=2)then ! point-source
    k = ks
@@ -44,7 +44,6 @@ subroutine source
    end do
 !$omp end parallel do
    grv2 = 0d0 ; grv3 = 0d0
-   grv1(is,js:je,k) = 0d0
 
   elseif(gravswitch==2.or.gravswitch==3)then
 !$omp parallel

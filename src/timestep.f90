@@ -13,6 +13,7 @@
   use physval
   use ninewave
   use eigen_mod
+  use constants,only:huge
 
   implicit none
 
@@ -23,7 +24,7 @@
 
   call eigen
 
-  dt = 1.d50
+  dt = huge
 !!$  cfmax = 0.d0
 !!$  do k = ks,ke
 !!$   do j = js,je
@@ -61,7 +62,7 @@
 !!$  end do
 
   allocate( dtdist(is:ie,js:je,ks:ke,1:3) )
-  dtdist = 1d50
+  dtdist = huge
   do k = ks, ke
    do j = js, je
     do i = is, ie

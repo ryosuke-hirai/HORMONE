@@ -63,6 +63,7 @@ module constants
   real*8,parameter:: kbol = 1.38064852d-16, amu = 1.6605402d-24
   real*8,parameter:: arad = 7.5646d-15
   real*8,parameter:: year = 3600d0*24d0*365.25d0
+  real*8,parameter:: huge = 1d99, tiny = 1d-99
   real*8:: fac_pgas, fac_egas
 
 end module constants

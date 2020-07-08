@@ -453,16 +453,14 @@ if(je/=1)then
 !$omp end do
 end if
 
-if(ie==1)flux1=0.d0
+if(ie==1)flux1=0d0
 if(ie==1)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
-if(je<=2.and.crdnt==2)flux2=0.d0
+if(je<=2.and.crdnt==2)flux2=0d0
 if(je==1)spcflx(1:spn,is:ie,js-1:je,ks:ke,2)=0d0
-if(ke==1)flux3=0.d0
+if(ke==1)flux3=0d0
 if(ke==1)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
 
 if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
-
-
 
 !$omp end parallel
 return

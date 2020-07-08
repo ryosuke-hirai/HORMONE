@@ -1,6 +1,6 @@
 module pressure_mod
  use recombination_mod
- use constants
+ use constants,only:fac_egas,fac_pgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr
 contains
@@ -25,9 +25,9 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
 
 !-----------------------------------------------------------------------------
 
- bsq = 0.5d0*(b1*b1+b2*b2+b3*b3)
+ bsq = 0.5d0*(b1**2+b2**2+b3**2)
  
- eint = e - 0.5d0*d*(v1*v1+v2*v2+v3*v3) - bsq
+ eint = e - 0.5d0*d*(v1**2+v2**2+v3**2) - bsq
 
  select case (eostype)
  case(0) ! ideal gas
@@ -68,7 +68,7 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
   end do
  
   imu = imurec
-  p = ( fac_pgas*imu*d + arad*T*T*T/3d0 )*T + bsq
+  p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
   gamma_eff = 1d0+p/(eint-d*erec)
 
   cf = sqrt(gamma_eff*p/d)
