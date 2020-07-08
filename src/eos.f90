@@ -36,7 +36,7 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
 
  case(1) ! ideal gas + radiation pressure
   T = Tini
-  corr = 1d99
+  corr = huge
   do while(abs(corr)>eoserr*T)
    corr = (eint - (arad*T**3+d*fac_egas*imu)*T) &
         / (  - 4d0*arad*T**3-d*fac_egas*imu)
@@ -48,7 +48,7 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
   T = Tini
-  corr = 1d99; Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
+  corr = huge; Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
   do while(abs(corr)>eoserr*T)
    call get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
    if(d*erec>=eint)then ! avoid negative thermal energy
@@ -96,7 +96,7 @@ real*8 function eos_p(d,eint,Tini,imu,X,Y)
   
  case(1) ! ideal gas + radiation
   T = Tini
-  corr = 1d99
+  corr = huge
   do while(abs(corr)>eoserr*T)
    corr = (eint-(arad*T**3+d*fac_egas*imu)*T) &
         / ( -4d0*arad*T**3-d*fac_egas*imu)
@@ -106,7 +106,7 @@ real*8 function eos_p(d,eint,Tini,imu,X,Y)
 
  case(2) ! ideal gas + radiation + recombination
   T = Tini
-  corr=1d99;Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
+  corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
   do while(abs(corr)>eoserr*T)
    call get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
    if(d*erec>=eint)then ! avoid negative thermal energy
@@ -148,7 +148,7 @@ real*8 function eos_e(d,p,T,imu,X,Y)
   eos_e = p/(gamma-1d0)
   
  case(1) ! ideal gas + radiation
-  corr = 1d99
+  corr = huge
   do while(abs(corr)>eoserr*T)
    corr = (p - (arad*T**3/3d0+d*fac_pgas*imu)*T) &
         / (-4d0*arad*T**3/3d0-d*fac_pgas*imu)
@@ -157,7 +157,7 @@ real*8 function eos_e(d,p,T,imu,X,Y)
   eos_e = ( fac_egas*imu*d + arad*T**3 )*T
   
  case(2) ! ideal gas + radiation + recombination
-  corr = 1d99; logd = log10(d)
+  corr = huge; logd = log10(d)
   do while(abs(corr)>eoserr*T)
    call get_imurec(logd,T,X,Y,imurec,dimurecdT)
    corr = (p - (arad*T**3/3d0+d*fac_pgas*imurec)*T) &
@@ -221,7 +221,7 @@ subroutine pressure
      eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
 !eint(i,j,k) = max(eint(i,j,k),1d-4*e(i,j,k))
 !    T(i,j,k) = eint(i,j,k) / (d(i,j,k)*fac_egas) ! initial guess
-     corr = 1d99
+     corr = huge
      do while(abs(corr)>eoserr*T(i,j,k))
       corr = (eint(i,j,k) - ( arad*T(i,j,k)**3 &
                             + d(i,j,k)*fac_egas*imu(i,j,k) ) *T(i,j,k) )&
@@ -246,7 +246,7 @@ subroutine pressure
      bsq = b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2
      eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
 
-     corr = 1d99;Tdot=0d0;logd=log10(d(i,j,k));dtau=0.9d0;nnn=0
+     corr = huge;Tdot=0d0;logd=log10(d(i,j,k));dtau=0.9d0;nnn=0
 ! W4 method to give guess for Newton-Raphson
      do while(abs(corr)>eoserr*T(i,j,k))
       call get_erec_imurec(logd,T(i,j,k),spc(1,i,j,k),spc(2,i,j,k),&
