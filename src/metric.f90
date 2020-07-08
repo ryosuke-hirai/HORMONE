@@ -40,7 +40,7 @@ subroutine metric
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   elseif(crdnt==1)then
    do i = is-1, ie+1
-    detg1(i) = xi1(i); idetg1(i) = 2.d0 / (xi1(i)**2-xi1(i-1)**2)
+    detg1(i) = xi1(i); idetg1(i) = 2d0 / (xi1(i)**2-xi1(i-1)**2)
     sx1(i) = 2d0 / (xi1(i)+xi1(i-1)) ; g22(i) = x1(i)
    end do
    do j = js-1, je+1

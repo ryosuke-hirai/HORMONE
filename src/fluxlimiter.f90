@@ -15,8 +15,8 @@ subroutine minmod(mm,u,dx)
   y = 1.4d0*(u(2) - u(1))*dx(1)
   z = (u(3)-u(1))*dx(1)*dx(2)/sum(dx)
 
-  mm = sign(1.d0,x) * max(0.d0,min(abs(x),sign(1.d0,x)*y,sign(1.d0,x)*z))
-!!$
+  mm = sign(1d0,x) * max(0.d0,min(abs(x),sign(1d0,x)*y,sign(1d0,x)*z))
+
 !!$
 !!$  x = (u(3)-u(2))*dx(2)
 !!$  y = (u(2)-u(1))*dx(1)
