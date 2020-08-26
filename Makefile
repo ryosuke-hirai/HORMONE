@@ -32,7 +32,7 @@ OBJ_F = $(patsubst %.o,$(OBJ_DIR)/%.o,$(OBJ))
 all: $(TARGET)
 
 $(TARGET): $(OBJ_F)
-	$(FC) $(FCFLAG) -o $@ $(OBJ_F)
+	$(FC) $(FCFLAG) -o $(BIN_DIR)/$@ $(OBJ_F)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90
 	$(FC) $(FCFLAG) -c $< -o $@ $(MODFLAG)$(OBJ_DIR)
