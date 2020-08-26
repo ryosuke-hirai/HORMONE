@@ -1,4 +1,4 @@
-module hlldflux_mod
+module hllflux_mod
 
 contains
 
@@ -168,4 +168,34 @@ subroutine fstar(tmpflux,d,v1,v2,v3,b1,b2,b3,e,p,phi)
 return
 end subroutine fstar
 
-end module hlldflux_mod
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                         SUBROUTINE HLLFLUX
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To calcaulte hllflux
+
+subroutine hllflux(fflux,fl,fr,ul,ur,cfl,cfr,vl,vr)
+
+  use grid
+  use physval
+
+  implicit none
+
+  real*8,intent(in) :: fl, fr, ul, ur, cfl, cfr, vl, vr
+  real*8 sl, sr
+  real*8,intent(inout)::fflux
+
+!--------------------------------------------------------------------
+
+! find left and right waves
+  sr  = max(vr+cfr,vl+cfl,0.d0)
+  sl  = min(vr-cfr,vl-cfl,0.d0)
+
+  fflux = (sr*fl - sl*fr + sr*sl*(ur-ul)) / (sr-sl)
+
+return
+end subroutine hllflux
+
+end module hllflux_mod

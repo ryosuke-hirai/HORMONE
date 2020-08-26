@@ -11,7 +11,7 @@ subroutine boundarycondition
  use settings
  use grid
  use physval
- use dirichlet
+ use dirichlet_mod
  use pressure_mod
 
  implicit none

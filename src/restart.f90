@@ -16,6 +16,7 @@ subroutine restart
  use pressure_mod
  use ejtfilemod,only:inimass
  use particle_mod
+ use dirichlet_mod
  
  implicit none
 

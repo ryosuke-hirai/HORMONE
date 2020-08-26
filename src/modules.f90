@@ -26,7 +26,6 @@ module settings
 end module settings
 
 
-
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module grid
 
@@ -139,19 +138,6 @@ module gravmod
 
 end module gravmod
 
-
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-module dirichlet
-
-  use grid,only:in,jn,kn
-
-  implicit none
-
-  real*8,allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30
-  real*8,allocatable,dimension(:,:,:,:):: spc0
-
-end module dirichlet
-
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module ejectamod
 
@@ -165,30 +151,6 @@ module ejectamod
   character*40 ejtbinfile
 
 end module ejectamod
-
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-module cooling_mod
- implicit none
-
- integer,parameter:: NN = 5
- real*8:: Yint(0:NN), Tint(0:NN), lint(0:NN), alph(0:NN-1), tcool, lambda, Y
- real*8,parameter:: Tref = 1d8
-
-end module cooling_mod
-
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-module particle_mod
-
- use settings,only:include_particles
-
- implicit none
- 
- integer np, maxptc, jmax, npl
- integer,allocatable,dimension(:,:):: ptci
- integer,allocatable,dimension(:):: ptc_in
- real*8,allocatable:: ptcx(:,:), cosiptc(:), sincptc(:), coscptc(:)
- 
-end module particle_mod
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

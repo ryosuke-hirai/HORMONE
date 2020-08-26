@@ -11,12 +11,13 @@ SRC_DIR = src
 
 TARGET = hormone
 
-# compile modules first
-MOD = modules.f90 recombination.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 eigen.f90
+# compile modules that are being depended on first
+MOD = modules.f90 recombination.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 cooling.f90
 MODF= $(patsubst %,$(SRC_DIR)/%,$(MOD))
-SRC = $(MODF) $(filter-out $(MODF), $(sort $(wildcard $(SRC_DIR)/*.f90)))
-#SRC = $(SRC_DIR)/$(MODF) $(filter-out $(SRC_DIR)/$(MODF), \
-      $(sort $(wildcard $(SRC_DIR)/*.f90)))
+TARGETF= $(patsubst %,$(SRC_DIR)/%.f90,$(TARGET))
+SRC = $(MODF) \
+      $(filter-out $(MODF) $(TARGETF), $(sort $(wildcard $(SRC_DIR)/*.f90))) \
+      $(TARGETF)
 OBJ = $(patsubst $(SRC_DIR)/%.f90,%.o,$(SRC))
 OBJ_F = $(patsubst %.o,$(OBJ_DIR)/%.o,$(OBJ))
 

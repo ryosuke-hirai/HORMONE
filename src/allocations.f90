@@ -12,8 +12,7 @@ subroutine allocations
  use grid
  use physval
  use gravmod
- use dirichlet
- use recombination_mod
+ use dirichlet_mod
 
  implicit none
 

@@ -1,3 +1,13 @@
+module dirichlet_mod
+
+  use grid,only:in,jn,kn
+
+  implicit none
+
+  real*8,allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30
+  real*8,allocatable,dimension(:,:,:,:):: spc0
+
+ contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                        SUBROUTINE DIRICHLETBOUND
@@ -9,7 +19,6 @@
 subroutine dirichletbound
 
   use grid
-  use dirichlet
   use ejectamod
   use physval,only:gamma
 
@@ -92,7 +101,6 @@ end subroutine dirichletbound
 subroutine outgoingboundary(i_,j_)
 
   use grid
-  use dirichlet
   use physval
 
   implicit none
@@ -115,7 +123,6 @@ end subroutine outgoingboundary
 subroutine freeboundary(i_,m_)
 
   use grid
-  use dirichlet
   use physval
 
   implicit none
@@ -133,3 +140,5 @@ subroutine freeboundary(i_,m_)
 
   return
 end subroutine freeboundary
+
+end module dirichlet_mod

@@ -12,7 +12,7 @@ subroutine numflux
   use grid
   use physval
   use ninewave
-  use hlldflux_mod
+  use hllflux_mod
   use pressure_mod
 
   implicit none

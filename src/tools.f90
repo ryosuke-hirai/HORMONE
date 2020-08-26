@@ -17,6 +17,7 @@ subroutine tools
  use pressure_mod
  use ejectamod
  use recombination_mod
+ use cooling_mod,only:cooling_setup
  
  implicit none
 

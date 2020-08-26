@@ -24,7 +24,10 @@ program hormone
   use constants
   use pressure_mod
   use particle_mod
-
+  use cooling_mod
+  use dirichlet_mod
+  use timestep_mod
+  
   use gravmod
   use ejectamod,only:nssin,nscos
 
