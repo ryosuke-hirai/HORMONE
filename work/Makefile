@@ -6,8 +6,8 @@ FC = gfortran
 MODFLAG = -J
 FCFLAG = -fopenmp -ffree-line-length-512 -ffpe-trap=invalid,zero,overflow -fbacktrace #-fmax-stack-var-size=32768 # for gfortran
 
-OBJ_DIR = obj
-SRC_DIR = src
+OBJ_DIR = $(HORMONE_DIR)/obj
+SRC_DIR = $(HORMONE_DIR)/src
 
 TARGET = hormone
 
@@ -30,4 +30,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90
 	$(FC) $(FCFLAG) -c $< -o $@ $(MODFLAG)$(OBJ_DIR)
 
 clean:
-	rm -f obj/*.o *~ src/*~ obj/*.mod hormone
+	rm -f $(OBJ_DIR)/*.o *~ $(SRC_DIR)/*~ $(OBJ_DIR)/*.mod hormone
