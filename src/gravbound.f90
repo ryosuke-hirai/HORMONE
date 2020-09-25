@@ -29,9 +29,9 @@
    error1=0
    do i = gie+1,gie+2
     do k=gks,gke
-     phi1o(i,k) = 0.0d0
+     phi1o(i,k) = tiny
      do ll=0,llmax
-      dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**dble(ll)/rdis(i,k)
+      dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi1o/phi1o(i,k)) < grverr) exit
       phi1o(i,k) = phi1o(i,k) + dphi1o
      end do !ll-loop
@@ -55,9 +55,9 @@
    error1=0
    do k = gks-2, gks-1
     do i=gis,gie
-     phi3i(i,k) = 0.0d0
+     phi3i(i,k) = tiny
      do ll=0,llmax
-      dphi3i = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**dble(ll)/rdis(i,k)
+      dphi3i = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi3i/phi3i(i,k)) < grverr) exit
       phi3i(i,k) = phi3i(i,k) + dphi3i
      end do !ll-loop
@@ -75,9 +75,9 @@
    error1=0
    do k = gke+1,gke+2
     do i=gis,gie
-     phi3o(i,k) = 0.0d0
+     phi3o(i,k) = tiny
      do ll=0,llmax
-      dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**dble(ll)/rdis(i,k)
+      dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi3o/phi3o(i,k)) < grverr) exit
       phi3o(i,k) = phi3o(i,k) + dphi3o
      end do !ll-loop
@@ -109,9 +109,9 @@
    error1=0
    do i = gie+1, gie+2
     do k=gks,gke
-     phi1o(i,k) = 0.0d0
+     phi1o(i,k) = tiny
      do ll=0,llmax,2
-      dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**dble(ll)/rdis(i,k)
+      dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi1o/phi1o(i,k)) < grverr) exit
       phi1o(i,k) = phi1o(i,k) + dphi1o
      end do !ll-loop
@@ -135,9 +135,9 @@
    error1=0
    do k = gke+1, gke+2
     do i=gis,gie
-     phi3o(i,k) = 0.0d0
+     phi3o(i,k) = tiny
      do ll=0,llmax,2
-      dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**dble(ll)/rdis(i,k)
+      dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi3o/phi3o(i,k)) < grverr) exit
       phi3o(i,k) = phi3o(i,k) + dphi3o
      end do !ll-loop
@@ -171,7 +171,7 @@
    error1=0
    do i = gie+1, gie+2
     do j = gjs,gje
-     phiio(i,j) = 0.0d0
+     phiio(i,j) = tiny
      do ll=0,llmax
       dphiio = -G*Pl(ll,j)*ml(ll)/x1(i)
       if(ll/=0.and.abs(dphiio/phiio(i,j)) < grverr) exit
@@ -198,7 +198,7 @@
     error1=0
     do i = gis-2, gis-1
      do j = gjs, gje
-      phiii(i,j) = 0.0d0
+      phiii(i,j) = tiny
       do ll=0,llmax
        call multipoleinner
        dphiii = -G*Pl(ll,j)*ml(ll)/x1(is-1)
@@ -249,7 +249,7 @@ end subroutine gravbound
    do ll = 0, llmax
     do kk = ks,ke
      do ii = is,ie
-      ml(ll) = ml(ll) + d(ii,jj,kk)*(rdis(ii,kk)/rdis(ie,ke))**dble(ll) &
+      ml(ll) = ml(ll) + d(ii,jj,kk)*(rdis(ii,kk)/rdis(ie,ke))**ll &
              * Plc(ll,ii,kk)*dvol(ii,jj,kk)
      end do
     end do
@@ -263,7 +263,7 @@ end subroutine gravbound
     ml(ll) = 0.0d0
     do jj = js,je
      do ii = is,ie
-      ml(ll) = ml(ll) + d(ii,jj,kk)*(x1(ii)/x1(ie+1))**dble(ll) &
+      ml(ll) = ml(ll) + d(ii,jj,kk)*(x1(ii)/x1(ie+1))**ll &
              * Pl(ll,jj) * dvol(ii,jj,kk)
      end do
     end do
