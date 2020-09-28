@@ -29,10 +29,10 @@
    error1=0
    do i = gie+1,gie+2
     do k=gks,gke
-     phi1o(i,k) = tiny
+     phi1o(i,k) = 0d0
      do ll=0,llmax
       dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
-      if(ll/=0.and.abs(dphi1o/phi1o(i,k)) < grverr) exit
+      if(ll/=0.and.abs(dphi1o) < grverr*abs(phi1o(i,k))) exit
       phi1o(i,k) = phi1o(i,k) + dphi1o
      end do !ll-loop
      if(ll>=llmax) error1=1
@@ -55,10 +55,10 @@
    error1=0
    do k = gks-2, gks-1
     do i=gis,gie
-     phi3i(i,k) = tiny
+     phi3i(i,k) = 0d0
      do ll=0,llmax
       dphi3i = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
-      if(ll/=0.and.abs(dphi3i/phi3i(i,k)) < grverr) exit
+      if(ll/=0.and.abs(dphi3i) < grverr*abs(phi3i(i,k))) exit
       phi3i(i,k) = phi3i(i,k) + dphi3i
      end do !ll-loop
      if(ll>=llmax) error1=1
@@ -75,10 +75,10 @@
    error1=0
    do k = gke+1,gke+2
     do i=gis,gie
-     phi3o(i,k) = tiny
+     phi3o(i,k) = 0d0
      do ll=0,llmax
       dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
-      if(ll/=0.and.abs(dphi3o/phi3o(i,k)) < grverr) exit
+      if(ll/=0.and.abs(dphi3o) < grverr*abs(phi3o(i,k))) exit
       phi3o(i,k) = phi3o(i,k) + dphi3o
      end do !ll-loop
      if(ll>=llmax) error1=1
@@ -109,10 +109,10 @@
    error1=0
    do i = gie+1, gie+2
     do k=gks,gke
-     phi1o(i,k) = tiny
+     phi1o(i,k) = 0d0
      do ll=0,llmax,2
       dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
-      if(ll/=0.and.abs(dphi1o/phi1o(i,k)) < grverr) exit
+      if(ll/=0.and.abs(dphi1o) < grverr*abs(phi1o(i,k))) exit
       phi1o(i,k) = phi1o(i,k) + dphi1o
      end do !ll-loop
      if(ll>=llmax) error1=1
@@ -135,10 +135,10 @@
    error1=0
    do k = gke+1, gke+2
     do i=gis,gie
-     phi3o(i,k) = tiny
+     phi3o(i,k) = 0d0
      do ll=0,llmax,2
       dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
-      if(ll/=0.and.abs(dphi3o/phi3o(i,k)) < grverr) exit
+      if(ll/=0.and.abs(dphi3o) < grverr*abs(phi3o(i,k))) exit
       phi3o(i,k) = phi3o(i,k) + dphi3o
      end do !ll-loop
      if(ll>=llmax) error1=1
@@ -171,10 +171,10 @@
    error1=0
    do i = gie+1, gie+2
     do j = gjs,gje
-     phiio(i,j) = tiny
+     phiio(i,j) = 0d0
      do ll=0,llmax
       dphiio = -G*Pl(ll,j)*ml(ll)/x1(i)
-      if(ll/=0.and.abs(dphiio/phiio(i,j)) < grverr) exit
+      if(ll/=0.and.abs(dphiio) < grverr*abs(phiio(i,j))) exit
       phiio(i,j) = phiio(i,j) + dphiio
      end do !ll-loop
      phiio(i,j) = phiio(i,j) - G*mc(is-1)/x1(i)
@@ -198,11 +198,11 @@
     error1=0
     do i = gis-2, gis-1
      do j = gjs, gje
-      phiii(i,j) = tiny
+      phiii(i,j) = 0d0
       do ll=0,llmax
        call multipoleinner
        dphiii = -G*Pl(ll,j)*ml(ll)/x1(is-1)
-       if(ll/=0.and.abs(dphiii/phiii(i,j)) < grverr) exit
+       if(ll/=0.and.abs(dphiii) < grverr*abs(phiii(i,j))) exit
        phiii(i,j) = phiii(i,j) + dphiii
       end do !ll-loop
       phiii(i,j) = phiii(i,j) - G*mc(is-1)/x1(is-1)
