@@ -70,6 +70,9 @@ subroutine numflux
 
       phil = phi(i  ,j,k) + dx(1) * dphi(i  ,j,k,1)
       phir = phi(i+1,j,k) - dx(2) * dphi(i+1,j,k,1)
+     else
+      b1l = 0d0 ; b1r = 0d0 ; b2l = 0d0 ; b2r = 0d0 ; b3l = 0d0 ; b3r = 0d0
+      phil = 0d0 ; phir = 0d0
      end if
 
      Tl = T(i,j,k) ; Tr = T(i+1,j,k)
@@ -206,6 +209,9 @@ if(je/=1)then
 
       phil = phi(i,j  ,k) + dx(1) * dphi(i,j  ,k,2)
       phir = phi(i,j+1,k) - dx(2) * dphi(i,j+1,k,2)
+     else
+      b1l = 0d0 ; b1r = 0d0 ; b2l = 0d0 ; b2r = 0d0 ; b3l = 0d0 ; b3r = 0d0
+      phil = 0d0 ; phir = 0d0
      end if
 
      Tl = T(i,j,k) ; Tr = T(i,j+1,k)
@@ -349,6 +355,9 @@ if(je/=1)then
 
       phil = phi(i,j,k  ) + dx(1) * dphi(i,j,k  ,3)
       phir = phi(i,j,k+1) - dx(2) * dphi(i,j,k+1,3)
+     else
+      b1l = 0d0 ; b1r = 0d0 ; b2l = 0d0 ; b2r = 0d0 ; b3l = 0d0 ; b3r = 0d0
+      phil = 0d0 ; phir = 0d0
      end if
 
      Tl = T(i,j,k) ; Tr = T(i,j,k+1)
@@ -454,11 +463,11 @@ if(je/=1)then
 end if
 
 if(ie==1)flux1=0d0
-if(ie==1)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
+if(ie==1.and.compswitch>=2)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
 if(je<=2.and.crdnt==2)flux2=0d0
-if(je==1)spcflx(1:spn,is:ie,js-1:je,ks:ke,2)=0d0
+if(je==1.and.compswitch>=2)spcflx(1:spn,is:ie,js-1:je,ks:ke,2)=0d0
 if(ke==1)flux3=0d0
-if(ke==1)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
+if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
 
 if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 
