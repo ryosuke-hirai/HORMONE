@@ -30,8 +30,8 @@ subroutine boundarycondition
 !  9: Dirichlet b.c. (boundary values should be given elsewhere!)
 
  call pressure
- call spcboundary
- 
+ if(compswitch==2)call spcboundary
+
 ! x1-direction ***********************************************************
 
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
