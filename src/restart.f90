@@ -9,12 +9,11 @@
 
 subroutine restart
 
- use settings!,only:start,outstyle,gravswitch,dt_out,include_particles
+ use settings
  use grid
  use physval
  use gravmod
  use pressure_mod
- use ejtfilemod,only:inimass
  use particle_mod
  use dirichlet_mod
  
@@ -32,7 +31,7 @@ subroutine restart
 
  open(unit=11,file=startfile,status='old',form='unformatted')
 
- read(11)tn,time,mc(is-1)
+ read(11)tn,time
  read(11) d (is:ie,js:je,ks:ke), &
           v1(is:ie,js:je,ks:ke), &
           v2(is:ie,js:je,ks:ke), &

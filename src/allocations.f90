@@ -85,7 +85,8 @@ subroutine allocations
   allocate( &
    spc(1:spn,-1:in,-1:jn,-1:kn), spcorg(1:spn,is:ie,js:je,ks:ke), &
    dspc  (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
-   spcflx(1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3)  )
+   spcflx(1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
+   species(1:spn) )
   if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
      bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
    allocate( spc0(1:spn,-1:in,-1:jn,-1:kn) )

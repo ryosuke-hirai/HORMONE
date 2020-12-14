@@ -31,6 +31,7 @@ contains
   use physval
   use gravmod
   use pressure_mod
+  use output_mod
 
   implicit none
 

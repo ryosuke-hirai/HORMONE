@@ -10,7 +10,6 @@ subroutine checksetup
   use settings
   use grid
   use physval
-  use gravmod
   
   implicit none
 
@@ -28,6 +27,7 @@ subroutine checksetup
   if(ie/=1.and.je/=1.and.ke/=1) dim=3
   courant = courant / dble(dim) ! To set a consistent courant number.
   hgcfl   = hgcfl   / dble(dim) ! To set a consistent hgcfl number.
+  if(dim/=2) write_other_vel = .false.
 
 ! To warn the periodic boundary condition
   if(bc1is*bc1os==0.and.bc1is+bc1os/=0)then
@@ -100,18 +100,32 @@ subroutine checksetup
    stop
   end if
 
-  if(gravswitch/=0.and.imesh/=0)then
-!   gis = is ; gie = ie ; gjs = js ; gje = je ; gks = ks ; gke = ke
-  elseif(gravswitch/=0.and.crdnt==1)then
+  if(gravswitch/=0.and.crdnt==1)then
    gis = is ; gjs = js ; gje = je
   elseif(gravswitch/=0.and.crdnt==2)then
    gis = is ; gjs = js ; gje = je ; gks = ks ; gke = ke
+  elseif(gravswitch==0)then
+   gis = is ; gie = ie ; gjs = js ; gje = je ; gks = ks ; gke = ke
   end if
 
   gis = min(gis,is) ; gjs = min(gjs,js) ; gks = min(gks,ks)
   gie = max(gie,ie) ; gje = max(gje,je) ; gke = max(gke,ke)
 
 !  if(gravswitch==3)courant = courant / HGfac
+  select case(dt_unit)
+  case('yr')
+   dt_unit_in_sec = 3600d0*24d0*365.25d0
+  case('d')
+   dt_unit_in_sec = 3600*24d0
+  case('hr')
+   dt_unit_in_sec = 3600d0
+  case('s')
+   dt_unit_in_sec = 1d0
+  case default
+   print*,'Error: Set a valid unit for output interval, dt_unit = ',dt_unit
+   stop
+  end select
+  dt_out = dt_out*dt_unit_in_sec
   t_out = dt_out
 
 ! Spherical composition only for spherical coordinates
@@ -129,6 +143,9 @@ subroutine checksetup
   if(compswitch<=1.and.eostype==2)then
    print *,'Provide composition to use recombination module'
   end if
-  
-return
+
+! Provide more than 3 species for composition
+  if(compswitch>=1) spn = max(spn,3)
+
+  return
 end subroutine checksetup

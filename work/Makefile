@@ -13,14 +13,14 @@ MODFLAG= -module
 FCFLAG+= -qopenmp #-heap-arrays -traceback -fpe0 -CB #-pg -check all 
 endif
 
-OBJ_DIR = $(HORMONE_DIR)/obj
+OBJ_DIR = obj
 SRC_DIR = $(HORMONE_DIR)/src
 BIN_DIR = $(HORMONE_DIR)/bin
 
 TARGET = hormone
 
 # compile modules that are being depended on first
-MOD = modules.f90 recombination.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 cooling.f90
+MOD = modules.f90 recombination.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 output.f90 cooling.f90
 MODF= $(patsubst %,$(SRC_DIR)/%,$(MOD))
 TARGETF= $(patsubst %,$(SRC_DIR)/%.f90,$(TARGET))
 SRC = $(MODF) \
@@ -39,4 +39,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90
 
 .PHONY: clean
 clean:
-	rm -f *~ $(SRC_DIR)/*~ hormone
+	rm -f *~ $(SRC_DIR)/*~ hormone $(OBJ_DIR)/*

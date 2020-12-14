@@ -10,21 +10,27 @@ c              Every 8/4/2 cells will be grouped up.
 	  sphrn=10 trnsn1=10 trnsn2=20 trnsn3=20 /
 
 &geoscon  x1min=4d9 x2min=0 x3min=2d9 /
+
 c outstyle/endstyle : time=1, timestep=2
-&timecon  outstyle=1 endstyle=1
-	  tnlim=100000000 t_end=1d7 dt_out=1.d3 tn_out=1 /
+c dt_unit : Give name of dt_unit (current options are 's','hr','d','yr')
+c sigfig : How many significant figures in output values
+c write_other_vel : Set to .true. if 2.5D
+&out_con  outstyle=1 endstyle=1
+          tnlim=00000000 t_end=1d7 dt_out=1.d3 tn_out=1
+          dt_unit='s' sigfig=7 write_other_vel =.false. write_shock =.false. /
 
 c eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
 c compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 c muconst : mean molecular weight (if compswitch=0 or background)
-c spn : number of species (3 if X,Y,Z)
-&eos_con eostype = 1 eoserr=1d-10 compswitch=2 muconst=0.62d0 spn=8 /
+c spn : number of species (>=3)
+&eos_con eostype = 1 eoserr=1d-10 compswitch=2 muconst=0.62d0 spn=8
+         include_cooling = .false. /
 
 c crdnt : cartesian:0,cylindrical:1,spherical:2
 c rktype: order of Runge-Kutta (1 is for Euler method)
 c start : Start from this file
 c flux_limiter: 'modified_mc' or 'minmod'
-&simucon  crdnt=2 courant=0.9d0 rktype=3 start=700000 mag_on=.false.
+&simucon  crdnt=2 courant=0.9d0 rktype=3 start=00000 mag_on=.false.
           flux_limiter='modified_mc' /
 
 c periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 

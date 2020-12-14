@@ -27,9 +27,8 @@ program hormone
   use cooling_mod
   use dirichlet_mod
   use timestep_mod
-  
+  use output_mod
   use gravmod
-  use ejectamod,only:nssin,nscos
 
   implicit none
 
@@ -37,7 +36,8 @@ program hormone
   namelist /gridcon/ xi1s, xi1e, xi2s, xi2e, xi3s, xi3e, &
                      is, ie, js, je, ks, ke, imesh, jmesh, kmesh, &
                      sphrn, trnsn1, trnsn2, trnsn3
-  namelist /timecon/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out
+  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
+                     dt_unit, sigfig, write_other_vel, write_shock
   namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, include_cooling
   namelist /simucon/ crdnt,courant, rktype, start, mag_on, flux_limiter
   namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
@@ -56,7 +56,7 @@ program hormone
   ! Reading parameters
   open(unit=1,file='parameters',status='old')
   read(1,NML=gridcon)
-  read(1,NML=timecon)
+  read(1,NML=out_con)
   read(1,NML=eos_con)
   read(1,NML=simucon)
   read(1,NML=bouncon)

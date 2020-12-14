@@ -13,7 +13,7 @@ subroutine eci
  use physval
  use constants
  use ejectamod
- use gravmod,only:extgrv,grvtime,include_extgrv,rdis,grvphi,mc,gis,gie,gjs,gje,gks,gke,grvphiold,coremass,coscyl,sincyl
+ use gravmod,only:extgrv,grvtime,include_extgrv,rdis,grvphi,mc,grvphiold,coremass,coscyl,sincyl
  use pressure_mod
 
  implicit none

@@ -8,11 +8,10 @@
 
 subroutine gridset
 
-  use settings,only:courant,imesh,jmesh,kmesh,eq_sym,start
+  use settings,only:courant,imesh,jmesh,kmesh,eq_sym,start,gravswitch
   use grid
   use constants,only:pi
-  use gravmod
-
+  
   implicit none
 
   integer jetmp,ketmp,dummy
@@ -457,7 +456,7 @@ subroutine gridset
   xi1s = xi1(is-1)
 
  end if
-
+ 
 return
 
 contains

@@ -13,10 +13,11 @@ module recombination_mod
  interface rapid_dtanh
     module procedure rapid_dtanhs,rapid_dtanhv
  end interface rapid_dtanh
- 
+
 contains
 ! **************************************************************************
  function rapid_tanhs(x)
+! Rapid hyperbolic tangent function for scalars
   implicit none
   real*8,intent(in)::x
   real*8:: a,b,x2,rapid_tanhs
@@ -32,6 +33,7 @@ contains
  end function rapid_tanhs
 
  function rapid_tanhv(x)
+! Rapid hyperbolic tangent function for vectors
   implicit none
   real*8,intent(in)::x(:)
   real*8,dimension(size(x)):: rapid_tanhv
@@ -51,6 +53,7 @@ contains
  end function rapid_tanhv
 ! **************************************************************************
  function rapid_dtanhs(x)
+! Rapid hyperbolic tangent derivative (1/cosh^2) for scalars
   implicit none
   real*8,intent(in)::x
   real*8:: a,b,x2,rapid_dtanhs
@@ -64,8 +67,9 @@ contains
    rapid_dtanhs = a/(15d0*b**2)
   end if
  end function rapid_dtanhs
- 
+
  function rapid_dtanhv(x)
+! Rapid hyperbolic tangent derivative (1/cosh^2) for vectors
   implicit none
   real*8,intent(in)::x(:)
   real*8,dimension(size(x)):: rapid_dtanhv
@@ -85,6 +89,7 @@ contains
  end function rapid_dtanhv
 ! **************************************************************************
  subroutine recombination_setup
+! PURPOSE: Set up all fitting coefficients
   use constants,only:amu,kbol
   implicit none
   real*8:: x
@@ -142,6 +147,7 @@ contains
  end function brec1
 ! *************************************************************************** 
  subroutine get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
+! PURPOSE: Get recombination energy and mean molecular weight given rho and T
   implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,intent(out):: erec,derecdT,imurec,dimurecdT
@@ -190,7 +196,7 @@ contains
 ! ***************************************************************************
  
  subroutine get_imurec(logd,T,X,Y,imurec,dimurecdT)
-  ! Calculate the mean molecular weight for partially ionised plasma
+! PURPOSE: Get the mean molecular weight for partially ionised plasma
   implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,intent(out):: imurec,dimurecdT
@@ -229,6 +235,7 @@ contains
 
 ! ***************************************************************************
  real*8 function get_erec(logd,T,X,Y)
+! PURPOSE: Get recombination energy given rho and T
   implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8:: logQ, logT, Yfac

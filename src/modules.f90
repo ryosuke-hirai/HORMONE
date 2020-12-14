@@ -10,18 +10,20 @@ module settings
  implicit none
 
 ! boundary conditions
- integer bc1is, bc1os, bc2is, bc2os, bc3is, bc3os
- integer bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov
- logical eq_sym, dirichlet_on
+ integer:: bc1is, bc1os, bc2is, bc2os, bc3is, bc3os
+ integer:: bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov
+ logical:: eq_sym, dirichlet_on
 ! numerical setups
- integer rktype, crdnt, tnlim, gravswitch, start, tn_out, outstyle, endstyle
- integer eostype, spn, compswitch
- real*8 courant, t_end, dt_out
- real*8 grverr, cgerr, eoserr
- integer imesh, jmesh, kmesh
+ integer:: rktype, crdnt, tnlim, gravswitch, start, tn_out, outstyle, endstyle
+ integer:: eostype, spn, compswitch, sigfig
+ real*8:: courant, t_end, dt_out, dt_unit_in_sec
+ character*5:: dt_unit
+ real*8:: grverr, cgerr, eoserr, HGfac, hgcfl
+ integer:: imesh, jmesh, kmesh
 ! switches
- logical include_extgrv, include_particles, include_cooling, mag_on
- character*30 flux_limiter
+ logical:: include_extgrv, include_particles, include_cooling, mag_on
+ logical:: write_other_vel, write_shock
+ character*30:: flux_limiter
 
 end module settings
 
@@ -34,17 +36,19 @@ module grid
   implicit none
 
 ! number of grids
-  integer is, ie, js, je, ks, ke, in, jn, kn
-  integer i,j,k,n,tn,dim
-  integer rungen, ufn
-  integer musize,sphrn,trnsn1,trnsn2,trnsn3
+  integer:: is, ie, js, je, ks, ke, in, jn, kn
+  integer:: gis, gie, gjs, gje, gks, gke, gin, gjn, gkn
+  integer:: i,j,k,n,tn,dim
+  integer:: rungen, ufn
+  integer:: musize,sphrn,trnsn1,trnsn2,trnsn3
 ! grid center = x, grid interface = xi
   real*8,allocatable,dimension(:):: x1, xi1, dx1, dxi1, idx1, idxi1
   real*8,allocatable,dimension(:):: x2, xi2, dx2, dxi2, idx2, idxi2
   real*8,allocatable,dimension(:):: x3, xi3, dx3, dxi3, idx3, idxi3
-  real*8 time, dt, t_out
-  real*8 xi1s, xi1e, xi2s, xi2e, xi3s, xi3e
+  real*8:: time, dt, t_out
+  real*8:: xi1s, xi1e, xi2s, xi2e, xi3s, xi3e
   real*8,allocatable,dimension(:):: sinc, sini, cosc, cosi
+  real*8,allocatable,dimension(:,:,:):: dvol
 
 end module grid
 
@@ -71,7 +75,7 @@ end module constants
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module physval
   
-  use grid,only:in,jn,kn
+  use grid,only:in,jn,kn,dvol
 
   implicit none
 
@@ -84,12 +88,13 @@ module physval
   real*8,allocatable,dimension(:,:):: mudata
   real*8,allocatable,dimension(:,:,:,:):: spc, spcorg
   real*8,allocatable,dimension(:,:,:,:,:):: dspc, spcflx
+  character*10,allocatable,dimension(:):: species
 
-  real*8 gamma, muconst
+  real*8:: gamma, muconst
 
   real*8,allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
   real*8,allocatable,dimension(:,:):: detg2, idetg2, g33
-  real*8,allocatable,dimension(:,:,:):: idetg3, dvol
+  real*8,allocatable,dimension(:,:,:):: idetg3
 
   integer,allocatable,dimension(:,:,:):: shock
 
@@ -101,7 +106,7 @@ module ninewave
 
   implicit none
 
-  real*8 ch
+  real*8:: ch
 
 end module ninewave
 
@@ -110,12 +115,11 @@ end module ninewave
 module gravmod
 
   use grid,only:ie,je,ke,in,jn,kn
-  use settings,only:gravswitch,grverr,cgerr,include_extgrv
+  use settings,only:gravswitch,grverr,cgerr,include_extgrv,hgcfl,HGfac
 
   implicit none
 
-  integer l, ll, lmax
-  integer gis, gie, gjs, gje, gks, gke, gin, gjn, gkn
+  integer:: l, ll, lmax
   integer,parameter:: llmax = 1000
   integer,allocatable,dimension(:):: modlimax
   real*8,allocatable,dimension(:,:,:):: grvphi, grvphiold, grv1, grv2, grv3, phicg
@@ -126,15 +130,15 @@ module gravmod
   real*8,allocatable,dimension(:,:):: phiio, phiii, phi1o, phi3i, phi3o
   real*8 ,dimension(0:llmax):: ml
   real*8,allocatable,dimension(:,:):: rdis, sincyl, coscyl
-  real*8 dt_old, HGfac, hgcfl, l2norm, grvtime
+  real*8:: dt_old, l2norm, grvtime
   real*8,allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32
   real*8,allocatable,dimension(:,:):: lag
   real*8,allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc
 
 !experimental
-  real*8 h
+  real*8:: h
   real*8,allocatable,dimension(:,:,:,:):: lag11,lag12,lag21,lag22,lag31,lag32
-  real*8 coremass
+  real*8:: coremass
 
 end module gravmod
 
@@ -143,12 +147,12 @@ module ejectamod
 
   implicit none
 
-  integer count, ejdatnum, tstartn, compsize, j_ejmax
+  integer:: count, ejdatnum, tstartn, compsize, j_ejmax
   real*8,allocatable,dimension(:):: t_ej, d_ej, p_ej, e_ej, v_ej, m_ej
   real*8,allocatable,dimension(:,:):: comp_ej
   real*8,allocatable,dimension(:,:,:):: nsdis, nsdfr, nssin, nscos
-  real*8 tstart, pmax, psmass, ejectadistance, sep
-  character*40 ejtbinfile
+  real*8:: tstart, pmax, psmass, ejectadistance, sep
+  character*40:: ejtbinfile
 
 end module ejectamod
 

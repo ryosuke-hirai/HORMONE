@@ -15,9 +15,9 @@ subroutine gravsetup
   implicit none
 
 !-----------------------------------------------------------------------------
-  gin = gie-gis+1
+ gin = gie-gis+1
 
-if(gravswitch==2.or.gravswitch==3)then
+ if(gravswitch==2.or.gravswitch==3)then
 ! Extracting i and j from l
  do l = 1, lmax
 !  modlimax(l) = mod(l,ie)
