@@ -8,7 +8,7 @@
 
 subroutine gridset
 
-  use settings,only:courant,imesh,jmesh,kmesh,eq_sym,start,gravswitch
+  use settings,only:courant,imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
   use grid
   use constants,only:pi
   

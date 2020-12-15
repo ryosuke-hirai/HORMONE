@@ -70,7 +70,6 @@ contains
   use settings,only:courant,outstyle
   use grid
   use physval
-  use ninewave
   use constants,only:huge
 
   implicit none

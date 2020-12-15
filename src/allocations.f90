@@ -20,7 +20,6 @@ subroutine allocations
 
  in = ie + 2 ; jn = je + 2 ; kn = ke + 2
  gin = gie + 2 ; gjn = gje + 2 ; gkn = gke + 2
-! lmax = ie*je*ke
  lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
 
  allocate( &
@@ -51,7 +50,6 @@ subroutine allocations
   detg2(-1:in,-1:jn), idetg2(-1:in,-1:jn), g33(-1:in,-1:jn), &
   idetg3(-1:in,-1:jn,-1:kn), dvol(-1:in,-1:jn,-1:kn), &
 
-!  grvphi(-1:in,-1:jn,-1:kn), grvphiold(-1:in,-1:jn,-1:kn), phicg(-1:in,-1:jn,-1:kn),&
   grvphi   (gis-2:gin,gjs-2:gjn,gks-2:gkn), &
   grvphiold(gis-2:gin,gjs-2:gjn,gks-2:gkn), &
   hgsrc(gis:gie,gjs:gje,gks:gke), &
@@ -61,14 +59,12 @@ subroutine allocations
   preca(0:lmax), precb(0:lmax), precc(0:lmax), precd(0:lmax), prece(0:lmax), &
   x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax), &
  
-!  phiio(ie+1:ie+2,-1:jn), phiii(is-2:is-1,-1:jn), &
   phiio(gie+1:gin,gjs-2:gjn), phiii(gis-2:gis-1,gjs-2:gjn), &
-!  phi1o(ie+1:ie+2,-1:kn), phi3i(-1:in,ks-2:ks-1), phi3o(-1:in,ke+1:ke+2), &
   phi1o(gie+1:gin,gks-2:gkn), phi3i(gis-2:gin,gks-2:gks-1), &
   phi3o(gis-2:gin,gke+1:gkn), &
   mc(is-1:in) &
 
- )
+  )
 
 ! allocate Dirichlet variables if Dirichlet boundary is applied
  if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
@@ -102,5 +98,6 @@ subroutine allocations
  T = 1d3  ! initial guess for temperature
  cf = 1d0
  b1 = 0d0; b2 = 0d0; b3 = 0d0
-return
+ 
+ return
 end subroutine allocations

@@ -12,7 +12,6 @@ subroutine interpolation
  use settings,only:compswitch,spn,eostype,mag_on
  use grid
  use physval
- use ninewave
  use fluxlimiter
  use pressure_mod
 

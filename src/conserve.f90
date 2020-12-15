@@ -10,7 +10,6 @@ subroutine conserve
 
   use grid
   use physval
-  use ninewave
 
   implicit none
 

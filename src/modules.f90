@@ -31,8 +31,8 @@ end module settings
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module grid
 
-  use settings,only:crdnt
-
+ use settings,only:crdnt
+ 
   implicit none
 
 ! number of grids
@@ -60,7 +60,7 @@ module constants
 
 ! all in cgs units
   real*8,parameter:: pi = acos(-1d0)
-  real*8,parameter:: G  = 6.67428d-8
+  real*8,parameter:: G  = 6.67428d-8, clight = 2.99792458d10
   real*8,parameter:: msun = 1.989d33, rsun = 6.963d10, &
                      msolar = msun, rsolar = rsun
   real*8,parameter:: kbol = 1.38064852d-16, amu = 1.6605402d-24
@@ -75,8 +75,6 @@ end module constants
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module physval
   
-  use grid,only:in,jn,kn,dvol
-
   implicit none
 
   real*8,allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3, ptot
@@ -88,9 +86,9 @@ module physval
   real*8,allocatable,dimension(:,:):: mudata
   real*8,allocatable,dimension(:,:,:,:):: spc, spcorg
   real*8,allocatable,dimension(:,:,:,:,:):: dspc, spcflx
-  character*10,allocatable,dimension(:):: species
+  character(len=10),allocatable:: species(:)
 
-  real*8:: gamma, muconst
+  real*8:: gamma, muconst, ch
 
   real*8,allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
   real*8,allocatable,dimension(:,:):: detg2, idetg2, g33
@@ -99,16 +97,6 @@ module physval
   integer,allocatable,dimension(:,:,:):: shock
 
 end module physval
-
-
-!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-module ninewave
-
-  implicit none
-
-  real*8:: ch
-
-end module ninewave
 
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

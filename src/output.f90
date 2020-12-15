@@ -165,7 +165,7 @@ return
 end subroutine output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                         SUBROUTINE WRITE_GRID
+!                          SUBROUTINE WRITE_GRID
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output gridfile.bin
@@ -196,8 +196,8 @@ subroutine write_grid
 
  open(unit=50,file='data/gridfile.dat',status='replace')
  write(50,'()')
- write(formhead,'(i1,"(i5),",i1,"(a",i2,")")')dim,dim+1,sigfig+8
- write(formval ,'(i1,"(i5),",i1,"(1x,1PE",i2,".",i2,"e2)")')&
+ write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')dim,dim+1,sigfig+8
+ write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
      dim,dim+1,sigfig+7,sigfig-1
 
  select case (dim)
@@ -327,7 +327,7 @@ subroutine write_bin
  
 !-----------------------------------------------------------------------------
 
- call set_file_name('bin',binfile)
+ call set_file_name('bin',tn,time,binfile)
  open(unit=10,file=binfile,status='replace',form='unformatted')
 
  write(10)tn,time
@@ -367,8 +367,8 @@ subroutine write_plt
 
  implicit none
 
- character*50:: pltfile,forma,forme,formi
- character*20:: header(50)='aaa'
+ character*50:: pltfile
+ character*20:: header(50)='aaa',forma,forme,formi
  integer:: unitn,columns
 
 !-----------------------------------------------------------------------------
@@ -385,7 +385,7 @@ subroutine write_plt
  unitn = 30
  
 ! Open file
- call set_file_name('plt',pltfile)
+ call set_file_name('plt',tn,time,pltfile)
  open(unit=unitn,file = pltfile, status='replace')
 
 ! Write time and time step
@@ -399,7 +399,7 @@ subroutine write_plt
  end do
  write(unitn,'()')
  do n = 1, columns
-  write(unitn,forma,advance="no") header(n)
+  write(unitn,forma,advance="no") trim(adjustl(header(n)))
  end do
  write(unitn,'()')
 
@@ -504,15 +504,16 @@ end subroutine write_plt
 
 ! PURPOSE: To create a file name with a given prefix
 
-subroutine set_file_name(prefix,filename)
+subroutine set_file_name(prefix,tn,time,filename)
 
  use settings,only:dt_unit_in_sec,dt_unit,outstyle
- use grid,only:time,tn
 
  implicit none
 
- character*5,intent(in):: prefix
- character*50,intent(out)::filename
+ character(*),intent(in):: prefix
+ character(*),intent(out)::filename
+ integer,intent(in):: tn
+ real*8,intent(in):: time
  
 !-----------------------------------------------------------------------------
  select case(outstyle)
@@ -545,17 +546,16 @@ subroutine get_header(header,columns)
 
  implicit none
 
- character*20,intent(inout):: header(50)
+ character(*),intent(inout):: header(50)
  integer,intent(out):: columns
  integer n
 
 !-----------------------------------------------------------------------------
 ! Output density/internal energy/pressure by default
- header(1) = 'd'
- header(2) = 'e'
- header(3) = 'p'
- 
- columns = 3
+ columns = 0
+ call add_column('d',columns,header)
+ call add_column('e',columns,header)
+ call add_column('p',columns,header)  
  
 ! Decide which velocity components to output
  select case(dim)
@@ -623,7 +623,7 @@ return
 end subroutine get_header
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE ADD_COLUMN
+!                          SUBROUTINE ADD_COLUMN
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To add a column of output variable into the header array
@@ -632,8 +632,8 @@ pure subroutine add_column(string,columns,header)
 
  implicit none
 
- character*20,intent(inout):: header(50)
- character*20,intent(in):: string
+ character(*),intent(inout):: header(50)
+ character(*),intent(in):: string
  integer,intent(inout):: columns
 
 !-----------------------------------------------------------------------------
@@ -659,8 +659,7 @@ subroutine write_val(unitn,i,j,k,forme,header)
  implicit none
 
  integer,intent(in):: unitn,i,j,k
- character*50,intent(in):: forme
- character*20,intent(in):: header(50)
+ character(*),intent(in):: forme, header(:)
  integer:: n, nn
 
 !-----------------------------------------------------------------------------

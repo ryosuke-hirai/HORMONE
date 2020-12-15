@@ -19,25 +19,7 @@ subroutine initialcondition
 
  if(start==0)then
 
-!  call KHtest
-
-!  call shocktube
-
-!  call orszagtang
-
-!  call switchon
-
-!  call sedovtaylor
-
-!  call explosion
-
-!  call companion
-
-!  call headoncollision
-
-!  call spinupRSG
-
-  call eci
+  call agndisk
 
 ! to set internal energy consistently ------------------------------!
   call meanmolweight                                                !
