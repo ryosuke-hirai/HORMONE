@@ -1,5 +1,8 @@
 module hllflux_mod
 
+ public:: hlldflux,hllflux
+ private:: fstar
+ 
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -14,7 +17,7 @@ contains
 subroutine hlldflux(fflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr,el,er,&
                     ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
 
-  use ninewave
+  use physval,only:ch
 
   implicit none
 
@@ -145,7 +148,7 @@ end subroutine hlldflux
 
 subroutine fstar(tmpflux,d,v1,v2,v3,b1,b2,b3,e,p,phi)
 
-  use ninewave
+  use physval,only:ch
 
   implicit none
 
@@ -176,10 +179,7 @@ end subroutine fstar
 
 ! PURPOSE: To calcaulte hllflux
 
-subroutine hllflux(fflux,fl,fr,ul,ur,cfl,cfr,vl,vr)
-
-  use grid
-  use physval
+pure subroutine hllflux(fflux,fl,fr,ul,ur,cfl,cfr,vl,vr)
 
   implicit none
 

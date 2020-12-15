@@ -11,7 +11,6 @@ subroutine numflux
   use settings,only:compswitch,spn,eq_sym,eostype,mag_on
   use grid
   use physval
-  use ninewave
   use hllflux_mod
   use pressure_mod
 
