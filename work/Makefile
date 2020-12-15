@@ -4,17 +4,20 @@ FCFLAG=
 # for gfortran
 ifeq (${FC},gfortran)
 MODFLAG= -J
-FCFLAG+= -fopenmp -ffree-line-length-512 -ffpe-trap=invalid,zero,overflow -fbacktrace #-fmax-stack-var-size=32768 
+FCFLAG+= -fopenmp -ffree-line-length-512 #-fmax-stack-var-size=32768
+DBFLAG= -ffpe-trap=invalid,zero,overflow -fbacktrace 
 endif
 
 # for ifort
 ifeq (${FC},ifort)
 MODFLAG= -module 
-FCFLAG+= -qopenmp #-heap-arrays -traceback -fpe0 -CB #-pg -check all 
+FCFLAG+= -qopenmp #-heap-arrays
+DBFLAG= -traceback -fpe0 -CB #-pg -check all
 endif
 
+# directories
 OBJ_DIR = obj
-SRC_DIR = $(HORMONE_DIR)/src
+SRC_DIR = ../src
 BIN_DIR = $(HORMONE_DIR)/bin
 
 TARGET = hormone
@@ -30,6 +33,9 @@ OBJ = $(patsubst $(SRC_DIR)/%.f90,%.o,$(SRC))
 OBJ_F = $(patsubst %.o,$(OBJ_DIR)/%.o,$(OBJ))
 
 all: $(TARGET)
+
+debug: FCFLAG+=$(DBFLAG)
+debug: $(TARGET)
 
 $(TARGET): $(OBJ_F)
 	$(FC) $(FCFLAG) -o $@ $(OBJ_F)

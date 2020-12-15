@@ -4,26 +4,26 @@ c sphrn : Central sphrn cells will be treated in 1D (spherical coord.)
 c         sphrn==0 to do full multi-D. Keep it small (sphrn<<ie) anyway.
 c trnsn1/2/3 : Number of cells in transition layer from fully 1D to multi-D.
 c              Every 8/4/2 cells will be grouped up.
-&gridcon  xi1s=0d6 xi1e=2.1d14 xi2s=-1.d0 xi2e=1.d0 xi3s=0d13 xi3e=2.1d14
-	  is=1 ie=900 js=1 je=200 ks=1 ke=1
+&gridcon  xi1s=0d6 xi1e=1.5d18 xi2s=-1.d0 xi2e=1.d0 xi3s=0d13 xi3e=2.1d14
+	  is=1 ie=600 js=1 je=200 ks=1 ke=1
 	  imesh=1 jmesh=2 kmesh=0
 	  sphrn=10 trnsn1=10 trnsn2=20 trnsn3=20 /
 
-&geoscon  x1min=4d9 x2min=0 x3min=2d9 /
+&geoscon  x1min=1.5d13 x2min=0 x3min=2d9 /
 
 c outstyle/endstyle : time=1, timestep=2
 c dt_unit : Give name of dt_unit (current options are 's','hr','d','yr')
 c sigfig : How many significant figures in output values
 c write_other_vel : Set to .true. if 2.5D
-&out_con  outstyle=1 endstyle=1
-          tnlim=00000000 t_end=1d7 dt_out=1.d3 tn_out=1
-          dt_unit='s' sigfig=7 write_other_vel =.false. write_shock =.false. /
+&out_con  outstyle=1 endstyle=2
+          tnlim=00000000 t_end=5d9 dt_out=1.d2 tn_out=1
+          dt_unit='d' sigfig=7 write_other_vel =.false. write_shock =.false. /
 
 c eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
 c compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 c muconst : mean molecular weight (if compswitch=0 or background)
 c spn : number of species (>=3)
-&eos_con eostype = 1 eoserr=1d-10 compswitch=2 muconst=0.62d0 spn=8
+&eos_con eostype = 1 eoserr=1d-10 compswitch=2 muconst=0.62d0 spn=5
          include_cooling = .false. /
 
 c crdnt : cartesian:0,cylindrical:1,spherical:2
