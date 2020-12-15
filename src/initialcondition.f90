@@ -12,7 +12,8 @@ subroutine initialcondition
  use grid
  use physval
  use pressure_mod
-
+ use composition_mod
+ 
  implicit none
 
 !----------------------------------------------------------------------------

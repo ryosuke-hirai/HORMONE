@@ -24,10 +24,20 @@ subroutine agndisk
  d_disk = 1d-15
  d_amb  = 1d-25
  e_bcg  = 1d-30
- M_SMBH = 1d7*msun
+ M_SMBH = 1d8*msun
  r_disk = 1d5 ! in gravitational radii
  aspratio = 5d-2
-
+! disk composition
+ spc(2,:,:,:) = 0.26797147940625970d0!he4
+ spc(3,:,:,:) = 2.4091251279941919d-3!c12
+ spc(4,:,:,:) = 7.0571096437237744d-4!n14
+ spc(5,:,:,:) = 6.5523144958419283d-3!o16
+ spc(6,:,:,:) = 1.4696223348338588d-3!ne20
+ spc(7,:,:,:) = 1.0078218370915769d-3!fe56
+ spc(8,:,:,:) = 3.353548168440335d-3!other metals
+ spc(1,:,:,:) = 1d0-spc(2,:,:,:)-spc(3,:,:,:)-spc(4,:,:,:)-spc(5,:,:,:) &
+                   -spc(6,:,:,:)-spc(7,:,:,:)-spc(8,:,:,:)
+ 
 ! explosion parameters
  Eexp = 1d51
  Mexp = 1.3d0*msun
@@ -76,8 +86,11 @@ subroutine agndisk
  species(1) = 'h1'
  species(2) = 'he4'
  species(3) = 'c12'
- species(4) = 'o16'
- species(5) = 'metal'
+ species(4) = 'n14'
+ species(5) = 'o16'
+ species(6) = 'ne20'
+ species(7) = 'fe56'
+ species(8) = 'others'
  
 return
 end subroutine agndisk

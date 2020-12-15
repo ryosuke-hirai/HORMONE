@@ -29,7 +29,8 @@ program hormone
   use timestep_mod
   use output_mod
   use gravmod
-
+  use composition_mod
+  
   implicit none
 
 ! set parameters

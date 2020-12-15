@@ -13,7 +13,8 @@ subroutine numflux
   use physval
   use hllflux_mod
   use pressure_mod
-
+  use composition_mod
+  
   implicit none
 
   real*8:: cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &

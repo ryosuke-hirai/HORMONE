@@ -1,3 +1,10 @@
+module composition_mod
+ implicit none
+
+ public:: meanmolweight, get_imu
+ 
+ contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                         SUBROUTINE MEANMOLWEIGHT
@@ -52,7 +59,7 @@ subroutine meanmolweight
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     imu(i,j,k) = 0.25d0*(6d0*spc(1,i,j,k)+spc(2,i,j,k)+2d0)
+     imu(i,j,k) = get_imu(spc(1:2,i,j,k))!0.25d0*(6d0*spc(1,i,j,k)+spc(2,i,j,k)+2d0)
     end do
    end do
   end do
@@ -97,4 +104,13 @@ subroutine meanmolweight
 return
 end subroutine meanmolweight
 
+function get_imu(spc) result(imu)
+ implicit none
+ real*8,intent(in)::spc(1:2)
+ real*8:: imu
 
+ imu = 0.25d0*(6d0*spc(1)+spc(2)+2d0)
+ 
+end function get_imu
+
+end module composition_mod
