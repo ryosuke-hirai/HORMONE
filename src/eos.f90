@@ -28,6 +28,7 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
  bsq = 0.5d0*(b1**2+b2**2+b3**2)
  
  eint = e - 0.5d0*d*(v1**2+v2**2+v3**2) - bsq
+ if(eint<=0d0)eint = e*1d-10! temporary
 
  select case (eostype)
  case(0) ! ideal gas
@@ -219,6 +220,7 @@ subroutine pressure
      vsq = v1(i,j,k)**2 + v2(i,j,k)**2 + v3(i,j,k)**2
      bsq = b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2
      eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
+!     print*,i,j,k,eint(i,j,k),e(i,j,k),v1(i,j,k),v2(i,j,k),v3(i,j,k)
 !eint(i,j,k) = max(eint(i,j,k),1d-4*e(i,j,k))
 !    T(i,j,k) = eint(i,j,k) / (d(i,j,k)*fac_egas) ! initial guess
      corr = huge

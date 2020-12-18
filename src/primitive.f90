@@ -11,7 +11,8 @@ subroutine primitive
   use grid
   use physval
   use pressure_mod,only:pressure
-
+  use composition_mod,only:meanmolweight
+  
   implicit none
 
 !--------------------------------------------------------------------
@@ -35,6 +36,7 @@ subroutine primitive
   end do
 !$omp end parallel do
 
+  call meanmolweight
   call pressure
 
 return

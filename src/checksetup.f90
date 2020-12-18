@@ -127,6 +127,7 @@ subroutine checksetup
   end select
   dt_out = dt_out*dt_unit_in_sec
   t_out = dt_out
+  t_end = t_end*dt_unit_in_sec
 
 ! Spherical composition only for spherical coordinates
   if(compswitch==1.and.crdnt/=2)then

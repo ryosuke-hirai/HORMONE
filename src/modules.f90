@@ -62,9 +62,9 @@ module constants
   real*8,parameter:: pi = acos(-1d0)
   real*8,parameter:: G  = 6.67428d-8, clight = 2.99792458d10
   real*8,parameter:: msun = 1.989d33, rsun = 6.963d10, &
-                     msolar = msun, rsolar = rsun
+                     msolar = msun, rsolar = rsun, au = 1.49598073d13
   real*8,parameter:: kbol = 1.38064852d-16, amu = 1.6605402d-24
-  real*8,parameter:: arad = 7.5646d-15
+  real*8,parameter:: arad = 7.5646d-15, sigma = 5.67051d-5
   real*8,parameter:: year = 3600d0*24d0*365.25d0
   real*8,parameter:: huge = 1d99, tiny = 1d-99
   real*8:: fac_pgas, fac_egas

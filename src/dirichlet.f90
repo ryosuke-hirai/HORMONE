@@ -1,7 +1,5 @@
 module dirichlet_mod
 
-  use grid,only:in,jn,kn
-
   implicit none
 
   real*8,allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30

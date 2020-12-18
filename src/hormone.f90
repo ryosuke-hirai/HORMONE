@@ -96,6 +96,7 @@ program hormone
    do while(time < t_end.and.tn<=tnlim)
 
     call timestep
+    print*,tn,time,dt
 
     if(tn>0)call gravity
     if(dirichlet_on)call dirichletbound

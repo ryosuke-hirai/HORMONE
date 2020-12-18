@@ -203,23 +203,23 @@ subroutine write_grid
  select case (dim)
 ! 1D outputs
  case(1)
-  write(formnum,'("(i5,2i",i2,")")')sigfig+8
+  write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
   write(50,formnum)1,2,3
   
   if(ie>1)then
-   write(50,formhead)'i','x1','dvol'
+   write(50,formhead)'# i','x1','dvol'
    j=js;k=ks
    do i = is, ie
     write(50,formval)i,x1(i),dvol(i,j,k)    
    end do
   elseif(je>1)then
-   write(50,formhead)'j','x2','dvol'
+   write(50,formhead)'# j','x2','dvol'
    i=is;k=ks
    do j = js, je
     write(50,formval)j,x2(j),dvol(i,j,k)    
    end do
   elseif(ke>1)then
-   write(50,formhead)'k','x3','dvol'
+   write(50,formhead)'# k','x3','dvol'
    i=is;j=js
    do k = ks, ke
     write(50,formval)k,x3(k),dvol(i,j,k)    
@@ -228,11 +228,11 @@ subroutine write_grid
 
 ! 2D outputs
  case(2)
-  write(formnum,'("(2i5,3i",i2,")")')sigfig+8
+  write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
   write(50,formnum)1,2,3,4,5
   
   if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
-   write(50,formhead)'i','j','x1','x2','dvol'
+   write(50,formhead)'# i','j','x1','x2','dvol'
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
@@ -260,7 +260,7 @@ subroutine write_grid
    end if
    
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
-   write(50,formhead)'i','k','x1','x3','dvol'
+   write(50,formhead)'# i','k','x1','x3','dvol'
    j=js
    do k = ks, ke
 ! writing inner boundary for polar coordinates
@@ -273,7 +273,7 @@ subroutine write_grid
    
   elseif(ie==1)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
-   write(50,formhead)'j','k','x2','x3','dvol'
+   write(50,formhead)'# j','k','x2','x3','dvol'
    i=is
    do k = ks, ke
     do j = js, je
@@ -284,10 +284,10 @@ subroutine write_grid
   end if
 
  case(3)
-  write(formnum,'("(3i5,4i",i2,")")')sigfig+8
+  write(formnum,'("(",a4,"i4,2i5,4i",i2,")")')'"#",',sigfig+8
   write(50,formnum)1,2,3,4,5,6,7
   
-  write(50,formhead)'i','j','k','x1','x2','x3','dvol'
+  write(50,formhead)'# i','j','k','x1','x2','x3','dvol'
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -432,7 +432,7 @@ subroutine write_plt
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=js-1
+    j=js
     do i = is, ie
      call write_val(unitn,i,j,k,forme,header)
     end do
@@ -448,7 +448,7 @@ subroutine write_plt
 
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=je+1
+    j=je
     do i = is, ie
      call write_val(unitn,i,j,k,forme,header)
     end do

@@ -616,35 +616,56 @@ subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
 
 !-----------------------------------------------------------------------------
 
-! for equal spacing in cos(theta)
+!!$! for equal spacing in cos(theta)
+!!$ allocate( xi2(js-2:je+2) )
+!!$! dcos = (cos(xi2e)-cos(xi2s))/dble((je-js+1))
+!!$ dcos = (cos(xi2e)-cos(xi2s))/dble(80)
+!!$
+!!$ xi2(js-1) = 1d0
+!!$ do j = js, 40
+!!$  xi2(j) = xi2(j-1) + dcos*0.125d0
+!!$ end do
+!!$ do j = 41, 60
+!!$  xi2(j) = xi2(j-1) + dcos*0.25d0
+!!$ end do
+!!$ do j = 61, 80
+!!$  xi2(j) = xi2(j-1) + dcos*0.5d0
+!!$ end do
+!!$ do j = 81, 120
+!!$  xi2(j) = xi2(j-1) + dcos
+!!$ end do
+!!$ do j = 121, 140
+!!$  xi2(j) = xi2(j-1) + dcos*0.5d0
+!!$ end do
+!!$ do j = 141, 160
+!!$  xi2(j) = xi2(j-1) + dcos*0.25d0
+!!$ end do
+!!$ do j = 161, 200
+!!$  xi2(j) = xi2(j-1) + dcos*0.125d0
+!!$ end do
+!!$ xi2(je) = -1d0
+!!$
+!!$ do j = js-1, je
+!!$  xi2(j) = acos(xi2(j))
+!!$ end do
+!!$ do j = js, je
+!!$  dxi2(j) = xi2(j) - xi2(j-1)
+!!$ end do
+!!$ dxi2(js-1) = dxi2(js)
+!!$ dxi2(js-2) = dxi2(js+1)
+!!$ dxi2(je+1) = dxi2(je)
+!!$ dxi2(je+2) = dxi2(je-1)
+
+
+ ! for equal spacing in cos(theta)
  allocate( xi2(js-2:je+2) )
-! dcos = (cos(xi2e)-cos(xi2s))/dble((je-js+1))
- dcos = (cos(xi2e)-cos(xi2s))/dble(80)
+ dcos = (cos(xi2e)-cos(xi2s))/dble(je-js+1)
 
  xi2(js-1) = 1d0
- do j = js, 40
-  xi2(j) = xi2(j-1) + dcos*0.125d0
- end do
- do j = 41, 60
-  xi2(j) = xi2(j-1) + dcos*0.25d0
- end do
- do j = 61, 80
-  xi2(j) = xi2(j-1) + dcos*0.5d0
- end do
- do j = 81, 120
+ do j = js, je
   xi2(j) = xi2(j-1) + dcos
  end do
- do j = 121, 140
-  xi2(j) = xi2(j-1) + dcos*0.5d0
- end do
- do j = 141, 160
-  xi2(j) = xi2(j-1) + dcos*0.25d0
- end do
- do j = 161, 200
-  xi2(j) = xi2(j-1) + dcos*0.125d0
- end do
- xi2(je) = -1d0
-
+ xi2(je) = 0d0
  do j = js-1, je
   xi2(j) = acos(xi2(j))
  end do
@@ -655,8 +676,6 @@ subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
  dxi2(js-2) = dxi2(js+1)
  dxi2(je+1) = dxi2(je)
  dxi2(je+2) = dxi2(je-1)
-
-
 
 return
 end subroutine other_jmesh

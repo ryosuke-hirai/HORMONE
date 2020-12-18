@@ -11,6 +11,7 @@ subroutine rungekutta
   use settings,only:rktype,compswitch,spn
   use grid
   use physval
+  use composition_mod
 
   implicit none
 
