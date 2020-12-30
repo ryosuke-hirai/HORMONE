@@ -1,7 +1,7 @@
 module output_mod
  implicit none
 
- public:: output
+ public:: output,set_file_name
  private:: write_grid,write_bin,write_plt,get_header,add_column, &
            write_val,gravpot1d
 

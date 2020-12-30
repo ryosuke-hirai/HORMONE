@@ -16,19 +16,18 @@ subroutine restart
  use pressure_mod
  use particle_mod
  use dirichlet_mod
+ use output_mod,only:set_file_name
  
  implicit none
 
+ real*8:: starttime
  character*30 startfile, bptfile
 
 !-----------------------------------------------------------------------------
 
- if(outstyle==1)then
-  write(startfile,'(a8,i11.11,a5)')'data/bin',start,'s.dat'
- elseif(outstyle==2)then
-  write(startfile,'(a8,i8.8,a4)')'data/bin',start,'.dat'
- end if
-
+ starttime = dble(start)*dt_unit_in_sec
+ call set_file_name('bin',start,starttime,startfile)
+ 
  open(unit=11,file=startfile,status='old',form='unformatted')
 
  read(11)tn,time
