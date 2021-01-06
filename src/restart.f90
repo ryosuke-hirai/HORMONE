@@ -52,7 +52,7 @@ subroutine restart
  close(11)
 
 
- call dirichletbound
+ if(dirichlet_on)call dirichletbound
 
 !bptfile----------------------------------------------------------------
  if(include_particles)then
