@@ -1,4 +1,8 @@
-FC = gfortran
+# Some versions of make default FC to f77
+ifeq ($(FC),f77)
+    FC = gfortran
+endif
+FC ?= gfortran
 FCFLAG=
 
 # for gfortran
