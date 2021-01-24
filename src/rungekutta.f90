@@ -280,37 +280,7 @@ subroutine rungekutta
 ! Average out central cells in spherical coordinates
 ! -> This avoids severe Courant conditions at the centre.
   if(sphrn>0.and.crdnt==2)then
-   do ufn = 1, 9
-    do i = is, is+2
-     u(i,js:je,ks:ke,ufn) = sum( u(i,js:je,ks:ke,ufn)*dvol(i,js:je,ks:ke) ) &
-                          / sum( dvol(i,js:je,ks:ke) )
-    end do
-    do i = is+3, sphrn
-     do j = js, je, 40
-      u(i,j:j+39,ks:ke,ufn) = sum( u(i,j:j+39,ks:ke,ufn)*dvol(i,j:j+39,ks:ke) ) &
-                           / sum( dvol(i,j:j+39,ks:ke) )
-      
-     end do
-    end do
-    do i = sphrn+1, sphrn+trnsn1
-     do j = js, je,8
-      u(i,j:j+7,ks:ke,ufn) = sum( u(i,j:j+7,ks:ke,ufn)*dvol(i,j:j+7,ks:ke) ) &
-                           / sum( dvol(i,j:j+7,ks:ke) )
-     end do
-    end do
-    do i = sphrn+trnsn1+1, sphrn+trnsn1+trnsn2
-     do j = js, je,4
-      u(i,j:j+3,ks:ke,ufn) = sum( u(i,j:j+3,ks:ke,ufn)*dvol(i,j:j+3,ks:ke) ) &
-                           / sum( dvol(i,j:j+3,ks:ke) )
-     end do
-    end do
-    do i = sphrn+trnsn1+trnsn2+1, sphrn+trnsn1+trnsn2+trnsn3
-     do j = js, je,2
-      u(i,j:j+1,ks:ke,ufn) = sum( u(i,j:j+1,ks:ke,ufn)*dvol(i,j:j+1,ks:ke) ) &
-                           / sum( dvol(i,j:j+1,ks:ke) )
-     end do
-    end do
-   end do
+! First average mass fractions
    if(compswitch>=2)then
     do i = is, is+2
      do n = 1, spn
@@ -356,6 +326,39 @@ subroutine rungekutta
      end do
     end do
    end if
+
+! Then average other conserved quantities
+   do ufn = 1, 9
+    do i = is, is+2
+     u(i,js:je,ks:ke,ufn) = sum( u(i,js:je,ks:ke,ufn)*dvol(i,js:je,ks:ke) ) &
+                          / sum( dvol(i,js:je,ks:ke) )
+    end do
+    do i = is+3, sphrn
+     do j = js, je, 40
+      u(i,j:j+39,ks:ke,ufn) = sum( u(i,j:j+39,ks:ke,ufn)*dvol(i,j:j+39,ks:ke) ) &
+                           / sum( dvol(i,j:j+39,ks:ke) )
+      
+     end do
+    end do
+    do i = sphrn+1, sphrn+trnsn1
+     do j = js, je,8
+      u(i,j:j+7,ks:ke,ufn) = sum( u(i,j:j+7,ks:ke,ufn)*dvol(i,j:j+7,ks:ke) ) &
+                           / sum( dvol(i,j:j+7,ks:ke) )
+     end do
+    end do
+    do i = sphrn+trnsn1+1, sphrn+trnsn1+trnsn2
+     do j = js, je,4
+      u(i,j:j+3,ks:ke,ufn) = sum( u(i,j:j+3,ks:ke,ufn)*dvol(i,j:j+3,ks:ke) ) &
+                           / sum( dvol(i,j:j+3,ks:ke) )
+     end do
+    end do
+    do i = sphrn+trnsn1+trnsn2+1, sphrn+trnsn1+trnsn2+trnsn3
+     do j = js, je,2
+      u(i,j:j+1,ks:ke,ufn) = sum( u(i,j:j+1,ks:ke,ufn)*dvol(i,j:j+1,ks:ke) ) &
+                           / sum( dvol(i,j:j+1,ks:ke) )
+     end do
+    end do
+   end do
   end if
 
   call primitive
