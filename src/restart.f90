@@ -41,7 +41,7 @@ subroutine restart
   read(11)grvphiold(gis:gie,gjs:gje,gks:gke), &
           dt_old
  end if
- if(compswitch>=2)read(11)spc(1:spn,is:ie,js:je,ks:ke)
+ if(compswitch>=2)read(11)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
  if(mag_on)then
   read(11) b1(is:ie,js:je,ks:ke), &
            b2(is:ie,js:je,ks:ke), &
