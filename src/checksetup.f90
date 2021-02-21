@@ -29,6 +29,11 @@ subroutine checksetup
   hgcfl   = hgcfl   / dble(dim) ! To set a consistent hgcfl number.
   if(dim/=2) write_other_vel = .false.
 
+! Set uniform mesh if that dimension it not used
+  if(ie==0)imesh=0
+  if(je==0)jmesh=0
+  if(ke==0)kmesh=0
+  
 ! To warn the periodic boundary condition
   if(bc1is*bc1os==0.and.bc1is+bc1os/=0)then
    print *,"Error from boundary condition 'bc1is,bc1os'"
