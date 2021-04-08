@@ -116,7 +116,6 @@ subroutine checksetup
   gis = min(gis,is) ; gjs = min(gjs,js) ; gks = min(gks,ks)
   gie = max(gie,ie) ; gje = max(gje,je) ; gke = max(gke,ke)
 
-!  if(gravswitch==3)courant = courant / HGfac
   select case(dt_unit)
   case('yr')
    dt_unit_in_sec = 3600d0*24d0*365.25d0
@@ -124,6 +123,8 @@ subroutine checksetup
    dt_unit_in_sec = 3600*24d0
   case('hr')
    dt_unit_in_sec = 3600d0
+  case('min')
+   dt_unit_in_sec = 60d0
   case('s')
    dt_unit_in_sec = 1d0
   case default
