@@ -187,7 +187,8 @@ contains
 ! PURPOSE: Get recombination energy and mean molecular weight given rho and T
   implicit none
   real*8,intent(in):: logd,T,X,Y
-  real*8,intent(out):: erec,derecdT,imurec,dimurecdT
+  real*8,intent(out):: erec, imurec
+  real*8,intent(out),optional:: derecdT, dimurecdT
   real*8,dimension(1:4):: e, xi, zi
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
@@ -198,13 +199,21 @@ contains
   e(3) = eion(3)*Y*0.25d0
   e(4) = eion(4)*Y*0.25d0
 
-  call get_xion(logd,T,X,Y,xi,zi)
+  if(present(derecdT).or.present(dimurecdT))then
+   call get_xion(logd,T,X,Y,xi,zi)
+  else
+   call get_xion(logd,T,X,Y,xi)
+  end if
 
   erec = sum(e(1:4)*xi(1:4))
-  imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
+  if(present(derecdT))then
+   derecdT = sum(e(1:4)*zi(1:4))
+  end if
 
-  derecdT = sum(e(1:4)*zi(1:4))
-  dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
+  imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
+  if(present(dimurecdT))then
+   dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
+  end if
 
   return
  end subroutine get_erec_imurec
@@ -215,16 +224,23 @@ contains
 ! PURPOSE: Get the mean molecular weight for partially ionised plasma
   implicit none
   real*8,intent(in):: logd,T,X,Y
-  real*8,intent(out):: imurec,dimurecdT
+  real*8,intent(out):: imurec
+  real*8,intent(out),optional:: dimurecdT
   real*8,dimension(1:4):: xi, zi
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
 
-  call get_xion(logd,T,X,Y,xi,zi)
+  if(present(dimurecdT))then
+   call get_xion(logd,T,X,Y,xi,zi)
+  else
+   call get_xion(logd,T,X,Y,xi)
+  end if
 
   imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
-  dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
+  if(present(dimurecdT))then
+   dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
+  end if
   
   return
  end subroutine get_imurec
