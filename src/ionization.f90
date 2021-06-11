@@ -1,4 +1,4 @@
-module recombination_mod
+module ionization_mod
  implicit none
 
  real*8,allocatable,public,dimension(:):: eion
@@ -88,7 +88,7 @@ contains
   end do
  end function rapid_dtanhv
 ! **************************************************************************
- subroutine recombination_setup
+ subroutine ionization_setup
 ! PURPOSE: Set up all fitting coefficients
   use constants,only:amu,kbol
   implicit none
@@ -120,7 +120,7 @@ contains
                / (15d0*((x*x+28d0)*x*x+63d0)**2d0)
 
   return
- end subroutine recombination_setup
+ end subroutine ionization_setup
 ! ***************************************************************************
  real*8 function arec1(x)
 ! molecular hydrogen fit coefficients
@@ -145,14 +145,50 @@ contains
    brec1 = brec1c(2)
   end if
  end function brec1
-! *************************************************************************** 
+! ***************************************************************************
+ 
+ subroutine get_xion(logd,T,X,Y,xion,dxion)
+! PURPOSE: Get ionization fractions (and dxdT) given rho and T
+  implicit none
+  real*8,intent(in):: logd,T,X,Y
+  real*8,intent(out):: xion(1:4)
+  real*8,intent(out),optional:: dxion(1:4)
+  real*8:: logQ, logT, Yfac
+  real*8,dimension(1:4):: Ttra, width, arg
+
+  logT = log10(T)
+  logQ = max(-14d0,logd)-2d0*logT+12d0
+
+  Yfac = 1d0-frec*Y
+
+  Ttra (1)   = arec1(logd)*logeion(1)+brec1(logd)*logQ
+  Ttra (2:4) = Yfac*arec(2:4)*logeion(2:4)+brec(2:4)*logQ
+  width(1:4) = Ttra(1:4)*crec(1:4)*(1d0+drec(1:4)*logQ)
+  arg  (1:4) = (logT-Ttra(1:4))/width(1:4)
+
+  xion(1:4) = 0.5d0*(rapid_tanh(arg(1:4))+1d0)
+
+  if(present(dxion))then
+   dxion(1) = ( width(1)*(1d0+2d0*brec1(logd)) &
+                + 2d0*crec(1)*(logT-Ttra(1))&
+                  *(brec1(logd)*(1d0+drec(1)*logQ)+drec(1)*Ttra(1)) )&
+              / (2d0*T*width(1)*width(1)) * rapid_dtanh(arg(1))
+   dxion(2:4) = ( width(2:4)*(1d0+2d0*brec(2:4)) &
+                 + 2d0*crec(2:4)*(logT-Ttra(2:4))&
+                   *(brec(2:4)*(1d0+drec(2:4)*logQ)+drec(2:4)*Ttra(2:4)) )&
+                / (2d0*T*width(2:4)*width(2:4)) * rapid_dtanh(arg(2:4))
+  end if
+  
+ end subroutine get_xion
+
+! ***************************************************************************
+ 
  subroutine get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
 ! PURPOSE: Get recombination energy and mean molecular weight given rho and T
   implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,intent(out):: erec,derecdT,imurec,dimurecdT
-  real*8:: logQ, logT, Yfac
-  real*8,dimension(1:4):: e, Ttra, width, xi, arg, zi
+  real*8,dimension(1:4):: e, xi, zi
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
@@ -162,27 +198,7 @@ contains
   e(3) = eion(3)*Y*0.25d0
   e(4) = eion(4)*Y*0.25d0
 
-  logT = log10(T)
-  logQ = max(-14d0,logd)-2d0*logT+12d0
-
-  Yfac=(1d0-frec*Y)
-
-! calculate transition temperature for given logQ
-  Ttra (1)   = arec1(logd)*logeion(1)+brec1(logd)*logQ
-  Ttra (2:4) = Yfac*arec(2:4)*logeion(2:4)+brec(2:4)*logQ
-  width(1:4) = Ttra(1:4)*crec(1:4)*(1d0+drec(1:4)*logQ)
-  arg(1:4) = (logT-Ttra(1:4))/width(1:4)
-
-! calculate ionisation fraction and derivatives
-  xi(1:4) = 0.5d0*(rapid_tanh(arg(1:4))+1d0)
-  zi(1) = ( width(1)*(1d0+2d0*brec1(logd)) &
-            + 2d0*crec(1)*(logT-Ttra(1))&
-              *(brec1(logd)*(1d0+drec(1)*logQ)+drec(1)*Ttra(1)) )&
-          / (2d0*T*width(1)*width(1)) * rapid_dtanh(arg(1))
-  zi(2:4) = ( width(2:4)*(1d0+2d0*brec(2:4)) &
-            + 2d0*crec(2:4)*(logT-Ttra(2:4))&
-              *(brec(2:4)*(1d0+drec(2:4)*logQ)+drec(2:4)*Ttra(2:4)) )&
-          / (2d0*T*width(2:4)*width(2:4)) * rapid_dtanh(arg(2:4))
+  call get_xion(logd,T,X,Y,xi,zi)
 
   erec = sum(e(1:4)*xi(1:4))
   imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
@@ -200,34 +216,14 @@ contains
   implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,intent(out):: imurec,dimurecdT
-  real*8:: logQ, logT, Yfac
-  real*8,dimension(1:4):: Ttra, width, xi, zi, arg
+  real*8,dimension(1:4):: xi, zi
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
 
-  logT = log10(T)
-  logQ = max(-14d0,logd)-2d0*logT+12d0
-
-  Yfac=(1d0-frec*Y)
-
-  Ttra (1)   = arec1(logd)*logeion(1)+brec1(logd)*logQ
-  Ttra (2:4) = Yfac*arec(2:4)*logeion(2:4)+brec(2:4)*logQ
-  width(1:4) = Ttra(1:4)*crec(1:4)*(1d0+drec(1:4)*logQ)
-  arg(1:4) = (logT-Ttra(1:4))/width(1:4)
-
-  xi(1:4) = 0.5d0*(rapid_tanh(arg(1:4))+1d0)
-  zi(1) = ( width(1)*(1d0+2d0*brec1(logd)) &
-            + 2d0*crec(1)*(logT-Ttra(1))&
-              *(brec1(logd)*(1d0+drec(1)*logQ)+drec(1)*Ttra(1)) )&
-          / (2d0*T*width(1)*width(1)) * rapid_dtanh(arg(1))
-  zi(2:4) = ( width(2:4)*(1d0+2d0*brec(2:4)) &
-            + 2d0*crec(2:4)*(logT-Ttra(2:4))&
-              *(brec(2:4)*(1d0+drec(2:4)*logQ)+drec(2:4)*Ttra(2:4)) )&
-          / (2d0*T*width(2:4)*width(2:4)) * rapid_dtanh(arg(2:4))
+  call get_xion(logd,T,X,Y,xi,zi)
 
   imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
-
   dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
   
   return
@@ -238,32 +234,21 @@ contains
 ! PURPOSE: Get recombination energy given rho and T
   implicit none
   real*8,intent(in):: logd,T,X,Y
-  real*8:: logQ, logT, Yfac
-  real*8,dimension(1:4):: e, Ttra, width, xi, arg, efac
+  real*8,dimension(1:4):: e, xi
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
-  
+
   e(1) = eion(1)*X*0.5d0
   e(2) = eion(2)*X
   e(3) = eion(3)*Y*0.25d0
   e(4) = eion(4)*Y*0.25d0
 
-  logT = log10(T)
-  logQ = max(-14d0,logd)-2d0*logT+12d0
-
-  Yfac=(1d0-frec*Y)
-
-  Ttra (1)   = arec1(logd)*logeion(1)+brec1(logd)*logQ
-  Ttra (2:4) = Yfac*arec(2:4)*logeion(2:4)+brec(2:4)*logQ
-  width(1:4) = Ttra(1:4)*crec(1:4)*(1d0+drec(1:4)*logQ)
-  arg(1:4) =(logT-Ttra(1:4))/width(1:4)
-
-  xi(1:4) = 0.5d0*(rapid_tanh(arg(1:4))+1d0)
+  call get_xion(logd,T,X,Y,xi)
 
   get_erec = sum(e(1:4)*xi(1:4))
 
   return
  end function get_erec
 
-end module recombination_mod
+end module ionization_mod

@@ -1,5 +1,5 @@
 module pressure_mod
- use recombination_mod
+ use ionization_mod
  use constants,only:fac_egas,fac_pgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr

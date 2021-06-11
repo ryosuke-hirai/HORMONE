@@ -9,7 +9,7 @@
 
 subroutine interpolation
 
- use settings,only:compswitch,spn,eostype,mag_on
+ use settings,only:compswitch,spn,eostype,mag_on,flux_limiter
  use grid
  use physval
  use fluxlimiter
@@ -29,6 +29,12 @@ subroutine interpolation
 ! *l, *r are cell boundary values at left and right looking from x1(i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+! Flat reconstruction
+ if(flux_limiter=='flat')then
+  dd=0d0;de=0d0;dm1=0d0;dm2=0d0;dm3=0d0;db1=0d0;db2=0d0;db3=0d0
+  return
+ end if
+ 
 ! slope1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&

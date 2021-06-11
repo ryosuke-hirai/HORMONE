@@ -29,7 +29,7 @@ c spn : number of species (>=3)
 c crdnt : cartesian:0,cylindrical:1,spherical:2
 c rktype: order of Runge-Kutta (1 is for Euler method)
 c start : Start from this file
-c flux_limiter: 'modified_mc' or 'minmod'
+c flux_limiter: 'modified_mc' or 'minmod' or 'flat'
 &simucon  crdnt=2 courant=0.9d0 rktype=3 start=00000 mag_on=.false.
           flux_limiter='modified_mc' /
 

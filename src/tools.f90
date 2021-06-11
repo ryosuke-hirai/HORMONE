@@ -16,7 +16,7 @@ subroutine tools
  use particle_mod
  use pressure_mod
  use ejectamod
- use recombination_mod
+ use ionization_mod,only:ionization_setup
  use cooling_mod,only:cooling_setup
  
  implicit none
@@ -233,7 +233,7 @@ subroutine tools
  imu(is-2:ie+2,js-2:je+2,ks-2:ke+2) = 1d0/muconst
 
  if(eostype==2)then
-  call recombination_setup
+  call ionization_setup
  end if
 
 ! Set cooling parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

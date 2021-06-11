@@ -18,7 +18,7 @@ contains
   use physval
   use constants
   use gravmod
-  use recombination_mod
+  use ionization_mod,only:ionization_setup
 
   implicit none
 
@@ -88,7 +88,7 @@ contains
  fac_pgas = kbol/amu ! frequently used factor for Pgas
 
  if(eostype==2)then
-  call recombination_setup
+  call ionization_setup
  end if
 
  return

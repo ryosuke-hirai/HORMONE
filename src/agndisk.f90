@@ -14,13 +14,15 @@ subroutine agndisk
  use constants
  use pressure_mod
  use composition_mod,only:get_imu
+ use ionization_mod
 
  implicit none
 
  real*8:: d_disk, d_amb, Eexp, Mexp, Rexp, Vexp, e_bcg, v0, t0, vedge, v0t0
  real*8:: M_SMBH, r_disk, rgrav, aspratio, hdisk, qkin, mass
- 
+
 !-----------------------------------------------------------------------------
+
 ! disk parameters
  d_disk = 1d-11
  d_amb  = 1d-25
