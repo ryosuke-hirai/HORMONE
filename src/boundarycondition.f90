@@ -13,6 +13,7 @@ subroutine boundarycondition
  use physval
  use dirichlet_mod
  use pressure_mod
+ use composition_mod
 
  implicit none
 
@@ -31,6 +32,7 @@ subroutine boundarycondition
 
  call pressure
  if(compswitch==2)call spcboundary
+ call meanmolweight
 
 ! x1-direction ***********************************************************
 

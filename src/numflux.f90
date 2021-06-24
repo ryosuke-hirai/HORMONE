@@ -30,7 +30,6 @@ subroutine numflux
 ! calculate flux
 
 ! use MUSCL interpolation
-  if(eostype==1)call meanmolweight
   call interpolation
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
