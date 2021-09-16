@@ -82,12 +82,13 @@ return
 end subroutine eos_p_cf
 
 ! ***************************************************************************
-real*8 function eos_p(d,eint,Tini,imu,X,Y)
+real*8 function eos_p(d,eint,T,imu,X,Y)
 ! PURPOSE: To calculate pressure from density and internal energy without B field
  implicit none
- real*8,intent(in):: d,eint,Tini,imu
+ real*8,intent(in):: d,eint
+ real*8,intent(inout):: T,imu
  real*8,intent(in),optional:: X,Y
- real*8:: T, corr, erec, imurec, derecdT, dimurecdT, Tdot, logd, dt
+ real*8:: corr, erec, imurec, derecdT, dimurecdT, Tdot, logd, dt
  real*8,parameter:: W4err = 1d-2
  integer n
 
@@ -96,7 +97,6 @@ real*8 function eos_p(d,eint,Tini,imu,X,Y)
   eos_p = (gamma-1d0)*eint
   
  case(1) ! ideal gas + radiation
-  T = Tini
   corr = huge
   do while(abs(corr)>eoserr*T)
    corr = (eint-(arad*T**3+d*fac_egas*imu)*T) &
@@ -106,15 +106,14 @@ real*8 function eos_p(d,eint,Tini,imu,X,Y)
   eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
 
  case(2) ! ideal gas + radiation + recombination
-  T = Tini
   corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
   do while(abs(corr)>eoserr*T)
-   call get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
+   call get_erec_imurec(logd,T,X,Y,erec,imu,derecdT,dimurecdT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.9d0*T; Tdot=0d0;cycle
    end if
-   corr = (eint-(arad*T**3+d*fac_egas*imurec)*T-d*erec) &
-    / ( -4d0*arad*T**3-d*(fac_egas*(imurec+dimurecdT*T)+derecdT) )
+   corr = (eint-(arad*T**3+d*fac_egas*imu)*T-d*erec) &
+    / ( -4d0*arad*T**3-d*(fac_egas*(imu+dimurecdT*T)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr
@@ -187,14 +186,12 @@ subroutine pressure
 
  implicit none
 
- real*8 vsq, bsq, corr, erec, imurec, derecdT, dimurecdT, Tdot, logd, dtau
- real*8,parameter:: W4err=1d-2
- integer nnn
+ real*8 vsq, bsq
 
 !-----------------------------------------------------------------------------
 
  select case (eostype)
- case(0) ! ideal gas
+ case(0:1) ! EoSs that don't require composition
 !$omp parallel do private(i,j,k,vsq,bsq)
   do k = ks,ke
    do j = js,je
@@ -202,9 +199,8 @@ subroutine pressure
      vsq      = v1(i,j,k)**2 + v2(i,j,k)**2 + v3(i,j,k)**2 
      bsq      = b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2 
      eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
-     T(i,j,k) = eint(i,j,k) / (d(i,j,k)*fac_egas*imu(i,j,k))
-     p(i,j,k) = (gamma-1.d0) * eint(i,j,k)
-     
+     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
+
      ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
 
     end do
@@ -212,70 +208,16 @@ subroutine pressure
   end do
 !$omp end parallel do
 
- case(1) ! ideal gas + radiation pressure
-!$omp parallel do private(i,j,k,vsq,bsq,corr)
+ case (2) ! EoSs that require composition
+!$omp parallel do private(i,j,k,vsq,bsq)
   do k = ks,ke
    do j = js,je
     do i = is,ie
      vsq = v1(i,j,k)**2 + v2(i,j,k)**2 + v3(i,j,k)**2
      bsq = b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2
      eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
-!     print*,i,j,k,eint(i,j,k),e(i,j,k),v1(i,j,k),v2(i,j,k),v3(i,j,k)
-!eint(i,j,k) = max(eint(i,j,k),1d-4*e(i,j,k))
-!    T(i,j,k) = eint(i,j,k) / (d(i,j,k)*fac_egas) ! initial guess
-     corr = huge
-     do while(abs(corr)>eoserr*T(i,j,k))
-      corr = (eint(i,j,k) - ( arad*T(i,j,k)**3 &
-                            + d(i,j,k)*fac_egas*imu(i,j,k) ) *T(i,j,k) )&
-           / ( -4d0*arad*T(i,j,k)**3 &
-               -d(i,j,k)*fac_egas*imu(i,j,k) )
-      T(i,j,k) = T(i,j,k) - corr
-     end do
-     p(i,j,k) = ( d(i,j,k)*fac_pgas*imu(i,j,k) & ! gas pressure
-                + arad*T(i,j,k)**3/3d0 ) *T(i,j,k) ! radiation pressure
-
-     ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
-    end do
-   end do
-  end do
-!$omp end parallel do
- case (2) ! ideal gas + radiation pressure + recombination energy
-!$omp parallel do private(i,j,k,vsq,bsq,corr,erec,imurec,derecdT,dimurecdT,Tdot,logd,nnn,dtau)
-  do k = ks,ke
-   do j = js,je
-    do i = is,ie
-     vsq = v1(i,j,k)**2 + v2(i,j,k)**2 + v3(i,j,k)**2
-     bsq = b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2
-     eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
-
-     corr = huge;Tdot=0d0;logd=log10(d(i,j,k));dtau=0.9d0;nnn=0
-! W4 method to give guess for Newton-Raphson
-     do while(abs(corr)>eoserr*T(i,j,k))
-      call get_erec_imurec(logd,T(i,j,k),spc(1,i,j,k),spc(2,i,j,k),&
-                           erec,imurec,derecdT,dimurecdT)
-      if(d(i,j,k)*erec>=eint(i,j,k))then ! avoid negative thermal energy
-       T(i,j,k) = 0.9d0*T(i,j,k); Tdot = 0d0; cycle
-      end if
-      corr = (eint(i,j,k) - ( arad*T(i,j,k)**3 &
-                            + d(i,j,k)*fac_egas*imurec ) *T(i,j,k) &
-                            - d(i,j,k)*erec )&
-                            
-           / ( - 4d0*arad*T(i,j,k)**3 &
-               - d(i,j,k)*(fac_egas*(imurec+dimurecdT*T(i,j,k))+derecdT) )
-      if(abs(corr)>W4err*T(i,j,k))then
-       T(i,j,k) = T(i,j,k) + Tdot*dtau
-       Tdot = (1d0-2d0*dtau)*Tdot-dtau*corr
-      else
-       T(i,j,k) = T(i,j,k) - corr
-       Tdot = 0d0
-      end if
-      nnn=nnn+1
-      if(nnn>50)dtau=0.5d0
-     end do
-
-     imu(i,j,k) = imurec
-     p(i,j,k) = ( d(i,j,k)*fac_pgas*imu(i,j,k) & ! gas pressure
-                + arad*T(i,j,k)**3/3d0 ) *T(i,j,k) ! radiation pressure
+     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
+                      spc(1,i,j,k),spc(2,i,j,k)) ! gets T too
 
      ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
     end do
