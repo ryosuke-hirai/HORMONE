@@ -38,11 +38,17 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
  case(1) ! ideal gas + radiation pressure
   T = Tini
   corr = huge
-  do while(abs(corr)>eoserr*T)
+  do n = 1, 50
    corr = (eint - (arad*T**3+d*fac_egas*imu)*T) &
         / (  - 4d0*arad*T**3-d*fac_egas*imu)
    T = T - corr
+   if(abs(corr)<eoserr*T)exit
   end do
+  if(n>50)then
+   print*,'Error in eos_p_cf, eostype=',eostype
+   print*,'d=',d,'e=',e,'mu=',1d0/imu
+   stop
+  end if
   p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
   gamma_eff = 1d0+p/eint
   cf = sqrt(gamma_eff*p/d)
@@ -50,7 +56,7 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
  case(2) ! ideal gas + radiation pressure + recombination energy
   T = Tini
   corr = huge; Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
-  do while(abs(corr)>eoserr*T)
+  do n = 1, 500
    call get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.9d0*T; Tdot = 0d0; cycle
@@ -64,9 +70,14 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
     T = T-corr
     Tdot = 0d0
    end if
-   n=n+1
    if(n>50)dt=0.5d0
+   if(abs(corr)<eoserr*T)exit
   end do
+  if(n>500)then
+   print*,'Error in eos_p_cf, eostype=',eostype
+   print*,'d=',d,'e=',e,'mu=',1d0/imu
+   stop
+  end if
  
   imu = imurec
   p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
@@ -98,16 +109,22 @@ real*8 function eos_p(d,eint,T,imu,X,Y)
   
  case(1) ! ideal gas + radiation
   corr = huge
-  do while(abs(corr)>eoserr*T)
+  do n = 1, 50
    corr = (eint-(arad*T**3+d*fac_egas*imu)*T) &
         / ( -4d0*arad*T**3-d*fac_egas*imu)
    T = T - corr
+   if(abs(corr)<eoserr*T)exit
   end do
+  if(n>50)then
+   print*,'Error in eos_p, eostype=',eostype
+   print*,'d=',d,'eint=',eint,'mu=',1d0/imu
+   stop
+  end if
   eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
 
  case(2) ! ideal gas + radiation + recombination
-  corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
-  do while(abs(corr)>eoserr*T)
+  corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
+  do n = 1, 500
    call get_erec_imurec(logd,T,X,Y,erec,imu,derecdT,dimurecdT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.9d0*T; Tdot=0d0;cycle
@@ -121,9 +138,14 @@ real*8 function eos_p(d,eint,T,imu,X,Y)
     T = T-corr
     Tdot = 0d0
    end if
-   n=n+1
+   if(abs(corr)<eoserr*T)exit
    if(n>50)dt=0.5d0
   end do
+  if(n>500)then
+   print*,'Error in eos_p, eostype=',eostype
+   print*,'d=',d,'eint=',eint,'mu=',1d0/imu
+   stop
+  end if
 
   eos_p = ( fac_pgas*imurec*d + arad*T**3/3d0 )*T
 
@@ -142,6 +164,7 @@ real*8 function eos_e(d,p,T,imu,X,Y)
  real*8,intent(in),optional:: X,Y
  real*8,intent(inout):: imu,T
  real*8:: corr, imurec, imurecold, dimurecdT, logd
+ integer n
  
  select case (eostype)
  case(0) ! ideal gas
@@ -149,22 +172,33 @@ real*8 function eos_e(d,p,T,imu,X,Y)
   
  case(1) ! ideal gas + radiation
   corr = huge
-  do while(abs(corr)>eoserr*T)
+  do n = 1, 50
    corr = (p - (arad*T**3/3d0+d*fac_pgas*imu)*T) &
         / (-4d0*arad*T**3/3d0-d*fac_pgas*imu)
    T = T - corr
+   if(abs(corr)<eoserr*T)exit
   end do
+  if(n>50)then
+   print*,'Error in eos_e, eostype=',eostype
+   print*,'d=',d,'p=',p,'mu=',1d0/imu
+   stop
+  end if
   eos_e = ( fac_egas*imu*d + arad*T**3 )*T
   
  case(2) ! ideal gas + radiation + recombination
   corr = huge; logd = log10(d)
-  do while(abs(corr)>eoserr*T)
+  do n = 1, 500
    call get_imurec(logd,T,X,Y,imurec,dimurecdT)
    corr = (p - (arad*T**3/3d0+d*fac_pgas*imurec)*T) &
         / (-4d0*arad*T**3/3d0-d*fac_pgas*(imurec+dimurecdT*T))
    T = T - corr
+   if(abs(corr)<eoserr*T)exit
   end do
-
+  if(n>500)then
+   print*,'Error in eos_e, eostype=',eostype
+   print*,'d=',d,'p=',p,'mu=',1d0/imu
+   stop
+  end if
   imu = imurec
   eos_e = ( fac_egas*imurec*d + arad*T**3 )*T + d*get_erec(logd,T,X,Y)
 
