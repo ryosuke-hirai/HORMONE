@@ -218,7 +218,7 @@ if(gravswitch==3)then
 ! Normal discretization
   gin = gie + 2; gjn = gje + 2
   allocate( hg11(gis-1:gin),hg12(gis-1:gin),hg21(gjs-1:gjn),hg22(gjs-1:gjn),&
-            hg123(gis-1:gin,gjs-1:gjn,1:1) )
+            hg31(gks-1:gkn),hg32(gks-1:gkn),hg123(gis-1:gin,gjs-1:gjn,1:1) )
 
   do i = gis-1, gie+1
    hg11(i) = 2d0*(x1(i)+dx1(i  ))/x1(i)*idx1(i+1)/sum(dx1(i:i+1))
