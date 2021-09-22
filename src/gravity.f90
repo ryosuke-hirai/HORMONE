@@ -28,7 +28,7 @@ gin = gie - gis + 1
 if(gravswitch==0.or.gravswitch==1)then
  grvphi = 0d0
 elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
-!elseif(gravswitch==2)then
+ if(grav_init_other)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
  call gravbound
@@ -146,26 +146,7 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
   grvphi(gis:gie,js:je,gks-2) = grvphi(gis:gie,js:je,gks)
   grvphi(gis:gie,js:je,gks-1) = grvphi(gis:gie,js:je,gks)
 
-!  gphidt = 0d0
-!  phicg     = grvphi
-  grvphiold = grvphi
-
- elseif(je==1.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
-! convert x to phi
-  do k = ks, ke
-   do i = is, ie
-    phicg(i,js,k) = x(i-is+1+(k-ks)*ie)
-   end do
-  end do
-
-  do k = ks,ke
-   do j = js,je
-    phicg(is-2,j,k) = phicg(is+1,j,k)
-    phicg(is-1,j,k) = phicg(is  ,j,k)
-   end do
-  end do
-  phicg(is:ie,js:je,ks-2) = phicg(is:ie,js:je,ks)
-  phicg(is:ie,js:je,ks-1) = phicg(is:ie,js:je,ks)
+  if(gravswitch==3)grvphiold = grvphi
 
  elseif(ke==1.and.crdnt==2.and.dim==2)then ! for spherical coordinates
   do j = js, je
@@ -184,10 +165,12 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
                    ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
 
-  grvphiold = grvphi
+  if(gravswitch==3)grvphiold = grvphi
 
  end if
 endif
+
+
 if(gravswitch==3.and.tn/=0)then
 ! Hyperbolic Self-Gravity $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -195,19 +178,14 @@ if(gravswitch==3.and.tn/=0)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates
   allocate( newphi(gis:gie,js:je,gks:gke), intphi(1:4) )
 
-!  fric = 0.5d0*d(is:ie,js:je,ks:ke)! temp
-
-!  dtgrav = dt / (courant*HGfac) * hgcfl
-
   cgrav2 = HGfac*max(maxval(cf(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
-                     0d0*maxval(cf(is:ie,js,ks:ke)+abs(v2(is:ie,js,ks:ke))), &
                      maxval(cf(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
   dtgrav = min(minval(dxi1(gis:gie)),minval(dxi3(gks:gke)))/cgrav2
   dtgrav = dtgrav*hgcfl
   cgrav2 = cgrav2**2
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
-!  do n = 1, int(HGfac)
+
   do while (grvtime<time+dt)
 
    grvphi(gis-1,js,gks:gke) = grvphi(gis,js,gks:gke)
@@ -362,6 +340,84 @@ if(gravswitch==3.and.tn/=0)then
   grvphi(gis-1,gjs:gje,gks) = grvphi(gis,gjs:gje,gks)
   grvphi(gis:gie,gjs-1,gks) = grvphi(gis:gje,gjs,gks)
   grvphi(gis:gie,gje+1,gks) = grvphi(gis:gje,gje,gks)
+
+  deallocate(newphi)
+
+ elseif(crdnt==2.and.dim==3)then
+! 3D spherical coordinates
+  allocate( newphi(gis:gie,gjs:gje,gks:gke) )
+
+  cgrav2 = HGfac*max(maxval(cf(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
+                     maxval(cf(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))), &
+                     maxval(cf(is:ie,js:je,ks)+abs(v3(is:ie,js:je,ks))) )
+
+  dtgrav = min(minval(dxi1(gis:gie)),g22(is)*minval(dxi2(gjs:gje)), &
+               minval(g33(is:ie,js:je)*dxi3(gks)))/cgrav2
+  dtgrav = dtgrav*hgcfl
+  cgrav2 = cgrav2**2
+
+  hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
+
+!  do n = 1, int(HGfac)
+  do while (grvtime<time+dt)
+!$omp parallel
+!$omp workshare
+   grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
+   grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gie,gjs,gks:gke)
+   grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gie,gje,gks:gke)
+   grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
+   grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
+!$omp end workshare
+
+!$omp do private(j)
+   do k = gks, gke
+    do j = gjs, gje
+     grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
+    end do
+   end do
+!$omp end do
+
+!$omp do private(i,j,k)
+   do k = gks, gke
+    do j = gjs, gje
+     do i = gis, gie
+      newphi(i,j,k) = 0.5d0*cgrav2*dtgrav*(dtgrav+dt_old)* &
+                    ( hg11(i)*grvphi(i+1,j,k) + hg12(i)*grvphi(i-1,j,k)  &
+                    +(hg21(j)*grvphi(i,j+1,k) + hg22(j)*grvphi(i,j-1,k)) &
+                      / x1(i)**2 &
+                    +(hg31(k)*grvphi(i,j,k+1) + hg32(k)*grvphi(i,j,k-1)) &
+                      / (x1(i)*sinc(j))**2 &
+                    + hg123(i,j,k)*grvphi(i,j,k) &
+                    - 4d0*pi*G*hgsrc(i,j,k) ) & ! source term
+                    - dtgrav/dt_old*grvphiold(i,j,k) &
+                    + (1d0+dtgrav/dt_old)*grvphi(i,j,k)
+     end do
+    end do
+   end do
+!$omp end do
+!$omp workshare
+   grvphiold(gis:gie,js:je,gks:gke) = grvphi(gis:gie,js:je,gks:gke)
+   grvphi(gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
+!$omp end workshare
+!$omp do private(j,k)
+   do k = gks, gke
+    do j = gjs, gje
+     grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
+    end do
+   end do
+!$omp end do
+!$omp end parallel
+
+   dt_old = dtgrav
+   grvtime = grvtime + dtgrav
+
+  end do
+
+  grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
+  grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gje,gjs,gks:gke)
+  grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gje,gje,gks:gke)
+  grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
+  grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
 
   deallocate(newphi)
 

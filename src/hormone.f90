@@ -43,7 +43,7 @@ program hormone
   namelist /simucon/ crdnt,courant, rktype, start, mag_on, flux_limiter
   namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                      bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
-  namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, &
+  namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, grav_init_other,&
                      include_extgrv, gis, gie, gjs, gje, gks, gke
   namelist /partcon/ include_particles, maxptc
 

@@ -22,7 +22,7 @@ module settings
  integer:: imesh, jmesh, kmesh
 ! switches
  logical:: include_extgrv, include_particles, include_cooling, mag_on
- logical:: write_other_vel, write_shock
+ logical:: write_other_vel, write_shock, grav_init_other
  character*30:: flux_limiter
 
 end module settings
@@ -103,7 +103,8 @@ end module physval
 module gravmod
 
   use grid,only:ie,je,ke,in,jn,kn
-  use settings,only:gravswitch,grverr,cgerr,include_extgrv,hgcfl,HGfac
+  use settings,only:gravswitch,grverr,cgerr,include_extgrv,hgcfl,HGfac,&
+                    grav_init_other
 
   implicit none
 
@@ -122,8 +123,6 @@ module gravmod
   real*8,allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32
   real*8,allocatable,dimension(:,:):: lag
   real*8,allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc
-
-!experimental
   real*8:: h
   real*8,allocatable,dimension(:,:,:,:):: lag11,lag12,lag21,lag22,lag31,lag32
   real*8:: coremass

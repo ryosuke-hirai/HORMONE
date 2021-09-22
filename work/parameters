@@ -41,7 +41,7 @@ c eq_sym : Set to .true. for equatorial symmetry
 
 c gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 &gravcon gravswitch=3 grverr=1.d-5 cgerr=1.d-5 HGfac=3d0 hgcfl=0.9d0
-	 include_extgrv=.false. 
+	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=600 gjs=1 gje=100 gks=1 gke=1 /
 
 &partcon include_particles=.true. maxptc=749248 /
