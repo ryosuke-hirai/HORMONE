@@ -469,6 +469,7 @@ if(ke==1)flux3=0d0
 if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
 
 if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
+if(eq_sym.and.crdnt==2)flux2(is:ie,je,ks:ke,1:9)=0d0
 
 !$omp end parallel
 return
