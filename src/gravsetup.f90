@@ -218,7 +218,8 @@ if(gravswitch==3)then
 ! Normal discretization
   gin = gie + 2; gjn = gje + 2
   allocate( hg11(gis-1:gin),hg12(gis-1:gin),hg21(gjs-1:gjn),hg22(gjs-1:gjn),&
-            hg31(gks-1:gkn),hg32(gks-1:gkn),hg123(gis-1:gin,gjs-1:gjn,1:1) )
+            hg31(gks-1:gkn),hg32(gks-1:gkn), &
+            hg123(gis-1:gin,gjs-1:gjn,gks-1:gke+1) )
 
   do i = gis-1, gie+1
    hg11(i) = 2d0*(x1(i)+dx1(i  ))/x1(i)*idx1(i+1)/sum(dx1(i:i+1))
@@ -232,14 +233,16 @@ if(gravswitch==3)then
    hg31(k) = 2d0*idx3(k+1)/sum(dx3(k:k+1))
    hg32(k) = 2d0*idx3(k  )/sum(dx3(k:k+1))
   end do
-  k = ks
-  do j = gjs-1, gje+1
-   do i = gis-1, gie+1
-    hg123(i,j,k) = ( 2d0*(dx1(i+1)-dx1(i)-x1(i))*idx1(i)*idx1(i+1) &
-                   + ((dx2(j+1)-dx2(j))/tan(x2(j))-2d0) &
-                     *idx2(j)*idx2(j+1)/x1(i)  &
-                   - 2d0*idx3(k)*idx3(k+1)/x1(i)/sinc(j)**2 ) &
-                 / x1(i)
+
+  do k = gks-1, gke+1
+   do j = gjs-1, gje+1
+    do i = gis-1, gie+1
+     hg123(i,j,k) = ( 2d0*(dx1(i+1)-dx1(i)-x1(i))*idx1(i)*idx1(i+1) &
+                    + ((dx2(j+1)-dx2(j))/tan(x2(j))-2d0) &
+                      *idx2(j)*idx2(j+1)/x1(i)  &
+                    - 2d0*idx3(k)*idx3(k+1)/x1(i)/sinc(j)**2 ) &
+                  / x1(i)
+    end do
    end do
   end do
 
