@@ -183,15 +183,15 @@ subroutine write_grid
 !-----------------------------------------------------------------------------
 
 !binary gridfile--------------------------------------------------------------
- open(unit=40,file='data/gridfile.bin',status='replace',form='unformatted')
+ open(newunit=unitn,file='data/gridfile.bin',status='replace',form='unformatted')
 
- write(40) x1  (gis-2:gie+2), xi1(gis-2:gie+2), &
-           dxi1(gis-2:gie+2), dx1(gis-2:gie+2), &
-           x2  (gjs-2:gje+2), xi2(gjs-2:gje+2), &
-           dxi2(gjs-2:gje+2), dx2(gjs-2:gje+2), &
-           x3  (gks-2:gke+2), xi3(gks-2:gke+2), &
-           dxi3(gks-2:gke+2), dx3(gks-2:gke+2)
- close(40) 
+ write(unitn) x1  (gis-2:gie+2), xi1(gis-2:gie+2), &
+              dxi1(gis-2:gie+2), dx1(gis-2:gie+2), &
+              x2  (gjs-2:gje+2), xi2(gjs-2:gje+2), &
+              dxi2(gjs-2:gje+2), dx2(gjs-2:gje+2), &
+              x3  (gks-2:gke+2), xi3(gks-2:gke+2), &
+              dxi3(gks-2:gke+2), dx3(gks-2:gke+2)
+ close(unitn)
 
 !gridfile---------------------------------------------------------------------
 
@@ -339,34 +339,35 @@ subroutine write_bin
  use settings
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
- use gravmod,only:grvphi,grvphiold,dt_old,nspos,nsmass,nsvel
+ use gravmod,only:grvphi,grvphiold,dt_old
 
  implicit none
 
  character*50:: binfile
+ integer:: un
  
 !-----------------------------------------------------------------------------
 
  call set_file_name('bin',tn,time,binfile)
- open(unit=10,file=binfile,status='replace',form='unformatted')
+ open(newunit=un,file=binfile,status='replace',form='unformatted')
 
- write(10)tn,time,nspos,nsvel,nsmass
- write(10) d (is:ie,js:je,ks:ke), &
+ write(un)tn,time
+ write(un) d (is:ie,js:je,ks:ke), &
            v1(is:ie,js:je,ks:ke), &
            v2(is:ie,js:je,ks:ke), &
            v3(is:ie,js:je,ks:ke), &
            e (is:ie,js:je,ks:ke)
- if(gravswitch>=2)write(10)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)write(10)grvphiold(gis:gie,gjs:gje,gks:gke),dt_old
- if(compswitch>=2)write(10)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
+ if(gravswitch>=2)write(un)grvphi(gis:gie,gjs:gje,gks:gke)
+ if(gravswitch==3)write(un)grvphiold(gis:gie,gjs:gje,gks:gke),dt_old
+ if(compswitch>=2)write(un)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
  if(mag_on)then
-  write(10) b1(is:ie,js:je,ks:ke), &
+  write(un) b1(is:ie,js:je,ks:ke), &
             b2(is:ie,js:je,ks:ke), &
             b3(is:ie,js:je,ks:ke), &
             phi(is:ie,js:je,ks:ke)
  end if
 
- close(10)
+ close(un)
  
 return
 end subroutine write_bin
