@@ -408,15 +408,21 @@ subroutine gridset
    end do
 
 ! set phi direction
-   if    (ke==1)then
-    ketmp=4
-   elseif(ke>=4)then
-    ketmp=ke
-   else
-    print *,"Error from ke",ke
-   endif
+   mesh_sph3: select case (kmesh)
+   case(0) mesh_sph3 ! uniform theta
+    if    (je==1)then
+     ketmp=4
+    elseif(ke>=4)then
+     ketmp=ke
+    else
+     print *,"Error from ke",ke
+    endif
+    dxi3(ks-2:ke+2) = (xi3e-xi3s) / dble(ketmp)
+   case(2) mesh_sph3 ! user specified mesh
+    call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
+   end select mesh_sph3
+
    do k = ks-1,ke+2
-    dxi3(k) = xi3e / dble(ketmp)
     dx3(k)  = 0.5d0 * ( dxi3(k-1) + dxi3(k) )
     idxi3(k)= 1.d0 / dxi3(k)
     idx3(k) = 1.d0 / dx3(k)
