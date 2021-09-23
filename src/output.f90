@@ -178,6 +178,7 @@ subroutine write_grid
  implicit none
 
  character*50:: formhead,formval,formnum
+ integer:: unitn
 
 !-----------------------------------------------------------------------------
 
@@ -194,8 +195,8 @@ subroutine write_grid
 
 !gridfile---------------------------------------------------------------------
 
- open(unit=50,file='data/gridfile.dat',status='replace')
- write(50,'()')
+ open(newunit=unitn,file='data/gridfile.dat',status='replace')
+ write(unitn,'()')
  write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')dim,dim+1,sigfig+8
  write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
      dim,dim+1,sigfig+7,sigfig-1
@@ -204,103 +205,122 @@ subroutine write_grid
 ! 1D outputs
  case(1)
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
-  write(50,formnum)1,2,3
+  write(unitn,formnum)1,2,3
   
   if(ie>1)then
-   write(50,formhead)'# i','x1','dvol'
+   write(unitn,formhead)'# i','x1','dvol'
    j=js;k=ks
    do i = is, ie
-    write(50,formval)i,x1(i),dvol(i,j,k)    
+    write(unitn,formval)i,x1(i),dvol(i,j,k)    
    end do
   elseif(je>1)then
-   write(50,formhead)'# j','x2','dvol'
+   write(unitn,formhead)'# j','x2','dvol'
    i=is;k=ks
    do j = js, je
-    write(50,formval)j,x2(j),dvol(i,j,k)    
+    write(unitn,formval)j,x2(j),dvol(i,j,k)    
    end do
   elseif(ke>1)then
-   write(50,formhead)'# k','x3','dvol'
+   write(unitn,formhead)'# k','x3','dvol'
    i=is;j=js
    do k = ks, ke
-    write(50,formval)k,x3(k),dvol(i,j,k)    
+    write(unitn,formval)k,x3(k),dvol(i,j,k)    
    end do
   end if
 
 ! 2D outputs
  case(2)
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
-  write(50,formnum)1,2,3,4,5
+  write(unitn,formnum)1,2,3,4,5
   
   if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
-   write(50,formhead)'# i','j','x1','x2','dvol'
+   write(unitn,formhead)'# i','j','x1','x2','dvol'
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
     j=js-1
     do i = is, ie
-     write(50,formval)i,j,x1(i),xi2s,dvol(i,j,k)
+     write(unitn,formval)i,j,x1(i),xi2s,dvol(i,j,k)
     end do
-    write(50,'()')
+    write(unitn,'()')
    end if
 
    do j = js, je
     do i = is, ie
-     write(50,formval)i,j,x1(i),x2(j),dvol(i,j,k)
+     write(unitn,formval)i,j,x1(i),x2(j),dvol(i,j,k)
     end do
-    write(50,'()')
+    write(unitn,'()')
    end do
 
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
     j=je+1
     do i = is, ie
-     write(50,formval)i,j,x1(i),xi2e,dvol(i,j,k)
+     write(unitn,formval)i,j,x1(i),xi2e,dvol(i,j,k)
     end do
-    write(50,'()')
+    write(unitn,'()')
    end if
    
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
-   write(50,formhead)'# i','k','x1','x3','dvol'
+   write(unitn,formhead)'# i','k','x1','x3','dvol'
    j=js
-   do k = ks, ke
+   do k = ks, ke, 2
 ! writing inner boundary for polar coordinates
-    if(crdnt==1.or.crdnt==2)write(50,formval)i,k,xi1(is-1),x3(k),dvol(is,j,k)
-    do i = is, ie
-     write(50,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
+    if(crdnt==1.or.crdnt==2)write(unitn,formval)i,k,xi1(is-1),x3(k),dvol(is,j,k)
+    do i = is, ie, 2
+     write(unitn,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
-    write(50,'()')
+    write(unitn,'()')
    end do   
    
   elseif(ie==1)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
-   write(50,formhead)'# j','k','x2','x3','dvol'
+   write(unitn,formhead)'# j','k','x2','x3','dvol'
    i=is
    do k = ks, ke
     do j = js, je
-     write(50,formval)j,k,x2(j),x3(k),dvol(i,j,k)
+     write(unitn,formval)j,k,x2(j),x3(k),dvol(i,j,k)
     end do
-    write(50,'()')
+    write(unitn,'()')
    end do
   end if
 
  case(3)
   write(formnum,'("(",a4,"i4,2i5,4i",i2,")")')'"#",',sigfig+8
-  write(50,formnum)1,2,3,4,5,6,7
+  write(unitn,formnum)1,2,3,4,5,6,7
   
-  write(50,formhead)'# i','j','k','x1','x2','x3','dvol'
-  do k = ks, ke
-   do j = js, je
+  write(unitn,formhead)'# i','j','k','x1','x2','x3','dvol'
+  if(crdnt==2)then
+   do j = je, je
     do i = is, ie
-     write(50,formval)i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
+     write(unitn,formval)i,j,k,x1(i),x2(j),xi3(ks-1),dvol(i,j,k)
     end do
-    write(50,'()')
+    write(unitn,'()')
+   end do
+  end if
+  
+  do k = ks, ke
+   do j = je, je
+    do i = is, ie
+     write(unitn,formval)i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
+    end do
+    write(unitn,'()')
    end do
   end do
+
+  if(crdnt==2)then
+   do j = je, je
+    do i = is, ie
+     write(unitn,formval)i,j,k,x1(i),x2(j),xi3(ke),dvol(i,j,k)
+    end do
+    write(unitn,'()')
+   end do
+  end if
+  
  case default
   stop 'Something wrong with dimension'
  end select
 
- close(50)
+ close(unitn)
  
 return
 end subroutine write_grid
@@ -319,7 +339,7 @@ subroutine write_bin
  use settings
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
- use gravmod,only:grvphi,grvphiold,dt_old
+ use gravmod,only:grvphi,grvphiold,dt_old,nspos,nsmass,nsvel
 
  implicit none
 
@@ -330,7 +350,7 @@ subroutine write_bin
  call set_file_name('bin',tn,time,binfile)
  open(unit=10,file=binfile,status='replace',form='unformatted')
 
- write(10)tn,time
+ write(10)tn,time,nspos,nsvel,nsmass
  write(10) d (is:ie,js:je,ks:ke), &
            v1(is:ie,js:je,ks:ke), &
            v2(is:ie,js:je,ks:ke), &
@@ -382,11 +402,11 @@ subroutine write_plt
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
  write(formi,'("(i",i2,")")')sigfig+8 ! for integers
- unitn = 30
+! unitn = 30
  
 ! Open file
  call set_file_name('plt',tn,time,pltfile)
- open(unit=unitn,file = pltfile, status='replace')
+ open(newunit=unitn,file = pltfile, status='replace')
 
 ! Write time and time step
  write(unitn,'(a,i7,a,1PE12.4e2,a)')&
@@ -457,10 +477,10 @@ subroutine write_plt
    
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    j=js
-   do k = ks, ke
+   do k = ks, ke, 2
 ! writing inner boundary for polar coordinates
     if(crdnt==1.or.crdnt==2)call write_val(unitn,is,j,k,forme,header)
-    do i = is, ie
+    do i = is, ie, 2
      call write_val(unitn,i,j,k,forme,header)
     end do
     write(unitn,'()')
@@ -478,15 +498,33 @@ subroutine write_plt
   end if
 
  case(3)
+  if(crdnt==2)then
+   do j = je, je
+    do i = is, ie
+     call write_val(unitn,i,j,ks,forme,header)
+    end do
+    write(unitn,'()')
+   end do
+  end if
   
   do k = ks, ke
-   do j = js, je
+   do j = je, je
     do i = is, ie
      call write_val(unitn,i,j,k,forme,header)
     end do
     write(unitn,'()')
    end do
   end do
+
+  if(crdnt==2)then
+   do j = je, je
+    do i = is, ie
+     call write_val(unitn,i,j,ke,forme,header)
+    end do
+    write(unitn,'()')
+   end do
+  end if
+  
  case default
   stop 'Something wrong with dimension'
  end select
