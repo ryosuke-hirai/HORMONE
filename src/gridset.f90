@@ -411,7 +411,7 @@ subroutine gridset
    if    (ke==1)then
     ketmp=4
    elseif(ke>=4)then
-    ketmp=je
+    ketmp=ke
    else
     print *,"Error from ke",ke
    endif
