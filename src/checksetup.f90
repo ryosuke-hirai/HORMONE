@@ -77,8 +77,10 @@ subroutine checksetup
 ! Setting boundary condition for equatorial symmetry
   if(eq_sym.and.crdnt==1)then
    bc3is=1
+   bc3iv=1
   elseif(eq_sym.and.crdnt==2)then
-   bc3os=1
+   bc2os=1
+   bc2ov=1
   end if
 
 ! Set flag if any boundary is set to Dirichlet boundary condition
