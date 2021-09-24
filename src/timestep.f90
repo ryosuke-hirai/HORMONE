@@ -81,45 +81,9 @@ contains
 
   call eigen
 
-  dt = huge
-!!$  cfmax = 0.d0
-!!$  do k = ks,ke
-!!$   do j = js,je
-!!$    do i = is,ie
-!!$     dt = min( dt , &
-!!$                     dxi1(i) / ( abs(v1(i,j,k))+cf(i,j,k) ), &
-!!$          g22(i)   * dxi2(j) / ( abs(v2(i,j,k))+cf(i,j,k) ), &
-!!$          g33(i,j) * dxi3(k) / ( abs(v3(i,j,k))+cf(i,j,k) )  &
-!!$          )
-!!$!     cfmax = max(abs(cf(i,j,k)),cfmax)
-!!$    end do
-!!$   end do
-!!$  end do
-
-!!$  do k = ks,ke
-!!$   do j = js,je
-!!$    do i = is,ie
-!!$      dt = min( dt , &
-!!$                     dxi1(i) / ( abs(v1(i,j,k))+v3(i,j,k)+cf(i,j,k) ) )
-!!$     if(je>1)then
-!!$      if(i>sphrn)then
-!!$       dt = min( dt , &
-!!$           g22(i)   * dxi2(j) / ( abs(v2(i,j,k)+v3(i,j,k))+cf(i,j,k) ) )
-!!$      end if
-!!$     end if
-!!$     if(ke>1)then
-!!$      if(i>sphrn)then
-!!$       dt = min( dt , &
-!!$           g33(i,j) * dxi3(k) / ( abs(v3(i,j,k))+v2(i,j,k)+cf(i,j,k) ) )
-!!$      end if
-!!$     end if
-!!$!     cfmax = max(abs(cf(i,j,k)),cfmax)
-!!$    end do
-!!$   end do
-!!$  end do
-
   allocate( dtdist(is:ie,js:je,ks:ke,1:3) )
   dtdist = huge
+!$omp parallel do private(i,j,k)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -135,7 +99,8 @@ contains
     end do
    end do
   end do
-
+!$omp end parallel do
+  
 ! Temporary (for workaround mesh)
   if(sphrn>0.and.crdnt==2)then
    do i = is, is+2
