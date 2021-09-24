@@ -306,7 +306,7 @@ subroutine gridset
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   case(2) coordinate_system
    xi2s = 0.d0 ; xi2e = pi ; if(je==1.or.eq_sym) xi2e = pi * 0.5d0
-   xi3s = 0.d0 ; xi3e = 2.d0*pi
+   xi3s = -pi  ; xi3e = pi
 ! set r direction
    mesh_sph1: select case (imesh)
    case(0) mesh_sph1 ! uniform mesh
@@ -428,10 +428,10 @@ subroutine gridset
     idx3(k) = 1.d0 / dx3(k)
    end do
 
-   x3(ks-1)  = - dxi3(ks-1)*0.5d0
+   x3(ks-1)  = xi3s - dxi3(ks-1)*0.5d0
    x3(ks-2)  = x3(ks-1) - dx3(ks-1)
-   xi3(ks-1) = 0.d0
-   xi3(ks-2) = -dxi3(ks-1)
+   xi3(ks-1) = xi3s
+   xi3(ks-2) = xi3s-dxi3(ks-1)
    do k = ks,ke+2
     x3(k)  = x3(k-1)  + dx3(k)
     xi3(k) = xi3(k-1) + dxi3(k)
