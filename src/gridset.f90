@@ -410,7 +410,7 @@ subroutine gridset
 ! set phi direction
    mesh_sph3: select case (kmesh)
    case(0) mesh_sph3 ! uniform theta
-    if    (je==1)then
+    if    (ke==1)then
      ketmp=4
     elseif(ke>=4)then
      ketmp=ke
