@@ -74,6 +74,14 @@ subroutine checksetup
    bc3is=3 ; bc3os=3 ; bc3iv=3 ; bc3ov=3
   end if
 
+! Set boundary condition for polar coordinates
+  if(crdnt==1)then
+   bc2is=0 ; bc2os=0 ; bc2iv=0 ; bc2ov=0
+  elseif(crdnt==2)then
+   bc2is=1 ; bc2os=1 ; bc2iv=1 ; bc2ov=1
+   bc3is=0 ; bc3os=0 ; bc3iv=0 ; bc3ov=0
+  end if
+  
 ! Setting boundary condition for equatorial symmetry
   if(eq_sym.and.crdnt==1)then
    bc3is=1
