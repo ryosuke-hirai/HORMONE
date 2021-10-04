@@ -44,7 +44,6 @@ subroutine initialcondition
  else
 
   call restart
-  call meanmolweight
 
  end if
 

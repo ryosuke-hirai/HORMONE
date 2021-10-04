@@ -17,6 +17,7 @@ subroutine restart
  use particle_mod
  use dirichlet_mod
  use output_mod,only:set_file_name
+ use readbin_mod
  
  implicit none
 
@@ -28,28 +29,7 @@ subroutine restart
  starttime = dble(start)*dt_unit_in_sec
  call set_file_name('bin',start,starttime,startfile)
  
- open(unit=11,file=startfile,status='old',form='unformatted')
-
- read(11)tn,time
- read(11) d (is:ie,js:je,ks:ke), &
-          v1(is:ie,js:je,ks:ke), &
-          v2(is:ie,js:je,ks:ke), &
-          v3(is:ie,js:je,ks:ke), &
-          e (is:ie,js:je,ks:ke)
- if(gravswitch>=2)read(11)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)then
-  read(11)grvphiold(gis:gie,gjs:gje,gks:gke), &
-          dt_old
- end if
- if(compswitch>=2)read(11)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
- if(mag_on)then
-  read(11) b1(is:ie,js:je,ks:ke), &
-           b2(is:ie,js:je,ks:ke), &
-           b3(is:ie,js:je,ks:ke), &
-           phi(is:ie,js:je,ks:ke)
- end if
-
- close(11)
+ call readbin(startfile)
 
 
  if(dirichlet_on)call dirichletbound

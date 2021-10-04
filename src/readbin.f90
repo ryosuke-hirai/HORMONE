@@ -114,28 +114,29 @@ subroutine readbin(filename)
  implicit none
 
  character(len=*),intent(in):: filename
+ integer:: un
 !-----------------------------------------------------------------------------
 
- open(unit=20,file=filename,status='old',form='unformatted')
- read(20) tn,time
- read(20) d (is:ie,js:je,ks:ke), &
+ open(newunit=un,file=filename,status='old',form='unformatted')
+ read(un) tn,time
+ read(un) d (is:ie,js:je,ks:ke), &
           v1(is:ie,js:je,ks:ke), &
           v2(is:ie,js:je,ks:ke), &
           v3(is:ie,js:je,ks:ke), &
           e (is:ie,js:je,ks:ke)
- if(gravswitch>=2)read(20)grvphi(gis:gie,gjs:gje,gks:gke)
+ if(gravswitch>=2)read(un)grvphi(gis:gie,gjs:gje,gks:gke)
  if(gravswitch==3)then
-  read(20)grvphiold(gis:gie,gjs:gje,gks:gke), &
+  read(un)grvphiold(gis:gie,gjs:gje,gks:gke), &
           dt_old
  end if
- if(compswitch>=2)read(20)spc(1:spn,is:ie,js:je,ks:ke)
+ if(compswitch>=2)read(un)spc(1:spn,is:ie,js:je,ks:ke)
  if(mag_on)then
-  read(20) b1(is:ie,js:je,ks:ke), &
+  read(un) b1(is:ie,js:je,ks:ke), &
            b2(is:ie,js:je,ks:ke), &
            b3(is:ie,js:je,ks:ke), &
            phi(is:ie,js:je,ks:ke)
  end if
- close(20)
+ close(un)
 
  call meanmolweight
  call pressure

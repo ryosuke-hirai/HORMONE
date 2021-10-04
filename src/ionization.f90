@@ -178,7 +178,7 @@ contains
                    *(brec(2:4)*(1d0+drec(2:4)*logQ)+drec(2:4)*Ttra(2:4)) )&
                 / (2d0*T*width(2:4)*width(2:4)) * rapid_dtanh(arg(2:4))
   end if
-  
+
  end subroutine get_xion
 
 ! ***************************************************************************

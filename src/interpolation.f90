@@ -19,7 +19,7 @@ subroutine interpolation
 
  real*8 dl, dr, ptl, ptr, el, er, m1l, m1r, m2l, m2r, m3l, m3r
  real*8 b1l, b1r, b2l, b2r, b3l, b3r, phil, phir, eintl, eintr,imul,imur
- real*8 uu(1:3), du, Xl, Xr, Yl, Yr
+ real*8 uu(1:3), du, Xl, Xr, Yl, Yr, Tini
  real*8 dx(1:2), x(1:3), xi(1:2)
 
 !-----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ subroutine interpolation
 ! slope1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr)
+!$omp Xl,Xr,Yl,Yr,Tini)
 
  do k = ks,ke
   do j = js,je
@@ -122,16 +122,17 @@ subroutine interpolation
      dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
      db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
     else
+     Tini = T(i,j,k)
      select case (eostype)
      case(0:1) ! without recombination
-      ptl = eos_p(dl,eintl,T(i,j,k),imul) ; ptr = eos_p(dr,eintr,T(i,j,k),imur)
+      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
      case(2) ! with recombination
       Xl = spc(1,i,j,k)-(x1(i)-xi1(i-1))* dspc(1,i,j,k,1)
       Yl = spc(2,i,j,k)-(x1(i)-xi1(i-1))* dspc(2,i,j,k,1)
       Xr = spc(1,i,j,k)+(xi1(i)-x1(i  ))* dspc(1,i,j,k,1)
       Yr = spc(2,i,j,k)+(xi1(i)-x1(i  ))* dspc(2,i,j,k,1)
-      ptl = eos_p(dl,eintl,T(i,j,k),imul,Xl,Yl)
-      ptr = eos_p(dr,eintr,T(i,j,k),imur,Xr,Yr)
+      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
+      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
      end select
      if( ptl>=maxval(ptot(i-1:i,j,k)).or.ptl<=minval(ptot(i-1:i,j,k)).or.&
          ptr>=maxval(ptot(i:i+1,j,k)).or.ptr<=minval(ptot(i:i+1,j,k)))then
@@ -151,7 +152,7 @@ subroutine interpolation
 if(je/=1)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr)
+!$omp Xl,Xr,Yl,Yr,Tini)
  do k = ks,ke
   do j = js-1,je+1
    do i = is, ie
@@ -230,16 +231,17 @@ if(je/=1)then
      dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
      db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
     else
+     Tini = T(i,j,k)
      select case (eostype)
      case(0:1) ! without recombination
-      ptl = eos_p(dl,eintl,T(i,j,k),imul) ; ptr = eos_p(dr,eintr,T(i,j,k),imur)
+      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
      case(2) ! with recombination
       Xl = spc(1,i,j,k)-(x2(j)-xi2(j-1))* dspc(1,i,j,k,2)
       Yl = spc(2,i,j,k)-(x2(j)-xi2(j-1))* dspc(2,i,j,k,2)
       Xr = spc(1,i,j,k)+(xi2(j)-x2(j  ))* dspc(1,i,j,k,2)
       Yr = spc(2,i,j,k)+(xi2(j)-x2(j  ))* dspc(2,i,j,k,2)
-      ptl = eos_p(dl,eintl,T(i,j,k),imul,Xl,Yl)
-      ptr = eos_p(dr,eintr,T(i,j,k),imur,Xr,Yr)
+      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
+      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
      end select
      if( ptl>=maxval(ptot(i,j-1:j,k)).or.ptl<=minval(ptot(i,j-1:j,k)).or.&
          ptr>=maxval(ptot(i,j:j+1,k)).or.ptr<=minval(ptot(i,j:j+1,k)))then
@@ -262,7 +264,7 @@ end if
 if(ke/=1)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr)
+!$omp Xl,Xr,Yl,Yr,Tini)
 
  do k = ks-1,ke+1
   do j = js,je
@@ -342,16 +344,17 @@ if(ke/=1)then
      dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
      db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
     else
+     Tini = T(i,j,k)
      select case (eostype)
      case(0:1) ! without recombination
-      ptl = eos_p(dl,eintl,T(i,j,k),imul) ; ptr = eos_p(dr,eintr,T(i,j,k),imur)
+      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
      case(2) ! with recombination
       Xl = spc(1,i,j,k)-(x3(k)-xi3(k-1))* dspc(1,i,j,k,3)
       Yl = spc(2,i,j,k)-(x3(k)-xi3(k-1))* dspc(2,i,j,k,3)
       Xr = spc(1,i,j,k)+(xi3(k)-x3(k  ))* dspc(1,i,j,k,3)
       Yr = spc(2,i,j,k)+(xi3(k)-x3(k  ))* dspc(2,i,j,k,3)
-      ptl = eos_p(dl,eintl,T(i,j,k),imul,Xl,Yl)
-      ptr = eos_p(dr,eintr,T(i,j,k),imur,Xr,Yr)
+      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
+      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
      end select
      if( ptl>=maxval(ptot(i,j,k-1:k)).or.ptl<=minval(ptot(i,j,k-1:k)).or.&
          ptr>=maxval(ptot(i,j,k:k+1)).or.ptr<=minval(ptot(i,j,k:k+1)))then
