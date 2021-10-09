@@ -643,6 +643,9 @@ subroutine get_header(header,columns)
 ! Output gravitational potential if gravswitch>=1
  if(gravswitch>=1)then
   call add_column('phi',columns,header)
+  if(include_extgrv)then
+   call add_column('extphi',columns,header)
+  end if
  end if
 
 ! Output mean molecular weight if compswitch>=1
@@ -726,12 +729,9 @@ subroutine write_val(unitn,i,j,k,forme,header)
   case('T')!temperature
    write(unitn,forme,advance='no')T(i,j,k)
   case('phi')!gravitational potential
-   if(include_extgrv)then
-    write(unitn,forme,advance='no')grvphi(i,j,k)+extgrv(i,j,k)
-   else
-    write(unitn,forme,advance='no')grvphi(i,j,k)
-   end if
-
+   write(unitn,forme,advance='no')grvphi(i,j,k)
+  case('extphi')!external gravitational potential
+   write(unitn,forme,advance='no')extgrv(i,j,k)
   case('mu')!mean molecular weight
    write(unitn,forme,advance='no')1d0/imu(i,j,k)
   case('shock')!shock position
