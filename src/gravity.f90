@@ -175,7 +175,7 @@ if(gravswitch==3.and.tn/=0)then
 ! Hyperbolic Self-Gravity $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
  if(crdnt==1.and.je==1)then
-! Cartoon mesh method for axially symmetric cylindrical coordinates
+! Cartoon mesh method for axially symmetric cylindrical coordinates %%%%%%%%%%
   allocate( newphi(gis:gie,js:je,gks:gke), intphi(1:4) )
 
   cgrav2 = HGfac*max(maxval(cf(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
@@ -275,7 +275,7 @@ if(gravswitch==3.and.tn/=0)then
   deallocate(newphi,intphi)
 
  elseif(crdnt==2.and.ke==1)then
-! Axisymmetric spherical coordinates
+! Axisymmetric spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   allocate( newphi(gis:gie,gjs:gje,gks:gke) )
 
   cgrav2 = HGfac*max(maxval(cf(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
@@ -344,7 +344,7 @@ if(gravswitch==3.and.tn/=0)then
   deallocate(newphi)
 
  elseif(crdnt==2.and.dim==3)then
-! 3D spherical coordinates
+! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   allocate( newphi(gis:gie,gjs:gje,gks:gke) )
 
   cgrav2 = HGfac*max(maxval(cf(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
@@ -396,8 +396,8 @@ if(gravswitch==3.and.tn/=0)then
    end do
 !$omp end do
 !$omp workshare
-   grvphiold(gis:gie,js:je,gks:gke) = grvphi(gis:gie,js:je,gks:gke)
-   grvphi(gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
+   grvphiold(gis:gie,gjs:gje,gks:gke) = grvphi(gis:gie,gjs:gje,gks:gke)
+   grvphi(gis:gie,gjs:gje,gks:gke) = newphi(gis:gie,gjs:gje,gks:gke)
 !$omp end workshare
 !$omp do private(j,k)
    do k = gks, gke
@@ -414,8 +414,8 @@ if(gravswitch==3.and.tn/=0)then
   end do
 
   grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
-  grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gje,gjs,gks:gke)
-  grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gje,gje,gks:gke)
+  grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gie,gjs,gks:gke)
+  grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gie,gje,gks:gke)
   grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
   grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
 
