@@ -188,6 +188,8 @@ if(gravswitch==3.and.tn/=0)then
 
   do while (grvtime<time+dt)
 
+   if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
+
    grvphi(gis-1,js,gks:gke) = grvphi(gis,js,gks:gke)
    if(eq_sym)grvphi(gis:gie,js,gks-1) = grvphi(gis:gie,js,gks)
 
@@ -203,22 +205,6 @@ if(gravswitch==3.and.tn/=0)then
     grvphi(i,js,gks-1) = orgdis(i,js,gks)/orgdis(i,js,gks-1) * grvphi(i,js,gks)
    end do
 !$omp end do
-!!$!$omp do private(i,j,k,phih)
-!!$   do k = gks, gke
-!!$    do j = js, je
-!!$     do i = gis, gie
-!!$      phih = sum( lag(-1:1,i)*grvphi(i-1:i+1,j,k) )
-!!$      newphi(i,j,k) = cgrav2*dtgrav*(dtgrav+dt_old)* &
-!!$                    ( hg11(i)*grvphi(i+1,j,k) + hg12(i)*grvphi(i-1,j,k) + &
-!!$                      hg31(k)*grvphi(i,j,k+1) + hg32(k)*grvphi(i,j,k-1) + &
-!!$                      hg21(i)*phih - hg123(i,j,k)*grvphi(i,j,k) &
-!!$                    - 2d0*pi*G*hgsrc(i,j,k) ) & ! source term
-!!$                    - dtgrav/dt_old*grvphiold(i,j,k) &
-!!$                    + (1d0+dtgrav/dt_old)*grvphi(i,j,k)
-!!$     end do
-!!$    end do
-!!$   end do
-!!$!$omp end do
 
 !$omp do private(i,j,k,h,phih,intphi)
    do k = gks, gke
@@ -289,6 +275,7 @@ if(gravswitch==3.and.tn/=0)then
 
 !  do n = 1, int(HGfac)
   do while (grvtime<time+dt)
+   if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
 !$omp parallel
    k = gks
 !$omp workshare
@@ -360,6 +347,7 @@ if(gravswitch==3.and.tn/=0)then
 
 !  do n = 1, int(HGfac)
   do while (grvtime<time+dt)
+   if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
 !$omp parallel
 !$omp workshare
    grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
@@ -422,8 +410,6 @@ if(gravswitch==3.and.tn/=0)then
   deallocate(newphi)
 
  end if
-
-! dt_old = dt
 
 
 end if
