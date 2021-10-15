@@ -226,8 +226,8 @@ subroutine rungekutta
      do k = ks,ke
       do j = js,je
        do i = is,ie
-        u(i,j,k,ufn) = 5.d-1 * uorg(i,j,k,ufn) + 5.d-1 * u(i,j,k,ufn) + &
-             5.d-1 * dt * &
+        u(i,j,k,ufn) = 0.5d0 * uorg(i,j,k,ufn) + 0.5d0 * u(i,j,k,ufn) + &
+             0.5d0 * dt * &
              ( idetg1(i) * &
                (detg1(i-1  )*flux1(i-1,j,k,ufn)-detg1(i  )*flux1(i,j,k,ufn)) &
              + idetg2(i,j) * &
