@@ -117,7 +117,7 @@ contains
   x=tanh_edge
   tanh_c = x*(1d0-((x*x+105d0)*x*x+945d0)*x/(((x*x+28d0)*x*x+63d0)*15d0))
   dtanh_c= x*x*((((x*x-21d0)*x*x+420d0)*x*x-6615d0)*x*x+59535d0)&
-               / (15d0*((x*x+28d0)*x*x+63d0)**2d0)
+               / (15d0*((x*x+28d0)*x*x+63d0)**2)
 
   return
  end subroutine ionization_setup
