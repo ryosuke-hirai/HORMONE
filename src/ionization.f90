@@ -5,7 +5,7 @@ module ionization_mod
  real*8,allocatable,private,dimension(:):: logeion, &
                                    arec, brec, crec, drec, arec1c, brec1c
  real*8,private:: frec, edge, tanh_c, dtanh_c
- real*8,parameter,private:: tanh_edge = 3.6467d0
+ real*8,parameter,private:: tanh_edge = 3.64673859532966d0
 
  interface rapid_tanh
     module procedure rapid_tanhs,rapid_tanhv
