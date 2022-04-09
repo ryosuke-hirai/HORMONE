@@ -99,7 +99,7 @@ real*8 function eos_p(d,eint,T,imu,X,Y)
  real*8,intent(in):: d,eint
  real*8,intent(inout):: T,imu
  real*8,intent(in),optional:: X,Y
- real*8:: corr, erec, imurec, derecdT, dimurecdT, Tdot, logd, dt
+ real*8:: corr, erec, derecdT, dimurecdT, Tdot, logd, dt
  real*8,parameter:: W4err = 1d-2
  integer n
 
@@ -147,7 +147,7 @@ real*8 function eos_p(d,eint,T,imu,X,Y)
    stop
   end if
 
-  eos_p = ( fac_pgas*imurec*d + arad*T**3/3d0 )*T
+  eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
 
  case default
   stop 'Error in eostype'
