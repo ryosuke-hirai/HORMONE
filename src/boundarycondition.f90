@@ -257,7 +257,7 @@ subroutine boundarycondition
 ! x2-direction ***********************************************************
 
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+if(je>1)then
 ! scalar values
  x2_inner_scalar: select case (bc2is)
  case(0) x2_inner_scalar ! periodic
@@ -453,11 +453,11 @@ subroutine boundarycondition
   end do
  end do
 !$omp end parallel do
-
+end if
 ! x3-direction ***********************************************************
 
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+if(ke>1)then
 ! scalar values
  x3_inner_scalar: select case (bc3is)
  case(0) x3_inner_scalar ! periodic
@@ -714,6 +714,7 @@ subroutine boundarycondition
   end do
  end do
 !$omp end parallel do
+end if
 
 return
 contains
