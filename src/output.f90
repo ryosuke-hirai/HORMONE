@@ -265,7 +265,8 @@ subroutine write_grid
    j=js
    do k = ks, ke, 2
 ! writing inner boundary for polar coordinates
-    if(crdnt==1.or.crdnt==2)write(unitn,formval)i,k,xi1(is-1),x3(k),dvol(is,j,k)
+    if(crdnt==1.or.crdnt==2)&
+     write(unitn,formval)is-1,k,xi1(is-1),x3(k),dvol(is,j,k)
     do i = is, ie, 2
      write(unitn,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
