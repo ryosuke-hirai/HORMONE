@@ -263,11 +263,11 @@ subroutine write_grid
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    write(unitn,formhead)'# i','k','x1','x3','dvol'
    j=js
-   do k = ks, ke, 2
+   do k = ks, ke, outres
 ! writing inner boundary for polar coordinates
     if(crdnt==1.or.crdnt==2)&
      write(unitn,formval)is-1,k,xi1(is-1),x3(k),dvol(is,j,k)
-    do i = is, ie, 2
+    do i = is, ie, outres
      write(unitn,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
     write(unitn,'()')
@@ -479,10 +479,10 @@ subroutine write_plt
    
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    j=js
-   do k = ks, ke, 2
+   do k = ks, ke, outres
 ! writing inner boundary for polar coordinates
     if(crdnt==1.or.crdnt==2)call write_val(unitn,is,j,k,forme,header)
-    do i = is, ie, 2
+    do i = is, ie, outres
      call write_val(unitn,i,j,k,forme,header)
     end do
     write(unitn,'()')

@@ -38,7 +38,7 @@ program hormone
                      is, ie, js, je, ks, ke, imesh, jmesh, kmesh, &
                      sphrn, trnsn1, trnsn2, trnsn3
   namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
-                     dt_unit, sigfig, write_other_vel, write_shock
+                     dt_unit, sigfig, outres, write_other_vel, write_shock
   namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, include_cooling
   namelist /simucon/ crdnt,courant, rktype, start, mag_on, flux_limiter
   namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
