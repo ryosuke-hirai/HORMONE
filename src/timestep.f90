@@ -20,6 +20,7 @@ contains
   implicit none
 
   real*8 asq, bb1, bb2, bb3, bbsq
+  integer ierr
 !--------------------------------------------------------------------------
 !$omp parallel do private(i,j,k,asq,bbsq,bb1,bb2,bb3)
   do k = ks,ke
@@ -28,14 +29,13 @@ contains
 
      select case (eostype)
      case(0:1) ! without recombination
-      call eos_p_cf(d(i,j,k), v1(i,j,k), v2(i,j,k), v3(i,j,k), &
-                              b1(i,j,k), b2(i,j,k), b3(i,j,k), &
-                    e(i,j,k), T (i,j,k), imu(i,j,k),p (i,j,k), cf(i,j,k) )
+      call eos_p_cf(d(i,j,k), b1(i,j,k), b2(i,j,k), b3(i,j,k), &
+                    eint(i,j,k), T (i,j,k), imu(i,j,k),p (i,j,k), cf(i,j,k),&
+                    ierr=ierr )
      case(2) ! with recombination
-      call eos_p_cf(d(i,j,k), v1(i,j,k), v2(i,j,k), v3(i,j,k), &
-                              b1(i,j,k), b2(i,j,k), b3(i,j,k), &
-                    e(i,j,k), T (i,j,k), imu(i,j,k),p (i,j,k), cf(i,j,k), &
-                    spc(1,i,j,k), spc(2,i,j,k) )
+      call eos_p_cf(d(i,j,k), b1(i,j,k), b2(i,j,k), b3(i,j,k), &
+                    eint(i,j,k), T (i,j,k), imu(i,j,k),p (i,j,k), cf(i,j,k),&
+                    spc(1,i,j,k), spc(2,i,j,k), ierr )
      end select
 
      asq = cf(i,j,k)*cf(i,j,k)

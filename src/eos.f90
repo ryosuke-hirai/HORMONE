@@ -11,25 +11,28 @@ contains
 
 ! PURPOSE: To calculate pressure and sound speed based on chosen EoS.
 !          output p includes magnetic pressure
-subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
+subroutine eos_p_cf(d,b1,b2,b3,eint,Tini,imu,p,cf,X,Y,ierr)
 ! PURPOSE: To calculate pressure and sound speed from density and internal energy
  implicit none
- real*8,intent( in):: d,v1,v2,v3,b1,b2,b3,e,Tini
+ real*8,intent( in):: d,b1,b2,b3,eint,Tini
  real*8,intent( in),optional:: X,Y
  real*8,intent(inout):: imu
  real*8,intent(out):: p,cf
- real*8:: eint, gamma_eff, bsq, T, corr
+ integer,intent(out):: ierr
+ real*8:: gamma_eff, bsq, T, corr
  real*8:: erec, imurec, derecdT, dimurecdT, Tdot, logd, dt
  real*8,parameter:: W4err = 1d-2
  integer n
 
 !-----------------------------------------------------------------------------
 
+ ierr=0
  bsq = 0.5d0*(b1**2+b2**2+b3**2)
+ if(eint<=0d0.or.d<=0d0)then
+  ierr=1
+  return
+ end if
  
- eint = e - 0.5d0*d*(v1**2+v2**2+v3**2) - bsq
- if(eint<=0d0)eint = e*1d-10! temporary
-
  select case (eostype)
  case(0) ! ideal gas
   p = (gamma-1d0)*eint + bsq
@@ -45,9 +48,10 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
    if(abs(corr)<eoserr*T)exit
   end do
   if(n>50)then
-   print*,'Error in eos_p_cf, eostype=',eostype
-   print*,'d=',d,'e=',e,'mu=',1d0/imu
-   stop
+   ierr=2
+   print*,'Error in eos_p_cf, did not converge, eostype=',eostype
+   print*,'d=',d,'e=',eint,'mu=',1d0/imu
+   return
   end if
   p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
   gamma_eff = 1d0+p/eint
@@ -74,9 +78,10 @@ subroutine eos_p_cf(d,v1,v2,v3,b1,b2,b3,e,Tini,imu,p,cf,X,Y)
    if(abs(corr)<eoserr*T)exit
   end do
   if(n>500)then
-   print*,'Error in eos_p_cf, eostype=',eostype
-   print*,'d=',d,'e=',e,'mu=',1d0/imu
-   stop
+   ierr=2
+   print*,'Error in eos_p_cf, did not converge, eostype=',eostype
+   print*,'d=',d,'e=',eint,'mu=',1d0/imu
+   return
   end if
  
   imu = imurec
@@ -220,36 +225,33 @@ subroutine pressure
 
  implicit none
 
- real*8 vsq, bsq
+ real*8 bsq
 
 !-----------------------------------------------------------------------------
 
+ call internalenergy
+
  select case (eostype)
  case(0:1) ! EoSs that don't require composition
-!$omp parallel do private(i,j,k,vsq,bsq)
+!$omp parallel do private(i,j,k,bsq)
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     vsq      = v1(i,j,k)**2 + v2(i,j,k)**2 + v3(i,j,k)**2 
-     bsq      = b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2 
-     eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
+     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
 
      ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
-
     end do
    end do
   end do
 !$omp end parallel do
 
  case (2) ! EoSs that require composition
-!$omp parallel do private(i,j,k,vsq,bsq)
+!$omp parallel do private(i,j,k,bsq)
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     vsq = v1(i,j,k)**2 + v2(i,j,k)**2 + v3(i,j,k)**2
-     bsq = b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2
-     eint(i,j,k) = e(i,j,k) - 0.5d0*d(i,j,k)*vsq - 0.5d0*bsq
+     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
                       spc(1,i,j,k),spc(2,i,j,k)) ! gets T too
 
@@ -265,6 +267,64 @@ subroutine pressure
 
  return
 end subroutine pressure
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE INTERNALENERGY
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute eint from etot, v and B over the whole grid
+
+subroutine internalenergy
+
+ use grid
+ use physval
+
+ implicit none
+
+ integer:: ierr
+
+!-----------------------------------------------------------------------------
+
+!$omp parallel do private(i,j,k)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    eint(i,j,k) = get_eint(e(i,j,k),d(i,j,k),&
+                           v1(i,j,k),v2(i,j,k),v3(i,j,k),&
+                           b1(i,j,k),b2(i,j,k),b3(i,j,k),ierr )
+    if(ierr==1)then
+     print*,'Error in internalenergy, Negative internal energy'
+     print'("i=",i4,"j=",i4,"k=",i4)',i,j,k
+     print*,'etot=',e(i,j,k),'eint=',eint(i,j,k)
+     stop
+    end if
+   end do
+  end do
+ end do
+!$omp end parallel do
+
+return
+end subroutine internalenergy
+
+! **************************************************************************
+
+real*8 function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr)
+!PURPOSE: To calculate eint from etot, v and B
+ implicit none
+ real*8,intent(in):: etot,d,v1,v2,v3,b1,b2,b3
+ integer,intent(out),optional::ierr
+ real*8:: vsq, bsq
+
+ ierr=0
+ vsq = v1**2 + v2**2 + v3**2
+ bsq = b1**2 + b2**2 + b3**2
+
+ get_eint = etot-0.5d0*d*bsq-0.5d0*bsq
+ if(present(ierr).and.get_eint<=0d0)ierr=1
+ 
+end function get_eint
 
 end module pressure_mod
 
