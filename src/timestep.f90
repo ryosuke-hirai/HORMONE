@@ -30,11 +30,11 @@ contains
      select case (eostype)
      case(0:1) ! without recombination
       call eos_p_cf(d(i,j,k), b1(i,j,k), b2(i,j,k), b3(i,j,k), &
-                    eint(i,j,k), T (i,j,k), imu(i,j,k),p (i,j,k), cf(i,j,k),&
+                    eint(i,j,k), T(i,j,k), imu(i,j,k), p(i,j,k), cf(i,j,k),&
                     ierr=ierr )
      case(2) ! with recombination
       call eos_p_cf(d(i,j,k), b1(i,j,k), b2(i,j,k), b3(i,j,k), &
-                    eint(i,j,k), T (i,j,k), imu(i,j,k),p (i,j,k), cf(i,j,k),&
+                    eint(i,j,k), T(i,j,k), imu(i,j,k), p(i,j,k), cf(i,j,k),&
                     spc(1,i,j,k), spc(2,i,j,k), ierr )
      end select
 
