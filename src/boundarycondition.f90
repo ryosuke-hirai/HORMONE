@@ -104,11 +104,11 @@ subroutine boundarycondition
    do i = is-2, is-1
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    T(i,j,k) = T(is,j,k)
     select case (eostype)
     case(0:1) ! without recombination
-     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(is,j,k),imu(i,j,k))
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
     case(2) ! with recombination
-     T(i,j,k) = T(is,j,k)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
@@ -238,11 +238,11 @@ subroutine boundarycondition
    do i = ie+1, ie+2
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    T(i,j,k) = T(ie,j,k)
     select case (eostype)
     case(0:1) ! without recombination
-     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(ie,j,k),imu(i,j,k))
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
     case(2) ! with recombination
-     T(i,j,k) = T(ie,j,k)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
@@ -338,11 +338,11 @@ if(je>1)then
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    T(i,j,k) = T(i,js,k)
     select case (eostype)
     case(0:1) ! without recombination
-     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,js,k),imu(i,j,k))
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
     case(2) ! with recombination
-     T(i,j,k) = T(i,js,k)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
@@ -437,11 +437,11 @@ if(je>1)then
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    T(i,j,k) = T(i,je,k)
     select case (eostype)
     case(0:1) ! without recombination
-     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,je,k),imu(i,j,k))
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
     case(2) ! with recombination
-     T(i,j,k) = T(i,je,k)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
@@ -569,11 +569,11 @@ if(ke>1)then
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    T(i,j,k) = T(i,j,ks)
     select case (eostype)
     case(0:1) ! without recombination
-     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,ks),imu(i,j,k))
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
     case(2) ! with recombination
-     T(i,j,k) = T(i,j,ks)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
@@ -698,11 +698,11 @@ if(ke>1)then
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    T(i,j,k) = T(i,j,ke)
     select case (eostype)
     case(0:1) ! without recombination
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
     case(2) ! with recombination
-     T(i,j,k) = T(i,j,ke)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
