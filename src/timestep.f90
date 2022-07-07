@@ -38,7 +38,7 @@ contains
                     spc(1,i,j,k), spc(2,i,j,k), ierr )
      end select
 
-     asq = cf(i,j,k)*cf(i,j,k)
+     asq = cf(i,j,k)**2
 
      bb1  = b1(i,j,k)**2 / d(i,j,k)
      bb2  = b2(i,j,k)**2 / d(i,j,k)
