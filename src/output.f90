@@ -208,19 +208,19 @@ subroutine write_grid
   write(unitn,formnum)1,2,3
   
   if(ie>1)then
-   write(unitn,formhead)'# i','x1','dvol'
+   write(unitn,formhead)'  i','x1','dvol'
    j=js;k=ks
    do i = is, ie
     write(unitn,formval)i,x1(i),dvol(i,j,k)    
    end do
   elseif(je>1)then
-   write(unitn,formhead)'# j','x2','dvol'
+   write(unitn,formhead)'  j','x2','dvol'
    i=is;k=ks
    do j = js, je
     write(unitn,formval)j,x2(j),dvol(i,j,k)    
    end do
   elseif(ke>1)then
-   write(unitn,formhead)'# k','x3','dvol'
+   write(unitn,formhead)'  k','x3','dvol'
    i=is;j=js
    do k = ks, ke
     write(unitn,formval)k,x3(k),dvol(i,j,k)    
@@ -233,7 +233,7 @@ subroutine write_grid
   write(unitn,formnum)1,2,3,4,5
   
   if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
-   write(unitn,formhead)'# i','j','x1','x2','dvol'
+   write(unitn,formhead)'  i','j','x1','x2','dvol'
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
@@ -261,7 +261,7 @@ subroutine write_grid
    end if
    
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
-   write(unitn,formhead)'# i','k','x1','x3','dvol'
+   write(unitn,formhead)'  i','k','x1','x3','dvol'
    j=js
    do k = ks, ke, outres
 ! writing inner boundary for polar coordinates
@@ -275,7 +275,7 @@ subroutine write_grid
    
   elseif(ie==1)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
-   write(unitn,formhead)'# j','k','x2','x3','dvol'
+   write(unitn,formhead)'  j','k','x2','x3','dvol'
    i=is
    do k = ks, ke
     do j = js, je
@@ -289,7 +289,7 @@ subroutine write_grid
   write(formnum,'("(",a4,"i4,2i5,4i",i2,")")')'"#",',sigfig+8
   write(unitn,formnum)1,2,3,4,5,6,7
   
-  write(unitn,formhead)'# i','j','k','x1','x2','x3','dvol'
+  write(unitn,formhead)'  i','j','k','x1','x2','x3','dvol'
   if(crdnt==2)then
    do j = je, je
     do i = is, ie
