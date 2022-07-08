@@ -9,14 +9,16 @@ FCFLAG=
 ifeq (${FC},gfortran)
 MODFLAG= -J
 FCFLAG+= -fopenmp -ffree-line-length-512 #-fmax-stack-var-size=32768
-DBFLAG= -ffpe-trap=invalid,zero,overflow -fbacktrace 
+DBFLAG= -ffpe-trap=invalid,zero,overflow -fbacktrace
+PRFLAG= -pg
 endif
 
 # for ifort
 ifeq (${FC},ifort)
 MODFLAG= -module 
 FCFLAG+= -qopenmp #-heap-arrays
-DBFLAG= -traceback -fpe0 -CB #-pg -check all
+DBFLAG= -traceback -fpe0 -CB #-pg #-check all
+PRFLAG= -pg
 endif
 
 # directories
@@ -40,6 +42,9 @@ all: $(TARGET)
 
 debug: FCFLAG+=$(DBFLAG)
 debug: $(TARGET)
+
+profile: FCFLAG+=$(PRFLAG)
+profile: $(TARGET)
 
 $(TARGET): $(OBJ_F)
 	$(FC) $(FCFLAG) -o $@ $(OBJ_F)
