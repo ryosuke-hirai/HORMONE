@@ -324,7 +324,7 @@ function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
  bsq = b1**2 + b2**2 + b3**2
 
  eint = etot-0.5d0*d*vsq-0.5d0*bsq
- if(present(ierr).and.get_eint<=0d0)ierr=1
+ if(present(ierr).and.eint<=0d0)ierr=1
  
 end function get_eint
 
