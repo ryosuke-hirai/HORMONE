@@ -298,7 +298,7 @@ subroutine internalenergy
                            b1(i,j,k),b2(i,j,k),b3(i,j,k),ierr )
     if(ierr==1)then
      print*,'Error in internalenergy, Negative internal energy'
-     print'("i=",i4,"j=",i4,"k=",i4)',i,j,k
+     print'("i=",i4,", j=",i4,", k=",i4)',i,j,k
      print*,'etot=',e(i,j,k),'eint=',eint(i,j,k)
      stop
     end if
