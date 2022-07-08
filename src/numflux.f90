@@ -478,11 +478,6 @@ if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
 
 if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 
-print'(a9,3(1PE13.5e2))','massflux',flux3(is,js,ke-2:ke,1)
-print'(a9,3(1PE13.5e2))','momeflux',flux3(is,js,ke-2:ke,4)
-print'(a9,3(1PE13.5e2))','enerflux',flux3(is,js,ke-2:ke,8)
-stop
-
 return
 contains
 
