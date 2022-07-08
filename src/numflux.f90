@@ -19,7 +19,7 @@ subroutine numflux
 
   real*8:: cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
-           v2l, v2r, v3l, v3r, fix
+           v2l, v2r, v3l, v3r, eil, eir, fix
   real*8,dimension(1:9)::tmpflux
   real*8,dimension(1:2):: dx
   real*8,dimension(1:spn):: spcl,spcr
@@ -35,7 +35,7 @@ subroutine numflux
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !$omp parallel
-!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,&
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
   do k = ks,ke
@@ -76,20 +76,22 @@ subroutine numflux
      end if
 
      Tl = T(i,j,k) ; Tr = T(i+1,j,k)
+     eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
+     eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
      select case (eostype)
      case(0:1) ! without recombination
       imul = 1d0/imu(i  ,j,k) + dx(1) * dmu(i  ,j,k,1)
       imur = 1d0/imu(i+1,j,k) - dx(2) * dmu(i+1,j,k,1)
       imul = 1d0/imul ; imur = 1d0/imur
-      call eos_p_cf(dl,b1l,b2l,b3l,el,Tl,imul,ptl,cfl,ierr=ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,er,Tr,imur,ptr,cfr,ierr=ierr)
+      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,ierr=ierr)
+      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,ierr=ierr)
       if(ierr>0)call error_flux(i,j,k,1,ierr)
      case(2) ! with recombination
       spcl(1:2) = spc(1:2,i  ,j,k) + dx(1) * dspc(1:2,i  ,j,k,1)
       spcr(1:2) = spc(1:2,i+1,j,k) - dx(2) * dspc(1:2,i+1,j,k,1)
-      call eos_p_cf(dl,b1l,b2l,b3l,el,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,er,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
+      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
+      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
       if(ierr>0)call error_flux(i,j,k,1,ierr)
      end select
 
@@ -173,7 +175,7 @@ subroutine numflux
 
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 if(je/=1)then
-!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,&
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,fix,spcl,spcr,signdflx,n,ierr)
   do k = ks,ke
@@ -215,20 +217,22 @@ if(je/=1)then
      end if
 
      Tl = T(i,j,k) ; Tr = T(i,j+1,k)
+     eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
+     eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
      select case (eostype)
      case(0:1) ! without recombination
       imul = 1d0/imu(i,j  ,k) + dx(1) * dmu(i,j  ,k,2)
       imur = 1d0/imu(i,j+1,k) - dx(2) * dmu(i,j+1,k,2)
       imul = 1d0/imul ; imur = 1d0/imur
-      call eos_p_cf(dl,b1l,b2l,b3l,el,Tl,imul,ptl,cfl,ierr=ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,er,Tr,imur,ptr,cfr,ierr=ierr)
+      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,ierr=ierr)
+      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,ierr=ierr)
       if(ierr>0)call error_flux(i,j,k,2,ierr)
      case(2) ! with recombination
       spcl(1:2) = spc(1:2,i,j  ,k) + dx(1) * dspc(1:2,i,j  ,k,2)
       spcr(1:2) = spc(1:2,i,j+1,k) - dx(2) * dspc(1:2,i,j+1,k,2)
-      call eos_p_cf(dl,b1l,b2l,b3l,el,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,er,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
+      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
+      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
       if(ierr>0)call error_flux(i,j,k,2,ierr)
      end select
      
@@ -319,7 +323,7 @@ if(je/=1)then
 
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
  if(ke/=1)then
-!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,&
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
   do k = ks-1,ke
@@ -361,20 +365,22 @@ if(je/=1)then
      end if
 
      Tl = T(i,j,k) ; Tr = T(i,j,k+1)
+     eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
+     eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
      select case (eostype)
      case(0:1) ! without recombination
       imul = 1d0/imu(i,j,k  ) + dx(1) * dmu(i,j,k  ,3)
       imur = 1d0/imu(i,j,k+1) - dx(2) * dmu(i,j,k+1,3)
       imul = 1d0/imul ; imur = 1d0/imur
-      call eos_p_cf(dl,b1l,b2l,b3l,el,Tl,imul,ptl,cfl,ierr=ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,er,Tr,imur,ptr,cfr,ierr=ierr)
+      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,ierr=ierr)
+      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,ierr=ierr)
       if(ierr>0)call error_flux(i,j,k,3,ierr)
      case(2) ! with recombination
       spcl(1:2) = spc(1:2,i,j,k  ) + dx(1) * dspc(1:2,i,j,k  ,3)
       spcr(1:2) = spc(1:2,i,j,k+1) - dx(2) * dspc(1:2,i,j,k+1,3)
-      call eos_p_cf(dl,b1l,b2l,b3l,el,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,er,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
+      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
+      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
       if(ierr>0)call error_flux(i,j,k,3,ierr)
      end select
 
@@ -461,6 +467,7 @@ if(je/=1)then
  end do
 !$omp end do
 end if
+!$omp end parallel
 
 if(ie==1)flux1=0d0
 if(ie==1.and.compswitch>=2)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
@@ -471,7 +478,11 @@ if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
 
 if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 
-!$omp end parallel
+print'(a9,3(1PE13.5e2))','massflux',flux3(is,js,ke-2:ke,1)
+print'(a9,3(1PE13.5e2))','momeflux',flux3(is,js,ke-2:ke,4)
+print'(a9,3(1PE13.5e2))','enerflux',flux3(is,js,ke-2:ke,8)
+stop
+
 return
 contains
 

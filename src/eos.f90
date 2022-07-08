@@ -36,7 +36,9 @@ subroutine eos_p_cf(d,b1,b2,b3,eint,Tini,imu,p,cf,X,Y,ierr)
  select case (eostype)
  case(0) ! ideal gas
   p = (gamma-1d0)*eint + bsq
-  cf = sqrt(gamma*p/d)
+  gamma_eff = 1d0+p/eint
+
+  cf = sqrt(gamma_eff*p/d)
 
  case(1) ! ideal gas + radiation pressure
   T = Tini
@@ -310,18 +312,18 @@ end subroutine internalenergy
 
 ! **************************************************************************
 
-real*8 function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr)
+function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
 !PURPOSE: To calculate eint from etot, v and B
  implicit none
  real*8,intent(in):: etot,d,v1,v2,v3,b1,b2,b3
  integer,intent(out),optional::ierr
- real*8:: vsq, bsq
+ real*8:: eint, vsq, bsq
 
  ierr=0
  vsq = v1**2 + v2**2 + v3**2
  bsq = b1**2 + b2**2 + b3**2
 
- get_eint = etot-0.5d0*d*bsq-0.5d0*bsq
+ eint = etot-0.5d0*d*vsq-0.5d0*bsq
  if(present(ierr).and.get_eint<=0d0)ierr=1
  
 end function get_eint
