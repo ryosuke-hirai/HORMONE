@@ -249,6 +249,7 @@ end subroutine gravbound
    real*8,intent(out):: ml
    integer ii, jj, kk
 
+   ml = 0d0
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   if(crdnt==1.and.je==1)then
    jj = js
