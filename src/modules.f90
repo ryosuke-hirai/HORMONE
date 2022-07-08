@@ -108,7 +108,7 @@ module gravmod
 
   implicit none
 
-  integer:: l, ll, lmax
+  integer:: l, lmax
   integer,parameter:: llmax = 1000
   integer,allocatable,dimension(:):: modlimax
   real*8,allocatable,dimension(:,:,:):: grvphi, grvphiold, grv1, grv2, grv3, phicg
