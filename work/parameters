@@ -6,10 +6,10 @@ c trnsn1/2/3 : Number of cells in transition layer from fully 1D to multi-D.
 c              Every 8/4/2 cells will be grouped up.
 &gridcon  xi1s=0d6 xi1e=3.5d10 xi2s=-1.d0 xi2e=1.d0 xi3s=-3.5d10 xi3e=3.5d10
 	  is=1 ie=300 js=1 je=1 ks=1 ke=600
-	  imesh=0 jmesh=0 kmesh=0
+	  imesh=1 jmesh=0 kmesh=2
 	  sphrn=0 trnsn1=10 trnsn2=20 trnsn3=20 /
 
-&geoscon  x1min=1.5d13 x2min=0 x3min=2d9 /
+&geoscon  x1min=1.5d7 x2min=0 x3min=2d9 /
 
 c outstyle/endstyle : time=1, timestep=2
 c dt_unit : Give name of dt_unit (current options are 's','hr','d','yr')
@@ -43,7 +43,8 @@ c eq_sym : Set to .true. for equatorial symmetry
 
 c gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 c grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
-&gravcon gravswitch=3 grverr=1.d-5 cgerr=1.d-5 HGfac=3d0 hgcfl=0.9d0
+c gbtype: 0=multipole expansion, 1=Robin boundary
+&gravcon gravswitch=3 grverr=1d-5 cgerr=1d-5 HGfac=10d0 hgcfl=0.9d0 gbtype=0
 	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=600 gjs=1 gje=1 gks=-299 gke=900 /
 
