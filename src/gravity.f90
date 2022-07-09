@@ -28,7 +28,7 @@ gin = gie - gis + 1
 if(gravswitch==0.or.gravswitch==1)then
  grvphi = 0d0
 elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
- if(grav_init_other)return
+ if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
  call gravbound
@@ -38,6 +38,11 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
 
 ! calculating b for Ax=b
   mind = minval(d(is:ie,js:je,ks:ke))
+  if(gravswitch==3)then
+   mind = sum(d(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))&
+        / (pi*xi1e**2*(xi3e-xi3s)) * 1d-2
+   hgsrc=mind
+  end if
   do l = 1, lmax
    i = modlimax(l) +gis-1
    k = (l-modlimax(l))/gin + gks
@@ -94,10 +99,12 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
 
    alpha = rrold / pAp
 
+!$omp parallel do private(l)
    do l = 1, lmax
     x(l) = x(l) + alpha*pp(l) !x_k+1
     r(l) = r(l) - alpha*aw(l) !r_k+1
    end do
+!$omp end parallel do
 
    call cctr(r)
 
@@ -119,9 +126,11 @@ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
    if(flgcg==0)exit                     !
 !+++++++++++++++++++++++++++++++++++++++!
 
+!$omp parallel do private(l)
    do l = 1, lmax
     pp(l) = z(l) + beta * pp(l)
    end do
+!$omp end parallel do
 
   end do
 
@@ -186,6 +195,8 @@ if(gravswitch==3.and.tn/=0)then
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
 
+  if(gbtype==0)call gravbound
+
   do while (grvtime<time+dt)
 
    if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
@@ -193,19 +204,18 @@ if(gravswitch==3.and.tn/=0)then
    grvphi(gis-1,js,gks:gke) = grvphi(gis,js,gks:gke)
    if(eq_sym)grvphi(gis:gie,js,gks-1) = grvphi(gis:gie,js,gks)
 
-!$omp parallel
-!$omp do private(k)
-   do k = gks, gke
-    grvphi(gie+1,js,k) = orgdis(gie,js,k)/orgdis(gie+1,js,k) * grvphi(gie,js,k)
-   end do
-!$omp end do
-!$omp do private(i)
-   do i = gis, gie
-    grvphi(i,js,gke+1) = orgdis(i,js,gke)/orgdis(i,js,gke+1) * grvphi(i,js,gke)
-    grvphi(i,js,gks-1) = orgdis(i,js,gks)/orgdis(i,js,gks-1) * grvphi(i,js,gks)
-   end do
-!$omp end do
+   if(gbtype==1)then
+!$omp parallel workshare
+    grvphi(gie+1,js,gks:gke) = orgdis(gie,js,gks:gke)/orgdis(gie+1,js,gks:gke) &
+                             * grvphi(gie,js,gks:gke)
+    grvphi(gis:gie,js,gke+1) = orgdis(gis:gie,js,gke)/orgdis(gis:gie,js,gke+1) &
+                             * grvphi(gis:gie,js,gke)
+    grvphi(gis:gie,js,gks-1) = orgdis(gis:gie,js,gks)/orgdis(gis:gie,js,gks-1) &
+                             * grvphi(gis:gie,js,gks)
+!$omp end parallel workshare
+   end if
 
+!$omp parallel
 !$omp do private(i,j,k,h,phih,intphi)
    do k = gks, gke
     do j = js, je
@@ -225,31 +235,27 @@ if(gravswitch==3.and.tn/=0)then
     end do
    end do
 !$omp end do
-!$omp single
+!$omp workshare
    grvphiold = grvphi
    grvphi(gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
-!$omp end single
-!$omp do private(k)
-   do k = gks, gke
-    grvphi(gie+1,js,k) = orgdis(gie,js,k)/orgdis(gie+1,js,k) * newphi(gie,js,k)
-   end do
-!$omp end do
-!$omp do private(i)
-   do i = gis, gie
-    grvphi(i,js,gke+1) = orgdis(i,js,gke)/orgdis(i,js,gke+1) * newphi(i,js,gke)
-    grvphi(i,js,gks-1) = orgdis(i,js,gks)/orgdis(i,js,gks-1) * newphi(i,js,gks)
-   end do
-!$omp end do
-!$omp end parallel
 
    grvphi(gis-1,js:je,gks:gke) = grvphi(gis,js:je,gks:gke)
+!$omp end workshare
+!$omp end parallel
 
    if(eq_sym)then ! for plane symmetry
-    grvphi(is:gie,js:je,ks-1) = newphi(is:gie,js:je,ks)
-    grvphi(is:gie,js:je,ks-2) = newphi(is:gie,js:je,ks+1)
+    grvphi(gis:gie,js:je,ks-1) = newphi(gis:gie,js:je,ks)
+    grvphi(gis:gie,js:je,ks-2) = newphi(gis:gie,js:je,ks+1)
    end if
+
    dt_old = dtgrav
    grvtime = grvtime + dtgrav
+
+   if(maxval(grvphi(gis:gie,js:je,gks:gke))>=0d0)then
+    print*,'Error in gravity: Positive gravitational potential'
+    print*,'e.g. (i,j,k)=',maxloc(grvphi(gis:gie,js:je,gks:gke))
+    stop
+   end if
 
    if(grvtime>=time+dt)then
     exit
@@ -273,22 +279,24 @@ if(gravswitch==3.and.tn/=0)then
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
 
-!  do n = 1, int(HGfac)
+  if(gbtype==0)call gravbound
+
   do while (grvtime<time+dt)
    if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
-!$omp parallel
    k = gks
+
+   if(gbtype==1)then
+!$omp parallel workshare
+     grvphi(gie+1,gjs:gje,k) = x1(gie)/x1(gie+1) * grvphi(gie,gjs:gje,k)
+!$omp end parallel workshare
+   end if
+   
+!$omp parallel
 !$omp workshare
    grvphi(gis-1,gjs:gje,k) = grvphi(gis,gjs:gje,k)
    grvphi(gis:gie,gjs-1,k) = grvphi(gis:gie,gjs,k)
    grvphi(gis:gie,gje+1,k) = grvphi(gis:gie,gje,k)
 !$omp end workshare
-
-!$omp do private(j)
-   do j = gjs, gje
-    grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
-   end do
-!$omp end do
 
 !$omp do private(i,j)
    do j = gjs, gje
@@ -308,11 +316,6 @@ if(gravswitch==3.and.tn/=0)then
    grvphiold(gis:gie,js:je,gks:gke) = grvphi(gis:gie,js:je,gks:gke)
    grvphi(gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
 !$omp end workshare
-!$omp do private(j)
-   do j = gjs, gje
-    grvphi(gie+1,j,gks) = x1(gie)/x1(gie+1) * grvphi(gie,j,gks)
-   end do
-!$omp end do
 !$omp end parallel
 
    dt_old = dtgrav
@@ -345,9 +348,21 @@ if(gravswitch==3.and.tn/=0)then
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
 
-!  do n = 1, int(HGfac)
+  if(gbtype==0)call gravbound
+
   do while (grvtime<time+dt)
    if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
+
+   if(gbtype==1)then ! Set Robin boundary condition
+ !$omp do private(j)
+    do k = gks, gke
+     do j = gjs, gje
+      grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
+     end do
+    end do
+!$omp end do
+   end if
+
 !$omp parallel
 !$omp workshare
    grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
@@ -356,14 +371,6 @@ if(gravswitch==3.and.tn/=0)then
    grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
    grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
 !$omp end workshare
-
-!$omp do private(j)
-   do k = gks, gke
-    do j = gjs, gje
-     grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
-    end do
-   end do
-!$omp end do
 
 !$omp do private(i,j,k)
    do k = gks, gke
@@ -387,13 +394,6 @@ if(gravswitch==3.and.tn/=0)then
    grvphiold(gis:gie,gjs:gje,gks:gke) = grvphi(gis:gie,gjs:gje,gks:gke)
    grvphi(gis:gie,gjs:gje,gks:gke) = newphi(gis:gie,gjs:gje,gks:gke)
 !$omp end workshare
-!$omp do private(j,k)
-   do k = gks, gke
-    do j = gjs, gje
-     grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
-    end do
-   end do
-!$omp end do
 !$omp end parallel
 
    dt_old = dtgrav

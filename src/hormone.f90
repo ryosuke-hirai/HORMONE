@@ -43,8 +43,9 @@ program hormone
   namelist /simucon/ crdnt,courant, rktype, start, mag_on, flux_limiter
   namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                      bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
-  namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, grav_init_other,&
-                     include_extgrv, gis, gie, gjs, gje, gks, gke
+  namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, gbtype, &
+                     grav_init_other, include_extgrv, &
+                     gis, gie, gjs, gje, gks, gke
   namelist /partcon/ include_particles, maxptc
 
 
@@ -97,7 +98,7 @@ program hormone
 
     call timestep
     print*,tn,time,dt
-
+!print*,v3(is,js,ke:ke+2),p(is,js,ke:ke+2),d(is,js,ke:ke+2),grvphi(is,js,ke:ke+2)
     if(tn>0)call gravity
     if(dirichlet_on)call dirichletbound
     call shockfind
