@@ -20,7 +20,7 @@ subroutine initialcondition
 
  if(start==0)then
 
-  call agndisk
+  call orszagtang
 
 ! to set internal energy consistently ------------------------------!
   call meanmolweight                                                !
