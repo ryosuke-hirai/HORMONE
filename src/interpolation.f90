@@ -84,9 +84,6 @@ subroutine interpolation
      uu(1:3) = b3(i-1:i+1,j,k)
      call minmod(du,uu,dx) ; db3(i,j,k,1) = du
      b3l = uu(2) - (x1(i)-xi1(i-1))*du ; b3r = uu(2) + (xi1(i)-x1(i))*du
-
-     uu(1:3) = phi(i-1:i+1,j,k)
-     call minmod(du,uu,dx) ; dphi(i,j,k,1) = du
     end if
     
 ! check stability at cell boundary ---------------------------------------- !
@@ -121,6 +118,7 @@ subroutine interpolation
      dd (i,j,k,1) = 0d0 ; de (i,j,k,1) = 0d0
      dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
      db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
+     dphi(i,j,k,1) = 0d0
     else
      Tini = T(i,j,k)
      select case (eostype)
@@ -139,10 +137,14 @@ subroutine interpolation
       dd (i,j,k,1) = 0d0 ; de (i,j,k,1) = 0d0
       dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
       db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
+      dphi(i,j,k,1) = 0d0
      end if
     end if
 ! ------------------------------------------------------------------------- !
 
+    uu(1:3) = phi(i-1:i+1,j,k)
+    call minmod(du,uu,dx) ; dphi(i,j,k,1) = du
+    
    end do
   end do
  end do
@@ -196,6 +198,9 @@ if(je/=1)then
      uu(1:3) = b3(i,j-1:j+1,k)
      call minmod(du,uu,dx) ; db3(i,j,k,2) = du
      b3l = uu(2) - (x2(j)-xi2(j-1))*du ; b3r = uu(2) + (xi2(j)-x2(j))*du
+
+     uu(1:3) = phi(i,j-1:j+1,k)
+     call minmod(du,uu,dx) ; dphi(i,j,k,2) = du
     end if
     
 ! check stability at cell boundary ---------------------------------------- !
@@ -230,6 +235,7 @@ if(je/=1)then
      dd (i,j,k,2) = 0d0 ; de (i,j,k,2) = 0d0
      dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
      db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
+     dphi(i,j,k,2) = 0d0
     else
      Tini = T(i,j,k)
      select case (eostype)
@@ -248,13 +254,14 @@ if(je/=1)then
       dd (i,j,k,2) = 0d0 ; de (i,j,k,2) = 0d0
       dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
       db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
+      dphi(i,j,k,2) = 0d0
      end if
     end if
 ! -------------------------------------------------------------------------- !
 
     uu(1:3) = phi(i,j-1:j+1,k)
     call minmod(du,uu,dx) ; dphi(i,j,k,2) = du
-
+    
    end do
   end do
  end do
@@ -309,6 +316,9 @@ if(ke/=1)then
      uu(1:3) = b3(i,j,k-1:k+1)
      call minmod(du,uu,dx) ; db3(i,j,k,3) = du
      b3l = uu(2) - (x3(k)-xi3(k-1))*du ; b3r = uu(2) + (xi3(k)-x3(k))*du
+
+     uu(1:3) = phi(i,j,k-1:k+1)
+     call minmod(du,uu,dx) ; dphi(i,j,k,3) = du
     end if
 
 ! check stability at cell boundary ---------------------------------------- !
@@ -343,6 +353,7 @@ if(ke/=1)then
      dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
      dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
      db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
+     dphi(i,j,k,3) = 0d0
     else
      Tini = T(i,j,k)
      select case (eostype)
@@ -361,6 +372,7 @@ if(ke/=1)then
       dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
       dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
       db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
+      dphi(i,j,k,3) = 0d0
      end if
     end if
 ! -------------------------------------------------------------------------- !
