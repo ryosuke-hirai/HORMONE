@@ -46,6 +46,7 @@ subroutine boundarycondition
   b1(is-2:is-1,js:je,ks:ke) = b1(ie-1:ie,js:je,ks:ke)
   b2(is-2:is-1,js:je,ks:ke) = b2(ie-1:ie,js:je,ks:ke)
   b3(is-2:is-1,js:je,ks:ke) = b3(ie-1:ie,js:je,ks:ke)
+  phi(is-2:is-1,js:je,ks:ke) = phi(ie-1:ie,js:je,ks:ke)
  case(1) x1_inner_scalar ! reflective
   d (is-2:is-1,js:je,ks:ke) = d (is+1:is:-1,js:je,ks:ke)
   p (is-2:is-1,js:je,ks:ke) = p (is+1:is:-1,js:je,ks:ke)
@@ -131,6 +132,7 @@ subroutine boundarycondition
   b1(ie+1:ie+2,js:je,ks:ke) = b1(is:is+1,js:je,ks:ke)
   b2(ie+1:ie+2,js:je,ks:ke) = b2(is:is+1,js:je,ks:ke)
   b3(ie+1:ie+2,js:je,ks:ke) = b3(is:is+1,js:je,ks:ke)
+  phi(ie+1:ie+2,js:je,ks:ke) = phi(is:is+1,js:je,ks:ke)
  case(1) x1_outer_scalar ! reflective
   d (ie+1:ie+2,js:je,ks:ke) = d (ie:ie-1:-1,js:je,ks:ke)
   p (ie+1:ie+2,js:je,ks:ke) = p (ie:ie-1:-1,js:je,ks:ke)
@@ -266,6 +268,7 @@ if(je>1)then
   b1(is:ie,js-2:js-1,ks:ke) = b1(is:ie,je-1:je,ks:ke)
   b2(is:ie,js-2:js-1,ks:ke) = b2(is:ie,je-1:je,ks:ke)
   b3(is:ie,js-2:js-1,ks:ke) = b3(is:ie,je-1:je,ks:ke)
+  phi(is:ie,js-2:js-1,ks:ke) = phi(is:ie,je-1:je,ks:ke)
  case(1) x2_inner_scalar ! reflective
   d (is:ie,js-2:js-1,ks:ke) = d (is:ie,js+1:js:-1,ks:ke)
   p (is:ie,js-2:js-1,ks:ke) = p (is:ie,js+1:js:-1,ks:ke)
@@ -365,6 +368,7 @@ if(je>1)then
   b1(is:ie,je+1:je+2,ks:ke) = b1(is:ie,js:js+1,ks:ke)
   b2(is:ie,je+1:je+2,ks:ke) = b2(is:ie,js:js+1,ks:ke)
   b3(is:ie,je+1:je+2,ks:ke) = b3(is:ie,js:js+1,ks:ke)
+  phi(is:ie,je+1:je+2,ks:ke) = phi(is:ie,js:js+1,ks:ke)
  case(1) x2_outer_scalar ! reflective
   d (is:ie,je+1:je+2,ks:ke) = d (is:ie,je:je-1:-1,ks:ke)
   p (is:ie,je+1:je+2,ks:ke) = p (is:ie,je:je-1:-1,ks:ke)
@@ -466,6 +470,7 @@ if(ke>1)then
   b1(is:ie,js:je,ks-2:ks-1) = b1(is:ie,js:je,ke-1:ke)
   b2(is:ie,js:je,ks-2:ks-1) = b2(is:ie,js:je,ke-1:ke)
   b3(is:ie,js:je,ks-2:ks-1) = b3(is:ie,js:je,ke-1:ke)
+  phi(is:ie,js:je,ks-2:ks-1) = phi(is:ie,js:je,ke-1:ke)
  case(1) x3_inner_scalar ! reflective
   d (is:ie,js:je,ks-2:ks-1) = d (is:ie,js:je,ks+1:ks:-1)
   p (is:ie,js:je,ks-2:ks-1) = p (is:ie,js:je,ks+1:ks:-1)
@@ -595,6 +600,7 @@ if(ke>1)then
   b1(is:ie,js:je,ke+1:ke+2) = b1(is:ie,js:je,ks:ks+1)
   b2(is:ie,js:je,ke+1:ke+2) = b2(is:ie,js:je,ks:ks+1)
   b3(is:ie,js:je,ke+1:ke+2) = b3(is:ie,js:je,ks:ks+1)
+  phi(is:ie,js:je,ke+1:ke+2) = phi(is:ie,js:je,ks:ks+1)
  case(1) x3_outer_scalar ! reflective
   d (is:ie,js:je,ke+1:ke+2) = d (is:ie,js:je,ke:ke-1:-1)
   p (is:ie,js:je,ke+1:ke+2) = p (is:ie,js:je,ke:ke-1:-1)
