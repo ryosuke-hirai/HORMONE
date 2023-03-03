@@ -42,9 +42,9 @@ subroutine output
   if(include_particles)then
 !ptcfile----------------------------------------------------------------
   if(outstyle==1)then
-   write(ptcfile,'(a8,i11.11,a5)')'data/ptc',int(time),'s.dat'
+   write(ptcfile,'(a8,i11.11,a5)')'data/ptc',nint(time),'s.dat'
    if(time>2147483647d0)then
-    write(ptcfile,'(a8,i9.9,a7)')'data/ptc',int(time*0.01d0),'00s.dat'
+    write(ptcfile,'(a8,i9.9,a7)')'data/ptc',nint(time*0.01d0),'00s.dat'
    end if
   elseif(outstyle==2)then
    write(ptcfile,'(a8,i8.8,a4)')'data/ptc',tn,'.dat'
@@ -108,9 +108,9 @@ subroutine output
 
 !bptfile----------------------------------------------------------------
   if(outstyle==1)then
-   write(bptfile,'(a8,i11.11,a5)')'data/bpt',int(time),'s.dat'
+   write(bptfile,'(a8,i11.11,a5)')'data/bpt',nint(time),'s.dat'
    if(time>2147483647d0)then
-    write(bptfile,'(a8,i9.9,a7)')'data/bpt',int(time*0.01d0),'00s.dat'
+    write(bptfile,'(a8,i9.9,a7)')'data/bpt',nint(time*0.01d0),'00s.dat'
    end if
   elseif(outstyle==2)then
    write(bptfile,'(a8,i8.8,a4)')'data/bpt',tn,'.dat'
@@ -559,10 +559,10 @@ subroutine set_file_name(prefix,tn,time,filename)
  select case(outstyle)
  case(1)
   write(filename,'(a5,a,i11.11,a,a4)')&
-   'data/',trim(prefix),int(time/dt_unit_in_sec),trim(dt_unit),'.dat'
+   'data/',trim(prefix),nint(time/dt_unit_in_sec),trim(dt_unit),'.dat'
   if(time/dt_unit_in_sec>2147483647d0)then ! if integer is overflowed
    write(filename,'(a5,a,i9.9,"00",a,a4)')&
-    'data/',trim(prefix),int(time/dt_unit_in_sec*0.01d0),trim(dt_unit),'.dat'
+    'data/',trim(prefix),nint(time/dt_unit_in_sec*0.01d0),trim(dt_unit),'.dat'
   end if
  case(2)
   write(filename,'(a5,a,i8.8,a4)')'data/',trim(prefix),tn,'.dat'   
