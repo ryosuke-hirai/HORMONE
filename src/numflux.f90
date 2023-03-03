@@ -200,14 +200,14 @@ if(je/=1)then
      v3r = ( d(i,j+1,k)*v1(i,j+1,k) - dx(2)*dm1(i,j+1,k,2) ) / dr
 
      if(mag_on)then
-      b1l = b1(i,j  ,k) + dx(1) * db1(i,j  ,k,2)
-      b1r = b1(i,j+1,k) - dx(2) * db1(i,j+1,k,2)
+      b1l = b2(i,j  ,k) + dx(1) * db2(i,j  ,k,2)
+      b1r = b2(i,j+1,k) - dx(2) * db2(i,j+1,k,2)
 
-      b2l = b2(i,j  ,k) + dx(1) * db2(i,j  ,k,2)
-      b2r = b2(i,j+1,k) - dx(2) * db2(i,j+1,k,2)
+      b2l = b3(i,j  ,k) + dx(1) * db3(i,j  ,k,2)
+      b2r = b3(i,j+1,k) - dx(2) * db3(i,j+1,k,2)
 
-      b3l = b3(i,j  ,k) + dx(1) * db3(i,j  ,k,2)
-      b3r = b3(i,j+1,k) - dx(2) * db3(i,j+1,k,2)
+      b3l = b1(i,j  ,k) + dx(1) * db1(i,j  ,k,2)
+      b3r = b1(i,j+1,k) - dx(2) * db1(i,j+1,k,2)
 
       phil = phi(i,j  ,k) + dx(1) * dphi(i,j  ,k,2)
       phir = phi(i,j+1,k) - dx(2) * dphi(i,j+1,k,2)
@@ -348,14 +348,14 @@ if(je/=1)then
      v3r = ( d(i,j,k+1)*v2(i,j,k+1) - dx(2)*dm2(i,j,k+1,3) ) / dr
 
      if(mag_on)then
-      b1l = b1(i,j,k  ) + dx(1) * db1(i,j,k  ,3)
-      b1r = b1(i,j,k+1) - dx(2) * db1(i,j,k+1,3)
+      b1l = b3(i,j,k  ) + dx(1) * db3(i,j,k  ,3)
+      b1r = b3(i,j,k+1) - dx(2) * db3(i,j,k+1,3)
 
-      b2l = b2(i,j,k  ) + dx(1) * db2(i,j,k  ,3)
-      b2r = b2(i,j,k+1) - dx(2) * db2(i,j,k+1,3)
+      b2l = b1(i,j,k  ) + dx(1) * db1(i,j,k  ,3)
+      b2r = b1(i,j,k+1) - dx(2) * db1(i,j,k+1,3)
 
-      b3l = b3(i,j,k  ) + dx(1) * db3(i,j,k  ,3)
-      b3r = b3(i,j,k+1) - dx(2) * db3(i,j,k+1,3)
+      b3l = b2(i,j,k  ) + dx(1) * db2(i,j,k  ,3)
+      b3r = b2(i,j,k+1) - dx(2) * db2(i,j,k+1,3)
 
       phil = phi(i,j,k  ) + dx(1) * dphi(i,j,k  ,3)
       phir = phi(i,j,k+1) - dx(2) * dphi(i,j,k+1,3)
