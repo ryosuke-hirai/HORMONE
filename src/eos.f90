@@ -5,114 +5,24 @@ module pressure_mod
  use settings,only:eostype,eoserr
 contains
 
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE EOS_P_CF
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                        SUBROUTINE GETT_FROM_DE
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To calculate pressure and sound speed based on chosen EoS.
-!          output p includes magnetic pressure
-subroutine eos_p_cf(d,b1,b2,b3,eint,Tini,imu,p,cf,X,Y,ierr)
-! PURPOSE: To calculate pressure and sound speed from density and internal energy
- implicit none
- real*8,intent( in):: d,b1,b2,b3,eint,Tini
- real*8,intent( in),optional:: X,Y
- real*8,intent(inout):: imu
- real*8,intent(out):: p,cf
- integer,intent(out):: ierr
- real*8:: gamma_eff, bsq, T, corr
- real*8:: erec, imurec, derecdT, dimurecdT, Tdot, logd, dt
- real*8,parameter:: W4err = 1d-2
- integer n
-
-!-----------------------------------------------------------------------------
-
- ierr=0
- bsq = 0.5d0*(b1**2+b2**2+b3**2)
- if(eint<=0d0.or.d<=0d0)then
-  ierr=1
-  return
- end if
- 
- select case (eostype)
- case(0) ! ideal gas
-  p = (gamma-1d0)*eint + bsq
-  gamma_eff = 1d0+p/eint
-
-  cf = sqrt(gamma_eff*p/d)
-
- case(1) ! ideal gas + radiation pressure
-  T = Tini
-  corr = huge
-  do n = 1, 50
-   corr = (eint - (arad*T**3+d*fac_egas*imu)*T) &
-        / (  - 4d0*arad*T**3-d*fac_egas*imu)
-   T = T - corr
-   if(abs(corr)<eoserr*T)exit
-  end do
-  if(n>50)then
-   ierr=2
-   print*,'Error in eos_p_cf, did not converge, eostype=',eostype
-   print*,'d=',d,'e=',eint,'mu=',1d0/imu
-   return
-  end if
-  p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
-  gamma_eff = 1d0+p/eint
-  cf = sqrt(gamma_eff*p/d)
-
- case(2) ! ideal gas + radiation pressure + recombination energy
-  T = Tini
-  corr = huge; Tdot=0d0;logd=log10(d);dt=0.9d0;n=0
-  do n = 1, 500
-   call get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
-   if(d*erec>=eint)then ! avoid negative thermal energy
-    T = 0.9d0*T; Tdot = 0d0; cycle
-   end if
-   corr = (eint-(arad*T**3+d*fac_egas*imurec)*T-d*erec) &
-        / ( -4d0*arad*T**3-d*(fac_egas*(imurec+dimurecdT*T)+derecdT) )
-   if(abs(corr)>W4err*T)then
-    T = T + Tdot*dt
-    Tdot = (1d0-2d0*dt)*Tdot - dt*corr
-   else
-    T = T-corr
-    Tdot = 0d0
-   end if
-   if(n>50)dt=0.5d0
-   if(abs(corr)<eoserr*T)exit
-  end do
-  if(n>500)then
-   ierr=2
-   print*,'Error in eos_p_cf, did not converge, eostype=',eostype
-   print*,'d=',d,'e=',eint,'mu=',1d0/imu
-   return
-  end if
- 
-  imu = imurec
-  p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
-  gamma_eff = 1d0+p/(eint-d*erec)
-
-  cf = sqrt(gamma_eff*p/d)
-
- case default
-  stop 'Error in eostype'
- end select
-
-return
-end subroutine eos_p_cf
-
-! ***************************************************************************
-real*8 function eos_p(d,eint,T,imu,X,Y)
-! PURPOSE: To calculate pressure from density and internal energy without B field
+subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
+! PURPOSE: To calculate temperature from density and internal energy
  implicit none
  real*8,intent(in):: d,eint
  real*8,intent(inout):: T,imu
  real*8,intent(in),optional:: X,Y
+ real*8,intent(out),optional:: erec_out
  real*8:: corr, erec, derecdT, dimurecdT, Tdot, logd, dt
  real*8,parameter:: W4err = 1d-2
  integer n
 
  select case (eostype)
  case(0) ! ideal gas
-  eos_p = (gamma-1d0)*eint
+  T = eint/(fac_egas*imu)
   
  case(1) ! ideal gas + radiation
   corr = huge
@@ -123,11 +33,10 @@ real*8 function eos_p(d,eint,T,imu,X,Y)
    if(abs(corr)<eoserr*T)exit
   end do
   if(n>50)then
-   print*,'Error in eos_p, eostype=',eostype
+   print*,'Error in getT_from_de, eostype=',eostype
    print*,'d=',d,'eint=',eint,'mu=',1d0/imu
    stop
   end if
-  eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
 
  case(2) ! ideal gas + radiation + recombination
   corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
@@ -149,33 +58,36 @@ real*8 function eos_p(d,eint,T,imu,X,Y)
    if(n>50)dt=0.5d0
   end do
   if(n>500)then
-   print*,'Error in eos_p, eostype=',eostype
+   print*,'Error in getT_from_de, eostype=',eostype
    print*,'d=',d,'eint=',eint,'mu=',1d0/imu
    stop
   end if
-
-  eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
-
+  if(present(erec_out)) erec_out = erec
+  
  case default
   stop 'Error in eostype'
  end select
 
-end function eos_p
+end subroutine getT_from_de
 
-! **************************************************************************
 
-real*8 function eos_e(d,p,T,imu,X,Y)
-! PURPOSE: To calculate internal energy from density and pressure
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                        SUBROUTINE GETT_FROM_DE
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
+! PURPOSE: To calculate temperature from density and pressure
  implicit none
  real*8,intent(in):: d,p
  real*8,intent(in),optional:: X,Y
- real*8,intent(inout):: imu,T
+ real*8,intent(inout):: T,imu
+ real*8,intent(out),optional:: erec
  real*8:: corr, imurec, imurecold, dimurecdT, logd
  integer n
  
  select case (eostype)
  case(0) ! ideal gas
-  eos_e = p/(gamma-1d0)
+  T = p/(fac_pgas*imu)
   
  case(1) ! ideal gas + radiation
   corr = huge
@@ -190,7 +102,6 @@ real*8 function eos_e(d,p,T,imu,X,Y)
    print*,'d=',d,'p=',p,'mu=',1d0/imu
    stop
   end if
-  eos_e = ( fac_egas*imu*d + arad*T**3 )*T
   
  case(2) ! ideal gas + radiation + recombination
   corr = huge; logd = log10(d)
@@ -207,13 +118,151 @@ real*8 function eos_e(d,p,T,imu,X,Y)
    stop
   end if
   imu = imurec
-  eos_e = ( fac_egas*imurec*d + arad*T**3 )*T + d*get_erec(logd,T,X,Y)
+  if(present(erec)) erec = get_erec(logd,T,X,Y)
+
+ case default
+  stop 'Error in eostype'
+ end select
+
+end subroutine getT_from_dp
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                           SUBROUTINE EOS_P_CF
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To calculate pressure and sound speed based on chosen EoS.
+!          output p includes magnetic pressure
+subroutine eos_p_cf(d,b1,b2,b3,eint,Tini,imu,p,cf,X,Y,ierr)
+! PURPOSE: To calculate pressure and sound speed from density and internal energy
+ implicit none
+ real*8,intent( in):: d,b1,b2,b3,eint,Tini
+ real*8,intent( in),optional:: X,Y
+ real*8,intent(inout):: imu
+ real*8,intent(out):: p,cf
+ integer,intent(out):: ierr
+ real*8:: gamma_eff, bsq, T, corr, erec
+
+!-----------------------------------------------------------------------------
+
+ ierr=0
+ bsq = 0.5d0*(b1**2+b2**2+b3**2)
+ if(eint<=0d0.or.d<=0d0)then
+  ierr=1
+  return
+ end if
+ 
+ select case (eostype)
+ case(0) ! ideal gas
+  p = (gamma-1d0)*eint + bsq
+  gamma_eff = 1d0+p/eint
+
+  cf = sqrt(gamma_eff*p/d)
+
+ case(1) ! ideal gas + radiation pressure
+  T = Tini
+  call getT_from_de(d,eint,T,imu)
+  p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
+  gamma_eff = 1d0+p/eint
+  cf = sqrt(gamma_eff*p/d)
+
+ case(2) ! ideal gas + radiation pressure + recombination energy
+  T = Tini
+  call getT_from_de(d,eint,T,imu,X,Y,erec)
+  p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
+  gamma_eff = 1d0+p/(eint-d*erec)
+
+  cf = sqrt(gamma_eff*p/d)
+
+ case default
+  stop 'Error in eostype'
+ end select
+
+return
+end subroutine eos_p_cf
+
+! ***************************************************************************
+real*8 function eos_p(d,eint,T,imu,X,Y)
+! PURPOSE: To calculate pressure from density and internal energy without B field
+ implicit none
+ real*8,intent(in):: d,eint
+ real*8,intent(inout):: T,imu
+ real*8,intent(in),optional:: X,Y
+
+ select case (eostype)
+ case(0) ! ideal gas
+  eos_p = (gamma-1d0)*eint
+  
+ case(1) ! ideal gas + radiation
+  call getT_from_de(d,eint,T,imu)
+  eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
+
+ case(2) ! ideal gas + radiation + recombination
+  call getT_from_de(d,eint,T,imu,X,Y)
+  eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
+
+ case default
+  stop 'Error in eostype'
+ end select
+
+end function eos_p
+
+! **************************************************************************
+
+real*8 function eos_e(d,p,T,imu,X,Y)
+! PURPOSE: To calculate internal energy from density and pressure
+ implicit none
+ real*8,intent(in):: d,p
+ real*8,intent(in),optional:: X,Y
+ real*8,intent(inout):: imu,T
+ real*8:: erec
+ 
+ select case (eostype)
+ case(0) ! ideal gas
+  eos_e = p/(gamma-1d0)
+  
+ case(1) ! ideal gas + radiation
+  call getT_from_dp(d,p,T,imu)
+  eos_e = ( fac_egas*imu*d + arad*T**3 )*T
+  
+ case(2) ! ideal gas + radiation + recombination
+  call getT_from_dp(d,p,T,imu,X,Y,erec)
+  eos_e = ( fac_egas*imu*d + arad*T**3 )*T + d*erec
 
  case default
   stop 'Error in eostype'
  end select
 
 end function eos_e
+
+! **************************************************************************
+
+function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
+
+! PURPOSE: To calculate internal energy from density and pressure
+ implicit none
+ real*8,intent(in):: d,p
+ real*8,intent(in),optional:: X,Y
+ real*8,intent(inout):: T,imu
+ real*8:: entropy
+
+ select case(eostype)
+ case(0) ! ideal gas
+  entropy = p/d**gamma
+
+ case(1) ! ideal gas + radiation
+  call getT_from_dp(d,p,T,imu)
+  entropy = fac_pgas*imu*log(T**1.5d0/d) + 4d0*arad*T**3/(3d0*d)
+
+ case(2) ! ideal gas + radiation + recombination
+  call getT_from_dp(d,p,T,imu,X,Y)
+  entropy = fac_pgas*imu*log(T**1.5d0/d) + 4d0*arad*T**3/(3d0*d)
+
+ case default
+  stop 'Error in eostype'
+  
+ end select
+  
+end function entropy_from_dp
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                           SUBROUTINE PRESSURE
