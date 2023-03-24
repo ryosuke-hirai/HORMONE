@@ -20,8 +20,9 @@ subroutine read_mesa(mesafile,r,m,rho,pres)
  character*100,intent(in):: mesafile
  character*30,allocatable::header(:),dum(:)
  real*8,allocatable,dimension(:),intent(out):: r, m, rho, pres
+ real*8,allocatable,dimension(:,:):: dat
  character*10000 dumc
- integer nn, nol, ii, i, rows
+ integer nn, nol, ii, i, lines, rows
  
 !-----------------------------------------------------------------------------
 
