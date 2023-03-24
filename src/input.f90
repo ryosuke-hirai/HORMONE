@@ -13,7 +13,7 @@ module input_mod
 
 subroutine read_mesa(mesafile,r,m,rho,pres)
 
- use constants,only:msun
+ use constants,only:msun,rsun
 
  implicit none
 
@@ -57,7 +57,10 @@ subroutine read_mesa(mesafile,r,m,rho,pres)
  do i = 1, rows
   if(trim(header(i))=='mass') m(1:lines) = dat(1:lines,i) * msun
   if(trim(header(i))=='density') rho(1:lines) = dat(1:lines,i)
+  if(trim(header(i))=='rho') rho(1:lines) = dat(1:lines,i)
   if(trim(header(i))=='radius_cm') r(1:lines) = dat(1:lines,i)
+  if(trim(header(i))=='radius') r(1:lines) = dat(1:lines,i) * rsun
+  if(trim(header(i))=='logR') r(1:lines) = 10**dat(1:lines,i) * rsun
   if(trim(header(i))=='pressure') pres(1:lines) = dat(1:lines,i)
  end do
 
