@@ -264,6 +264,54 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
   
 end function entropy_from_dp
 
+! **************************************************************************
+
+function get_d_from_ps(p,S,imu,X,Y) result(d)
+! PURPOSE: Calculate density given pressure and entropy​
+ implicit none
+
+ real*8,intent(in):: p,S
+ real*8,intent(inout):: imu
+ real*8,intent(in),optional:: X,Y
+ real*8:: d,corr,dp,Sp,dSdd,T
+ real*8,parameter:: dfac=1d-12
+
+!-----------------------------------------------------------------------------
+
+ select case (eostype)
+ case(0)
+  d = (p/S)**(1d0/gamma)
+
+ case(1)
+  d=1d-8 ! initial guess
+  corr=1d99
+  do while(abs(corr)>eoserr*d)
+   dp = d*(1d0+dfac)
+   Sp = entropy_from_dp(dp,p,T,imu)
+   dSdd = (Sp-entropy_from_dp(d,p,T,imu))/(dp-d) ! Numerical differentiation
+   corr = (entropy_from_dp(d,p,T,imu)-S)/dSdd
+   d = d-corr
+  end do
+
+ case(2)
+  d=1d-8 ! initial guess
+  corr=1d99
+  do while(abs(corr)>eoserr*d)
+   dp = d*(1d0+dfac)
+   Sp = entropy_from_dp(dp,p,T,imu,X,Y)
+   dSdd = (Sp-entropy_from_dp(d,p,T,imu,X,Y))/(dp-d) ! Numerical differentiation
+   corr = (entropy_from_dp(d,p,T,imu,X,Y)-S)/dSdd
+   d = d-corr
+  end do
+
+ case default
+  stop 'Error in eostype'
+ end select
+
+return
+end function get_d_from_ps
+
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                           SUBROUTINE PRESSURE
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
