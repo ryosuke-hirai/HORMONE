@@ -72,7 +72,7 @@ end subroutine getT_from_de
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE GETT_FROM_DE
+!                        SUBROUTINE GETT_FROM_DP
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
