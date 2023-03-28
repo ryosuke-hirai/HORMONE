@@ -262,7 +262,7 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
   n_y = d*Y/(4d0*amu)
   n_z = d*(1d0-X-Y)/(12d0*amu)
   n_e = n_x*xion(2)+n_y*sum(xion(3:4))+6d0*n_z
-  fac = 2d0*pi*amu*kbol/h**2
+  fac = 2d0*pi*amu*kbol/hplanck**2
   S_ion = X*(log((fac*T)**1.5d0/n_x)+2.5d0) &
         + Y*(log((fac*T)**1.5d0/n_y)+2.5d0)*0.25d0
   S_ele = (2.5d0*(X+1d0)/2d0-eta*n_e/d)*amu
@@ -300,10 +300,10 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
 !-----------------------------------------------------------------------------
 
  select case (eostype)
- case(0)
+ case(0) ! ideal gas
   d = (p/S)**(1d0/gamma)
 
- case(1)
+ case(1) ! ideal gas + radiation (fully ionized, uniform composition)
   d = 1d-8 ! initial guess
   T = p/(fac_pgas*d*imu)
   corr=1d99
@@ -322,7 +322,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
    stop
   end if
   
- case(2)
+ case(2) ! ideal gas + radiation + recombination
   d = 1d-8 ! initial guess
   T = 1d3
   corr=huge;ddot=0d0;dt=0.9d0
