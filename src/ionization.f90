@@ -93,6 +93,9 @@ contains
   use constants,only:amu,kbol
   implicit none
   real*8:: x
+
+  if(allocated(eion))return ! skip if already called
+
   allocate( eion(1:4), arec(2:4), brec(2:4), crec(1:4), drec(1:4),&
             arec1c(1:2), brec1c(1:2), logeion(1:4) )
 
