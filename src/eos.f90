@@ -91,14 +91,14 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
   
  case(1) ! ideal gas + radiation
   corr = huge
-  do n = 1, 50
+  do n = 1, 500
    corr = (p - (arad*T**3/3d0+d*fac_pgas*imu)*T) &
         / (-4d0*arad*T**3/3d0-d*fac_pgas*imu)
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
-  if(n>50)then
-   print*,'Error in eos_e, eostype=',eostype
+  if(n>500)then
+   print*,'Error in getT_from_dp, eostype=',eostype
    print*,'d=',d,'p=',p,'mu=',1d0/imu
    stop
   end if
@@ -113,7 +113,7 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
    if(abs(corr)<eoserr*T)exit
   end do
   if(n>500)then
-   print*,'Error in eos_e, eostype=',eostype
+   print*,'Error in getT_from_dp, eostype=',eostype
    print*,'d=',d,'p=',p,'mu=',1d0/imu
    stop
   end if
@@ -237,13 +237,13 @@ end function eos_e
 ! **************************************************************************
 
 function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
-
+ use constants
 ! PURPOSE: To calculate internal energy from density and pressure
  implicit none
  real*8,intent(in):: d,p
  real*8,intent(in),optional:: X,Y
  real*8,intent(inout):: T,imu
- real*8:: entropy
+ real*8:: entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
 
  select case(eostype)
  case(0) ! ideal gas
@@ -251,11 +251,31 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
 
  case(1) ! ideal gas + radiation
   call getT_from_dp(d,p,T,imu)
-  entropy = fac_pgas*imu*log(T**1.5d0/d) + 4d0*arad*T**3/(3d0*d)
-
+  S_ion = fac_pgas*imu*log(T**1.5d0/d)
+  S_rad = 4d0*arad*T**3/(3d0*d)
+  entropy = (S_ion + S_rad) / fac_pgas
+  
  case(2) ! ideal gas + radiation + recombination
   call getT_from_dp(d,p,T,imu,X,Y)
-  entropy = fac_pgas*imu*log(T**1.5d0/d) + 4d0*arad*T**3/(3d0*d)
+  call get_xion(log(d),T,X,Y,xion)
+  n_x = d*X/amu
+  n_y = d*Y/(4d0*amu)
+  n_z = d*(1d0-X-Y)/(12d0*amu)
+  n_e = n_x*xion(2)+n_y*sum(xion(3:4))+6d0*n_z
+  fac = 2d0*pi*amu*kbol/h**2
+  S_ion = X*(log((fac*T)**1.5d0/n_x)+2.5d0) &
+        + Y*(log((fac*T)**1.5d0/n_y)+2.5d0)*0.25d0
+  S_ele = (2.5d0*(X+1d0)/2d0-eta*n_e/d)*amu
+  S_rad = 4d0*arad*T**3/(3d0*d*kbol)*amu
+  entropy = S_ion + S_ele + S_rad
+
+! TODO LIST:
+! 1. Write a routine to calculate the degeneracy parameter eta given d,T,X,Y
+! 2. Add ionization entropy
+! 3. Is S_ion correct with the current expression for partial degeneracy?
+  
+  print*, 'Entropy calculation for eostype=2 still needs work'
+  stop
 
  case default
   stop 'Error in eostype'
@@ -273,8 +293,9 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
  real*8,intent(in):: p,S
  real*8,intent(inout):: imu
  real*8,intent(in),optional:: X,Y
- real*8:: d,corr,dp,Sp,dSdd,T
- real*8,parameter:: dfac=1d-12
+ real*8:: d,corr,corr0,dp,S0,Sp,dSdd,T,ddot,dt
+ real*8,parameter:: dfac=1d-8, Serr_rel_eoserr=1d2, W4err=1d-2
+ integer n
 
 !-----------------------------------------------------------------------------
 
@@ -283,26 +304,50 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
   d = (p/S)**(1d0/gamma)
 
  case(1)
-  d=1d-8 ! initial guess
+  d = 1d-8 ! initial guess
+  T = p/(fac_pgas*d*imu)
   corr=1d99
-  do while(abs(corr)>eoserr*d)
+  do n = 1, 500 ! Newton-Raphson iteration to get density
    dp = d*(1d0+dfac)
+   S0 = entropy_from_dp(d,p,T,imu)
    Sp = entropy_from_dp(dp,p,T,imu)
-   dSdd = (Sp-entropy_from_dp(d,p,T,imu))/(dp-d) ! Numerical differentiation
-   corr = (entropy_from_dp(d,p,T,imu)-S)/dSdd
+   dSdd = (Sp-S0)/(dp-d) ! Numerical differentiation
+   corr = min((S0-S)/dSdd,d*0.9d0)
    d = d-corr
+   if(abs((S0-S)/dSdd)<Serr_rel_eoserr*eoserr*d)exit
   end do
-
+  if(n>500)then
+   print*,'Error in getd_from_ps, eostype=',eostype
+   print*,'d=',d,'S=',S,'mu=',1d0/imu
+   stop
+  end if
+  
  case(2)
-  d=1d-8 ! initial guess
-  corr=1d99
-  do while(abs(corr)>eoserr*d)
+  d = 1d-8 ! initial guess
+  T = 1d3
+  corr=huge;ddot=0d0;dt=0.9d0
+  do n = 1,500
    dp = d*(1d0+dfac)
+   S0 = entropy_from_dp(d,p,T,imu,X,Y)
    Sp = entropy_from_dp(dp,p,T,imu,X,Y)
-   dSdd = (Sp-entropy_from_dp(d,p,T,imu,X,Y))/(dp-d) ! Numerical differentiation
-   corr = (entropy_from_dp(d,p,T,imu,X,Y)-S)/dSdd
-   d = d-corr
+   dSdd = (Sp-S0)/(dp-d) ! Numerical differentiation
+   corr0 = (S0-S)/dSdd
+   corr = min(corr0,d*0.9d0)
+   if(abs(corr)>W4err*d)then
+    d = d + ddot*dt
+    ddot = (1d0-2d0*dt)*ddot - dt*corr
+   else
+    d = d-corr
+    ddot = 0d0
+   end if
+   if(abs(corr)<Serr_rel_eoserr*eoserr*d)exit
+   if(n>50)dt=0.5d0
   end do
+  if(n>500)then
+   print*,'Error in getd_from_ps, eostype=',eostype
+   print*,'d=',d,'S=',S,'mu=',1d0/imu
+   stop
+  end if
 
  case default
   stop 'Error in eostype'
