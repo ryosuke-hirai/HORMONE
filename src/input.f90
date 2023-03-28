@@ -11,7 +11,7 @@ module input_mod
 
 ! PURPOSE: To read MESA file
 
-subroutine read_mesa(mesafile,r,m,rho,pres)
+subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 
  use constants,only:msun,rsun
 
@@ -20,20 +20,32 @@ subroutine read_mesa(mesafile,r,m,rho,pres)
  character*100,intent(in):: mesafile
  character*30,allocatable::header(:),dum(:)
  real*8,allocatable,dimension(:),intent(out):: r, m, rho, pres
+ real*8,allocatable,dimension(:,:),intent(out),optional:: comp
+ character*10,allocatable,intent(out),optional::comp_list(:)
  real*8,allocatable,dimension(:,:):: dat
  character*10000 dumc
- integer nn, nol, ii, i, lines, rows
+ integer nn,ui, i,j, lines, rows, nrel, nel
+ character*10:: element
+ character*10,allocatable:: element_list(:)
+
  
 !-----------------------------------------------------------------------------
 
- ! reading data from datafile ! -----------------------------------------------
- open(unit=40,file=mesafile,status='old')
- read(40,'()')
- read(40,'()')
- read(40,*) lines, lines
- read(40,'()')
- read(40,'()')
- read(40,'(a)') dumc
+! list of relevant elements ! ------------------------------------------------
+ nrel = 20 ! number of elements in the list
+ allocate(element_list(nrel))
+ element_list = (/'h1','he3','he4','c12','n14','o16','ne20','mg24',&
+                  'si28','s32','ar36','ca40','ti44','cr48','cr60',&
+                  'fe52','fe54','fe56','co56','ni56'/)
+ 
+! reading data from datafile ! -----------------------------------------------
+ open(newunit=ui,file=mesafile,status='old')
+ read(ui,'()')
+ read(ui,'()')
+ read(ui,*) lines, lines
+ read(ui,'()')
+ read(ui,'()')
+ read(ui,'(a)') dumc
 
 ! counting rows
  allocate(dum(500)) ; dum = 'aaa'
@@ -49,11 +61,36 @@ subroutine read_mesa(mesafile,r,m,rho,pres)
  header(1:rows) = dum(1:rows)
  deallocate(dum)
 
+! find relevant chemical elements in the headers
+ if(present(comp))then
+  nel = 0
+  do j = 1, nrel
+   do i = 1, rows
+    if(trim(header(i))==trim(element_list(j)))then
+     nel = nel + 1 ! first count how many elements
+     exit
+    end if
+   end do
+  end do
+  allocate(comp_list(nel))
+  nn = 1
+  element_loop: do j = 1, nrel
+   do i = 1, rows
+    if(trim(header(i))==trim(element_list(j)))then
+     comp_list(nn) = header(i)
+     nn = nn + 1
+     if(nn>nel)exit element_loop
+     exit
+    end if
+   end do
+  end do element_loop
+ end if
+
  do i = 1, lines
-  read(40,*) dat(lines-i+1,1:rows) 
+  read(ui,*) dat(lines-i+1,1:rows) 
  end do
 
- allocate(m(0:lines),r(0:lines),rho(0:lines),pres(1:lines))
+ allocate(m(0:lines),r(0:lines),rho(0:lines),pres(0:lines),comp(1:nel,0:lines))
  do i = 1, rows
   if(trim(header(i))=='mass') m(1:lines) = dat(1:lines,i) * msun
   if(trim(header(i))=='density') rho(1:lines) = dat(1:lines,i)
@@ -62,11 +99,20 @@ subroutine read_mesa(mesafile,r,m,rho,pres)
   if(trim(header(i))=='radius') r(1:lines) = dat(1:lines,i) * rsun
   if(trim(header(i))=='logR') r(1:lines) = 10**dat(1:lines,i) * rsun
   if(trim(header(i))=='pressure') pres(1:lines) = dat(1:lines,i)
+  if(present(comp))then
+   do j = 1, nel
+    if(trim(header(i))==trim(comp_list(j))) comp(j,1:lines) = dat(1:lines,i)
+   end do
+  end if
  end do
 
+ close(ui)
+ 
  r(0) = 0d0
  m(0) = 0d0
  rho(0) = rho(1)
+ pres(0) = pres(1)
+ comp(:,0) = comp(:,1)
 
 return
 end subroutine read_mesa
