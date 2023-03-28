@@ -65,7 +65,7 @@ module constants
   real*8,parameter:: msolar = msun, rsolar = rsun, au = 1.49598073d13
   real*8,parameter:: kbol = 1.38064852d-16, amu = 1.6605402d-24
   real*8,parameter:: arad = 7.5646d-15, sigma = 5.67051d-5
-  real*8,parameter:: h = 6.6260755d-27, m_p = 1.6726231d-24
+  real*8,parameter:: hplanck = 6.6260755d-27, m_p = 1.6726231d-24
   real*8,parameter:: m_n = 1.6749286e-24, m_e = 9.1093897e-28
   real*8,parameter:: N_A = 6.0221367e23
   real*8,parameter:: year = 3600d0*24d0*365.25d0
