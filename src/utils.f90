@@ -24,7 +24,8 @@ contains
  end function carpol
 
 
-pure function softened_potential(r,h) result(phi)
+ pure function softened_potential(r,h) result(phi)
+! From Price & Monaghan 2007
  implicit none
  real*8,intent(in):: r,h
  real*8:: phi,q
