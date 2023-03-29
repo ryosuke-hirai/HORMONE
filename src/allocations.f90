@@ -62,7 +62,6 @@ subroutine allocations
    modlimax(1:lmax), &
    a1(0:lmax), a2(0:lmax), a3(0:lmax), &
    preca(0:lmax), precb(0:lmax), precc(0:lmax), precd(0:lmax), prece(0:lmax), &
-   x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax), &
  
    phiio(gie+1:gin,gjs-2:gjn), phiii(gis-2:gis-1,gjs-2:gjn), &
    phi1o(gie+1:gin,gks-2:gkn), phi3i(gis-2:gin,gks-2:gks-1), &
