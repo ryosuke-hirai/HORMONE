@@ -1,4 +1,4 @@
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                           SUBROUTINE ALLOCATIONS
 !
@@ -44,27 +44,32 @@ subroutine allocations
   flux2(-1:in,-1:jn,-1:kn,1:9), &
   flux3(-1:in,-1:jn,-1:kn,1:9), &
   src  (is:ie,js:je,ks:ke,1:9), &
+  grv1(-1:in,-1:jn,-1:kn), grv2(-1:in,-1:jn,-1:kn),grv3(-1:in,-1:jn,-1:kn), &
 
   detg1(-1:in), idetg1(-1:in), sx1(-1:in), g22(-1:in), &
   scot(-1:jn), sisin(-1:jn), &
   detg2(-1:in,-1:jn), idetg2(-1:in,-1:jn), g33(-1:in,-1:jn), &
-  idetg3(-1:in,-1:jn,-1:kn), dvol(-1:in,-1:jn,-1:kn), &
+  idetg3(-1:in,-1:jn,-1:kn), dvol(-1:in,-1:jn,-1:kn) &
+ )
 
-  grvphi   (gis-2:gin,gjs-2:gjn,gks-2:gkn), &
-  grvphiold(gis-2:gin,gjs-2:gjn,gks-2:gkn), &
-  hgsrc(gis:gie,gjs:gje,gks:gke), &
-  grv1(-1:in,-1:jn,-1:kn), grv2(-1:in,-1:jn,-1:kn),grv3(-1:in,-1:jn,-1:kn), &
-  modlimax(1:lmax), &
-  a1(0:lmax), a2(0:lmax), a3(0:lmax), &
-  preca(0:lmax), precb(0:lmax), precc(0:lmax), precd(0:lmax), prece(0:lmax), &
-  x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax), &
+! allocate gravity related quantities if gravswitch>=1
+ if(gravswitch>=1)then
+  allocate( &
+   grvphi   (gis-2:gin,gjs-2:gjn,gks-2:gkn), &
+   grvphiold(gis-2:gin,gjs-2:gjn,gks-2:gkn), &
+   hgsrc(gis:gie,gjs:gje,gks:gke), &
+
+   modlimax(1:lmax), &
+   a1(0:lmax), a2(0:lmax), a3(0:lmax), &
+   preca(0:lmax), precb(0:lmax), precc(0:lmax), precd(0:lmax), prece(0:lmax), &
+   x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax), &
  
-  phiio(gie+1:gin,gjs-2:gjn), phiii(gis-2:gis-1,gjs-2:gjn), &
-  phi1o(gie+1:gin,gks-2:gkn), phi3i(gis-2:gin,gks-2:gks-1), &
-  phi3o(gis-2:gin,gke+1:gkn), &
-  mc(is-1:in) &
-
+   phiio(gie+1:gin,gjs-2:gjn), phiii(gis-2:gis-1,gjs-2:gjn), &
+   phi1o(gie+1:gin,gks-2:gkn), phi3i(gis-2:gin,gks-2:gks-1), &
+   phi3o(gis-2:gin,gke+1:gkn), &
+   mc(is-1:in) &
   )
+ end if
 
 ! allocate Dirichlet variables if Dirichlet boundary is applied
  if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &

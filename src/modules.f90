@@ -84,7 +84,7 @@ module physval
   real*8,allocatable,dimension(:,:,:):: T, eint, imu
   real*8,allocatable,dimension(:,:,:,:):: dd, de, dm1, dm2, dm3 
   real*8,allocatable,dimension(:,:,:,:):: db1, db2, db3, dphi, dmu
-  real*8,allocatable,dimension(:,:,:):: cf, phi
+  real*8,allocatable,dimension(:,:,:):: cf, phi, grv1, grv2, grv3
   real*8,allocatable,dimension(:,:,:,:):: u, flux1, flux2, flux3, uorg, src
   real*8,allocatable,dimension(:,:):: mudata
   real*8,allocatable,dimension(:,:,:,:):: spc, spcorg
@@ -114,7 +114,7 @@ module gravmod
   integer:: l, lmax
   integer,parameter:: llmax = 1000
   integer,allocatable,dimension(:):: modlimax
-  real*8,allocatable,dimension(:,:,:):: grvphi, grvphiold, grv1, grv2, grv3, phicg
+  real*8,allocatable,dimension(:,:,:):: grvphi, grvphiold
   real*8,allocatable,dimension(:):: a1,a2,a3, preca, precb, precc, precd, prece
   real*8,allocatable,dimension(:):: x,y,z,r,aw, mc
   real*8,allocatable,dimension(:,:):: Pl
