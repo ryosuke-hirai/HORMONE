@@ -53,9 +53,10 @@ subroutine redsupergiant
  call replace_core(rcore,r,m,rho,pres,comp,comp_list)
 
 ! Set external gravity
- do i = is-2, ie+2
-  extgrv(i,js-2:je+2,ks-2:ke+2) = softened_pot(x1(i),rcore)
+ do i = is, ie+2
+  extgrv(i,js-2:je+2,ks-2:ke+2) = G*m(0)*softened_pot(x1(i),rcore)
  end do
+ extgrv(is-1,js-2:je+2,ks-2:ke+2) =  extgrv(is,js-2:je+2,ks-2:ke+2)
  
 ! Place the star at the origin
  m = m-m(0)

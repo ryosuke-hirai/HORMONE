@@ -77,6 +77,7 @@ subroutine source
    if(include_extgrv)call externalfield
 
    if(ie==1)grv1 = 0d0; if(je==1)grv2 = 0d0; if(ke==1)grv3 = 0d0
+   if(xi1s==0d0)grv1(is,js:je,ks:ke) = 0d0
    if(crdnt==2)grv2(is:ie,js,ks:ke) = 0d0
    if(crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
   else
