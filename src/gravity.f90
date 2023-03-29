@@ -16,18 +16,21 @@ subroutine gravity
 
   implicit none
 
-  integer flgcg
-  real*8 rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind
+  integer l, flgcg
+  real*8 rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
   real*8,dimension(1:lmax):: gsrc, pp, absrob
   real*8,allocatable,dimension(:,:,:):: newphi
   real*8,allocatable,dimension(:):: intphi
+  real*8,allocatable,dimension(:):: x,y,z,r,aw
 
 !-----------------------------------------------------------------------------
-gin = gie - gis + 1
+  gin = gie - gis + 1
 
 if(gravswitch==0.or.gravswitch==1)then
  grvphi = 0d0
 elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+ allocate( x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax) )
+ 
  if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 

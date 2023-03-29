@@ -8,16 +8,17 @@
 
  subroutine gravbound
 
-  use settings,only:bc3is
-  use grid
-  use constants
-  use physval
-  use gravmod
+  use settings,only:bc3is,crdnt,grverr
+  use grid,only:i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,xi1s,x1,tn
+  use constants,only:G
+  use physval,only:d
+  use gravmod,only:llmax,grvphi,phiii,phiio,phi1o,phi3i,phi3o,mc,Pl,Plc,rdis
 
   implicit none
 
   integer ll, error1
   real*8 dphiii, dphiio, dphi1o, dphi3i, dphi3o
+  real*8,dimension(0:llmax):: ml
 
 !------------------------------------------------------------------------------
 
@@ -233,14 +234,13 @@
   end if
 
 return
-end subroutine gravbound
-
+contains
 
 !------------------------------------------------------------------------------
  subroutine multipole(ll,ml)
 
-   use grid
-   use physval
+   use grid,only:is,ie,js,je,ks,ke,x1,dvol
+   use physval,only:d
    use gravmod,only:rdis,Pl,Plc
 
    implicit none
@@ -284,9 +284,9 @@ end subroutine gravbound
 !------------------------------------------------------------------------------
  subroutine multipoleinner(ll)
 
-   use grid
-   use physval
-   use gravmod
+   use grid,only:crdnt,is,ie,js,je,ks,ke,x1,dvol
+   use physval,only:d
+   use gravmod,only:Pl
 
    implicit none
 
@@ -310,3 +310,5 @@ end subroutine gravbound
 
   return
   end subroutine multipoleinner
+
+ end subroutine gravbound

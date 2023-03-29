@@ -14,6 +14,9 @@ subroutine gravsetup
   
   implicit none
 
+  integer l
+  real*8:: h
+
 !-----------------------------------------------------------------------------
  gin = gie-gis+1
 

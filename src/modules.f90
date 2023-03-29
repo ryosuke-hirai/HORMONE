@@ -23,7 +23,7 @@ module settings
 ! switches
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: write_other_vel, write_shock, grav_init_other
- character*30:: flux_limiter
+ character*30:: flux_limiter, simtype
 
 end module settings
 
@@ -111,22 +111,19 @@ module gravmod
 
   implicit none
 
-  integer:: l, lmax
+  integer:: lmax
   integer,parameter:: llmax = 1000
   integer,allocatable,dimension(:):: modlimax
   real*8,allocatable,dimension(:,:,:):: grvphi, grvphiold
   real*8,allocatable,dimension(:):: a1,a2,a3, preca, precb, precc, precd, prece
-  real*8,allocatable,dimension(:):: x,y,z,r,aw, mc
   real*8,allocatable,dimension(:,:):: Pl
   real*8,allocatable,dimension(:,:,:):: Plc
   real*8,allocatable,dimension(:,:):: phiio, phiii, phi1o, phi3i, phi3o
-  real*8 ,dimension(0:llmax):: ml
   real*8,allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real*8:: dt_old, l2norm, grvtime
-  real*8,allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32
+  real*8,allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32, mc
   real*8,allocatable,dimension(:,:):: lag
   real*8,allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc
-  real*8:: h
   real*8,allocatable,dimension(:,:,:,:):: lag11,lag12,lag21,lag22,lag31,lag32
   real*8:: coremass
 
