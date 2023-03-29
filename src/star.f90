@@ -165,7 +165,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   end do
  end do
 
- if(gravswitch==2)grvphiold = grvphi
+ if(gravswitch==3)grvphiold = grvphi
 
 return
 end subroutine set_star_sph_grid
