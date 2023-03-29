@@ -9,7 +9,7 @@
 subroutine externalfield
 
  use grid
- use physval,only:d
+ use physval,only:d,grv1,grv2,grv3
  use gravmod
 
  implicit none
