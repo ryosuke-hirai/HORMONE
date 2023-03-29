@@ -11,6 +11,7 @@ subroutine gridset
   use settings,only:courant,imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
   use grid
   use constants,only:pi
+  use utils,only:geometrical_series
   
   implicit none
 
@@ -466,69 +467,6 @@ subroutine gridset
 return
 
 contains
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!
-!                      SUBROUTINE GEOMETRICAL_SERIES
-!
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: To calculate dxi's in a geometrical series.
-
-subroutine geometrical_series(dxi,xmin,is,ie,xis,xie)
-
- implicit none
-
- integer,intent(in):: is,ie
- real*8,intent(in):: xis,xie,xmin
- real*8,intent(inout),allocatable:: dxi(:)
- integer i
- real*8 xrng, irng, xr, xrnew, xrmax, err, maxerr, fx, dfx
-
-!-----------------------------------------------------------------------------
-
- xrmax = 1.015d0
- maxerr = 1d-10
-
- xr = 1.01d0
- xrng = xie - xis ; irng = dble(ie - is + 1)
-
- if(xrng/irng<xmin)then
-  print *,"Error from geometrical_series ;"
-  print *,"xmin should be smaller or uniform mesh should be chosen",xmin
-  stop
- end if
-
- do i = 1, 10000000
-  fx = (xr-1d0)*xrng - xmin * (xr**irng-1d0)
-  dfx = xrng - irng * xmin * xr**(irng-1d0)
-
-  xrnew = xr - fx/dfx
-
-  if(abs((xrnew-xr)/xr)<maxerr)then
-   xr = xrnew ; exit
-  end if
-  if(xrnew<1d0)xrnew = 2d0
-
-  xr = xrnew
- end do
-
- if(xr>xrmax)then
-  print *,"xmin too small", xmin, xr
-  stop
- end if
-
- dxi(is) = xmin
- do i = is+1, ie
-  dxi(i) = dxi(i-1) * xr
- end do
- dxi(is-1) = dxi(is) ; dxi(is-2) = dxi(is+1)
- dxi(ie+1) = dxi(ie)*xr ; dxi(ie+2) = dxi(ie)*xr*xr
-
- if(xr-1d0<maxerr) dxi = (xie-xis) / irng
-
-return
-end subroutine geometrical_series
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !

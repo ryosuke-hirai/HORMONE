@@ -3,7 +3,7 @@ module output_mod
 
  public:: output,set_file_name
  private:: write_grid,write_bin,write_plt,get_header,add_column, &
-           write_val,gravpot1d
+           write_val
 
  contains
 
@@ -386,6 +386,7 @@ subroutine write_plt
  use settings
  use grid,only:n,i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn,dim
  use physval
+ use utils,only:gravpot1d
 
  implicit none
 
@@ -753,34 +754,5 @@ return
 end subroutine write_val
 
 
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE GRAVPOT1D
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: To calculate 1D gravitational potential
-
-subroutine gravpot1d
-
- use grid
- use constants,only:pi,G
- use physval,only:d
- use gravmod
-
- implicit none
-
-!-----------------------------------------------------------------------------
-
- j = js ; k = ks
- do i = is, ie-1
-  grvphi(i,js:je,k) = 0d0
-  do n = i+1, ie
-   grvphi(i,js:je,k) = grvphi(i,js:je,k) - sum(d(n,js:je,k)*dvol(n,js:je,k))/sum(dvol(n,js:je,k))*x1(n)*dxi1(n)
-  end do
-  grvphi(i,js:je,k) = G*(-mc(i)/x1(i)+4d0*pi*grvphi(i,js:je,k))
- end do
- grvphi(ie,js:je,k) = -G*mc(ie)/x1(ie)
-
-return
-end subroutine gravpot1d
 
 end module output_mod

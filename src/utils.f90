@@ -24,21 +24,39 @@ contains
  end function carpol
 
 
- pure function softened_potential(r,h) result(phi)
-! From Price & Monaghan 2007
- implicit none
- real*8,intent(in):: r,h
- real*8:: phi,q
- q=r/h
- if(q>=2d0)then
-  phi = -1d0/r
- elseif(q>=1d0)then
-  phi = (4d0/3d0*q**2-q**3+0.3d0*q**4-q**5/30d0-1.6d0+1/(15d0*q))/h
- elseif(q>=0d0)then
-  phi = (2d0/3d0*q**2-0.3d0*q**4+0.1d0*q**5-1.4d0)/h
- end if
+ pure function softened_pot(r,hsoft) result(phi)
+! Softened potential from Price & Monaghan 2007 Appendix A
+  implicit none
+  real*8,intent(in):: r,hsoft
+  real*8:: phi,h,q
+  h = 0.5d0*hsoft
+  q=r/h
+  if(q>=2d0)then
+   phi = -1d0/r
+  elseif(q>=1d0)then
+   phi = (4d0/3d0*q**2-q**3+0.3d0*q**4-q**5/30d0-1.6d0+1/(15d0*q))/h
+  elseif(q>=0d0)then
+   phi = (2d0/3d0*q**2-0.3d0*q**4+0.1d0*q**5-1.4d0)/h
+  end if
  
-end function softened_potential
+ end function softened_pot
+
+ pure function softened_acc(r,hsoft) result(acc)
+! Softened acceleration from Price & Monaghan 2007 Appendix A
+  implicit none
+  real*8,intent(in):: r,hsoft
+  real*8::acc,h,q
+  h = 0.5d0*hsoft
+  q = r/h
+  if(q<1d0)then
+   acc=(4d0/3d0*q-1.2d0*q**3+0.5d0*q**4)/h**2
+  elseif(q<2d0)then
+   acc=(8d0/3d0*q-3d0*q**2+1.2d0*q**3-q**4/6d0-1d0/(15d0*q**2))/h**2
+  else
+   acc=1d0/r**2
+  end if
+  
+ end function softened_acc
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -208,5 +226,35 @@ subroutine geometrical_series(dxi,xmin,is,ie,xis,xie)
 return
 end subroutine geometrical_series
 
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE GRAVPOT1D
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To calculate 1D gravitational potential
+
+subroutine gravpot1d
+
+ use grid
+ use constants,only:pi,G
+ use physval,only:d
+ use gravmod
+
+ implicit none
+
+!-----------------------------------------------------------------------------
+
+ j = js ; k = ks
+ do i = is, ie-1
+  grvphi(i,js:je,k) = 0d0
+  do n = i+1, ie
+   grvphi(i,js:je,k) = grvphi(i,js:je,k) - sum(d(n,js:je,k)*dvol(n,js:je,k))/sum(dvol(n,js:je,k))*x1(n)*dxi1(n)
+  end do
+  grvphi(i,js:je,k) = G*(-mc(i)/x1(i)+4d0*pi*grvphi(i,js:je,k))
+ end do
+ grvphi(ie,js:je,k) = -G*mc(ie)/x1(ie)
+
+ return
+end subroutine gravpot1d
 
 end module utils
