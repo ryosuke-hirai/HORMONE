@@ -132,15 +132,15 @@ end subroutine getT_from_dp
 
 ! PURPOSE: To calculate pressure and sound speed based on chosen EoS.
 !          output p includes magnetic pressure
-subroutine eos_p_cf(d,b1,b2,b3,eint,Tini,imu,p,cf,X,Y,ierr)
+subroutine eos_p_cf(d,b1,b2,b3,eint,T,imu,p,cf,X,Y,ierr)
 ! PURPOSE: To calculate pressure and sound speed from density and internal energy
  implicit none
- real*8,intent( in):: d,b1,b2,b3,eint,Tini
+ real*8,intent( in):: d,b1,b2,b3,eint
  real*8,intent( in),optional:: X,Y
- real*8,intent(inout):: imu
+ real*8,intent(inout):: T,imu
  real*8,intent(out):: p,cf
  integer,intent(out):: ierr
- real*8:: gamma_eff, bsq, T, corr, erec
+ real*8:: gamma_eff,bsq,corr,erec
 
 !-----------------------------------------------------------------------------
 
@@ -159,14 +159,12 @@ subroutine eos_p_cf(d,b1,b2,b3,eint,Tini,imu,p,cf,X,Y,ierr)
   cf = sqrt(gamma_eff*p/d)
 
  case(1) ! ideal gas + radiation pressure
-  T = Tini
   call getT_from_de(d,eint,T,imu)
   p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
   gamma_eff = 1d0+p/eint
   cf = sqrt(gamma_eff*p/d)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
-  T = Tini
   call getT_from_de(d,eint,T,imu,X,Y,erec)
   p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
   gamma_eff = 1d0+p/(eint-d*erec)
