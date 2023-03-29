@@ -166,5 +166,8 @@ subroutine checksetup
 ! Provide more than 3 species for composition
   if(compswitch>=1) spn = max(spn,3)
 
+! Don't allocate spc if compswitch == 0
+  if(compswitch==0) spn = 0
+
   return
 end subroutine checksetup
