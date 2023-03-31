@@ -58,7 +58,7 @@ subroutine metric
       idetg3(i,j,k) = idxi3(k)
       dvol(i,j,k) = 0.5d0 * (xi1(i)**2-xi1(i-1)**2) * dxi2(j) * dxi3(k)
       if(je==1)dvol(i,j,k) = pi * (xi1(i)**2-xi1(i-1)**2) * dxi3(k)
-      sa1(i,j,k) = 0.5d0*sum(xi1(i:i-1)) * dxi2(j) * dxi3(k)
+      sa1(i,j,k) = 0.5d0*sum(xi1(i-1:i)) * dxi2(j) * dxi3(k)
       sa2(i,j,k) = dxi1(i) * dxi3(k)
       sa3(i,j,k) = (xi1(i)**2-xi1(i-1)**2) * dxi2(j)
      end do
@@ -92,7 +92,7 @@ subroutine metric
                     * (cosi(j-1)-cosi(j)) * dxi3(k)
       sa1(i,j,k)    = 0.5d0*(xi1(i)**2+xi1(i-1)**2) &
                     * (cosi(j-1)-cosi(j)) * dxi3(k)
-      sa2(i,j,k)    = 0.5d0*sum(cosi(j:j-1)) &
+      sa2(i,j,k)    = 0.5d0*sum(sini(j-1:j)) &
                     * (xi1(i)**2-xi1(i-1)**2) * dxi3(k)
       sa3(i,j,k)    = (xi1(i)**2-xi1(i-1)**2) * dxi2(j)
      end do

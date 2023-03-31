@@ -14,7 +14,7 @@ contains
 
  subroutine timestep
 
-  use settings,only:courant,outstyle,eostype
+  use settings,only:courant,outstyle,eostype,mag_on
   use grid
   use physval
   use constants,only:huge
@@ -30,21 +30,21 @@ contains
 
 
   allocate( dtdist(is:ie,js:je,ks:ke,1:3), dti(is:ie,js:je,ks:ke) )
-  dtdist = huge
+!!$  dtdist = huge
 !!$!$omp parallel do private(i,j,k)
 !!$  do k = ks, ke
 !!$   do j = js, je
 !!$    do i = is, ie
 !!$     if(ie>1)then
-!!$      dtdist(i,j,k,1) = dxi1(i) / ( abs(v1(i,j,k))+abs(v3(i,j,k))+cf(i,j,k) )
+!!$      dtdist(i,j,k,1) = dxi1(i) / ( abs(v1(i,j,k))+abs(v3(i,j,k))+cs(i,j,k) )
 !!$     end if
 !!$     if(je>1)then
 !!$      dtdist(i,j,k,2) = g22(i)*dxi2(j) &
-!!$                      / ( abs(v2(i,j,k))+abs(v3(i,j,k))+cf(i,j,k) )
+!!$                      / ( abs(v2(i,j,k))+abs(v3(i,j,k))+cs(i,j,k) )
 !!$     end if
 !!$     if(ke>1)then
 !!$      dtdist(i,j,k,3) = g33(i,j)*dxi3(k) &
-!!$                      / ( abs(v3(i,j,k)+cf(i,j,k) ) )
+!!$                      / ( abs(v3(i,j,k)+cs(i,j,k) ) )
 !!$     end if
 !!$    end do
 !!$   end do
@@ -65,9 +65,16 @@ contains
       call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
                     p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
      end select
-     cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-     cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
-     cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b2(i,j,k),b1(i,j,k))
+
+     if(mag_on)then
+      cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
+      cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
+      cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b2(i,j,k),b1(i,j,k))
+     else
+      cf1 = cs(i,j,k)
+      cf2 = cs(i,j,k)
+      cf3 = cs(i,j,k)
+     end if
 
      dti(i,j,k) = dvol(i,j,k) / &
                 ( ( cf1 + abs(v1(i,j,k)) )*off(is,ie) * sa1(i,j,k) &
@@ -110,10 +117,10 @@ contains
 !  dt = minval( dtdist(is:ie,js:je,ks:ke,1:3) )
   dt = minval( dti(is:ie,js:je,ks:ke) )
 
-!  cfmax = maxval(abs(cf))
+  cfmax = maxval(abs(cs))
 
   dt = courant * dt
-!print *,dt,minloc(dtdist(is:ie,js:je,ks:ke,1:3));stop
+
   if(outstyle==1) dt = min(dt,t_out-time)
 
   ch = cfmax
