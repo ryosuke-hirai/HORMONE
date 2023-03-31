@@ -14,7 +14,7 @@ contains
 
  subroutine timestep
 
-  use settings,only:courant,outstyle
+  use settings,only:courant,outstyle,eostype
   use grid
   use physval
   use constants,only:huge
@@ -57,8 +57,14 @@ contains
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                   p(i,j,k), cs(i,j,k), ierr=ierr )
+     select case(eostype)
+     case(0:1)
+      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
+                    p(i,j,k), cs(i,j,k), ierr=ierr )
+     case(2)
+      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
+                    p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
+     end select
      cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
      cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
      cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b2(i,j,k),b1(i,j,k))

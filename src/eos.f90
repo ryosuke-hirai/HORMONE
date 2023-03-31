@@ -140,7 +140,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
  real*8,intent(inout):: T,imu
  real*8,intent(out):: p,cs
  integer,intent(out):: ierr
- real*8:: gamma_eff,corr,erec
+ real*8:: gamma_eff,corr,erec,Ttemp
 
 !-----------------------------------------------------------------------------
 
@@ -161,12 +161,13 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
  case(1) ! ideal gas + radiation pressure
   p = eos_p(d,eint,T,imu)
   gamma_eff = 1d0+p/eint
-
+  
   cs = sqrt(gamma_eff*p/d)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
+  Ttemp = 1d3
+  call getT_from_de(d,eint,Ttemp,imu,X,Y,erec)
   p = eos_p(d,eint,T,imu,X,Y)
-  erec = get_erec(log(d),T,X,Y)
   gamma_eff = 1d0+p/(eint-d*erec)
 
   cs = sqrt(gamma_eff*p/d)
