@@ -509,7 +509,7 @@ contains
   integer,intent(in):: i,j,k,whichflux,ierr
 !-----------------------------------------------------------------------------
 
-  print'("i=",i5,"j=",i5,"k=",i5)',i,j,k
+  print'("i=",i5,", j=",i5,", k=",i5)',i,j,k
   print'("In numflux",i2)',whichflux
   stop
 
