@@ -25,8 +25,7 @@ subroutine numflux
   real*8,dimension(1:spn):: spcl,spcr
   real*8 signdflx,ul,ur,fl,fr,rinji, rotfac
   integer ierr
-!temporary
-  real*8:: w1l,w1r,w2l,w2r,w3l,w3r,w4l,w4r,w5l,w5r,w6l,w6r,w7l,w7r,cf,sqrtd
+
 !--------------------------------------------------------------------
 
 ! calculate flux
@@ -39,8 +38,7 @@ subroutine numflux
   if(ie/=1)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,pl,pr,&
-!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr,&
-!$omp w1l,w1r,w2l,w2r,w3l,w3r,w4l,w4r,w5l,w5r,w6l,w6r,w7l,w7r,cf,sqrtd)
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
   do k = ks,ke
    do j = js,je
     do i = is-1, ie
