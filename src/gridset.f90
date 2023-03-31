@@ -15,10 +15,7 @@ subroutine gridset
   
   implicit none
 
-  integer jetmp,ketmp,dummy
-  real*8 x1min, x2min, x3min
-
-  namelist /geoscon/ x1min, x2min, x3min
+  integer jetmp,ketmp
 
 !-------------------------------------------------------------------------
 
@@ -46,9 +43,6 @@ subroutine gridset
    case(0) mesh_car1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie-is+1)
    case(1) mesh_car1 ! geometrical series
-    open(unit=1,file='parameters',status='old')
-    read(1,NML=geoscon)
-    close(1)
     call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
    case(2) mesh_car1 ! user specified mesh
     call other_imesh(dxi1,is,ie,xi1s,xi1e)
@@ -87,9 +81,6 @@ subroutine gridset
    case(0) mesh_car2 ! uniform mesh
     dxi2 = (xi2e-xi2s) / dble(je-js+1)
    case(1) mesh_car2 ! geometrical series
-    open(unit=1,file='parameters',status='old')
-    read(1,NML=geoscon)
-    close(1)
     call geometrical_series(dxi2,x2min,js,je,xi2s,xi2e)
    case(2) mesh_car2 ! user specified mesh
     call other_jmesh(dxi2,js,je,xi2s,xi2e)
@@ -128,9 +119,6 @@ subroutine gridset
    case(0) mesh_car3 ! uniform mesh
     dxi3 = (xi3e-xi3s) / dble(ke-ks+1)
    case(1) mesh_car3 ! geometrical series
-    open(unit=1,file='parameters',status='old')
-    read(1,NML=geoscon)
-    close(1)
     call geometrical_series(dxi3,x3min,ks,ke,xi3s,xi3e)
    case(2) mesh_car3 ! user specified mesh
     call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
@@ -172,9 +160,6 @@ subroutine gridset
    case(0) mesh_cyl1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie-is+1)
    case(1) mesh_cyl1 ! geometrical series
-    open(unit=1,file='parameters',status='old')
-    read(1,NML=geoscon)
-    close(1)
     call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
    case(2) mesh_cyl1 ! user specified mesh
     call other_imesh(dxi1,is,ie,xi1s,xi1e)
@@ -246,9 +231,6 @@ subroutine gridset
    case(0) mesh_cyl3 ! uniform mesh
     dxi3 = (xi3e-xi3s) / dble(ke-ks+1)
    case(1) mesh_cyl3 ! geometrical series
-    open(unit=1,file='parameters',status='old')
-    read(1,NML=geoscon)
-    close(1)
     call geometrical_series(dxi3,x3min,ks,ke,xi3s,xi3e)
    case(2) mesh_cyl3 ! user specified mesh
     call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
@@ -313,9 +295,6 @@ subroutine gridset
    case(0) mesh_sph1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie-is+1)
    case(1) mesh_sph1 ! geometrical series
-    open(unit=1,file='parameters',status='old')
-    read(1,NML=geoscon)
-    close(1)
     call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
    case(2) mesh_sph1 ! user specified mesh
     call other_imesh(dxi1,is,ie,xi1s,xi1e)
