@@ -1,0 +1,18 @@
+----------------------------- HORMONE -----------------------------
+
+Choose what kind of simulation you want to do.
+If start/=0, it will restart from the file number specified by (start).
+If start==0, it will set the initial condition based on the choice of simtype.
+'parafile' specifies the extra parameter file name. Leave it blank if you are happy with the defaults.
+
+++++++ SIMTYPE OPTIONS ++++++
+'eostest': Forwards and backwards consistency test for EoS.
+'orszagtang_xy': Orszag-Tang test in xy plane
+'orszagtang_yz': Orszag-Tang test in yz plane
+'orszagtang_xz': Orszag-Tang test in xz plane
+'sedov': Sedov blast wave
+'briowushock_{x,y,z}': Brio & Wu shocktube problem
+'sodshock_{x,y,z}': Sod shocktube problem
+'rsg_sph': Do something with a red supergiant on spherical coordinates
+
+&startcon start=0 simtype='sodshock_x' parafile=''/

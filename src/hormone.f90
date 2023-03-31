@@ -22,6 +22,7 @@ program hormone
   use grid
   use physval
   use constants
+  use setup_mod
   use pressure_mod
   use particle_mod
   use cooling_mod
@@ -33,39 +34,22 @@ program hormone
   
   implicit none
 
-! set parameters
-  namelist /gridcon/ xi1s, xi1e, xi2s, xi2e, xi3s, xi3e, &
-                     is, ie, js, je, ks, ke, imesh, jmesh, kmesh, &
-                     sphrn, trnsn1, trnsn2, trnsn3
-  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
-                     dt_unit, sigfig, outres, write_other_vel, write_shock
-  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, include_cooling
-  namelist /simucon/ crdnt,courant, rktype, start, mag_on, flux_limiter
-  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
-                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
-  namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, gbtype, &
-                     grav_init_other, include_extgrv, &
-                     gis, gie, gjs, gje, gks, gke
-  namelist /partcon/ include_particles, maxptc
-
-
 !############################## start program ################################
 
 ! Initial setups -------------------------------------------------------------
 
   time = 0.d0; tn = 0
 
-  ! Reading parameters
-  open(unit=1,file='parameters',status='old')
-  read(1,NML=gridcon)
-  read(1,NML=out_con)
-  read(1,NML=eos_con)
-  read(1,NML=simucon)
-  read(1,NML=bouncon)
-  read(1,NML=gravcon)
-  read(1,NML=partcon)
-  close(1)
+! Read startfile
+  call read_startfile
 
+! Read default parameter file
+  call read_default
+
+! Reading parameters
+  call read_parameters(parafile)
+
+! Start initial setup
   call checksetup
   call allocations
   call gridset
@@ -85,6 +69,7 @@ program hormone
 !  if(include_particles.and.time==inifile)call particles_setup
   call boundarycondition
   call timestep
+
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
 
   if(tn==0)then
@@ -94,11 +79,11 @@ program hormone
 
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
-   do while(time < t_end.and.tn<=tnlim)
+   do
 
     call timestep
-    print*,tn,time,dt
-!print*,v3(is,js,ke:ke+2),p(is,js,ke:ke+2),d(is,js,ke:ke+2),grvphi(is,js,ke:ke+2)
+    print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
+
     if(tn>0)call gravity
     if(dirichlet_on)call dirichletbound
     call shockfind
@@ -137,7 +122,7 @@ program hormone
     case(1) ! time up       ! 
      if(time>=t_end)exit    ! 
     case(2) ! timestep up   !
-     if(tn>=tnlim)exit      ! 
+     if(tn>=tnlim)exit      !
     end select              ! 
 ! --------------------------!
 
