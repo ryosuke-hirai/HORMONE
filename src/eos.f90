@@ -127,25 +127,25 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
 end subroutine getT_from_dp
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE EOS_P_CF
+!                           SUBROUTINE EOS_P_CS
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To calculate pressure and sound speed based on chosen EoS.
-!          output p includes magnetic pressure
-subroutine eos_p_cf(d,b1,b2,b3,eint,T,imu,p,cf,X,Y,ierr)
-! PURPOSE: To calculate pressure and sound speed from density and internal energy
+! PURPOSE: To calculate pressure and thermal sound speed from d and eint
+
+subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
+
  implicit none
- real*8,intent( in):: d,b1,b2,b3,eint
+ real*8,intent( in):: d,eint
  real*8,intent( in),optional:: X,Y
  real*8,intent(inout):: T,imu
- real*8,intent(out):: p,cf
+ real*8,intent(out):: p,cs
  integer,intent(out):: ierr
- real*8:: gamma_eff,bsq,corr,erec
+ real*8:: gamma_eff,corr,erec
 
 !-----------------------------------------------------------------------------
 
  ierr=0
- bsq = 0.5d0*(b1**2+b2**2+b3**2)
+
  if(eint<=0d0.or.d<=0d0)then
   ierr=1
   return
@@ -153,30 +153,30 @@ subroutine eos_p_cf(d,b1,b2,b3,eint,T,imu,p,cf,X,Y,ierr)
  
  select case (eostype)
  case(0) ! ideal gas
-  p = (gamma-1d0)*eint + bsq
+  p = eos_p(d,eint,T,imu)
   gamma_eff = 1d0+p/eint
 
-  cf = sqrt(gamma_eff*p/d)
+  cs = sqrt(gamma_eff*p/d)
 
  case(1) ! ideal gas + radiation pressure
-  call getT_from_de(d,eint,T,imu)
-  p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
+  p = eos_p(d,eint,T,imu)
   gamma_eff = 1d0+p/eint
-  cf = sqrt(gamma_eff*p/d)
+
+  cs = sqrt(gamma_eff*p/d)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
-  call getT_from_de(d,eint,T,imu,X,Y,erec)
-  p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T + bsq
+  p = eos_p(d,eint,T,imu,X,Y)
+  erec = get_erec(log(d),T,X,Y)
   gamma_eff = 1d0+p/(eint-d*erec)
 
-  cf = sqrt(gamma_eff*p/d)
+  cs = sqrt(gamma_eff*p/d)
 
  case default
   stop 'Error in eostype'
  end select
 
 return
-end subroutine eos_p_cf
+end subroutine eos_p_cs
 
 ! ***************************************************************************
 real*8 function eos_p(d,eint,T,imu,X,Y)
@@ -188,6 +188,7 @@ real*8 function eos_p(d,eint,T,imu,X,Y)
 
  select case (eostype)
  case(0) ! ideal gas
+  call getT_from_de(d,eint,T,imu)
   eos_p = (gamma-1d0)*eint
   
  case(1) ! ideal gas + radiation
@@ -216,6 +217,7 @@ real*8 function eos_e(d,p,T,imu,X,Y)
  
  select case (eostype)
  case(0) ! ideal gas
+  call getT_from_dp(d,p,T,imu)
   eos_e = p/(gamma-1d0)
   
  case(1) ! ideal gas + radiation
@@ -232,7 +234,26 @@ real*8 function eos_e(d,p,T,imu,X,Y)
 
 end function eos_e
 
-! **************************************************************************
+! ***************************************************************************
+
+pure function get_cf(d,cs,b1,b2,b3) result(cf)
+! PURPOSE: To calculate full sound speed from thermal sound speed and B field
+!          Note that this is the sound speed in the b1 direction
+ real*8,intent(in):: d,cs,b1,b2,b3
+ real*8:: cf,asq,bbsq,bb1,bb2,bb3
+ asq = cs**2
+
+ bb1  = b1**2 / d
+ bb2  = b2**2 / d
+ bb3  = b3**2 / d
+ bbsq = bb1 + bb2 + bb3
+
+ cf = sqrt( 0.5d0*( asq + bbsq + sqrt( (asq+bbsq)**2 - 4d0*asq*bb1 ) ) )
+
+end function get_cf
+
+
+! ***************************************************************************
 
 function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
  use constants
@@ -245,6 +266,7 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
 
  select case(eostype)
  case(0) ! ideal gas
+  call getT_from_dp(d,p,T,imu)
   entropy = p/d**gamma
 
  case(1) ! ideal gas + radiation
@@ -368,6 +390,7 @@ subroutine pressure
  implicit none
 
  real*8 bsq
+ integer:: ierr
 
 !-----------------------------------------------------------------------------
 
@@ -380,8 +403,9 @@ subroutine pressure
    do j = js,je
     do i = is,ie
      bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)
-     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
-
+!     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
+     call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
+                   p(i,j,k), cs(i,j,k), ierr=ierr )
      ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
     end do
    end do

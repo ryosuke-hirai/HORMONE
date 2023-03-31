@@ -19,13 +19,14 @@ subroutine numflux
 
   real*8:: cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
-           v2l, v2r, v3l, v3r, eil, eir, fix
+           v2l, v2r, v3l, v3r, eil, eir, csl, csr, pl, pr, fix
   real*8,dimension(1:9)::tmpflux
   real*8,dimension(1:2):: dx
   real*8,dimension(1:spn):: spcl,spcr
   real*8 signdflx,ul,ur,fl,fr,rinji, rotfac
   integer ierr
-
+!temporary
+  real*8:: w1l,w1r,w2l,w2r,w3l,w3r,w4l,w4r,w5l,w5r,w6l,w6r,w7l,w7r,cf,sqrtd
 !--------------------------------------------------------------------
 
 ! calculate flux
@@ -35,9 +36,11 @@ subroutine numflux
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !$omp parallel
+  if(ie/=1)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
-!$omp imul,imur,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,pl,pr,&
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr,&
+!$omp w1l,w1r,w2l,w2r,w3l,w3r,w4l,w4r,w5l,w5r,w6l,w6r,w7l,w7r,cf,sqrtd)
   do k = ks,ke
    do j = js,je
     do i = is-1, ie
@@ -84,70 +87,75 @@ subroutine numflux
       imul = 1d0/imu(i  ,j,k) + dx(1) * dmu(i  ,j,k,1)
       imur = 1d0/imu(i+1,j,k) - dx(2) * dmu(i+1,j,k,1)
       imul = 1d0/imul ; imur = 1d0/imur
-      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,ierr=ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,ierr=ierr)
+      call eos_p_cs(dl,eil,Tl,imul,pl,csl,ierr=ierr)
+      call eos_p_cs(dr,eir,Tr,imur,pr,csr,ierr=ierr)
       if(ierr>0)call error_flux(i,j,k,1,ierr)
      case(2) ! with recombination
       spcl(1:2) = spc(1:2,i  ,j,k) + dx(1) * dspc(1:2,i  ,j,k,1)
       spcr(1:2) = spc(1:2,i+1,j,k) - dx(2) * dspc(1:2,i+1,j,k,1)
-      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
+      call eos_p_cs(dl,eil,Tl,imul,pl,csl,spcl(1),spcl(2),ierr)
+      call eos_p_cs(dr,eir,Tr,imur,pr,csr,spcr(1),spcr(2),ierr)
       if(ierr>0)call error_flux(i,j,k,1,ierr)
      end select
+     ptl = pl + 0.5d0*(b1l**2+b2l**2+b3l**2)
+     ptr = pr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+
+     cfl = get_cf(dl,csl,b1l,b2l,b3l)
+     cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
      call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
           el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
 
-     if(maxval(shock(i:i+1,j-1:j+1,k-1:k+1))==1)then ! if supersonic
-      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v2l),abs(v2r),abs(v1l),abs(v1r)))then ! and aligned
-
-       fl = dl*v1l;fr = dr*v1r ; ul = dl ; ur = dr
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(1) = rinji
-
-       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
-       ul = dl*v1l ; ur = dr*v1r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(2) = rinji
-
-       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
-       ul = dl*v2l ; ur = dr*v2r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(3) = rinji
-
-       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
-       ul = dl*v3l ; ur = dr*v3r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(4) = rinji
-
-       fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
-       fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
-       ul = el ; ur = er
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(8) = rinji
-
-       if(mag_on)then
-        fl = phil;fr = phir ; ul = b1l ; ur = b1r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(5) = rinji
-
-        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
-        ul = b2l ; ur = b2r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(6) = rinji
-
-        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
-        ul = b3l ; ur = b3r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(7) = rinji
-
-        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(9) = rinji
-       end if
-       
-      end if
-     end if
+!!$     if(maxval(shock(i:i+1,j-1:j+1,k-1:k+1))==1)then ! if supersonic
+!!$      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v2l),abs(v2r),abs(v1l),abs(v1r)))then ! and aligned
+!!$
+!!$       fl = dl*v1l;fr = dr*v1r ; ul = dl ; ur = dr
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(1) = rinji
+!!$
+!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
+!!$       ul = dl*v1l ; ur = dr*v1r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(2) = rinji
+!!$
+!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
+!!$       ul = dl*v2l ; ur = dr*v2r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(3) = rinji
+!!$
+!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
+!!$       ul = dl*v3l ; ur = dr*v3r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(4) = rinji
+!!$
+!!$       fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
+!!$       fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
+!!$       ul = el ; ur = er
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(8) = rinji
+!!$
+!!$       if(mag_on)then
+!!$        fl = phil;fr = phir ; ul = b1l ; ur = b1r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(5) = rinji
+!!$
+!!$        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
+!!$        ul = b2l ; ur = b2r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(6) = rinji
+!!$
+!!$        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
+!!$        ul = b3l ; ur = b3r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(7) = rinji
+!!$
+!!$        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(9) = rinji
+!!$       end if
+!!$       
+!!$      end if
+!!$     end if
 
 
      do ufn = 1,9
@@ -172,12 +180,13 @@ subroutine numflux
    end do
   end do
 !$omp end do
-
+ end if
+ 
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-if(je/=1)then
+ if(je/=1)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
-!$omp imul,imur,fix,spcl,spcr,signdflx,n,ierr)
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr)
   do k = ks,ke
    do j = js-1,je
     do i = is, ie
@@ -225,71 +234,75 @@ if(je/=1)then
       imul = 1d0/imu(i,j  ,k) + dx(1) * dmu(i,j  ,k,2)
       imur = 1d0/imu(i,j+1,k) - dx(2) * dmu(i,j+1,k,2)
       imul = 1d0/imul ; imur = 1d0/imur
-      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,ierr=ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,ierr=ierr)
+      call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
+      call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
       if(ierr>0)call error_flux(i,j,k,2,ierr)
      case(2) ! with recombination
       spcl(1:2) = spc(1:2,i,j  ,k) + dx(1) * dspc(1:2,i,j  ,k,2)
       spcr(1:2) = spc(1:2,i,j+1,k) - dx(2) * dspc(1:2,i,j+1,k,2)
-      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
+      call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
+      call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
       if(ierr>0)call error_flux(i,j,k,2,ierr)
      end select
+     ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
+     ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+     cfl = get_cf(dl,csl,b1l,b2l,b3l)
+     cfr = get_cf(dr,csr,b1r,b2r,b3r)
      
      call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
           el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
 
 
-     if(maxval(shock(i-1:i+1,j:j+1,k-1:k+1))==1)then ! if shock
-      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v1l),abs(v1r)))then ! and aligned
-
-       fl = dl*v1l;fr = dr*v1r ; ul = dl ; ur = dr
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(1) = rinji
-
-       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
-       ul = dl*v1l ; ur = dr*v1r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(2) = rinji
-
-       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
-       ul = dl*v2l ; ur = dr*v2r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(3) = rinji
-
-       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
-       ul = dl*v3l ; ur = dr*v3r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(4) = rinji
-
-       fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
-       fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
-       ul = el ; ur = er
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(8) = rinji
-
-       if(mag_on)then
-        fl = phil;fr = phir ; ul = b1l ; ur = b1r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(5) = rinji
-
-        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
-        ul = b2l ; ur = b2r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(6) = rinji
- 
-        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
-        ul = b3l ; ur = b3r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(7) = rinji
-
-        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil; ur=phir
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(9) = rinji
-       end if
-
-      end if
-     end if
+!!$     if(maxval(shock(i-1:i+1,j:j+1,k-1:k+1))==1)then ! if shock
+!!$      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v1l),abs(v1r)))then ! and aligned
+!!$
+!!$       fl = dl*v1l;fr = dr*v1r ; ul = dl ; ur = dr
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(1) = rinji
+!!$
+!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
+!!$       ul = dl*v1l ; ur = dr*v1r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(2) = rinji
+!!$
+!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
+!!$       ul = dl*v2l ; ur = dr*v2r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(3) = rinji
+!!$
+!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
+!!$       ul = dl*v3l ; ur = dr*v3r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(4) = rinji
+!!$
+!!$       fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
+!!$       fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
+!!$       ul = el ; ur = er
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(8) = rinji
+!!$
+!!$       if(mag_on)then
+!!$        fl = phil;fr = phir ; ul = b1l ; ur = b1r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(5) = rinji
+!!$
+!!$        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
+!!$        ul = b2l ; ur = b2r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(6) = rinji
+!!$ 
+!!$        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
+!!$        ul = b3l ; ur = b3r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(7) = rinji
+!!$
+!!$        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil; ur=phir
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(9) = rinji
+!!$       end if
+!!$
+!!$      end if
+!!$     end if
 
      flux2(i,j,k,1) = tmpflux(1)
      flux2(i,j,k,2) = tmpflux(4)
@@ -325,7 +338,7 @@ if(je/=1)then
  if(ke/=1)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
-!$omp imul,imur,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
   do k = ks-1,ke
    do j = js,je
     do i = is, ie
@@ -373,70 +386,74 @@ if(je/=1)then
       imul = 1d0/imu(i,j,k  ) + dx(1) * dmu(i,j,k  ,3)
       imur = 1d0/imu(i,j,k+1) - dx(2) * dmu(i,j,k+1,3)
       imul = 1d0/imul ; imur = 1d0/imur
-      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,ierr=ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,ierr=ierr)
+      call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
+      call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
       if(ierr>0)call error_flux(i,j,k,3,ierr)
      case(2) ! with recombination
       spcl(1:2) = spc(1:2,i,j,k  ) + dx(1) * dspc(1:2,i,j,k  ,3)
       spcr(1:2) = spc(1:2,i,j,k+1) - dx(2) * dspc(1:2,i,j,k+1,3)
-      call eos_p_cf(dl,b1l,b2l,b3l,eil,Tl,imul,ptl,cfl,spcl(1),spcl(2),ierr)
-      call eos_p_cf(dr,b1r,b2r,b3r,eir,Tr,imur,ptr,cfr,spcr(1),spcr(2),ierr)
+      call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
+      call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
       if(ierr>0)call error_flux(i,j,k,3,ierr)
      end select
+     ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
+     ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+     cfl = get_cf(dl,csl,b1l,b2l,b3l)
+     cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
      call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
           el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
 
-     if(maxval(shock(i-1:i+1,j,k:k+1))==1)then ! if supersonic
-      if(max(abs(v2l),abs(v2r))>1d-1*max(abs(v1l),abs(v1r),abs(v3l),abs(v3r)))then ! and aligned
-
-       fl = dl*v1l;fr = dr*v1r ; ul = dl ; ur = dr
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(1) = rinji
-
-       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
-       ul = dl*v1l ; ur = dr*v1r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(2) = rinji
-
-       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
-       ul = dl*v2l ; ur = dr*v2r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(3) = rinji
-
-       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
-       ul = dl*v3l ; ur = dr*v3r
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(4) = rinji
-
-       fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
-       fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
-       ul = el ; ur = er
-       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-       tmpflux(8) = rinji
-
-       if(mag_on)then
-        fl = phil;fr = phir ; ul = b1l ; ur = b1r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(5) = rinji
-
-        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
-        ul = b2l ; ur = b2r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(6) = rinji
-
-        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
-        ul = b3l ; ur = b3r
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(7) = rinji
-
-        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
-        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
-        tmpflux(9) = rinji
-       end if
-
-      end if
-     end if
+!!$     if(maxval(shock(i-1:i+1,j,k:k+1))==1)then ! if supersonic
+!!$      if(max(abs(v2l),abs(v2r))>1d-1*max(abs(v1l),abs(v1r),abs(v3l),abs(v3r)))then ! and aligned
+!!$
+!!$       fl = dl*v1l;fr = dr*v1r ; ul = dl ; ur = dr
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(1) = rinji
+!!$
+!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
+!!$       ul = dl*v1l ; ur = dr*v1r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(2) = rinji
+!!$
+!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
+!!$       ul = dl*v2l ; ur = dr*v2r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(3) = rinji
+!!$
+!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
+!!$       ul = dl*v3l ; ur = dr*v3r
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(4) = rinji
+!!$
+!!$       fl = (el+ptl)*v1l-b1l*(v1l*b1l+v2l*b2l+v3l*b3l)
+!!$       fr = (er+ptr)*v1r-b1r*(v1r*b1r+v2r*b2r+v3r*b3r)
+!!$       ul = el ; ur = er
+!!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$       tmpflux(8) = rinji
+!!$
+!!$       if(mag_on)then
+!!$        fl = phil;fr = phir ; ul = b1l ; ur = b1r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(5) = rinji
+!!$
+!!$        fl = b2l*v1l-b1l*v2l;fr = b2r*v1r-b1r*v2r
+!!$        ul = b2l ; ur = b2r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(6) = rinji
+!!$
+!!$        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
+!!$        ul = b3l ; ur = b3r
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(7) = rinji
+!!$
+!!$        fl = ch*ch*b1l ; fr = ch*ch*b1r ; ul = phil;ur=phir
+!!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
+!!$        tmpflux(9) = rinji
+!!$       end if
+!!$
+!!$      end if
+!!$     end if
 
      flux3(i,j,k,1) = tmpflux(1)
      flux3(i,j,k,2) = tmpflux(3)
@@ -470,12 +487,12 @@ end if
 !$omp end parallel
 
 if(ie==1)flux1=0d0
-if(ie==1.and.compswitch>=2)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
-if(je<=2.and.crdnt==2)flux2=0d0
-if(je==1.and.compswitch>=2)spcflx(1:spn,is:ie,js-1:je,ks:ke,2)=0d0
+if(je==1)flux2=0d0
 if(ke==1)flux3=0d0
+if(ie==1.and.compswitch>=2)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
+if(je==1.and.compswitch>=2)spcflx(1:spn,is:ie,js-1:je,ks:ke,2)=0d0
 if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
-
+if(je<=2.and.crdnt==2)flux2=0d0
 if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 
 return

@@ -31,18 +31,20 @@ subroutine interpolation
 
 ! Flat reconstruction
  if(flux_limiter=='flat')then
-  dd=0d0;de=0d0;dm1=0d0;dm2=0d0;dm3=0d0;db1=0d0;db2=0d0;db3=0d0
+  dd=0d0;de=0d0;dm1=0d0;dm2=0d0;dm3=0d0;db1=0d0;db2=0d0;db3=0d0;dphi=0d0
   return
  end if
- 
+
+!$omp parallel
+
 ! slope1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
+if(ie/=is)then
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
 !$omp Xl,Xr,Yl,Yr,Tini)
-
  do k = ks,ke
   do j = js,je
-   do i = is-1, ie+1
+   do i = is-1,ie+1
     dx(1:2) = idx1(i:i+1)
     x(1:3) = x1(i-1:i+1) ; xi(1:2) = xi1(i-1:i)
 
@@ -84,80 +86,84 @@ subroutine interpolation
      uu(1:3) = b3(i-1:i+1,j,k)
      call minmod(du,uu,dx) ; db3(i,j,k,1) = du
      b3l = uu(2) - (x1(i)-xi1(i-1))*du ; b3r = uu(2) + (xi1(i)-x1(i))*du
+    else
+     b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
     end if
+
     
 ! check stability at cell boundary ---------------------------------------- !
-    ! first calculate mean molecular weight at the surface
-    select case (compswitch)
-    case(0) ! uniform composition
-     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,1) = 0d0
-    case(1:2) ! nonuniform composition
-     uu(1:3) = 1d0/imu(i-1:i+1,j,k)
-     call minmod(du,uu,dx) ; dmu(i,j,k,1) = du
-     imul = uu(2) - (x1(i)-xi1(i-1))*du ; imur = uu(2) + (xi1(i)-x1(i))*du
-     imul = 1d0/imul ; imur = 1d0/imur
-     if(compswitch==2)then
-      do n = 1, spn
-       uu(1:3) = spc(n,i-1:i+1,j,k)
-       call minmod(du,uu,dx) ; dspc(n,i,j,k,1) = du
-      end do
-     end if
-    case default
-     print *, "Error in compswitch",compswitch
-     stop
-    end select
-    ! then calculate the energies at boundaries
-    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
-    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
-    if(mag_on)then
-     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
-     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
-    end if
-    if( eintl>=maxval(eint(i-1:i,j,k)).or.eintl<=minval(eint(i-1:i,j,k)).or.&
-        eintr>=maxval(eint(i:i+1,j,k)).or.eintr<=minval(eint(i:i+1,j,k)))then
-     dd (i,j,k,1) = 0d0 ; de (i,j,k,1) = 0d0
-     dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
-     db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
-     dphi(i,j,k,1) = 0d0
-    else
-     Tini = T(i,j,k)
-     select case (eostype)
-     case(0:1) ! without recombination
-      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
-     case(2) ! with recombination
-      Xl = spc(1,i,j,k)-(x1(i)-xi1(i-1))* dspc(1,i,j,k,1)
-      Yl = spc(2,i,j,k)-(x1(i)-xi1(i-1))* dspc(2,i,j,k,1)
-      Xr = spc(1,i,j,k)+(xi1(i)-x1(i  ))* dspc(1,i,j,k,1)
-      Yr = spc(2,i,j,k)+(xi1(i)-x1(i  ))* dspc(2,i,j,k,1)
-      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
-      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
-     end select
-     if( ptl>=maxval(ptot(i-1:i,j,k)).or.ptl<=minval(ptot(i-1:i,j,k)).or.&
-         ptr>=maxval(ptot(i:i+1,j,k)).or.ptr<=minval(ptot(i:i+1,j,k)))then
-      dd (i,j,k,1) = 0d0 ; de (i,j,k,1) = 0d0
-      dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
-      db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
-      dphi(i,j,k,1) = 0d0
-     end if
-    end if
+!!$    ! first calculate mean molecular weight at the surface
+!!$    select case (compswitch)
+!!$    case(0) ! uniform composition
+!!$     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,1) = 0d0
+!!$    case(1:2) ! nonuniform composition
+!!$     uu(1:3) = 1d0/imu(i-1:i+1,j,k)
+!!$     call minmod(du,uu,dx) ; dmu(i,j,k,1) = du
+!!$     imul = uu(2) - (x1(i)-xi1(i-1))*du ; imur = uu(2) + (xi1(i)-x1(i))*du
+!!$     imul = 1d0/imul ; imur = 1d0/imur
+!!$     if(compswitch==2)then
+!!$      do n = 1, spn
+!!$       uu(1:3) = spc(n,i-1:i+1,j,k)
+!!$       call minmod(du,uu,dx) ; dspc(n,i,j,k,1) = du
+!!$      end do
+!!$     end if
+!!$    case default
+!!$     print *, "Error in compswitch",compswitch
+!!$     stop
+!!$    end select
+!!$    ! then calculate the energies at boundaries
+!!$    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
+!!$    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
+!!$    if(mag_on)then
+!!$     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
+!!$     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
+!!$    end if
+!!$    if( eintl>=maxval(eint(i-1:i,j,k)).or.eintl<=minval(eint(i-1:i,j,k)).or.&
+!!$        eintr>=maxval(eint(i:i+1,j,k)).or.eintr<=minval(eint(i:i+1,j,k)))then
+!!$     dd (i,j,k,1) = 0d0 ; de (i,j,k,1) = 0d0
+!!$     dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
+!!$     db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
+!!$     dphi(i,j,k,1) = 0d0
+!!$    else
+!!$     Tini = T(i,j,k)
+!!$     select case (eostype)! Get thermal pressure
+!!$     case(0:1) ! without recombination
+!!$      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
+!!$     case(2) ! with recombination
+!!$      Xl = spc(1,i,j,k)-(x1(i)-xi1(i-1))* dspc(1,i,j,k,1)
+!!$      Yl = spc(2,i,j,k)-(x1(i)-xi1(i-1))* dspc(2,i,j,k,1)
+!!$      Xr = spc(1,i,j,k)+(xi1(i)-x1(i  ))* dspc(1,i,j,k,1)
+!!$      Yr = spc(2,i,j,k)+(xi1(i)-x1(i  ))* dspc(2,i,j,k,1)
+!!$      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
+!!$      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
+!!$     end select
+!!$     ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
+!!$     ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+!!$     if( ptl>=maxval(ptot(i-1:i,j,k)).or.ptl<=minval(ptot(i-1:i,j,k)).or.&
+!!$         ptr>=maxval(ptot(i:i+1,j,k)).or.ptr<=minval(ptot(i:i+1,j,k)))then
+!!$      dd (i,j,k,1) = 0d0 ; de (i,j,k,1) = 0d0
+!!$      dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
+!!$      db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
+!!$      dphi(i,j,k,1) = 0d0
+!!$     end if
+!!$    end if
 ! ------------------------------------------------------------------------- !
-
-    uu(1:3) = phi(i-1:i+1,j,k)
-    call minmod(du,uu,dx) ; dphi(i,j,k,1) = du
     
    end do
   end do
  end do
-!$omp end parallel do
+!$omp end do
+end if
+
 
 ! slope2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-if(je/=1)then
-!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
+if(je/=js)then
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
 !$omp Xl,Xr,Yl,Yr,Tini)
  do k = ks,ke
   do j = js-1,je+1
-   do i = is, ie
+   do i = is,ie
     dx(1:2) = idx2(j:j+1)
     x(1:3) = x2(j-1:j+1) ; xi(1:2) = xi2(j-1:j)
 
@@ -198,84 +204,84 @@ if(je/=1)then
      uu(1:3) = b3(i,j-1:j+1,k)
      call minmod(du,uu,dx) ; db3(i,j,k,2) = du
      b3l = uu(2) - (x2(j)-xi2(j-1))*du ; b3r = uu(2) + (xi2(j)-x2(j))*du
-
-     uu(1:3) = phi(i,j-1:j+1,k)
-     call minmod(du,uu,dx) ; dphi(i,j,k,2) = du
+    else
+     b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
     end if
     
 ! check stability at cell boundary ---------------------------------------- !
-    ! first calculate mean molecular weight at boundaries
-    select case (compswitch)
-    case(0) ! uniform composition
-     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,2) = 0d0
-    case(1:2) ! nonuniform composition
-     uu(1:3) = 1d0/imu(i,j-1:j+1,k)
-     call minmod(du,uu,dx) ; dmu(i,j,k,2) = du
-     imul = uu(2) - (x2(j)-xi2(j-1))*du ; imur = uu(2) + (xi2(j)-x2(j))*du
-     imul = 1d0/imul ; imur = 1d0/imur
-     if(compswitch==2)then
-      do n = 1, spn
-       uu(1:3) = spc(n,i,j-1:j+1,k)
-       call minmod(du,uu,dx) ; dspc(n,i,j,k,2) = du
-      end do
-     end if
-    case default
-     print *, "Error in compswitch",compswitch
-     stop
-    end select
-    ! then calculate the energies at boundaries
-    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
-    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
-    if(mag_on)then
-     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
-     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
-    end if
-    if( eintl>=maxval(eint(i,j-1:j,k)).or.eintl<=minval(eint(i,j-1:j,k)).or.&
-        eintr>=maxval(eint(i,j:j+1,k)).or.eintr<=minval(eint(i,j:j+1,k)))then
-     dd (i,j,k,2) = 0d0 ; de (i,j,k,2) = 0d0
-     dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
-     db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
-     dphi(i,j,k,2) = 0d0
-    else
-     Tini = T(i,j,k)
-     select case (eostype)
-     case(0:1) ! without recombination
-      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
-     case(2) ! with recombination
-      Xl = spc(1,i,j,k)-(x2(j)-xi2(j-1))* dspc(1,i,j,k,2)
-      Yl = spc(2,i,j,k)-(x2(j)-xi2(j-1))* dspc(2,i,j,k,2)
-      Xr = spc(1,i,j,k)+(xi2(j)-x2(j  ))* dspc(1,i,j,k,2)
-      Yr = spc(2,i,j,k)+(xi2(j)-x2(j  ))* dspc(2,i,j,k,2)
-      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
-      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
-     end select
-     if( ptl>=maxval(ptot(i,j-1:j,k)).or.ptl<=minval(ptot(i,j-1:j,k)).or.&
-         ptr>=maxval(ptot(i,j:j+1,k)).or.ptr<=minval(ptot(i,j:j+1,k)))then
-      dd (i,j,k,2) = 0d0 ; de (i,j,k,2) = 0d0
-      dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
-      db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
-      dphi(i,j,k,2) = 0d0
-     end if
-    end if
+!!$    ! first calculate mean molecular weight at boundaries
+!!$    select case (compswitch)
+!!$    case(0) ! uniform composition
+!!$     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,2) = 0d0
+!!$    case(1:2) ! nonuniform composition
+!!$     uu(1:3) = 1d0/imu(i,j-1:j+1,k)
+!!$     call minmod(du,uu,dx) ; dmu(i,j,k,2) = du
+!!$     imul = uu(2) - (x2(j)-xi2(j-1))*du ; imur = uu(2) + (xi2(j)-x2(j))*du
+!!$     imul = 1d0/imul ; imur = 1d0/imur
+!!$     if(compswitch==2)then
+!!$      do n = 1, spn
+!!$       uu(1:3) = spc(n,i,j-1:j+1,k)
+!!$       call minmod(du,uu,dx) ; dspc(n,i,j,k,2) = du
+!!$      end do
+!!$     end if
+!!$    case default
+!!$     print *, "Error in compswitch",compswitch
+!!$     stop
+!!$    end select
+!!$    ! then calculate the energies at boundaries
+!!$    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
+!!$    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
+!!$    if(mag_on)then
+!!$     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
+!!$     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
+!!$    end if
+!!$    if( eintl>=maxval(eint(i,j-1:j,k)).or.eintl<=minval(eint(i,j-1:j,k)).or.&
+!!$        eintr>=maxval(eint(i,j:j+1,k)).or.eintr<=minval(eint(i,j:j+1,k)))then
+!!$     dd (i,j,k,2) = 0d0 ; de (i,j,k,2) = 0d0
+!!$     dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
+!!$     db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
+!!$     dphi(i,j,k,2) = 0d0
+!!$    else
+!!$     Tini = T(i,j,k)
+!!$     select case (eostype)
+!!$     case(0:1) ! without recombination
+!!$      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
+!!$     case(2) ! with recombination
+!!$      Xl = spc(1,i,j,k)-(x2(j)-xi2(j-1))* dspc(1,i,j,k,2)
+!!$      Yl = spc(2,i,j,k)-(x2(j)-xi2(j-1))* dspc(2,i,j,k,2)
+!!$      Xr = spc(1,i,j,k)+(xi2(j)-x2(j  ))* dspc(1,i,j,k,2)
+!!$      Yr = spc(2,i,j,k)+(xi2(j)-x2(j  ))* dspc(2,i,j,k,2)
+!!$      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
+!!$      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
+!!$     end select
+!!$     ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
+!!$     ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+!!$     if( ptl>=maxval(ptot(i,j-1:j,k)).or.ptl<=minval(ptot(i,j-1:j,k)).or.&
+!!$         ptr>=maxval(ptot(i,j:j+1,k)).or.ptr<=minval(ptot(i,j:j+1,k)))then
+!!$      dd (i,j,k,2) = 0d0 ; de (i,j,k,2) = 0d0
+!!$      dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
+!!$      db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
+!!$      dphi(i,j,k,2) = 0d0
+!!$     end if
+!!$    end if
 ! -------------------------------------------------------------------------- !
-
-    uu(1:3) = phi(i,j-1:j+1,k)
-    call minmod(du,uu,dx) ; dphi(i,j,k,2) = du
     
    end do
   end do
  end do
-!$omp end parallel do
+!$omp end do
 end if
+
+
 ! slope3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-if(ke/=1)then
-!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
+if(ke/=ks)then
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
 !$omp Xl,Xr,Yl,Yr,Tini)
 
  do k = ks-1,ke+1
   do j = js,je
-   do i = is, ie
+   do i = is,ie
     dx(1:2) = idx3(k:k+1)
     x(1:3) = x3(k-1:k+1) ; xi(1:2) = xi3(k-1:k)
 
@@ -316,75 +322,74 @@ if(ke/=1)then
      uu(1:3) = b3(i,j,k-1:k+1)
      call minmod(du,uu,dx) ; db3(i,j,k,3) = du
      b3l = uu(2) - (x3(k)-xi3(k-1))*du ; b3r = uu(2) + (xi3(k)-x3(k))*du
-
-     uu(1:3) = phi(i,j,k-1:k+1)
-     call minmod(du,uu,dx) ; dphi(i,j,k,3) = du
+    else
+     b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
     end if
 
 ! check stability at cell boundary ---------------------------------------- !
     ! first calculate mean molecular weight at boundaries
-    select case (compswitch)
-    case(0) ! uniform composition
-     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,3) = 0d0
-    case(1:2) ! nonuniform composition
-     uu(1:3) = 1d0/imu(i,j,k-1:k+1)
-     call minmod(du,uu,dx) ; dmu(i,j,k,3) = du
-     imul = uu(2) - (x3(k)-xi3(k-1))*du ; imur = uu(2) + (xi3(k)-x3(k))*du
-     imul = 1d0/imul ; imur = 1d0/imur
-     if(compswitch==2)then
-      do n = 1, spn
-       uu(1:3) = spc(n,i,j,k-1:k+1)
-       call minmod(du,uu,dx) ; dspc(n,i,j,k,3) = du
-      end do
-     end if
-    case default
-     print *, "Error in compswitch",compswitch
-     stop
-    end select
-    ! then calculate the condition at boundaries
-    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
-    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
-    if(mag_on)then
-     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
-     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
-    end if
-    if( eintl>=maxval(eint(i,j,k-1:k)).or.eintl<=minval(eint(i,j,k-1:k)).or.&
-        eintr>=maxval(eint(i,j,k:k+1)).or.eintr<=minval(eint(i,j,k:k+1)))then
-     dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
-     dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
-     db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
-     dphi(i,j,k,3) = 0d0
-    else
-     Tini = T(i,j,k)
-     select case (eostype)
-     case(0:1) ! without recombination
-      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
-     case(2) ! with recombination
-      Xl = spc(1,i,j,k)-(x3(k)-xi3(k-1))* dspc(1,i,j,k,3)
-      Yl = spc(2,i,j,k)-(x3(k)-xi3(k-1))* dspc(2,i,j,k,3)
-      Xr = spc(1,i,j,k)+(xi3(k)-x3(k  ))* dspc(1,i,j,k,3)
-      Yr = spc(2,i,j,k)+(xi3(k)-x3(k  ))* dspc(2,i,j,k,3)
-      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
-      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
-     end select
-     if( ptl>=maxval(ptot(i,j,k-1:k)).or.ptl<=minval(ptot(i,j,k-1:k)).or.&
-         ptr>=maxval(ptot(i,j,k:k+1)).or.ptr<=minval(ptot(i,j,k:k+1)))then
-      dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
-      dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
-      db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
-      dphi(i,j,k,3) = 0d0
-     end if
-    end if
+!!$    select case (compswitch)
+!!$    case(0) ! uniform composition
+!!$     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,3) = 0d0
+!!$    case(1:2) ! nonuniform composition
+!!$     uu(1:3) = 1d0/imu(i,j,k-1:k+1)
+!!$     call minmod(du,uu,dx) ; dmu(i,j,k,3) = du
+!!$     imul = uu(2) - (x3(k)-xi3(k-1))*du ; imur = uu(2) + (xi3(k)-x3(k))*du
+!!$     imul = 1d0/imul ; imur = 1d0/imur
+!!$     if(compswitch==2)then
+!!$      do n = 1, spn
+!!$       uu(1:3) = spc(n,i,j,k-1:k+1)
+!!$       call minmod(du,uu,dx) ; dspc(n,i,j,k,3) = du
+!!$      end do
+!!$     end if
+!!$    case default
+!!$     print *, "Error in compswitch",compswitch
+!!$     stop
+!!$    end select
+!!$    ! then calculate the condition at boundaries
+!!$    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
+!!$    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
+!!$    if(mag_on)then
+!!$     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
+!!$     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
+!!$    end if
+!!$    if( eintl>=maxval(eint(i,j,k-1:k)).or.eintl<=minval(eint(i,j,k-1:k)).or.&
+!!$        eintr>=maxval(eint(i,j,k:k+1)).or.eintr<=minval(eint(i,j,k:k+1)))then
+!!$     dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
+!!$     dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
+!!$     db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
+!!$     dphi(i,j,k,3) = 0d0
+!!$    else
+!!$     Tini = T(i,j,k)
+!!$     select case (eostype)
+!!$     case(0:1) ! without recombination
+!!$      ptl = eos_p(dl,eintl,Tini,imul) ; ptr = eos_p(dr,eintr,Tini,imur)
+!!$     case(2) ! with recombination
+!!$      Xl = spc(1,i,j,k)-(x3(k)-xi3(k-1))* dspc(1,i,j,k,3)
+!!$      Yl = spc(2,i,j,k)-(x3(k)-xi3(k-1))* dspc(2,i,j,k,3)
+!!$      Xr = spc(1,i,j,k)+(xi3(k)-x3(k  ))* dspc(1,i,j,k,3)
+!!$      Yr = spc(2,i,j,k)+(xi3(k)-x3(k  ))* dspc(2,i,j,k,3)
+!!$      ptl = eos_p(dl,eintl,Tini,imul,Xl,Yl)
+!!$      ptr = eos_p(dr,eintr,Tini,imur,Xr,Yr)
+!!$     end select
+!!$     ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
+!!$     ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+!!$     if( ptl>=maxval(ptot(i,j,k-1:k)).or.ptl<=minval(ptot(i,j,k-1:k)).or.&
+!!$         ptr>=maxval(ptot(i,j,k:k+1)).or.ptr<=minval(ptot(i,j,k:k+1)))then
+!!$      dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
+!!$      dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
+!!$      db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
+!!$      dphi(i,j,k,3) = 0d0
+!!$     end if
+!!$    end if
 ! -------------------------------------------------------------------------- !
-
-    uu(1:3) = phi(i,j,k-1:k+1)
-    call minmod(du,uu,dx) ; dphi(i,j,k,3) = du
 
    end do
   end do
  end do
-!$omp end parallel do
+!$omp end do
 end if
+!$omp end parallel
 
 return
 end subroutine interpolation

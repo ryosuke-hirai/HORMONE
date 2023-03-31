@@ -30,7 +30,7 @@ subroutine allocations
   d (-1:in,-1:jn,-1:kn), p (-1:in,-1:jn,-1:kn), e (-1:in,-1:jn,-1:kn), &
   v1(-1:in,-1:jn,-1:kn), v2(-1:in,-1:jn,-1:kn), v3(-1:in,-1:jn,-1:kn), &
   b1(-1:in,-1:jn,-1:kn), b2(-1:in,-1:jn,-1:kn), b3(-1:in,-1:jn,-1:kn), &
-  ptot(-1:in,-1:jn,-1:kn), cf(-1:in,-1:jn,-1:kn), phi(-1:in,-1:jn,-1:kn), &
+  ptot(-1:in,-1:jn,-1:kn), cs(-1:in,-1:jn,-1:kn), phi(-1:in,-1:jn,-1:kn), &
   T(-1:in,-1:jn,-1:kn), eint(-1:in,-1:jn,-1:kn), imu (-1:in,-1:jn,-1:kn), &
   shock(-1:in,-1:jn,-1:kn),&
   
@@ -38,7 +38,11 @@ subroutine allocations
   dm1(-1:in,-1:jn,-1:kn,1:3), dm2(-1:in,-1:jn,-1:kn,1:3), dm3(-1:in,-1:jn,-1:kn,1:3),&
   db1(-1:in,-1:jn,-1:kn,1:3), db2(-1:in,-1:jn,-1:kn,1:3), db3(-1:in,-1:jn,-1:kn,1:3),&
   dmu(-1:in,-1:jn,-1:kn,1:3), &
-
+! temporary
+  dw1(-1:in,-1:jn,-1:kn,1:3), dw2(-1:in,-1:jn,-1:kn,1:3), dw3(-1:in,-1:jn,-1:kn,1:3),&
+  dw4(-1:in,-1:jn,-1:kn,1:3), dw5(-1:in,-1:jn,-1:kn,1:3), dw6(-1:in,-1:jn,-1:kn,1:3),&
+  dw7(-1:in,-1:jn,-1:kn,1:3), dp(-1:in,-1:jn,-1:kn,1:3),&
+! end temporary
   u(-1:in,-1:jn,-1:kn,1:9), uorg(is:ie,js:je,ks:ke,1:9), &
   flux1(-1:in,-1:jn,-1:kn,1:9), &
   flux2(-1:in,-1:jn,-1:kn,1:9), &
@@ -49,7 +53,8 @@ subroutine allocations
   detg1(-1:in), idetg1(-1:in), sx1(-1:in), g22(-1:in), &
   scot(-1:jn), sisin(-1:jn), &
   detg2(-1:in,-1:jn), idetg2(-1:in,-1:jn), g33(-1:in,-1:jn), &
-  idetg3(-1:in,-1:jn,-1:kn), dvol(-1:in,-1:jn,-1:kn) &
+  idetg3(-1:in,-1:jn,-1:kn), dvol(-1:in,-1:jn,-1:kn), &
+  sa1(-1:in,-1:jn,-1:kn), sa2(-1:in,-1:jn,-1:kn), sa3(-1:in,-1:jn,-1:kn)  &
  )
 
 ! allocate gravity related quantities if gravswitch>=1
@@ -100,7 +105,7 @@ subroutine allocations
  
  d = 1d0  ! set for numerical reasons
  T = 1d3  ! initial guess for temperature
- cf = 1d0
+ cs = 1d0
  b1 = 0d0; b2 = 0d0; b3 = 0d0
  
  return

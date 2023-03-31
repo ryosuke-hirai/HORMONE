@@ -76,12 +76,11 @@ subroutine shockfind
 contains
  
  real*8 function Mach(ii,jj,kk)
-  implicit none
   integer,intent(in):: ii,jj,kk
   Mach = sqrt( v1(ii,jj,kk)*v1(ii,jj,kk)   &
               +v2(ii,jj,kk)*v2(ii,jj,kk)   &
               +v3(ii,jj,kk)*v3(ii,jj,kk) ) &
-       / cf(ii,jj,kk)
+       / cs(ii,jj,kk)
  end function Mach
  
 end subroutine shockfind

@@ -89,54 +89,6 @@ subroutine tools
   end do
  end if
 
-! set ejecta %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-!!$ ejtbinfile = 'ejtbin17_5.0B_dis1.62E+15cm.dat'
-!!$ sep = 4000d0*rsun
-!!$
-!!$ open(unit=90, file=ejtbinfile, status='old',form='unformatted')
-!!$ count = -2
-!!$ do
-!!$  read(90,end=311)
-!!$  count = count+1
-!!$ end do
-!!$311 close(90)!counting lines of ejtfile
-!!$
-!!$ ejdatnum = count
-!!$ allocate( t_ej(count),d_ej(count),p_ej(count),e_ej(count), &
-!!$           v_ej(count),m_ej(count) )
-!!$
-!!$ open(unit=90, file=ejtbinfile, status='old',form='unformatted')
-!!$
-!!$ read(90)psmass
-!!$ read(90)ejectadistance
-!!$
-!!$ do i = 1, count
-!!$  read(90)t_ej(i), d_ej(i), p_ej(i), e_ej(i), v_ej(i), m_ej(i)
-!!$  if(tstart==0.d0.and.v_ej(i)>=1.d4)then
-!!$  !if(tstart==0d0.and.d_ej(i)>6d-16)then
-!!$   tstart  = t_ej(i)
-!!$   tstartn = i
-!!$  end if
-!!$  if(p_ej(i)>pmax) pmax = p_ej(i)
-!!$ end do
-!!$ close(90) !reading ejecta data
-!!$
-!!$ allocate( nsdis(is-2:ie+2,js-2:je+2,ks-2:ke+2), &
-!!$           nsdfr(is-2:ie+2,js-2:je+2,ks-2:ke+2), &
-!!$           nssin(is-2:ie+2,js-2:je+2,ks-2:ke+2), &
-!!$           nscos(is-2:ie+2,js-2:je+2,ks-2:ke+2) )
-!!$
-!!$ j = js
-!!$ do k = ks-2,ke+2
-!!$  do i = is-2,ie+2
-!!$   nsdis(i,j,k) = sqrt(x1(i)*x1(i)+(sep-x3(k))**2d0)
-!!$   nsdfr(i,j,k) = ejectadistance / nsdis(i,j,k)
-!!$   nscos(i,j,k) = (sep-x3(k)) / nsdis(i,j,k)
-!!$   nssin(i,j,k) = x1(i) / nsdis(i,j,k)
-!!$  end do
-!!$ end do
-
 ! reading composition data from datafile ! --------------------------------
 !!$ open(unit=40,file='17lateRSG.data',status='old')
 !!$ read(40,'()')

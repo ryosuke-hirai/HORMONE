@@ -24,6 +24,7 @@ module settings
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: write_other_vel, write_shock, grav_init_other
  character*30:: flux_limiter, simtype
+ character*50:: parafile
 
 end module settings
 
@@ -46,9 +47,12 @@ module grid
   real*8,allocatable,dimension(:):: x2, xi2, dx2, dxi2, idx2, idxi2
   real*8,allocatable,dimension(:):: x3, xi3, dx3, dxi3, idx3, idxi3
   real*8:: time, dt, t_out
-  real*8:: xi1s, xi1e, xi2s, xi2e, xi3s, xi3e
+  real*8:: xi1s, xi1e, xi2s, xi2e, xi3s, xi3e, x1min, x2min, x3min
   real*8,allocatable,dimension(:):: sinc, sini, cosc, cosi
-  real*8,allocatable,dimension(:,:,:):: dvol
+  real*8,allocatable,dimension(:,:,:):: dvol, idetg3
+  real*8,allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
+  real*8,allocatable,dimension(:,:):: detg2, idetg2, g33
+  real*8,allocatable,dimension(:,:,:):: sa1, sa2, sa3
 
 end module grid
 
@@ -82,9 +86,12 @@ module physval
 
   real*8,allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3, ptot
   real*8,allocatable,dimension(:,:,:):: T, eint, imu
-  real*8,allocatable,dimension(:,:,:,:):: dd, de, dm1, dm2, dm3 
+  real*8,allocatable,dimension(:,:,:,:):: dd, de, dm1, dm2, dm3
   real*8,allocatable,dimension(:,:,:,:):: db1, db2, db3, dphi, dmu
-  real*8,allocatable,dimension(:,:,:):: cf, phi, grv1, grv2, grv3
+  ! temporary
+  real*8,allocatable,dimension(:,:,:,:):: dw1,dw2,dw3,dw4,dw5,dw6,dw7,dp
+  ! end temporary
+  real*8,allocatable,dimension(:,:,:):: cs, phi, grv1, grv2, grv3
   real*8,allocatable,dimension(:,:,:,:):: u, flux1, flux2, flux3, uorg, src
   real*8,allocatable,dimension(:,:):: mudata
   real*8,allocatable,dimension(:,:,:,:):: spc, spcorg
@@ -92,10 +99,6 @@ module physval
   character(len=10),allocatable:: species(:)
 
   real*8:: gamma, muconst, ch
-
-  real*8,allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
-  real*8,allocatable,dimension(:,:):: detg2, idetg2, g33
-  real*8,allocatable,dimension(:,:,:):: idetg3
 
   integer,allocatable,dimension(:,:,:):: shock
 

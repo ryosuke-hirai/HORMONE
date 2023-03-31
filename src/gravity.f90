@@ -16,8 +16,8 @@ subroutine gravity
 
   implicit none
 
-  integer l, flgcg
-  real*8 rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
+  integer:: l, flgcg
+  real*8:: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
   real*8,dimension(1:lmax):: gsrc, pp, absrob
   real*8,allocatable,dimension(:,:,:):: newphi
   real*8,allocatable,dimension(:):: intphi
@@ -190,8 +190,8 @@ if(gravswitch==3.and.tn/=0)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates %%%%%%%%%%
   allocate( newphi(gis:gie,js:je,gks:gke), intphi(1:4) )
 
-  cgrav2 = HGfac*max(maxval(cf(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
-                     maxval(cf(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
+  cgrav2 = HGfac*max(maxval(cs(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
+                     maxval(cs(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
   dtgrav = min(minval(dxi1(gis:gie)),minval(dxi3(gks:gke)))/cgrav2
   dtgrav = dtgrav*hgcfl
   cgrav2 = cgrav2**2
@@ -273,8 +273,8 @@ if(gravswitch==3.and.tn/=0)then
 ! Axisymmetric spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   allocate( newphi(gis:gie,gjs:gje,gks:gke) )
 
-  cgrav2 = HGfac*max(maxval(cf(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
-                     maxval(cf(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))) )
+  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
+                     maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))) )
 
   dtgrav = min(minval(dxi1(gis:gie)),x1(is)*minval(dxi2(gjs:gje)))/cgrav2
   dtgrav = dtgrav*hgcfl
@@ -340,9 +340,9 @@ if(gravswitch==3.and.tn/=0)then
 ! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   allocate( newphi(gis:gie,gjs:gje,gks:gke) )
 
-  cgrav2 = HGfac*max(maxval(cf(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
-                     maxval(cf(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))), &
-                     maxval(cf(is:ie,js:je,ks)+abs(v3(is:ie,js:je,ks))) )
+  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
+                     maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))), &
+                     maxval(cs(is:ie,js:je,ks)+abs(v3(is:ie,js:je,ks))) )
 
   dtgrav = min(minval(dxi1(gis:gie)),g22(is)*minval(dxi2(gjs:gje)), &
                minval(g33(is:ie,js:je)*dxi3(gks)))/cgrav2
