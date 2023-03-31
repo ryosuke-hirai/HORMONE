@@ -18,7 +18,7 @@ subroutine eostest
 
  real*8:: d, p, e, T, imu
  real*8:: X, Y, Z, Xi, Xf, p2, T2, Ti, Tf
- real*8:: Qi, Qf, Q, erec, imu2, imu3, T0, cf
+ real*8:: Qi, Qf, Q, erec, imu2, imu3, T0, cs
  real*8:: T3, p3, d2, S, T4, imu4
  real*8:: rerrp1,rerrp2,rerrT1,rerrT2,rerrd1
  integer:: iie, jje, kke, ierr, ui
@@ -55,9 +55,9 @@ subroutine eostest
  open(newunit=ui,file='data/eostest_gas.dat',status='replace')
  write(ui,'(2a5,14a23)')&
     'j','k','d','Q','e',&
-    'T_from_eos_e','T_from_eos_p','T_from_eos_p_cf',&
-    'p_for_eos_e','p_from_eos_p','p_from_eos_p_cf',&
-    'rel_error_for_eos_p','rel_error_for_eos_p_cf',&
+    'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
+    'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
+    'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
     'entropy_from_dp','d_from_inventropy'
 
  do k = 0, kke ! loop over T
@@ -74,7 +74,7 @@ subroutine eostest
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
    e = eos_e(d,p,T,imu)
    p2 = eos_p(d,e,T2,imu)
-   call eos_p_cf(d,0d0,0d0,0d0,e,T3,imu,p3,cf,ierr=ierr)
+   call eos_p_cs(d,e,T3,imu,p3,cs,ierr=ierr)
 
    S = entropy_from_dp(d,p,T4,imu)
    d2 = get_d_from_ps(p,S,imu)
@@ -99,7 +99,7 @@ subroutine eostest
  print*,'Relative errors computed from each module is:'
  form1='(a,1PE10.3e2,2X,a,1PE10.3e2)'
  print form1,'eos_p    : temperature =',rerrT1,'pressure =',rerrp1
- print form1,'eos_p_cf : temperature =',rerrT2,'pressure =',rerrp2
+ print form1,'eos_p_cs : temperature =',rerrT2,'pressure =',rerrp2
  print form1,'get_d_from_ps: density =',rerrd1
  print*,'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
  print*,''
@@ -113,9 +113,9 @@ subroutine eostest
  open(newunit=ui,file='data/eostest_gasrad.dat',status='replace')
  write(ui,'(2a5,14a23)')&
     'j','k','d','Q','e',&
-    'T_from_eos_e','T_from_eos_p','T_from_eos_p_cf',&
-    'p_for_eos_e','p_from_eos_p','p_from_eos_p_cf',&
-    'rel_error_for_eos_p','rel_error_for_eos_p_cf',&
+    'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
+    'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
+    'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
     'entropy_from_dp','d_from_inventropy'
 
  do k = 0, kke ! loop over T
@@ -132,7 +132,7 @@ subroutine eostest
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
    e = eos_e(d,p,T,imu)
    p2 = eos_p(d,e,T2,imu)
-   call eos_p_cf(d,0d0,0d0,0d0,e,T3,imu,p3,cf,ierr=ierr)
+   call eos_p_cs(d,e,T3,imu,p3,cs,ierr=ierr)
 
    S = entropy_from_dp(d,p,T4,imu)
    d2 = get_d_from_ps(p,S,imu)
@@ -157,7 +157,7 @@ subroutine eostest
  print*,'Relative errors computed from each module is:'
  form1='(a,1PE10.3e2,2X,a,1PE10.3e2)'
  print form1,'eos_p    : temperature =',rerrT1,'pressure =',rerrp1
- print form1,'eos_p_cf : temperature =',rerrT2,'pressure =',rerrp2
+ print form1,'eos_p_cs : temperature =',rerrT2,'pressure =',rerrp2
  print form1,'get_d_from_ps: density =',rerrd1
  print*,'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
  print*,''
@@ -171,10 +171,10 @@ subroutine eostest
  open(newunit=ui,file='data/eostest_gasradrec.dat',status='replace')
  write(ui,'(2a5,18a23)')&
     'j','k','d','Q','e','X',&
-    'mu_from_eos_e','mu_from_eos_p','mu_from_eos_p_cf',&
-    'T_from_eos_e','T_from_eos_p','T_from_eos_p_cf',&
-    'p_for_eos_e','p_from_eos_p','p_from_eos_p_cf',&
-    'rel_error_for_eos_p','rel_error_for_eos_p_cf',&
+    'mu_from_eos_e','mu_from_eos_p','mu_from_eos_p_cs',&
+    'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
+    'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
+    'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
     'entropy_from_dp','d_from_inventropy'
 
  do k = 0, kke ! loop over T
@@ -192,7 +192,7 @@ subroutine eostest
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
    e = eos_e(d,p,T,imu,X,Y)
    p2 = eos_p(d,e,T2,imu2,X,Y)
-   call eos_p_cf(d,0d0,0d0,0d0,e,T3,imu3,p3,cf,X,Y,ierr)
+   call eos_p_cs(d,e,T3,imu3,p3,cs,X,Y,ierr)
 
 ! Currently not ready for entropy calculations
 !   S = entropy_from_dp(d,p,T4,imu4,X,Y)
@@ -218,7 +218,7 @@ subroutine eostest
 
  print*,'Relative errors computed from each module is:'
  print form1,'eos_p    : temperature =',rerrT1,'pressure =',rerrp1
- print form1,'eos_p_cf : temperature =',rerrT2,'pressure =',rerrp2
+ print form1,'eos_p_cs : temperature =',rerrT2,'pressure =',rerrp2
 ! print form1,'get_d_from_ps: density =',rerrd1
  print*,'Entropy calculations for eostype=2 currently under construction'
 
