@@ -23,7 +23,7 @@ subroutine sedov(damb,Eexp)
  i_inj = 10
  ein = Eexp/sum(dvol(is:i_inj,js:je,ks:ke))
  Tin = 1d3
- imu = 1d0/muconst
+ imuconst = 1d0/muconst
  pin = eos_p(damb,ein,Tin,imuconst)
  pamb = 1d-3*Eexp/sum(dvol(is:ie,js:je,ks:ke)) ! Low energy
 
