@@ -72,15 +72,16 @@ program hormone
 
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
 
-  if(write_evo)then
-   call open_evofile
-   call evo_output
-  end if
-  
   if(tn==0)then
    call gravity
    call output
   end if
+
+  if(write_evo)then
+   call open_evofile
+   call evo_output
+  end if
+
 
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
