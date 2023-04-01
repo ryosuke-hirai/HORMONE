@@ -73,7 +73,7 @@ end subroutine replace_core
 
 subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
 
- use settings,only:spn,compswitch
+ use settings,only:spn,compswitch,eq_sym
  use constants,only:G,pi
  use grid
  use physval
@@ -86,7 +86,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  real*8,allocatable,dimension(:)::gpot
  integer lines,nn,sn
  real*8:: Eexp,PNSmass, mass, radius
- real*8:: mnow,rnow
+ real*8:: mnow,rnow,volfac
 !-----------------------------------------------------------------------------
 
  lines = size(r)-1
@@ -119,10 +119,16 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   end do
  end do
 
+ if(eq_sym)then
+  volfac=2d0
+ else
+  volfac=1d0
+ end if
+ 
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    d(i,j,k) = (mc(i)-mc(i-1))/sum(dvol(i,js:je,ks:ke))
+    d(i,j,k) = (mc(i)-mc(i-1))/(volfac*sum(dvol(i,js:je,ks:ke)))
     if(x1(i)<r(1))then
      p(i,j,k) = pres(1)
      if(compswitch==2)spc(1:spn,i,j,k) = comp(1:spn,1)
