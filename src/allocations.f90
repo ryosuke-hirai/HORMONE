@@ -38,11 +38,7 @@ subroutine allocations
   dm1(-1:in,-1:jn,-1:kn,1:3), dm2(-1:in,-1:jn,-1:kn,1:3), dm3(-1:in,-1:jn,-1:kn,1:3),&
   db1(-1:in,-1:jn,-1:kn,1:3), db2(-1:in,-1:jn,-1:kn,1:3), db3(-1:in,-1:jn,-1:kn,1:3),&
   dmu(-1:in,-1:jn,-1:kn,1:3), &
-! temporary
-  dw1(-1:in,-1:jn,-1:kn,1:3), dw2(-1:in,-1:jn,-1:kn,1:3), dw3(-1:in,-1:jn,-1:kn,1:3),&
-  dw4(-1:in,-1:jn,-1:kn,1:3), dw5(-1:in,-1:jn,-1:kn,1:3), dw6(-1:in,-1:jn,-1:kn,1:3),&
-  dw7(-1:in,-1:jn,-1:kn,1:3), dp(-1:in,-1:jn,-1:kn,1:3),&
-! end temporary
+
   u(-1:in,-1:jn,-1:kn,1:9), uorg(is:ie,js:je,ks:ke,1:9), &
   flux1(-1:in,-1:jn,-1:kn,1:9), &
   flux2(-1:in,-1:jn,-1:kn,1:9), &
