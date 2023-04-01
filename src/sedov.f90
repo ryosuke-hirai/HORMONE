@@ -36,3 +36,4 @@ subroutine sedov(damb,Eexp)
 
 return
 end subroutine sedov
+s
