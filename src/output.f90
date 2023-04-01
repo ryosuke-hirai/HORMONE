@@ -241,7 +241,8 @@ subroutine evo_output
  if(gravswitch>=1)then
   if(include_extgrv)then
    Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke) &
-                    *(grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)))
+                    *(grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
+                    *dvol(is:ie,js:je,ks:ke))
   else
    Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke)*grvphi(is:ie,js:je,ks:ke))
   end if
@@ -675,7 +676,6 @@ subroutine write_extgrv
 
 !-----------------------------------------------------------------------------
 
- extgrv = 0d0
  open(newunit=ui,file='data/extgrv.bin',status='replace',form='unformatted')
  write(ui)mc(is-1)
  write(ui)extgrv(gis-2:gie+2,gjs:gje,gks-2:gke+2)
