@@ -257,4 +257,29 @@ subroutine gravpot1d
  return
 end subroutine gravpot1d
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                        SUBROUTINE MASSCOORDINATE
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To get mass coordinates
+
+subroutine masscoordinate
+
+ use grid,only:is,ie,js,je,ks,ke,dvol
+ use physval,only:d
+ use gravmod,only:mc
+
+ implicit none
+
+ integer:: i
+
+!-----------------------------------------------------------------------------
+
+ do i = is, ie
+  mc(i) = mc(i-1) + sum( d(i,js:je,ks:ke) * dvol(i,js:je,ks:ke) )
+ end do
+
+return
+end subroutine masscoordinate
+
 end module utils

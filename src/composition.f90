@@ -19,6 +19,7 @@ subroutine meanmolweight
  use grid
  use physval
  use gravmod,only:mc
+ use utils,only:masscoordinate
 
  implicit none
 
@@ -29,10 +30,8 @@ subroutine meanmolweight
   return
 
  case(1) composition_type ! for fixed mu distribution
-  k = ks
-  do i = is, ie
-   mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )
-  end do
+
+  call masscoordinate
 
   do i = is, ie
    if(mc(i)<mudata(1,0))then
