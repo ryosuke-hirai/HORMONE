@@ -186,6 +186,7 @@ subroutine open_evofile
  if(tn==0)then
   open(newunit=ievo,file='data/evo.dat',status='replace')
   write(ievo,'(a10)',advance='no')'tn'
+  write(ievo,forma,advance="no")'time'
   write(ievo,forma,advance="no")'tot_mass'
   write(ievo,forma,advance="no")'tot_e'
   write(ievo,forma,advance="no")'tot_eint'
@@ -270,6 +271,7 @@ subroutine evo_output
 
  write(ievo,'(i10)',advance='no')tn
  call write_anyval(ievo,forme,time)
+ call write_anyval(ievo,forme,Mtot)
  call write_anyval(ievo,forme,Etot)
  call write_anyval(ievo,forme,Eitot)
  call write_anyval(ievo,forme,Ektot)
