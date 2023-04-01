@@ -88,9 +88,6 @@ module physval
   real*8,allocatable,dimension(:,:,:):: T, eint, imu
   real*8,allocatable,dimension(:,:,:,:):: dd, de, dm1, dm2, dm3
   real*8,allocatable,dimension(:,:,:,:):: db1, db2, db3, dphi, dmu
-  ! temporary
-  real*8,allocatable,dimension(:,:,:,:):: dw1,dw2,dw3,dw4,dw5,dw6,dw7,dp
-  ! end temporary
   real*8,allocatable,dimension(:,:,:):: cs, phi, grv1, grv2, grv3
   real*8,allocatable,dimension(:,:,:,:):: u, flux1, flux2, flux3, uorg, src
   real*8,allocatable,dimension(:,:):: mudata

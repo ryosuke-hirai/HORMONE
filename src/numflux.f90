@@ -19,7 +19,7 @@ subroutine numflux
 
   real*8:: cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
-           v2l, v2r, v3l, v3r, eil, eir, csl, csr, pl, pr, fix
+           v2l, v2r, v3l, v3r, eil, eir, csl, csr, fix
   real*8,dimension(1:9)::tmpflux
   real*8,dimension(1:2):: dx
   real*8,dimension(1:spn):: spcl,spcr
@@ -34,10 +34,9 @@ subroutine numflux
   call interpolation
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!$omp parallel
   if(ie/=1)then
-!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,pl,pr,&
+!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
   do k = ks,ke
    do j = js,je
@@ -85,24 +84,24 @@ subroutine numflux
       imul = 1d0/imu(i  ,j,k) + dx(1) * dmu(i  ,j,k,1)
       imur = 1d0/imu(i+1,j,k) - dx(2) * dmu(i+1,j,k,1)
       imul = 1d0/imul ; imur = 1d0/imur
-      call eos_p_cs(dl,eil,Tl,imul,pl,csl,ierr=ierr)
-      call eos_p_cs(dr,eir,Tr,imur,pr,csr,ierr=ierr)
+      call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
+      call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
       if(ierr>0)call error_flux(i,j,k,1,ierr)
      case(2) ! with recombination
       spcl(1:2) = spc(1:2,i  ,j,k) + dx(1) * dspc(1:2,i  ,j,k,1)
       spcr(1:2) = spc(1:2,i+1,j,k) - dx(2) * dspc(1:2,i+1,j,k,1)
-      call eos_p_cs(dl,eil,Tl,imul,pl,csl,spcl(1),spcl(2),ierr)
-      call eos_p_cs(dr,eir,Tr,imur,pr,csr,spcr(1),spcr(2),ierr)
+      call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
+      call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
       if(ierr>0)call error_flux(i,j,k,1,ierr)
      end select
-     ptl = pl + 0.5d0*(b1l**2+b2l**2+b3l**2)
-     ptr = pr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+     ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
+     ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
 
      cfl = get_cf(dl,csl,b1l,b2l,b3l)
      cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
      call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-          el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
+                           el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
 
 !!$     if(maxval(shock(i:i+1,j-1:j+1,k-1:k+1))==1)then ! if supersonic
 !!$      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v2l),abs(v2r),abs(v1l),abs(v1r)))then ! and aligned
@@ -177,12 +176,12 @@ subroutine numflux
     end do
    end do
   end do
-!$omp end do
+!$omp end parallel do
  end if
  
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
  if(je/=1)then
-!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
+!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr)
   do k = ks,ke
@@ -329,12 +328,12 @@ subroutine numflux
     end do
    end do
   end do
-!$omp end do
+!$omp end parallel do
  end if
 
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
  if(ke/=1)then
-!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
+!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
   do k = ks-1,ke
@@ -480,9 +479,9 @@ subroutine numflux
    end do
   end do
  end do
-!$omp end do
+!$omp end parallel do
 end if
-!$omp end parallel
+
 
 if(ie==1)flux1=0d0
 if(je==1)flux2=0d0

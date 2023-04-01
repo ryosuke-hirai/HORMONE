@@ -165,7 +165,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
   cs = sqrt(gamma_eff*p/d)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
-  Ttemp = 1d3
+  Ttemp = T
   call getT_from_de(d,eint,Ttemp,imu,X,Y,erec)
   p = eos_p(d,eint,T,imu,X,Y)
   gamma_eff = 1d0+p/(eint-d*erec)
