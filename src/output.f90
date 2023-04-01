@@ -1,7 +1,8 @@
 module output_mod
  implicit none
 
- public:: output,set_file_name
+ integer:: ievo
+ public:: output,set_file_name,write_extgrv,evo_output
  private:: write_grid,write_bin,write_plt,get_header,add_column, &
            write_val
 
@@ -13,7 +14,7 @@ module output_mod
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To output data
+! PURPOSE: To output snapshot sdata
 
 subroutine output
 
@@ -163,6 +164,123 @@ subroutine output
 
 return
 end subroutine output
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE OPEN_EVOFILE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Start or open evofile
+
+subroutine open_evofile
+
+ use settings,only:sigfig,gravswitch,mag_on,crdnt
+ use grid,only:tn,dim
+ 
+ character*50:: forma
+
+!-----------------------------------------------------------------------------
+
+ write(forma,'("(a",i2,")")')sigfig+8 ! for strings
+ if(tn==0)then
+  open(newunit=ievo,file='data/evo.dat',status='replace')
+  write(ievo,'(a10)',advance='no')'tn'
+  write(ievo,forma,advance="no")'tot_mass'
+  write(ievo,forma,advance="no")'tot_e'
+  write(ievo,forma,advance="no")'tot_eint'
+  write(ievo,forma,advance="no")'tot_ekin'
+  if(gravswitch>=1)write(ievo,forma,advance="no")'tot_egrv'
+  if(mag_on)write(ievo,forma,advance="no")'tot_emag'
+  if(dim>=2.and.crdnt>=1)write(ievo,forma,advance="no")'tot_angmom'
+  write(ievo,'()')
+ else
+  open(newunit=ievo,file='data/evo.dat',status='old',position='append')
+ end if
+
+return
+end subroutine open_evofile
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE EVO_OUTPUT
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output quantities as a function of time
+
+subroutine evo_output
+
+ use settings
+ use grid
+ use physval
+ use gravmod
+
+ implicit none
+
+ character*50:: forme
+ real*8:: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot
+
+!-----------------------------------------------------------------------------
+ 
+ write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
+
+ Mtot = sum(d(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
+ Etot = sum(e(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
+ Eitot = sum(eint(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
+ Ektot = 0.5d0*sum(d(is:ie,js:je,ks:ke)&
+                   * ( v1(is:ie,js:je,ks:ke)**2 &
+                     + v2(is:ie,js:je,ks:ke)**2 &
+                     + v3(is:ie,js:je,ks:ke)**2 ) &
+                   * dvol(is:ie,js:je,ks:ke) )
+ if(mag_on)then
+  Ebtot = 0.5d0*sum( ( b1(is:ie,js:je,ks:ke)**2 &
+                     + b2(is:ie,js:je,ks:ke)**2 &
+                     + b3(is:ie,js:je,ks:ke)**2 ) &
+                   * dvol(is:ie,js:je,ks:ke) )
+ end if
+ if(gravswitch>=1)then
+  if(include_extgrv)then
+   Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke) &
+                    *(grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)))
+  else
+   Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke)*grvphi(is:ie,js:je,ks:ke))
+  end if
+ end if
+
+ if(dim>=2.and.crdnt>=1)then
+  Jtot = 0d0
+  select case(crdnt)
+  case(1)
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      Jtot = Jtot + d(i,j,k)*x1(i)*v2(i,j,k)*dvol(i,j,k)
+     end do
+    end do
+   end do
+  case(2)
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      Jtot = Jtot + d(i,j,k)*x1(i)*sinc(j)*v3(i,j,k)*dvol(i,j,k)
+     end do
+    end do
+   end do
+  end select
+ end if
+
+ write(ievo,'(i10)',advance='no')tn
+ call write_anyval(ievo,forme,time)
+ call write_anyval(ievo,forme,Etot)
+ call write_anyval(ievo,forme,Eitot)
+ call write_anyval(ievo,forme,Ektot)
+ if(gravswitch>=1)call write_anyval(ievo,forme,Egtot)
+ if(mag_on)call write_anyval(ievo,forme,Ebtot)
+ if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
+ write(ievo,'()')
+ flush(ievo)
+ 
+return
+end subroutine evo_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE WRITE_GRID
@@ -385,7 +503,6 @@ subroutine write_plt
 
  use settings
  use grid,only:n,i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn,dim
- use physval
  use utils,only:gravpot1d
 
  implicit none
@@ -538,6 +655,32 @@ subroutine write_plt
 
 return
 end subroutine write_plt
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                         SUBROUTINE WRITE_EXTGRV
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To write extgrv file
+
+subroutine write_extgrv
+
+ use grid
+ use gravmod,only:extgrv,mc
+
+ implicit none
+
+ integer:: ui
+
+!-----------------------------------------------------------------------------
+
+ extgrv = 0d0
+ open(newunit=ui,file='data/extgrv.bin',status='replace',form='unformatted')
+ write(ui)mc(is-1)
+ write(ui)extgrv(gis-2:gie+2,gjs:gje,gks-2:gke+2)
+ close(ui)
+
+return
+end subroutine write_extgrv
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                       SUBROUTINE SET_FILE_NAME
@@ -711,40 +854,40 @@ subroutine write_val(unitn,i,j,k,forme,header)
  do n = 1, 50
   select case(header(n))
   case('d')!density
-   write(unitn,forme,advance='no')d(i,j,k)
+   call write_anyval(unitn,forme,d(i,j,k))
   case('e')!internal energy
-   write(unitn,forme,advance='no')eint(i,j,k)
+   call write_anyval(unitn,forme,eint(i,j,k))
   case('p')!pressure
-   write(unitn,forme,advance='no')p(i,j,k)
+   call write_anyval(unitn,forme,p(i,j,k))
   case('v1')!velocity 1
-   write(unitn,forme,advance='no')v1(i,j,k)
+   call write_anyval(unitn,forme,v1(i,j,k))
   case('v2')!velocity 2
-   write(unitn,forme,advance='no')v2(i,j,k)
+   call write_anyval(unitn,forme,v2(i,j,k))
   case('v3')!velocity 3
-   write(unitn,forme,advance='no')v3(i,j,k)
+   call write_anyval(unitn,forme,v3(i,j,k))
   case('b1')!magnetic field 1
-   write(unitn,forme,advance='no')b1(i,j,k)
+   call write_anyval(unitn,forme,b1(i,j,k))
   case('b2')!magnetic field 2
-   write(unitn,forme,advance='no')b2(i,j,k)
+   call write_anyval(unitn,forme,b2(i,j,k))
   case('b3')!magnetic field 3
-   write(unitn,forme,advance='no')b3(i,j,k)
+   call write_anyval(unitn,forme,b3(i,j,k))
   case('T')!temperature
-   write(unitn,forme,advance='no')T(i,j,k)
+   call write_anyval(unitn,forme,T(i,j,k))
   case('phi')!gravitational potential
-   write(unitn,forme,advance='no')grvphi(i,j,k)
+   call write_anyval(unitn,forme,grvphi(i,j,k))
   case('extphi')!external gravitational potential
-   write(unitn,forme,advance='no')extgrv(i,j,k)
+   call write_anyval(unitn,forme,extgrv(i,j,k))
   case('mu')!mean molecular weight
-   write(unitn,forme,advance='no')1d0/imu(i,j,k)
+   call write_anyval(unitn,forme,1d0/imu(i,j,k))
   case('shock')!shock position
-   write(unitn,forme,advance='no')dble(shock(i,j,k))
+   call write_anyval(unitn,forme,dble(shock(i,j,k)))
   case('aaa')!end of line
    write(unitn,'()')
    exit
   case default!chemical composition
    do nn = 1, spn
     if(header(n)==species(nn))then
-     write(unitn,forme,advance='no')spc(nn,i,j,k)
+     call write_anyval(unitn,forme,spc(nn,i,j,k))
     end if
    end do
   end select
@@ -753,6 +896,22 @@ subroutine write_val(unitn,i,j,k,forme,header)
 return
 end subroutine write_val
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE WRITE_ANYVAL
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+! PURPOSE: To write one value
+
+subroutine write_anyval(unitn,forme,val)
+
+ integer,intent(in):: unitn
+ character(*),intent(in):: forme
+ real*8,intent(in):: val
+!-----------------------------------------------------------------------------
+
+ write(unitn,forme,advance='no')val
+
+return
+end subroutine write_anyval
 
 end module output_mod

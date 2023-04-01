@@ -72,6 +72,11 @@ program hormone
 
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
 
+  if(write_evo)then
+   call open_evofile
+   call evo_output
+  end if
+  
   if(tn==0)then
    call gravity
    call output
@@ -115,6 +120,7 @@ program hormone
      print *,'outstyle out of range'     !
      stop                                !
     end if                               !
+    if(write_evo)call evo_output         !
 ! -------------------------------------- !
 
 ! End sequence -------------!

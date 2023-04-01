@@ -14,8 +14,6 @@ contains
 
   use settings,only:start,simtype,parafile
 
-  implicit none
-
 !-----------------------------------------------------------------------------
 
   namelist /startcon/ start, simtype, parafile
@@ -94,8 +92,6 @@ subroutine read_parameters(filename)
  use physval
  use particle_mod,only:maxptc
 
- implicit none
-
  integer:: ui
  character*50,intent(in)::filename
 
@@ -106,7 +102,8 @@ subroutine read_parameters(filename)
                     x1min, x2min, x3min, &
                     sphrn, trnsn1, trnsn2, trnsn3
  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
-                    dt_unit, sigfig, outres, write_other_vel, write_shock
+                    dt_unit, sigfig, outres, write_other_vel, write_shock, &
+                    write_evo
  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt,courant, rktype, mag_on, flux_limiter, &
                     include_cooling, include_extforce
@@ -131,4 +128,5 @@ subroutine read_parameters(filename)
   
 return
 end subroutine read_parameters
+
 end module setup_mod

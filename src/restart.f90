@@ -23,6 +23,7 @@ subroutine restart
 
  real*8:: starttime
  character*30 startfile, bptfile
+ integer:: ui
 
 !-----------------------------------------------------------------------------
 
@@ -42,13 +43,13 @@ subroutine restart
    write(bptfile,'(a8,i11.11,a4)')'data/bpt',start,'.dat'
   end if
 
-  open(unit=81,file = bptfile, status='old',form='unformatted')
+  open(newunit=ui,file = bptfile, status='old',form='unformatted')
   allocate( ptcx(0:dim,1:maxptc), ptci(0:2,1:maxptc) )
 
-  read(81)np,npl
-  read(81)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
+  read(ui)np,npl
+  read(ui)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
 
-  close(81)
+  close(ui)
  end if
 
  t_out = time + dt_out
@@ -57,10 +58,10 @@ subroutine restart
 !extgrvfile-------------------------------------------------------------
  if(include_extgrv)then
   extgrv = 0d0
-  open(unit=9191,file='data/extgrv.bin',status='old',form='unformatted')
-  read(9191)coremass
-  read(9191)extgrv(gis-2:gie+2,gjs:gje,gks-2:gke+2)
-  close(9191)
+  open(newunit=ui,file='data/extgrv.bin',status='old',form='unformatted')
+  read(ui)coremass
+  read(ui)extgrv(gis-2:gie+2,gjs:gje,gks-2:gke+2)
+  close(ui)
  end if
 
 end subroutine restart
