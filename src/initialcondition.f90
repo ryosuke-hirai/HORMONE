@@ -49,6 +49,9 @@ subroutine initialcondition
    gamma = 2d0
    call shocktube(3,    1d0,  1d0,0d0,0d0,0d0, 1d0,0d0,0.75d0,&
                     0.125d0,0.1d0,0d0,0d0,0d0,-1d0,0d0,0.75d0)
+  case('sedov')
+   gamma=1.4d0
+   call sedov(1d0,1d0)
   case('rsg_sph')
    call redsupergiant
   case default
