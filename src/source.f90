@@ -9,7 +9,7 @@
 subroutine source
 
  use grid
- use settings,only:eq_sym
+ use settings,only:eq_sym,include_extforce
  use physval
  use constants
  use gravmod
@@ -77,7 +77,7 @@ subroutine source
    if(include_extgrv)call externalfield
 
    if(ie==1)grv1 = 0d0; if(je==1)grv2 = 0d0; if(ke==1)grv3 = 0d0
-   if(xi1s==0d0)grv1(is,js:je,ks:ke) = 0d0
+   if(abs(xi1s)<=tiny)grv1(is,js:je,ks:ke) = 0d0
    if(crdnt==2)grv2(is:ie,js,ks:ke) = 0d0
    if(crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
   else
@@ -85,6 +85,8 @@ subroutine source
    stop
   end if
 
+  if(include_extforce)call externalforce
+  
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  if(crdnt==0)then
   do k = ks, ke

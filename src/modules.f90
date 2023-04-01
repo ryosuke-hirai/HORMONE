@@ -22,6 +22,7 @@ module settings
  integer:: imesh, jmesh, kmesh
 ! switches
  logical:: include_extgrv, include_particles, include_cooling, mag_on
+ logical:: include_extforce
  logical:: write_other_vel, write_shock, grav_init_other
  character*30:: flux_limiter, simtype
  character*50:: parafile
