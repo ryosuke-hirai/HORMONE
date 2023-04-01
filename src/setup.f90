@@ -42,10 +42,14 @@ subroutine read_default
  use grid
 
  integer:: ui
- character*50:: filename
+ character*50:: filename, basefile
 
 !-----------------------------------------------------------------------------
+! Read base file to set all parameters to default
+ basefile='../para/parameters_base'
+ call read_parameters(basefile)
 
+! Read default file relevant for the simtype
  select case(simtype)
  case('eostest')
   filename='../para/parameters_eostest'
@@ -103,8 +107,9 @@ subroutine read_parameters(filename)
                     sphrn, trnsn1, trnsn2, trnsn3
  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
                     dt_unit, sigfig, outres, write_other_vel, write_shock
- namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, include_cooling
- namelist /simucon/ crdnt,courant, rktype, mag_on, flux_limiter
+ namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
+ namelist /simucon/ crdnt,courant, rktype, mag_on, flux_limiter, &
+                    include_cooling, include_extforce
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
  namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, gbtype, &
