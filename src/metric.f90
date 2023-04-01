@@ -99,9 +99,17 @@ subroutine metric
     end do
    end do
 
-   if(ke==1) dvol = 4d0 * dvol
-   if(ke==1) idetg3 = idetg3 * 0.25d0
-   if(je==1) dvol = dvol * 2d0
+   if(ke==ks)then
+    dvol = dvol * 4d0
+    idetg3 = idetg3 * 0.25d0
+    sa1 = sa1 * 4d0 
+    sa2 = sa2 * 4d0 
+   end if
+   if(je==js)then
+    dvol = dvol * 2d0
+    sa1 = sa1 * 2d0
+    sa3 = sa3 * 2d0
+   end if
 
    do j = js-1, je+1
     scot(j)  = ( sini(j) - sini(j-1) ) / ( cosi(j-1) - cosi(j) )
