@@ -4,7 +4,11 @@ c sphrn : Central sphrn cells will be treated in 1D (spherical coord.)
 c         sphrn==0 to do full multi-D. Keep it small (sphrn<<ie) anyway.
 c trnsn1/2/3 : Number of cells in transition layer from fully 1D to multi-D.
 c              Every 8/4/2 cells will be grouped up.
-&gridcon   /
+&gridcon  xi1s=0d0 xi1e=2d14 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
+	  is=1 ie=300 js=1 je=100 ks=1 ke=1
+	  imesh=1 jmesh=0 kmesh=0
+	  x1min=1d11 x2min=0 x3min=0d0
+	  sphrn=0 trnsn1=0 trnsn2=0 trnsn3=0 /
 
 c outstyle/endstyle : time=1, timestep=2
 c tnlim : Upper limit for number of timesteps (only when outstyle=2)
@@ -16,27 +20,36 @@ c sigfig : How many significant figures in output values
 c outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
 c write_other_vel : Set to .true. if 2.5D
 c write_shock : Output shock switch
-&out_con   /
+&out_con  outstyle=2 endstyle=2
+          tnlim=100000 t_end=0.5d0 dt_out=1.d2 tn_out=100
+          dt_unit='s' sigfig=7 outres=1
+	  write_other_vel =.false. write_shock =.true. /
 
 c eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
 c compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 c muconst : mean molecular weight (if compswitch=0 or background)
 c spn : number of species (>=3)
-&eos_con  eoserr=1d-15 /
+&eos_con eostype = 1 eoserr=1d-15 compswitch=2 muconst=0.62d0 spn=8 /
 
 c crdnt : cartesian:0,cylindrical:1,spherical:2
 c rktype: order of Runge-Kutta (1 is for Euler method)
 c flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-&simucon   /
+&simucon  crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
+          flux_limiter='modified_mc'
+	  include_cooling = .false.
+	  include_extforce = .false. /
 
 c periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
 c Dirichlet:9(provide in dirichlet.f90)
 c eq_sym : Set to .true. for equatorial symmetry
-&bouncon  /
+&bouncon  bc1is=1 bc1os=2 bc2is=1 bc2os=1 bc3is=0 bc3os=0
+	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.false. /
 
 c gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 c grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 c gbtype: 0=multipole expansion, 1=Robin boundary
-&gravcon  /
+&gravcon gravswitch=3 grverr=1d-5 cgerr=1d-5 HGfac=10d0 hgcfl=0.9d0 gbtype=0
+	 grav_init_other=.false. include_extgrv=.true.
+	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
 &partcon  /
