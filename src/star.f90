@@ -157,10 +157,10 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   end do
  end do
 
- p(ie+1,js:je,ks:ke) = 1d-99
- do i = ie, is, -1
-  p(i,js:je,ks:ke) = p(i+1,js:je,ks:ke) + G*mc(i)*max(d(i,js,ks),rho(lines)*1d-5)/xi1(i)**2*dx1(i+1)
- end do
+!!$ p(ie+1,js:je,ks:ke) = 1d-99
+!!$ do i = ie, is, -1
+!!$  p(i,js:je,ks:ke) = p(i+1,js:je,ks:ke) + G*mc(i)*max(d(i,js,ks),rho(lines)*1d-5)/xi1(i)**2*dx1(i+1)
+!!$ end do
 
  do j = gjs-1, gje+1
   do i = gis-1, gie+1
