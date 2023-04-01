@@ -5,7 +5,7 @@ c         sphrn==0 to do full multi-D. Keep it small (sphrn<<ie) anyway.
 c trnsn1/2/3 : Number of cells in transition layer from fully 1D to multi-D.
 c              Every 8/4/2 cells will be grouped up.
 &gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
-	  is=1 ie=200 js=1 je=1 ks=1 ke=1
+	  is=1 ie=500 js=1 je=1 ks=1 ke=1
 	  imesh=0 jmesh=0 kmesh=0
 	  x1min=0d0 x2min=0 x3min=0d0 /
 
