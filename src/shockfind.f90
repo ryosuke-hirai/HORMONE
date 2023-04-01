@@ -17,6 +17,8 @@ subroutine shockfind
 
 !-----------------------------------------------------------------------------
 
+ if(dim==1)return
+ 
  shock = 0
 
  if(crdnt==2.and.ke==1)then
