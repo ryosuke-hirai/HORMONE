@@ -7,7 +7,8 @@
 ! PURPOSE: To calculate metrics
 
 subroutine metric
-  
+
+ use settings,only:include_extforce
  use constants,only:pi
  use grid
 
@@ -116,6 +117,19 @@ subroutine metric
     sisin(j) = ( xi2(j) - xi2(j-1) ) / ( cosi(j-1) - cosi(j) )
    end do
 
+   if(include_extforce)then
+    allocate(spinc_r(is:ie),spinc_t(js:je))
+    do i = is, ie
+     spinc_r(i) = 0.75d0*(xi1(i)**2+xi1(i-1)**2) &
+                        *(xi1(i)+xi1(i-1)) &
+                        /(xi1(i)**2+xi1(i)*xi1(i-1)+xi1(i-1)**2)
+    end do
+    do j = js, je
+     spinc_t(j) = 0.25d0*(2d0*dxi2(j)-sin(2d0*xi2(j)) &
+                          +sin(2d0*xi2(j-1)))/(cosi(j-1)-cosi(j))
+    end do
+   end if
+   
   end if
 
 return

@@ -54,6 +54,7 @@ module grid
   real*8,allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
   real*8,allocatable,dimension(:,:):: detg2, idetg2, g33
   real*8,allocatable,dimension(:,:,:):: sa1, sa2, sa3
+  real*8,allocatable,dimension(:):: spinc_r,spinc_t
 
 end module grid
 
