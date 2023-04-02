@@ -184,7 +184,7 @@
       if(ll/=0.and.abs(dphiio) < grverr*abs(phiio(i,j))) exit
       phiio(i,j) = phiio(i,j) + dphiio
      end do !ll-loop
-     phiio(i,j) = phiio(i,j) - G*mc(is-1)/x1(i)
+     phiio(i,j) = phiio(i,j)! - G*mc(is-1)/x1(i)
      if(ll>=llmax) error1=1
     end do
 
