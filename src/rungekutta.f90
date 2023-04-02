@@ -12,6 +12,7 @@ subroutine rungekutta
   use grid
   use physval
   use composition_mod
+  use smear_mod
 
   implicit none
 
@@ -277,89 +278,7 @@ subroutine rungekutta
   end select runge_type
 
 
-! Average out central cells in spherical coordinates
-! -> This avoids severe Courant conditions at the centre.
-  if(sphrn>0.and.crdnt==2)then
-! First average mass fractions
-   if(compswitch>=2)then
-    do i = is, is+2
-     do n = 1, spn
-      spc(n,i,js:je,ks:ke) = sum( u(i,js:je,ks:ke,1)*spc(n,i,js:je,ks:ke) &
-                                 *dvol(i,js:je,ks:ke) ) &
-                           / sum( u(i,js:je,ks:ke,1)*dvol(i,js:je,ks:ke) )
-     end do
-    end do
-    do i = is+3, sphrn
-     do n = 1, spn
-      do j = js, je,40
-       spc(n,i,j:j+39,ks:ke) = sum( u(i,j:j+39,ks:ke,1)*spc(n,i,j:j+39,ks:ke) &
-                                  *dvol(i,j:j+39,ks:ke) ) &
-                             / sum( u(i,j:j+39,ks:ke,1)*dvol(i,j:j+39,ks:ke) )
-      end do
-     end do
-    end do
-    do i = sphrn+1, sphrn+trnsn1
-     do n = 1, spn
-      do j = js, je,8
-       spc(n,i,j:j+7,ks:ke) = sum( u(i,j:j+7,ks:ke,1)*spc(n,i,j:j+7,ks:ke) &
-                                  *dvol(i,j:j+7,ks:ke) ) &
-                            / sum( u(i,j:j+7,ks:ke,1)*dvol(i,j:j+7,ks:ke) )
-      end do
-     end do
-    end do
-    do i = sphrn+trnsn1+1, sphrn+trnsn1+trnsn2
-     do n = 1, spn
-      do j = js, je,4
-       spc(n,i,j:j+3,ks:ke) = sum( u(i,j:j+3,ks:ke,1)*spc(n,i,j:j+3,ks:ke) &
-                                  *dvol(i,j:j+3,ks:ke) ) &
-                            / sum( u(i,j:j+3,ks:ke,1)*dvol(i,j:j+3,ks:ke) )
-      end do
-     end do
-    end do
-    do i = sphrn+trnsn1+trnsn2+1, sphrn+trnsn1+trnsn2+trnsn3
-     do n = 1, spn
-      do j = js, je,2
-       spc(n,i,j:j+1,ks:ke) = sum( u(i,j:j+1,ks:ke,1)*spc(n,i,j:j+1,ks:ke) &
-                                  *dvol(i,j:j+1,ks:ke) ) &
-                            / sum( u(i,j:j+1,ks:ke,1)*dvol(i,j:j+1,ks:ke) )
-      end do
-     end do
-    end do
-   end if
-
-! Then average other conserved quantities
-   do ufn = 1, 9
-    do i = is, is+2
-     u(i,js:je,ks:ke,ufn) = sum( u(i,js:je,ks:ke,ufn)*dvol(i,js:je,ks:ke) ) &
-                          / sum( dvol(i,js:je,ks:ke) )
-    end do
-    do i = is+3, sphrn
-     do j = js, je, 40
-      u(i,j:j+39,ks:ke,ufn) = sum( u(i,j:j+39,ks:ke,ufn)*dvol(i,j:j+39,ks:ke) ) &
-                           / sum( dvol(i,j:j+39,ks:ke) )
-      
-     end do
-    end do
-    do i = sphrn+1, sphrn+trnsn1
-     do j = js, je,8
-      u(i,j:j+7,ks:ke,ufn) = sum( u(i,j:j+7,ks:ke,ufn)*dvol(i,j:j+7,ks:ke) ) &
-                           / sum( dvol(i,j:j+7,ks:ke) )
-     end do
-    end do
-    do i = sphrn+trnsn1+1, sphrn+trnsn1+trnsn2
-     do j = js, je,4
-      u(i,j:j+3,ks:ke,ufn) = sum( u(i,j:j+3,ks:ke,ufn)*dvol(i,j:j+3,ks:ke) ) &
-                           / sum( dvol(i,j:j+3,ks:ke) )
-     end do
-    end do
-    do i = sphrn+trnsn1+trnsn2+1, sphrn+trnsn1+trnsn2+trnsn3
-     do j = js, je,2
-      u(i,j:j+1,ks:ke,ufn) = sum( u(i,j:j+1,ks:ke,ufn)*dvol(i,j:j+1,ks:ke) ) &
-                           / sum( dvol(i,j:j+1,ks:ke) )
-     end do
-    end do
-   end do
-  end if
+  call smear
 
   call primitive
 
