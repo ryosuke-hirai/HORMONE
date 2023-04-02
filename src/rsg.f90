@@ -14,8 +14,9 @@ subroutine redsupergiant
  use physval
  use input_mod
  use star_mod
- use gravmod,only:grvphi,extgrv
+ use gravmod,only:grvphi,extgrv,mc
  use utils,only:softened_pot
+ use output_mod,only:write_extgrv
 
  implicit none
 
@@ -24,7 +25,7 @@ subroutine redsupergiant
  real*8,allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
  integer nel,nn,sn
- real*8::rcore,dbg,mass,spc_bg(1:spn)
+ real*8::rcore,mcore,dbg,mass,spc_bg(1:spn)
  
 !-----------------------------------------------------------------------------
 
@@ -58,8 +59,10 @@ subroutine redsupergiant
  end do
  extgrv(is-1,js-2:je+2,ks-2:ke+2) =  extgrv(is,js-2:je+2,ks-2:ke+2)
  
+ mcore = m(0)
+ 
 ! Place the star at the origin
- m = m-m(0)
+ m = m-mcore
  call set_star_sph_grid(r,m,rho,pres,comp,comp_list)
 
 ! Attach a uniform density atmosphere
@@ -74,6 +77,11 @@ subroutine redsupergiant
    end do
   end do
  end do
- 
+
+! Remember core mass
+ mc(is-1) = mcore
+
+ call write_extgrv
+
 return
 end subroutine redsupergiant
