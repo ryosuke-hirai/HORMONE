@@ -27,10 +27,10 @@ contains
 ! read parameters
   namelist /gridcon/ xi1s, xi1e, xi2s, xi2e, xi3s, xi3e, &
                      is, ie, js, je, ks, ke, imesh, jmesh, kmesh, &
-                     sphrn, trnsn1, trnsn2, trnsn3
+                     sphrn, trnsn16, trnsn8, trnsn4, trnsn2
   namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
                      dt_unit, sigfig, write_other_vel, write_shock
-  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, include_cooling
+  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
   namelist /simucon/ crdnt,courant, rktype, start, mag_on, flux_limiter
   namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                      bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym

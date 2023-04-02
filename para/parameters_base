@@ -8,7 +8,7 @@ c              Every 8/4/2 cells will be grouped up.
 	  is=1 ie=10 js=1 je=1 ks=1 ke=1
 	  imesh=0 jmesh=0 kmesh=0
 	  x1min=0d0 x2min=0 x3min=0d0
-	  sphrn=0 trnsn1=0 trnsn2=0 trnsn3=0 /
+	  sphrn=0 trnsn16=0 trnsn8=0 trnsn4=0 trnsn2=0 /
 
 c outstyle/endstyle : time=1, timestep=2
 c tnlim : Upper limit for number of timesteps (only when outstyle=2)
