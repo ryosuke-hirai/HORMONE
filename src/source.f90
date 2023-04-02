@@ -85,8 +85,6 @@ subroutine source
    stop
   end if
 
-  if(include_extforce)call externalforce
-  
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  if(crdnt==0)then
   do k = ks, ke
@@ -167,6 +165,8 @@ subroutine source
   stop
  end if
 
+ if(include_extforce)call externalforce
+ 
  if(ie==1)src(is:ie,js:je,ks:ke,2) = 0d0
  if(je<=2.and.crdnt==2)src(is:ie,js:je,ks:ke,3) = 0d0
 ! if(ke==1)src(is:ie,js:je,ks:ke,4) = 0d0
