@@ -93,7 +93,7 @@ subroutine read_parameters(filename)
  use particle_mod,only:maxptc
 
  integer:: ui
- character*50,intent(in)::filename
+ character(len=*),intent(in)::filename
 
 !-----------------------------------------------------------------------------
 
