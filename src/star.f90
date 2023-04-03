@@ -156,11 +156,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
    end do
   end do
  end do
-
-do i = is, ie
- print*,x1(i),d(i,js,ks)
-end do
-stop
  
 !!$ p(ie+1,js:je,ks:ke) = 1d-99
 !!$ do i = ie, is, -1
