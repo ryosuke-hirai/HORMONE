@@ -59,7 +59,7 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  do j = 1, size(comp_list)
   comp(j,0:i-1) = comp(j,i)
  end do
- 
+
 return
 end subroutine replace_core
 
@@ -243,7 +243,7 @@ subroutine one_shot(Sc,imu,r,mcore,msoft,rho,p,mass)
         +dr(i)**2*p(i+1) &
         +(dr(i+1)**2-dr(i)**2)*p(i))/dr(i+1)**2
   rho(i-1) = get_d_from_ps(p(i-1),Sc,imu)
-  mass=mass-0.5d0*(rho(i)+rho(i-1))*vol(i)
+  mass=mass-0.5d0*rho(i)*vol(i)
   if(mass<0d0)return
  end do
 
