@@ -157,6 +157,11 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   end do
  end do
 
+do i = is, ie
+ print*,x1(i),d(i,js,ks)
+end do
+stop
+ 
 !!$ p(ie+1,js:je,ks:ke) = 1d-99
 !!$ do i = ie, is, -1
 !!$  p(i,js:je,ks:ke) = p(i+1,js:je,ks:ke) + G*mc(i)*max(d(i,js,ks),rho(lines)*1d-5)/xi1(i)**2*dx1(i+1)
@@ -243,7 +248,7 @@ subroutine one_shot(Sc,imu,r,mcore,msoft,rho,p,mass)
         +dr(i)**2*p(i+1) &
         +(dr(i+1)**2-dr(i)**2)*p(i))/dr(i+1)**2
   rho(i-1) = get_d_from_ps(p(i-1),Sc,imu)
-  mass=mass-0.5d0*rho(i)*vol(i)
+  mass=mass-rho(i)*vol(i)
   if(mass<0d0)return
  end do
 
