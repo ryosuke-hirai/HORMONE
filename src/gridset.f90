@@ -202,7 +202,7 @@ subroutine gridset
    end if
 
 ! set theta direction
-   if    (je==1)then
+   if    (je==js)then
     jetmp=4
    elseif(je>=4)then
     jetmp=je
@@ -288,7 +288,7 @@ subroutine gridset
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   case(2) coordinate_system
-   xi2s = 0.d0 ; xi2e = pi ; if(je==1.or.eq_sym) xi2e = pi * 0.5d0
+   xi2s = 0.d0 ; xi2e = pi ; if(je==js.or.eq_sym) xi2e = pi * 0.5d0
    xi3s = -pi  ; xi3e = pi
 ! set r direction
    mesh_sph1: select case (imesh)
@@ -351,9 +351,9 @@ subroutine gridset
 ! set theta direction
    mesh_sph2: select case (jmesh)
    case(0) mesh_sph2 ! uniform theta
-    if    (je==1)then
+    if    (je==js)then
      jetmp=1
-    elseif(je>=2)then
+    elseif(je>=js+1)then
      jetmp=je
     endif
     dxi2(js-2:je+2) = xi2e / dble(jetmp)
@@ -390,9 +390,9 @@ subroutine gridset
 ! set phi direction
    mesh_sph3: select case (kmesh)
    case(0) mesh_sph3 ! uniform theta
-    if    (ke==1)then
+    if    (ke==ks)then
      ketmp=4
-    elseif(ke>=4)then
+    elseif(ke>=ks+3)then
      ketmp=ke
     else
      print *,"Error from ke",ke
