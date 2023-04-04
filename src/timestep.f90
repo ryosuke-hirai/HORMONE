@@ -77,9 +77,9 @@ contains
      end if
 
      dti(i,j,k) = dvol(i,j,k) / &
-                ( ( cf1 + abs(v1(i,j,k)) )*off(is,ie) * sa1(i,j,k) &
-                + ( cf2 + abs(v2(i,j,k)) )*off(js,je) * sa2(i,j,k) &
-                + ( cf3 + abs(v3(i,j,k)) )*off(ks,ke) * sa3(i,j,k) )
+                ( ( cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j,k)) &
+                + ( cf2 + abs(v2(i,j,k)) )*off(js,je) * sum(sa2(i,j-1:j,k)) &
+                + ( cf3 + abs(v3(i,j,k)) )*off(ks,ke) * sum(sa3(i,j,k-1:k)) )
 
      cfmax = max(cfmax,cf1,cf2,cf3)
     end do
@@ -132,7 +132,7 @@ contains
      cf1 = cs(i,j,k)
     end if
     dti(i,js:je,ks:ke) = sum(dvol(i,js:je,ks:ke)) / &
-                ( ( cf1+abs(v1(i,j,k)) )*off(is,ie)*sum(sa1(i,js:je,k)))
+                ( ( cf1+abs(v1(i,j,k)) )*off(is,ie)*sum(sa1(i-1:i,js:je,k)))
    end do
    do i = is+sphrn, is+sphrn+trnsn16-1
     do j = js, je,16
@@ -154,8 +154,8 @@ contains
       cf2 = cs(i,j,k)
      end if
      dti(i,j:j+15,ks:ke) = sum(dvol(i,j:j+15,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i,j:j+15,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j,k)+sa2(i,j+15,k))  )
+      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+15,k)) &
+      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+15,k))  )
     end do
    end do
    do i = is+sphrn+trnsn16, is+sphrn+trnsn16+trnsn8-1
@@ -178,8 +178,8 @@ contains
       cf2 = cs(i,j,k)
      end if
      dti(i,j:j+7,ks:ke) = sum(dvol(i,j:j+7,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i,j:j+7,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j,k)+sa2(i,j+7,k))  )
+      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+7,k)) &
+      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+7,k))  )
     end do
    end do
    do i = is+sphrn+trnsn16+trnsn8, is+sphrn+trnsn16+trnsn8+trnsn4-1
@@ -202,8 +202,8 @@ contains
       cf2 = cs(i,j,k)
      end if
      dti(i,j:j+3,ks:ke) = sum(dvol(i,j:j+3,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i,j:j+3,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j,k)+sa2(i,j+3,k))  )
+      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+3,k)) &
+      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+3,k))  )
     end do
    end do
    do i = is+sphrn+trnsn16+trnsn8+trnsn4, is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1
@@ -226,8 +226,8 @@ contains
       cf2 = cs(i,j,k)
      end if
      dti(i,j:j+1,ks:ke) = sum(dvol(i,j:j+1,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i,j:j+1,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j,k)+sa2(i,j+1,k))  )
+      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+1,k)) &
+      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+1,k))  )
     end do
    end do
   end if
