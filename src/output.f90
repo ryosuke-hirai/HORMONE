@@ -240,11 +240,13 @@ subroutine evo_output
  end if
  if(gravswitch>=1)then
   if(include_extgrv)then
-   Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke) &
-                    *(grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
-                    *dvol(is:ie,js:je,ks:ke))
+! grvphi is self-gravity so is double counted, whereas extgrv is not
+   Egtot = sum(d(is:ie,js:je,ks:ke) &
+              *(0.5d0*grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
+              *dvol(is:ie,js:je,ks:ke))
   else
-   Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke)*grvphi(is:ie,js:je,ks:ke))
+   Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke)*grvphi(is:ie,js:je,ks:ke) &
+                    *dvol(is:ie,js:je,ks:ke))
   end if
  end if
 
