@@ -584,11 +584,11 @@ subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
  allocate( xi2(js-2:je+2) )
  dcos = (cos(xi2e)-cos(xi2s))/dble(je-js+1)
 
- xi2(js-1) = 1d0
+ xi2(js-1) = cos(xi2s)
  do j = js, je
   xi2(j) = xi2(j-1) + dcos
  end do
- xi2(je) = 0d0
+ xi2(je) = cos(xi2e)
  do j = js-1, je
   xi2(j) = acos(xi2(j))
  end do
