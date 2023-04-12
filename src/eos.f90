@@ -20,6 +20,8 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  real*8,parameter:: W4err = 1d-2
  integer n
 
+ if(T<=0d0) T=1d3
+
  select case (eostype)
  case(0) ! ideal gas
   T = eint/(fac_egas*imu)
@@ -84,6 +86,8 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
  real*8,intent(out),optional:: erec
  real*8:: corr, imurec, imurecold, dimurecdT, logd
  integer n
+
+ if(T<=0d0) T=1d3
  
  select case (eostype)
  case(0) ! ideal gas
@@ -253,31 +257,28 @@ pure function get_cf(d,cs,b1,b2,b3) result(cf)
 
 end function get_cf
 
-
 ! ***************************************************************************
 
-function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
+function entropy_from_dT(d,T,imu,X,Y) result(entropy)
  use constants
-! PURPOSE: To calculate internal energy from density and pressure
+! PURPOSE: To calculate entropy from density and temperature
  implicit none
- real*8,intent(in):: d,p
+ real*8,intent(in):: d,T
  real*8,intent(in),optional:: X,Y
- real*8,intent(inout):: T,imu
- real*8:: entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+ real*8,intent(inout):: imu
+ real*8:: p,entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
 
  select case(eostype)
  case(0) ! ideal gas
-  call getT_from_dp(d,p,T,imu)
+  p = fac_pgas*T*imu
   entropy = p/d**gamma
 
  case(1) ! ideal gas + radiation
-  call getT_from_dp(d,p,T,imu)
   S_ion = fac_pgas*imu*log(T**1.5d0/d)
   S_rad = 4d0*arad*T**3/(3d0*d)
   entropy = (S_ion + S_rad) / fac_pgas
   
  case(2) ! ideal gas + radiation + recombination
-  call getT_from_dp(d,p,T,imu,X,Y)
   call get_xion(log(d),T,X,Y,xion)
   n_x = d*X/amu
   n_y = d*Y/(4d0*amu)
@@ -303,7 +304,69 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
   
  end select
   
+end function entropy_from_dT
+
+! ***************************************************************************
+
+function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
+ use constants
+! PURPOSE: To calculate entropy from density and pressure
+ implicit none
+ real*8,intent(in):: d,p
+ real*8,intent(in),optional:: X,Y
+ real*8,intent(inout):: T,imu
+ real*8:: entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+
+ select case(eostype)
+ case(0) ! ideal gas
+  call getT_from_dp(d,p,T,imu)
+  entropy = p/d**gamma
+
+ case(1) ! ideal gas + radiation
+  call getT_from_dp(d,p,T,imu)
+  entropy = entropy_from_dT(d,T,imu)
+  
+ case(2) ! ideal gas + radiation + recombination
+  call getT_from_dp(d,p,T,imu,X,Y)
+  entropy = entropy_from_dT(d,T,imu,X,Y)
+
+ case default
+  stop 'Error in eostype'
+  
+ end select
+  
 end function entropy_from_dp
+
+! ***************************************************************************
+
+function entropy_from_de(d,e,T,imu,X,Y) result(entropy)
+ use constants
+! PURPOSE: To calculate entropy from density and internal energy
+ implicit none
+ real*8,intent(in):: d,e
+ real*8,intent(in),optional:: X,Y
+ real*8,intent(inout):: T,imu
+ real*8:: entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+
+ select case(eostype)
+ case(0) ! ideal gas
+  call getT_from_de(d,e,T,imu)
+  entropy = (gamma-1d0)*e/d**gamma
+
+ case(1) ! ideal gas + radiation
+  call getT_from_de(d,e,T,imu)
+  entropy = entropy_from_dT(d,T,imu)
+  
+ case(2) ! ideal gas + radiation + recombination
+  call getT_from_de(d,e,T,imu,X,Y)
+  entropy = entropy_from_dT(d,T,imu,X,Y)
+
+ case default
+  stop 'Error in eostype'
+  
+ end select
+  
+end function entropy_from_de
 
 ! **************************************************************************
 
@@ -315,7 +378,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
  real*8,intent(inout):: imu
  real*8,intent(in),optional:: X,Y
  real*8:: d,corr,corr0,dp,S0,Sp,dSdd,T,ddot,dt
- real*8,parameter:: dfac=1d-8, Serr_rel_eoserr=1d2, W4err=1d-2
+ real*8,parameter:: dfac=1d-8, Serr_rel_eoserr=7d0, W4err=1d-2
  integer n
 
 !-----------------------------------------------------------------------------
@@ -328,7 +391,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
   d = 1d-8 ! initial guess
   T = p/(fac_pgas*d*imu)
   corr=1d99
-  do n = 1, 500 ! Newton-Raphson iteration to get density
+  do n = 1, 5000 ! Newton-Raphson iteration to get density
    dp = d*(1d0+dfac)
    S0 = entropy_from_dp(d,p,T,imu)
    Sp = entropy_from_dp(dp,p,T,imu)
@@ -337,8 +400,8 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
    d = d-corr
    if(abs((S0-S)/dSdd)<Serr_rel_eoserr*eoserr*d)exit
   end do
-  if(n>500)then
-   print*,'Error in getd_from_ps, eostype=',eostype
+  if(n>5000)then
+   print*,'Error in get_d_from_ps, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
   end if
@@ -365,7 +428,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
    if(n>50)dt=0.5d0
   end do
   if(n>500)then
-   print*,'Error in getd_from_ps, eostype=',eostype
+   print*,'Error in get_d_from_ps, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
   end if
@@ -377,6 +440,110 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
 return
 end function get_d_from_ps
 
+! **************************************************************************
+
+function get_e_from_ds(d,S,imu,X,Y) result(e)
+! PURPOSE: Calculate internal energy given density and entropy​
+ implicit none
+
+ real*8,intent(in):: d,S
+ real*8,intent(inout):: imu
+ real*8,intent(in),optional:: X,Y
+ real*8:: e,p,corr,corr0,ep,S0,Sp,dSde,T,edot,dt
+ real*8,parameter:: dfac=1d-8, Serr_rel_eoserr=1d2, W4err=1d-2
+ integer n
+
+!-----------------------------------------------------------------------------
+
+ select case (eostype)
+ case(0) ! ideal gas
+  e = (S*d**gamma)/(gamma-1d0)
+
+ case(1) ! ideal gas + radiation (fully ionized, uniform composition)
+  e = 1d-8 ! initial guess
+  T = e/(fac_egas*d*imu)
+  corr=1d99
+  do n = 1, 500 ! Newton-Raphson iteration to get internal energy
+   ep = e*(1d0+dfac)
+   S0 = entropy_from_de(d,e,T,imu)
+   Sp = entropy_from_de(d,ep,T,imu)
+   dSde = (Sp-S0)/(ep-e) ! Numerical differentiation
+   corr = min((S0-S)/dSde,e*0.9d0)
+   e = e-corr
+   if(abs((S0-S)/dSde)<Serr_rel_eoserr*eoserr*e)exit
+  end do
+  if(n>500)then
+   print*,'Error in get_e_from_ds, eostype=',eostype
+   print*,'d=',d,'S=',S,'mu=',1d0/imu
+   stop
+  end if
+  
+ case(2) ! ideal gas + radiation + recombination
+  e = 1d-8 ! initial guess
+  T = 1d3
+  corr=huge;edot=0d0;dt=0.9d0
+  do n = 1,500
+   ep = e*(1d0+dfac)
+   S0 = entropy_from_de(d,e,T,imu,X,Y)
+   Sp = entropy_from_de(d,ep,T,imu,X,Y)
+   dSde = (Sp-S0)/(ep-e) ! Numerical differentiation
+   corr0 = (S0-S)/dSde
+   corr = min(corr0,e*0.9d0)
+   if(abs(corr)>W4err*e)then
+    e = e + edot*dt
+    edot = (1d0-2d0*dt)*edot - dt*corr
+   else
+    e = e-corr
+    edot = 0d0
+   end if
+   if(abs(corr)<Serr_rel_eoserr*eoserr*e)exit
+   if(n>50)dt=0.5d0
+  end do
+  if(n>500)then
+   print*,'Error in getd_from_ps, eostype=',eostype
+   print*,'d=',d,'S=',S,'mu=',1d0/imu
+   stop
+  end if
+
+ case default
+  stop 'Error in eostype'
+ end select
+
+return
+end function get_e_from_ds
+
+! **************************************************************************
+
+function get_p_from_ds(d,S,imu,X,Y) result(p)
+! PURPOSE: Calculate internal energy given density and entropy​
+ implicit none
+
+ real*8,intent(in):: d,S
+ real*8,intent(inout):: imu
+ real*8,intent(in),optional:: X,Y
+ real*8:: eint,p,T
+
+!-----------------------------------------------------------------------------
+ 
+ select case(eostype)
+ case(0) ! ideal gas
+  p = S*d**gamma
+
+ case(1) ! ideal gas + radiation (fully ionized, uniform composition)
+  eint = get_e_from_ds(d,S,imu)
+  p = eos_p(d,eint,T,imu)
+
+ case(2) ! ideal gas + radiation + recombination
+  eint = get_e_from_ds(d,S,imu,X,Y)
+  p = eos_p(d,eint,T,imu,X,Y)
+
+ case default
+  stop 'Error in eostype'
+  
+ end select
+
+ return
+end function get_p_from_ds
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                           SUBROUTINE PRESSURE

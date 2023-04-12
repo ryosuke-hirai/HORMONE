@@ -19,8 +19,8 @@ subroutine eostest
  real*8:: d, p, e, T, imu
  real*8:: X, Y, Z, Xi, Xf, p2, T2, Ti, Tf
  real*8:: Qi, Qf, Q, erec, imu2, imu3, T0, cs
- real*8:: T3, p3, d2, S, T4, imu4
- real*8:: rerrp1,rerrp2,rerrT1,rerrT2,rerrd1
+ real*8:: T3, p3, p4, d2, S, T4, imu4
+ real*8:: rerrp1,rerrp2,rerrp3,rerrT1,rerrT2,rerrd1
  integer:: iie, jje, kke, ierr, ui
  character(len=100):: form1
 
@@ -53,12 +53,12 @@ subroutine eostest
  imu = 1d0/0.62d0
  rerrp1=0d0;rerrp2=0d0;rerrT1=0d0;rerrT2=0d0;rerrd1=0d0
  open(newunit=ui,file='data/eostest_gas.dat',status='replace')
- write(ui,'(2a5,14a23)')&
+ write(ui,'(2a5,15a23)')&
     'j','k','d','Q','e',&
     'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
     'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
     'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
-    'entropy_from_dp','d_from_inventropy'
+    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy'
 
  do k = 0, kke ! loop over T
   T0 = 10d0**(Ti+(Tf-Ti)/dble(kke)*dble(k))
@@ -78,17 +78,19 @@ subroutine eostest
 
    S = entropy_from_dp(d,p,T4,imu)
    d2 = get_d_from_ps(p,S,imu)
+   p4 = get_p_from_ds(d,S,imu)
 
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
+   rerrp3 = max(rerrp3,abs(p4/p-1d0))
    rerrT1 = max(rerrT1,abs(T2/T-1d0))
    rerrT2 = max(rerrT2,abs(T3/T-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
-   write(ui,'(2i5,14(1PE23.15e2))')&
+   write(ui,'(2i5,15(1PE23.15e2))')&
     j,k,d,Q,e,&
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
-    S,d2
+    p4/p-1d0,S,d2
    
   end do
   write(ui,'()')
@@ -101,6 +103,7 @@ subroutine eostest
  print form1,'eos_p    : temperature =',rerrT1,'pressure =',rerrp1
  print form1,'eos_p_cs : temperature =',rerrT2,'pressure =',rerrp2
  print form1,'get_d_from_ps: density =',rerrd1
+ print form1,'get_p_from_ds: pressure =',rerrp3
  print*,'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
  print*,''
 
@@ -116,7 +119,7 @@ subroutine eostest
     'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
     'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
     'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
-    'entropy_from_dp','d_from_inventropy'
+    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy'
 
  do k = 0, kke ! loop over T
   T0 = 10d0**(Ti+(Tf-Ti)/dble(kke)*dble(k))
@@ -136,17 +139,19 @@ subroutine eostest
 
    S = entropy_from_dp(d,p,T4,imu)
    d2 = get_d_from_ps(p,S,imu)
+   p4 = get_p_from_ds(d,S,imu)
 
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
+   rerrp3 = max(rerrp3,abs(p4/p-1d0))
    rerrT1 = max(rerrT1,abs(T2/T-1d0))
    rerrT2 = max(rerrT2,abs(T3/T-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
-   write(ui,'(2i5,14(1PE23.15e2))')&
+   write(ui,'(2i5,15(1PE23.15e2))')&
     j,k,d,Q,e,&
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
-    S,d2
+    p4/p-1d0,S,d2
    
   end do
   write(ui,'()')
@@ -159,6 +164,7 @@ subroutine eostest
  print form1,'eos_p    : temperature =',rerrT1,'pressure =',rerrp1
  print form1,'eos_p_cs : temperature =',rerrT2,'pressure =',rerrp2
  print form1,'get_d_from_ps: density =',rerrd1
+ print form1,'get_p_from_ds: pressure =',rerrp3
  print*,'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
  print*,''
  
@@ -175,7 +181,7 @@ subroutine eostest
     'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
     'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
     'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
-    'entropy_from_dp','d_from_inventropy'
+    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy'
 
  do k = 0, kke ! loop over T
   T0 = 10d0**(Ti+(Tf-Ti)/dble(kke)*dble(k))
@@ -197,9 +203,12 @@ subroutine eostest
 ! Currently not ready for entropy calculations
 !   S = entropy_from_dp(d,p,T4,imu4,X,Y)
 !   d2 = get_d_from_ps(p,S,imu4,X,Y)
+!   p4 = get_p_from_ds(d,S,imu)
+
 
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
+   rerrp3 = max(rerrp3,abs(p4/p-1d0))
    rerrT1 = max(rerrT1,abs(T2/T-1d0))
    rerrT2 = max(rerrT2,abs(T3/T-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
@@ -208,7 +217,7 @@ subroutine eostest
     1d0/imu,1d0/imu2,1d0/imu3,&
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
-    S,d2
+    p4/p-1d0,S,d2
    
   end do
   write(ui,'()')
@@ -220,6 +229,7 @@ subroutine eostest
  print form1,'eos_p    : temperature =',rerrT1,'pressure =',rerrp1
  print form1,'eos_p_cs : temperature =',rerrT2,'pressure =',rerrp2
 ! print form1,'get_d_from_ps: density =',rerrd1
+! print form1,'get_p_from_ds: pressure =',rerrp3
  print*,'Entropy calculations for eostype=2 currently under construction'
 
  stop
