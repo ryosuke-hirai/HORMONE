@@ -13,9 +13,10 @@ subroutine initialcondition
  use physval
  use pressure_mod
  use composition_mod
- 
+
  implicit none
 
+ integer:: dir
 !----------------------------------------------------------------------------
 
  if(start==0)then
@@ -23,40 +24,37 @@ subroutine initialcondition
   select case(simtype)
   case('eostest')
    call eostest
+   
   case('orszagtang_xy','orszagtang_yz','orszagtang_xz')
    call orszagtang
-  case('sodshock_x')
+
+  case('sodshock_x','sodshock_y','sodshock_z')
    gamma = 1.4d0
-   call shocktube(1,    1d0,  1d0,0d0,0d0,0d0,0d0,0d0,0d0,&
-                    0.125d0,0.1d0,0d0,0d0,0d0,0d0,0d0,0d0)
-  case('sodshock_y')
-   gamma = 1.4d0
-   call shocktube(2,    1d0,  1d0,0d0,0d0,0d0,0d0,0d0,0d0,&
-                    0.125d0,0.1d0,0d0,0d0,0d0,0d0,0d0,0d0)
-  case('sodshock_z')
-   gamma = 1.4d0
-   call shocktube(3,    1d0,  1d0,0d0,0d0,0d0,0d0,0d0,0d0,&
-                    0.125d0,0.1d0,0d0,0d0,0d0,0d0,0d0,0d0)
-  case('briowushock_x')
+   if(simtype(10:10)=='x')dir=1
+   if(simtype(10:10)=='y')dir=2
+   if(simtype(10:10)=='z')dir=3
+   call shocktube(dir,    1d0,  1d0,0d0,0d0,0d0,0d0,0d0,0d0,&
+                      0.125d0,0.1d0,0d0,0d0,0d0,0d0,0d0,0d0)
+
+  case('briowushock_x','briowushock_y','briowushock_z')
    gamma = 2d0
-   call shocktube(1,    1d0,  1d0,0d0,0d0,0d0,0.75d0, 1d0,0d0,&
-    & 0.125d0,0.1d0,0d0,0d0,0d0,0.75d0,-1d0,0d0)
-  case('briowushock_y')
-   gamma = 2d0
-   call shocktube(2,    1d0,  1d0,0d0,0d0,0d0,0d0,0.75d0, 1d0,&
-                    0.125d0,0.1d0,0d0,0d0,0d0,0d0,0.75d0,-1d0)
-  case('briowushock_z')
-   gamma = 2d0
-   call shocktube(3,    1d0,  1d0,0d0,0d0,0d0, 1d0,0d0,0.75d0,&
-                    0.125d0,0.1d0,0d0,0d0,0d0,-1d0,0d0,0.75d0)
+   if(simtype(13:13)=='x')dir=1
+   if(simtype(13:13)=='y')dir=2
+   if(simtype(13:13)=='z')dir=3
+   call shocktube(dir,    1d0,  1d0,0d0,0d0,0d0,0.75d0, 1d0,0d0,&
+                      0.125d0,0.1d0,0d0,0d0,0d0,0.75d0,-1d0,0d0)
+
   case('sedov')
    gamma=1.4d0
    call sedov(1d0,1d0)
+
   case('rsg_sph')
    call redsupergiant
+
   case default
    print*,'Chosen simtype not available, simtype = ',simtype
    stop
+
   end select
 
 ! to set internal energy consistently ------------------------------!
