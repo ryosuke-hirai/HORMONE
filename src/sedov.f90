@@ -4,21 +4,35 @@
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: Set initial conditions for Sedov-Taylor blast wave test
+! PURPOSE: Set initial conditions for Sedov-Taylor blast wave
 
-subroutine sedov(damb,Eexp)
+subroutine sedov
 
+ use settings,only:simtype,extrasfile
  use grid
  use physval
  use pressure_mod,only:eos_p
+ use input_mod,only:error_extras,error_nml
 
  implicit none
 
- real*8,intent(in):: damb,Eexp
- real*8:: ein, pin, pamb, Tin, imuconst
- integer:: i_inj
+ real*8:: damb, Eexp, ein, pin, pamb, Tin, imuconst
+ integer:: i_inj,ui,istat
 
 !-----------------------------------------------------------------------------
+
+ namelist /sedocon/ gamma,damb,Eexp
+
+ select case(simtype)
+ case('sedov_default')
+  open(newunit=ui,file='../para/extras_sedov',status='old',iostat=istat)
+ case('sedov_other')
+  open(newunit=ui,file=extrasfile,status='old',iostat=istat)
+  if(istat/=0)call error_extras('sedov',extrasfile)
+ end select
+ read(ui,NML=sedocon,iostat=istat)
+ if(istat/=0)call error_nml('sedov',extrasfile)
+ close(ui)
 
  i_inj = 10
  ein = Eexp/sum(dvol(is:i_inj,js:je,ks:ke))

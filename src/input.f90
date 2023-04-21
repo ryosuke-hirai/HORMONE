@@ -165,5 +165,43 @@ end subroutine read_mesa
 !!$  end do
 !!$ end do
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                         SUBROUTINE ERROR_EXTRAS
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output error message and stop simulation when failing to find extras file.
+
+subroutine error_extras(simutype,extrasfile)
+
+ character(len=*),intent(in):: simutype,extrasfile
+ 
+!-----------------------------------------------------------------------------
+
+ print*,'Error: Model parameter file cannot be found.'
+ print'(5a)','Copy over "../para/extras_',simutype,'" to "',trim(extrasfile),&
+             '" and specify model parameters'
+ stop
+
+end subroutine error_extras
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE ERROR_NML
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output error message and stop simulation when relevant namelist cannot be found in extras file
+
+subroutine error_nml(simutype,extrasfile)
+
+ character(len=*),intent(in)::simutype,extrasfile
+
+!-----------------------------------------------------------------------------
+
+ print*,'Error: extras file does not contain relevant namelist'
+ print'(5a)','Copy over contents of "../para/extras_',simutype,'" to "',&
+             trim(extrasfile),'" and specify model parameters'
+ stop 
+
+return
+end subroutine error_nml
 
 end module input_mod

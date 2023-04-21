@@ -25,7 +25,7 @@ module settings
  logical:: include_extforce
  logical:: write_other_vel, write_shock, grav_init_other, write_evo
  character*30:: flux_limiter, simtype
- character*50:: parafile
+ character*50:: parafile,extrasfile
 
 end module settings
 

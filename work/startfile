@@ -4,15 +4,16 @@ Choose what kind of simulation you want to do.
 If start/=0, it will restart from the file number specified by (start).
 If start==0, it will set the initial condition based on the choice of simtype.
 'parafile' specifies the extra parameter file name. Leave it blank if you are happy with the defaults.
+'simtype' specifies the type of simulation. Available options are listed below.
 
 ++++++ SIMTYPE OPTIONS ++++++
 'eostest': Forwards and backwards consistency test for EoS.
-'orszagtang_xy': Orszag-Tang test in xy plane
-'orszagtang_yz': Orszag-Tang test in yz plane
-'orszagtang_xz': Orszag-Tang test in xz plane
-'sedov': Sedov blast wave
-'briowushock_{x,y,z}': Brio & Wu shocktube problem
-'sodshock_{x,y,z}': Sod shocktube problem
+'orszagtang_{xy,yz,xz}': Orszag-Tang test in the xy/yz/xz plane
+'sedov_default': Sedov blast wave with default parameters.
+'sedov_other': Sedov blast wave. Set model parameters in extras file.
+'briowushock_{x,y,z}': Brio & Wu shocktube problem in the x/y/z direction
+'sodshock_{x,y,z}': Sod shocktube problem in the x/y/z direction
+'other_shocktube_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 
-&startcon start=0 simtype='sodshock_x' parafile=''/
+&startcon start=0 simtype='sedov_other' parafile=''/

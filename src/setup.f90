@@ -57,13 +57,13 @@ subroutine read_default
   filename='../para/parameters_orszagtang_yz'
  case('orszagtang_xz')
   filename='../para/parameters_orszagtang_xz'
- case('sodshock_x','briowushock_x')
+ case('sodshock_x','briowushock_x','other_shocktube_x')
   filename='../para/parameters_shocktube_x'
- case('sodshock_y','briowushock_y')
+ case('sodshock_y','briowushock_y','other_shocktube_y')
   filename='../para/parameters_shocktube_y'
- case('sodshock_z','briowushock_z')
+ case('sodshock_z','briowushock_z','other_shocktube_z')
   filename='../para/parameters_shocktube_z'
- case('sedov')
+ case('sedov_default','sedov_other')
   filename='../para/parameters_sedov'
  case('rsg_sph')
   filename='../para/parameters_rsg_sph'
@@ -92,7 +92,7 @@ subroutine read_parameters(filename)
  use physval
  use particle_mod,only:maxptc
 
- integer:: ui
+ integer:: ui,istat
  character(len=*),intent(in)::filename
 
 !-----------------------------------------------------------------------------
@@ -106,7 +106,7 @@ subroutine read_parameters(filename)
                     write_evo
  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt,courant, rktype, mag_on, flux_limiter, &
-                    include_cooling, include_extforce
+                    include_cooling, include_extforce, extrasfile
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
  namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, gbtype, &
@@ -116,7 +116,12 @@ subroutine read_parameters(filename)
 
  if(filename=='')return
  
- open(newunit=ui,file=filename,status='old')
+ open(newunit=ui,file=filename,status='old',iostat=istat)
+ if(istat/=0)then
+  print*,'Error: Simulation parameter file cannot be found'
+  print'(3a)','Missing file name = "',trim(filename),'"'
+  stop
+ end if
  read(ui,NML=gridcon)
  read(ui,NML=out_con)
  read(ui,NML=eos_con)

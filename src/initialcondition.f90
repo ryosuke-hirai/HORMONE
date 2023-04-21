@@ -1,6 +1,6 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE INITIALCONDITION
+!                       SUBROUTINE INITIALCONDITION
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -28,25 +28,13 @@ subroutine initialcondition
   case('orszagtang_xy','orszagtang_yz','orszagtang_xz')
    call orszagtang
 
-  case('sodshock_x','sodshock_y','sodshock_z')
-   gamma = 1.4d0
-   if(simtype(10:10)=='x')dir=1
-   if(simtype(10:10)=='y')dir=2
-   if(simtype(10:10)=='z')dir=3
-   call shocktube(dir,    1d0,  1d0,0d0,0d0,0d0,0d0,0d0,0d0,&
-                      0.125d0,0.1d0,0d0,0d0,0d0,0d0,0d0,0d0)
+  case('sodshock_x','sodshock_y','sodshock_z',&
+       'briowushock_x','briowushock_y','briowushock_z',&
+       'other_shocktube_x','other_shocktube_y','other_shocktube_z')
+   call shocktube
 
-  case('briowushock_x','briowushock_y','briowushock_z')
-   gamma = 2d0
-   if(simtype(13:13)=='x')dir=1
-   if(simtype(13:13)=='y')dir=2
-   if(simtype(13:13)=='z')dir=3
-   call shocktube(dir,    1d0,  1d0,0d0,0d0,0d0,0.75d0, 1d0,0d0,&
-                      0.125d0,0.1d0,0d0,0d0,0d0,0.75d0,-1d0,0d0)
-
-  case('sedov')
-   gamma=1.4d0
-   call sedov(1d0,1d0)
+  case('sedov_default','sedov_other')
+   call sedov
 
   case('rsg_sph')
    call redsupergiant

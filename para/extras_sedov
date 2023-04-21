@@ -1,0 +1,7 @@
+c Model parameters for other_shocktube
+
+c gamma: Adiabatic index
+c damb: Ambient density
+c Eexp: Explosion energy
+
+&sedocon gamma=1.4d0 damb=1d0 Eexp=1d0 /

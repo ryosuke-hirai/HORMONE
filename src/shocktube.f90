@@ -1,14 +1,85 @@
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE SHOCKTUBE
+!                          SUBROUTINE SHOCKTUBE
 !
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To set initial condition for shock tube problems.
 
-subroutine shocktube(whichaxis, &
-                     dl,pl,v1l,v2l,v3l,b1l,b2l,b3l,&
-                     dr,pr,v1r,v2r,v3r,b1r,b2r,b3r)
+subroutine shocktube
+
+ use settings,only:mag_on,simtype,parafile,extrasfile
+ use physval,only:gamma
+ use input_mod,only:error_extras,error_nml
+
+ implicit none
+
+ integer::dir,ui,strl,istat
+ real*8:: dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,b1l,b1r,b2l,b2r,b3l,b3r
+!-----------------------------------------------------------------------------
+
+ namelist /tubecon/ mag_on,gamma,&
+                    dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,&
+                                b1l,b1r,b2l,b2r,b3l,b3r
+
+! Set default values
+ open(newunit=ui,file='../para/extras_shocktube',status='old')
+ read(ui,NML=tubecon)
+ close(ui)
+
+ strl = len(trim(simtype))
+! Select the type of shock tube problem
+ select case(simtype(1:strl-2))
+ case('sodshock')
+  mag_on = .false.
+  gamma = 1.4d0
+  dl = 1d0 ; dr = 0.125d0
+  pl = 1d0 ; pr = 0.1d0
+  
+ case('briowu')
+  mag_on = .true.
+  gamma = 2d0
+  dl  = 1d0    ; dr  = 0.125d0
+  pl  = 1d0    ; pr  = 0.1d0
+  b1l = 0.75d0 ; b1r = 0.75d0
+  b2l = 1d0    ; b2r =-1d0
+  
+ case('other_shocktube')
+  open(newunit=ui,file=extrasfile,status='old',iostat=istat)
+  if(istat/=0)call error_extras('shocktube',extrasfile)
+  read(ui,NML=tubecon,iostat=istat)
+  if(istat/=0)call error_nml('shocktube',extrasfile)
+  close(ui)
+
+ end select
+
+! Find the direction of shock tube
+ select case(simtype(strl:strl))
+ case('x')
+  dir = 1
+ case('y')
+  dir = 2
+ case('z')
+  dir = 3
+ end select
+
+ call setup_shocktube(dir,dl,pl,v1l,v2l,v3l,b1l,b2l,b3l,&
+                          dr,pr,v1r,v2r,v3r,b1r,b2r,b3r)
+
+ return
+ 
+contains
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE SETUP_SHOCKTUBE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To set initial condition for shock tube problems.
+
+subroutine setup_shocktube(whichaxis, &
+                           dl,pl,v1l,v2l,v3l,b1l,b2l,b3l,&
+                           dr,pr,v1r,v2r,v3r,b1r,b2r,b3r)
 
   use grid
   use physval
@@ -89,4 +160,6 @@ subroutine shocktube(whichaxis, &
   end select
 
 return
+end subroutine setup_shocktube
+
 end subroutine shocktube

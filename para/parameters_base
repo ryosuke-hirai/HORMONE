@@ -38,10 +38,12 @@ c mag_on: Whether or not to include magnetic fields
 c flux_limiter: 'modified_mc' or 'minmod' or 'flat'
 c include_cooling: switch for cooling
 c include_extforce: switch for external force provided in externalforce
+c extrasfile: file containing model parameters
 &simucon  crdnt=0 courant=0.9d0 rktype=3 mag_on=.false.
           flux_limiter='modified_mc'
           include_cooling = .false.
-  	  include_extforce= .false. /
+  	  include_extforce= .false.
+          extrasfile='extras' /
 
 c periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
 c Dirichlet:9(provide in dirichlet.f90)
