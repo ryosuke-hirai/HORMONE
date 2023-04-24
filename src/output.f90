@@ -14,7 +14,7 @@ module output_mod
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To output snapshot sdata
+! PURPOSE: To output snapshot data
 
 subroutine output
 
