@@ -20,9 +20,7 @@ contains
   use gravmod
   use ionization_mod,only:ionization_setup
 
-  implicit none
-
- !-----------------------------------------------------------------------------
+!-----------------------------------------------------------------------------
 
 ! read parameters
   namelist /gridcon/ xi1s, xi1e, xi2s, xi2e, xi3s, xi3e, &
@@ -111,8 +109,6 @@ subroutine readbin(filename)
  use composition_mod
  use gravmod
 
- implicit none
-
  character(len=*),intent(in):: filename
  integer:: un
 !-----------------------------------------------------------------------------
@@ -140,5 +136,30 @@ subroutine readbin(filename)
 
 return
 end subroutine readbin
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                           SUBROUTINE READGRID
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To read gridfile.bin
+
+subroutine readgrid(filename)
+
+ use grid
+
+ character(len=*),intent(in)::filename
+ integer:: ui
+!-----------------------------------------------------------------------------
+
+ open(newunit=ui,file=filename,status='old',form='unformatted')
+ read(ui)x1(gis-2:gie+2),xi1(gis-2:gie+2),dx1(gis-2:gie+2),dxi1(gis-2:gie+2), &
+         x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dx2(gjs-2:gje+2),dxi2(gjs-2:gje+2), &
+         x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
+ close(ui)
+
+return
+end subroutine readgrid
 
 end module readbin_mod

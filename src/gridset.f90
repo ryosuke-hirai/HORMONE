@@ -12,10 +12,11 @@ subroutine gridset
   use grid
   use constants,only:pi
   use utils,only:geometrical_series
+  use readbin_mod,only:readgrid
   
   implicit none
 
-  integer jetmp,ketmp,ui
+  integer jetmp,ketmp
 
 !-------------------------------------------------------------------------
 
@@ -425,11 +426,7 @@ subroutine gridset
  else
 
 ! Read from previous gridfile if not first time step
-  open(newunit=ui,file='data/gridfile.bin',status='old',form='unformatted')
-  read(ui)x1(gis-2:gie+2),xi1(gis-2:gie+2),dx1(gis-2:gie+2),dxi1(gis-2:gie+2), &
-          x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dx2(gjs-2:gje+2),dxi2(gjs-2:gje+2), &
-          x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
-  close(ui)
+  call readgrid('data/gridfile.bin')
 
   idxi1(gis-1:gie+2)=1d0/dxi1(gis-1:gie+2)
   idx1 (gis-1:gie+2)=1d0/dx1 (gis-1:gie+2)
