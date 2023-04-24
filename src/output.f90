@@ -301,25 +301,22 @@ subroutine write_grid
  implicit none
 
  character*50:: formhead,formval,formnum
- integer:: unitn
+ integer:: ui
 
 !-----------------------------------------------------------------------------
 
 !binary gridfile--------------------------------------------------------------
- open(newunit=unitn,file='data/gridfile.bin',status='replace',form='unformatted')
+ open(newunit=ui,file='data/gridfile.bin',status='replace',form='unformatted')
 
- write(unitn) x1 (gis-2:gie+2), xi1 (gis-2:gie+2), &
-              dx1(gis-2:gie+2), dxi1(gis-2:gie+2), &
-              x2 (gjs-2:gje+2), xi2 (gjs-2:gje+2), &
-              dx2(gjs-2:gje+2), dxi2(gjs-2:gje+2), &
-              x3 (gks-2:gke+2), xi3 (gks-2:gke+2), &
-              dx3(gks-2:gke+2), dxi3(gks-2:gke+2)
- close(unitn)
+ write(ui)x1(gis-2:gie+2),xi1(gis-2:gie+2),dx1(gis-2:gie+2),dxi1(gis-2:gie+2),&
+          x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dx2(gjs-2:gje+2),dxi2(gjs-2:gje+2),&
+          x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
+ close(ui)
 
 !gridfile---------------------------------------------------------------------
 
- open(newunit=unitn,file='data/gridfile.dat',status='replace')
- write(unitn,'()')
+ open(newunit=ui,file='data/gridfile.dat',status='replace')
+ write(ui,'()')
  write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')dim,dim+1,sigfig+8
  write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
      dim,dim+1,sigfig+7,sigfig-1
@@ -328,115 +325,115 @@ subroutine write_grid
 ! 1D outputs
  case(1)
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
-  write(unitn,formnum)1,2,3
+  write(ui,formnum)1,2,3
   
   if(ie>1)then
-   write(unitn,formhead)'  i','x1','dvol'
+   write(ui,formhead)'  i','x1','dvol'
    j=js;k=ks
    do i = is, ie
-    write(unitn,formval)i,x1(i),dvol(i,j,k)    
+    write(ui,formval)i,x1(i),dvol(i,j,k)    
    end do
   elseif(je>1)then
-   write(unitn,formhead)'  j','x2','dvol'
+   write(ui,formhead)'  j','x2','dvol'
    i=is;k=ks
    do j = js, je
-    write(unitn,formval)j,x2(j),dvol(i,j,k)    
+    write(ui,formval)j,x2(j),dvol(i,j,k)    
    end do
   elseif(ke>1)then
-   write(unitn,formhead)'  k','x3','dvol'
+   write(ui,formhead)'  k','x3','dvol'
    i=is;j=js
    do k = ks, ke
-    write(unitn,formval)k,x3(k),dvol(i,j,k)    
+    write(ui,formval)k,x3(k),dvol(i,j,k)    
    end do
   end if
 
 ! 2D outputs
  case(2)
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
-  write(unitn,formnum)1,2,3,4,5
+  write(ui,formnum)1,2,3,4,5
   
   if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
-   write(unitn,formhead)'  i','j','x1','x2','dvol'
+   write(ui,formhead)'  i','j','x1','x2','dvol'
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
     j=js-1
     do i = is, ie
-     write(unitn,formval)i,j,x1(i),xi2s,dvol(i,j,k)
+     write(ui,formval)i,j,x1(i),xi2s,dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end if
 
    do j = js, je
     do i = is, ie
-     write(unitn,formval)i,j,x1(i),x2(j),dvol(i,j,k)
+     write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
 
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
     j=je+1
     do i = is, ie
-     write(unitn,formval)i,j,x1(i),xi2e,dvol(i,j,k)
+     write(ui,formval)i,j,x1(i),xi2e,dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end if
    
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
-   write(unitn,formhead)'  i','k','x1','x3','dvol'
+   write(ui,formhead)'  i','k','x1','x3','dvol'
    j=js
    do k = ks, ke, outres
 ! writing inner boundary for polar coordinates
     if(crdnt==1.or.crdnt==2)&
-     write(unitn,formval)is-1,k,xi1(is-1),x3(k),dvol(is,j,k)
+     write(ui,formval)is-1,k,xi1(is-1),x3(k),dvol(is,j,k)
     do i = is, ie, outres
-     write(unitn,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
+     write(ui,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do   
    
   elseif(ie==1)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
-   write(unitn,formhead)'  j','k','x2','x3','dvol'
+   write(ui,formhead)'  j','k','x2','x3','dvol'
    i=is
    do k = ks, ke
     do j = js, je
-     write(unitn,formval)j,k,x2(j),x3(k),dvol(i,j,k)
+     write(ui,formval)j,k,x2(j),x3(k),dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end if
 
  case(3)
   write(formnum,'("(",a4,"i4,2i5,4i",i2,")")')'"#",',sigfig+8
-  write(unitn,formnum)1,2,3,4,5,6,7
+  write(ui,formnum)1,2,3,4,5,6,7
   
-  write(unitn,formhead)'  i','j','k','x1','x2','x3','dvol'
+  write(ui,formhead)'  i','j','k','x1','x2','x3','dvol'
   if(crdnt==2)then
    do j = je, je
     do i = is, ie
-     write(unitn,formval)i,j,k,x1(i),x2(j),xi3(ks-1),dvol(i,j,k)
+     write(ui,formval)i,j,k,x1(i),x2(j),xi3(ks-1),dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end if
   
   do k = ks, ke
    do j = je, je
     do i = is, ie
-     write(unitn,formval)i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
+     write(ui,formval)i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end do
 
   if(crdnt==2)then
    do j = je, je
     do i = is, ie
-     write(unitn,formval)i,j,k,x1(i),x2(j),xi3(ke),dvol(i,j,k)
+     write(ui,formval)i,j,k,x1(i),x2(j),xi3(ke),dvol(i,j,k)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end if
   
@@ -444,7 +441,7 @@ subroutine write_grid
   stop 'Something wrong with dimension'
  end select
 
- close(unitn)
+ close(ui)
  
 return
 end subroutine write_grid
@@ -514,7 +511,7 @@ subroutine write_plt
 
  character*50:: pltfile
  character*20:: header(50)='aaa',forma,forme,formi
- integer:: unitn,columns
+ integer:: ui,columns
 
 !-----------------------------------------------------------------------------
 
@@ -527,26 +524,26 @@ subroutine write_plt
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
  write(formi,'("(i",i2,")")')sigfig+8 ! for integers
-! unitn = 30
+! ui = 30
  
 ! Open file
  call set_file_name('plt',tn,time,pltfile)
- open(newunit=unitn,file = pltfile, status='replace')
+ open(newunit=ui,file = pltfile, status='replace')
 
 ! Write time and time step
- write(unitn,'(a,i7,a,1PE12.4e2,a)')&
+ write(ui,'(a,i7,a,1PE12.4e2,a)')&
   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
 
 ! Decide what quantities to write
  call get_header(header,columns)
  do n = 1, columns
-  write(unitn,formi,advance='no') n+2*dim+1
+  write(ui,formi,advance='no') n+2*dim+1
  end do
- write(unitn,'()')
+ write(ui,'()')
  do n = 1, columns
-  write(unitn,forma,advance="no") trim(adjustl(header(n)))
+  write(ui,forma,advance="no") trim(adjustl(header(n)))
  end do
- write(unitn,'()')
+ write(ui,'()')
 
 ! Write file
  select case (dim)
@@ -556,17 +553,17 @@ subroutine write_plt
   if(ie>1)then
    j=js;k=ks
    do i = is, ie
-    call write_val(unitn,i,j,k,forme,header)
+    call write_val(ui,i,j,k,forme,header)
    end do
   elseif(je>1)then
    i=is;k=ks
    do j = js, je
-    call write_val(unitn,i,j,k,forme,header)
+    call write_val(ui,i,j,k,forme,header)
    end do
   elseif(ke>1)then
    i=is;j=js
    do k = ks, ke
-    call write_val(unitn,i,j,k,forme,header)
+    call write_val(ui,i,j,k,forme,header)
    end do
   end if
 
@@ -579,36 +576,36 @@ subroutine write_plt
    if(crdnt==1.or.crdnt==2)then
     j=js
     do i = is, ie
-     call write_val(unitn,i,j,k,forme,header)
+     call write_val(ui,i,j,k,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end if
 
    do j = js, je
     do i = is, ie
-     call write_val(unitn,i,j,k,forme,header)
+     call write_val(ui,i,j,k,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
 
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
     j=je
     do i = is, ie
-     call write_val(unitn,i,j,k,forme,header)
+     call write_val(ui,i,j,k,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end if
    
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    j=js
    do k = ks, ke, outres
 ! writing inner boundary for polar coordinates
-    if(crdnt==1.or.crdnt==2)call write_val(unitn,is,j,k,forme,header)
+    if(crdnt==1.or.crdnt==2)call write_val(ui,is,j,k,forme,header)
     do i = is, ie, outres
-     call write_val(unitn,i,j,k,forme,header)
+     call write_val(ui,i,j,k,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do   
    
   elseif(ie==1)then! For 2D Cartesian
@@ -616,9 +613,9 @@ subroutine write_plt
    i=is
    do k = ks, ke
     do j = js, je
-     call write_val(unitn,i,j,k,forme,header)
+     call write_val(ui,i,j,k,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end if
 
@@ -626,27 +623,27 @@ subroutine write_plt
   if(crdnt==2)then
    do j = je, je
     do i = is, ie
-     call write_val(unitn,i,j,ks,forme,header)
+     call write_val(ui,i,j,ks,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end if
   
   do k = ks, ke
    do j = je, je
     do i = is, ie
-     call write_val(unitn,i,j,k,forme,header)
+     call write_val(ui,i,j,k,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end do
 
   if(crdnt==2)then
    do j = je, je
     do i = is, ie
-     call write_val(unitn,i,j,ke,forme,header)
+     call write_val(ui,i,j,ke,forme,header)
     end do
-    write(unitn,'()')
+    write(ui,'()')
    end do
   end if
   
@@ -655,7 +652,7 @@ subroutine write_plt
  end select
 
 
- close(unitn)
+ close(ui)
  
 
 return
@@ -841,7 +838,7 @@ end subroutine add_column
 
 ! PURPOSE: To write a single row of values
 
-subroutine write_val(unitn,i,j,k,forme,header)
+subroutine write_val(ui,i,j,k,forme,header)
 
  use settings,only:spn,include_extgrv
  use physval
@@ -849,7 +846,7 @@ subroutine write_val(unitn,i,j,k,forme,header)
  
  implicit none
 
- integer,intent(in):: unitn,i,j,k
+ integer,intent(in):: ui,i,j,k
  character(*),intent(in):: forme, header(:)
  integer:: n, nn
 
@@ -858,40 +855,40 @@ subroutine write_val(unitn,i,j,k,forme,header)
  do n = 1, 50
   select case(header(n))
   case('d')!density
-   call write_anyval(unitn,forme,d(i,j,k))
+   call write_anyval(ui,forme,d(i,j,k))
   case('e')!internal energy
-   call write_anyval(unitn,forme,eint(i,j,k))
+   call write_anyval(ui,forme,eint(i,j,k))
   case('p')!pressure
-   call write_anyval(unitn,forme,p(i,j,k))
+   call write_anyval(ui,forme,p(i,j,k))
   case('v1')!velocity 1
-   call write_anyval(unitn,forme,v1(i,j,k))
+   call write_anyval(ui,forme,v1(i,j,k))
   case('v2')!velocity 2
-   call write_anyval(unitn,forme,v2(i,j,k))
+   call write_anyval(ui,forme,v2(i,j,k))
   case('v3')!velocity 3
-   call write_anyval(unitn,forme,v3(i,j,k))
+   call write_anyval(ui,forme,v3(i,j,k))
   case('b1')!magnetic field 1
-   call write_anyval(unitn,forme,b1(i,j,k))
+   call write_anyval(ui,forme,b1(i,j,k))
   case('b2')!magnetic field 2
-   call write_anyval(unitn,forme,b2(i,j,k))
+   call write_anyval(ui,forme,b2(i,j,k))
   case('b3')!magnetic field 3
-   call write_anyval(unitn,forme,b3(i,j,k))
+   call write_anyval(ui,forme,b3(i,j,k))
   case('T')!temperature
-   call write_anyval(unitn,forme,T(i,j,k))
+   call write_anyval(ui,forme,T(i,j,k))
   case('phi')!gravitational potential
-   call write_anyval(unitn,forme,grvphi(i,j,k))
+   call write_anyval(ui,forme,grvphi(i,j,k))
   case('extphi')!external gravitational potential
-   call write_anyval(unitn,forme,extgrv(i,j,k))
+   call write_anyval(ui,forme,extgrv(i,j,k))
   case('mu')!mean molecular weight
-   call write_anyval(unitn,forme,1d0/imu(i,j,k))
+   call write_anyval(ui,forme,1d0/imu(i,j,k))
   case('shock')!shock position
-   call write_anyval(unitn,forme,dble(shock(i,j,k)))
+   call write_anyval(ui,forme,dble(shock(i,j,k)))
   case('aaa')!end of line
-   write(unitn,'()')
+   write(ui,'()')
    exit
   case default!chemical composition
    do nn = 1, spn
     if(header(n)==species(nn))then
-     call write_anyval(unitn,forme,spc(nn,i,j,k))
+     call write_anyval(ui,forme,spc(nn,i,j,k))
     end if
    end do
   end select
@@ -906,14 +903,14 @@ end subroutine write_val
 
 ! PURPOSE: To write one value
 
-subroutine write_anyval(unitn,forme,val)
+subroutine write_anyval(ui,forme,val)
 
- integer,intent(in):: unitn
+ integer,intent(in):: ui
  character(*),intent(in):: forme
  real*8,intent(in):: val
 !-----------------------------------------------------------------------------
 
- write(unitn,forme,advance='no')val
+ write(ui,forme,advance='no')val
 
 return
 end subroutine write_anyval
