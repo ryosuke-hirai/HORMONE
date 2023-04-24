@@ -90,7 +90,6 @@ subroutine read_parameters(filename)
  use settings
  use grid
  use physval
- use particle_mod,only:maxptc
 
  integer:: ui,istat
  character(len=*),intent(in)::filename

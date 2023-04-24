@@ -1,10 +1,10 @@
 module particle_mod
 
- use settings,only:include_particles
+ use settings,only:include_particles,maxptc
 
  implicit none
  
- integer np, maxptc, jmax, npl
+ integer np, jmax, npl
  integer,allocatable,dimension(:,:):: ptci
  integer,allocatable,dimension(:):: ptc_in
  real*8,allocatable:: ptcx(:,:), cosiptc(:), sincptc(:), coscptc(:)

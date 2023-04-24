@@ -199,7 +199,7 @@ subroutine error_nml(simutype,extrasfile)
  print*,'Error: extras file does not contain relevant namelist'
  print'(5a)','Copy over contents of "../para/extras_',simutype,'" to "',&
              trim(extrasfile),'" and specify model parameters'
- stop 
+ stop
 
 return
 end subroutine error_nml

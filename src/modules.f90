@@ -15,7 +15,7 @@ module settings
  logical:: eq_sym, dirichlet_on
 ! numerical setups
  integer:: rktype, crdnt, tnlim, gravswitch, start, tn_out, outstyle, endstyle
- integer:: eostype, spn, compswitch, sigfig, outres, gbtype
+ integer:: eostype, spn, compswitch, sigfig, outres, gbtype, maxptc
  real*8:: courant, t_end, dt_out, dt_unit_in_sec
  character*5:: dt_unit
  real*8:: grverr, cgerr, eoserr, HGfac, hgcfl
