@@ -15,7 +15,7 @@ subroutine gridset
   
   implicit none
 
-  integer jetmp,ketmp
+  integer jetmp,ketmp,ui
 
 !-------------------------------------------------------------------------
 
@@ -425,11 +425,11 @@ subroutine gridset
  else
 
 ! Read from previous gridfile if not first time step
-  open(unit=41,file='data/gridfile.bin',status='old',form='unformatted')
-  read(41)x1(gis-2:gie+2),xi1(gis-2:gie+2),dxi1(gis-2:gie+2),dx1(gis-2:gie+2), &
-          x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dxi2(gjs-2:gje+2),dx2(gjs-2:gje+2), &
-          x3(gks-2:gke+2),xi3(gks-2:gke+2),dxi3(gks-2:gke+2),dx3(gks-2:gke+2)
-  close(41)
+  open(newunit=ui,file='data/gridfile.bin',status='old',form='unformatted')
+  read(ui)x1(gis-2:gie+2),xi1(gis-2:gie+2),dx1(gis-2:gie+2),dxi1(gis-2:gie+2), &
+          x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dx2(gjs-2:gje+2),dxi2(gjs-2:gje+2), &
+          x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
+  close(ui)
 
   idxi1(gis-1:gie+2)=1d0/dxi1(gis-1:gie+2)
   idx1 (gis-1:gie+2)=1d0/dx1 (gis-1:gie+2)
