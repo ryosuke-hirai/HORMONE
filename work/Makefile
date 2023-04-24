@@ -29,7 +29,7 @@ BIN_DIR = $(HORMONE_DIR)/bin
 TARGET = hormone
 
 # compile modules that are being depended on first
-MOD = modules.f90 utils.f90 ionization.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 cooling.f90 composition.f90 star.f90 output.f90 smear.f90
+MOD = modules.f90 utils.f90 ionization.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 cooling.f90 composition.f90 star.f90 output.f90 smear.f90 readbin.f90
 MODF= $(patsubst %,$(SRC_DIR)/%,$(MOD))
 TARGETF= $(patsubst %,$(SRC_DIR)/%.f90,$(TARGET))
 SRC = $(MODF) \
