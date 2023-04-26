@@ -1,10 +1,9 @@
 c Model parameters for star_sph
 
 c mesafile: Name of MESA profile file to be read.
-c species: List of all elements to be tracked in the simulation.
+c spc_list: List of all elements to be tracked in the simulation.
 &starcon
- spn=8
  mesafile='sun_profile.data'
- species(1:spn) = ([character(len=10):: 'h1','he4','he3','c12','n14','o16','fe56','others'])
+ spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
 
 /
