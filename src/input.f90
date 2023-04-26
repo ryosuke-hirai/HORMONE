@@ -43,7 +43,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
  if(istat/=0)then
   print*,'Error: Input MESA file cannot be found.'
   print*,'Make sure to specify the correct file name.'
-  print'(3a)',"mesafile='",mesafile,"'"
+  print'(3a)',"mesafile='",trim(mesafile),"'"
   stop
  end if
  read(ui,'()')
