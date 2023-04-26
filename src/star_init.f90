@@ -23,7 +23,7 @@ subroutine star_init
  real*8,allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
  character(len=10)::spc_list(1:1000)
- integer nel,nn,sn,istat
+ integer nn,sn,istat
  real*8::dbg,mass,radius,spc_bg(1:spn)
  
 !-----------------------------------------------------------------------------
@@ -49,6 +49,7 @@ subroutine star_init
           dspc   (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
           spcflx (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
           species(1:spn) )
+ species(1:spn) = spc_list(1:spn)
  
  call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 
