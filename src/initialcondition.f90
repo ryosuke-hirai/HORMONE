@@ -36,6 +36,9 @@ subroutine initialcondition
   case('sedov_default','sedov_other')
    call sedov
 
+  case('star_sph')
+   call star_init
+
   case('rsg_sph')
    call redsupergiant
 

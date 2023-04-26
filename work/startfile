@@ -14,6 +14,7 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'briowushock_{x,y,z}': Brio & Wu shocktube problem in the x/y/z direction
 'sodshock_{x,y,z}': Sod shocktube problem in the x/y/z direction
 'other_shocktube_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
+'star_sph': Do something with a star on spherical coordinates
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 
-&startcon start=0 simtype='sedov_other' parafile=''/
+&startcon start=0 simtype='star_sph' parafile='parameters'/

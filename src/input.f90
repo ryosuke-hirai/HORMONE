@@ -24,7 +24,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
  character*10,allocatable,intent(out),optional::comp_list(:)
  real*8,allocatable,dimension(:,:):: dat
  character*10000 dumc
- integer nn,ui, i,j, lines, rows, nrel, nel
+ integer nn,ui, i,j, lines, rows, nrel, nel,istat
  character(len=10):: element
  character(len=10),allocatable:: element_list(:)
 
@@ -39,7 +39,13 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
                   'fe52','fe54','fe56','co56','ni56'/)
  
 ! reading data from datafile ! -----------------------------------------------
- open(newunit=ui,file=mesafile,status='old')
+ open(newunit=ui,file=mesafile,status='old',iostat=istat)
+ if(istat/=0)then
+  print*,'Error: Input MESA file cannot be found.'
+  print*,'Make sure to specify the correct file name.'
+  print'(2a)',"mesafile='",mesafile
+  stop
+ end if
  read(ui,'()')
  read(ui,'()')
  read(ui,*) lines, lines
