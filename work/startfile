@@ -17,4 +17,4 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'star_sph': Do something with a star on spherical coordinates
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 
-&startcon start=0 simtype='star_sph' parafile='parameters'/
+&startcon start=0 simtype='star_sph' parafile=''/
