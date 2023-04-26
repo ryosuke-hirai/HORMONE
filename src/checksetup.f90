@@ -139,6 +139,8 @@ subroutine checksetup
    dt_unit_in_sec = 1d0
   case('ms')
    dt_unit_in_sec = 1d-3
+  case('ns')
+   dt_unit_in_sec = 1d-9
   case default
    print*,'Error: Set a valid unit for output interval, dt_unit = ',dt_unit
    stop
