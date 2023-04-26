@@ -34,7 +34,8 @@ subroutine star_init
 ! Specify input file, elements you want to track, and a softening length
  open(newunit=nn,file=extrasfile,status='old',iostat=istat)
  if(istat/=0)call error_extras('star',extrasfile)
- read(nn,NML=starcon)
+ read(nn,NML=starcon,iostat=istat)
+ if(istat/=0)call error_nml('star',extrasfile)
  close(nn)
 
 ! Re-count spn based on spc_list and reallocate relevant arrays
