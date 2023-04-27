@@ -1,0 +1,17 @@
+c Model parameters for AGN disk explosion
+
+&agn_con
+
+! AGN disk parameters
+ d_disk = 1d-11 ! mid-plane density in g/cc
+ M_SMBH = 1d9 ! in solar masses
+ r_disk = 1d3 ! in gravitational radii
+ aspratio = 1d-3 ! H/r for disk
+
+! explosion parameters
+ Eexp = 1d51 ! Explosion energy in ergs
+ Mexp = 1.3d0 ! Ejecta mass in solar masses
+ Rexp = 6d12 ! energy injection radius in cm
+ qkin = 0.5d0 ! Fraction of energy injected as kinetic energy
+
+/

@@ -69,6 +69,8 @@ subroutine read_default
   filename='../para/parameters_star_sph'
  case('rsg_sph')
   filename='../para/parameters_rsg_sph'
+ case('agndisk')
+  filename='../para/parameters_agndisk'
  case default
   print*,'This simtype does not exist yet, simtype ="',trim(simtype),'"'
   stop

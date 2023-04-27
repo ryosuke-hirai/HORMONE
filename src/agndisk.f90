@@ -9,27 +9,36 @@
 subroutine agndisk
 
  use grid
- use settings,only:dt_out
+ use settings,only:dt_out,extrasfile
  use physval
- use constants
- use pressure_mod
+ use constants,only:pi,clight,G,msun
+ use pressure_mod,only:eos_p
  use composition_mod,only:get_imu
- use ionization_mod
+ use input_mod,only:error_extras,error_nml
 
  implicit none
 
+ integer:: ui,istat
  real*8:: d_disk, d_amb, Eexp, Mexp, Rexp, Vexp, e_bcg, v0, t0, vedge, v0t0
  real*8:: M_SMBH, r_disk, rgrav, aspratio, hdisk, qkin, mass
 
 !-----------------------------------------------------------------------------
 
-! disk parameters
- d_disk = 1d-11
+ namelist /agn_con/ d_disk,M_SMBH,r_disk,aspratio,Eexp,Mexp,Rexp,qkin
+! Specify input file, elements you want to track, and a softening length
+ open(newunit=ui,file=extrasfile,status='old',iostat=istat)
+ if(istat/=0)call error_extras('agndisk',extrasfile)
+ read(ui,NML=agn_con,iostat=istat)
+ if(istat/=0)call error_nml('agndisk',extrasfile)
+ close(ui)
+
+ M_SMBH = M_SMBH*msun
+ Mexp = Mexp*msun
+
+! Background parameters
  d_amb  = 1d-25
  e_bcg  = 1d-30
- M_SMBH = 1d9*msun
- r_disk = 1d3 ! in gravitational radii
- aspratio = 1d-3
+
 ! disk composition
  spc(2,:,:,:) = 2.6797147940625970d-1!he4
  spc(3,:,:,:) = 2.4091251279941919d-3!c12
@@ -41,12 +50,7 @@ subroutine agndisk
  spc(1,:,:,:) = 1d0-spc(2,:,:,:)-spc(3,:,:,:)-spc(4,:,:,:)-spc(5,:,:,:) &
                    -spc(6,:,:,:)-spc(7,:,:,:)-spc(8,:,:,:)
  
-! explosion parameters
- Eexp = 1d51
- Mexp = 1.3d0*msun
- Rexp = 6d12 ! energy injection radius
- qkin = 0.5d0 ! Fraction of energy injected as kinetic energy
- 
+
  do i = is, ie
   if(xi1(i)>Rexp)then
    Rexp = xi1(i)

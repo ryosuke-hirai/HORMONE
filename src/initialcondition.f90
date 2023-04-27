@@ -42,6 +42,9 @@ subroutine initialcondition
   case('rsg_sph')
    call redsupergiant
 
+  case('agndisk')
+   call agndisk
+
   case default
    print*,'Chosen simtype not available, simtype = ',simtype
    stop
