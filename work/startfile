@@ -5,6 +5,8 @@ If start/=0, it will restart from the file number specified by (start).
 If start==0, it will set the initial condition based on the choice of simtype.
 'parafile' specifies the extra parameter file name. Leave it blank if you are happy with the defaults.
 'simtype' specifies the type of simulation. Available options are listed below.
+          Type " test" after the simtype if you want to compare results against
+	  pre-computed test data. Only certain simtypes have test data available
 
 ++++++ SIMTYPE OPTIONS ++++++
 'eostest': Forwards and backwards consistency test for EoS.
@@ -19,4 +21,4 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 'agndisk': Explosions in AGN disks (Grishin+2021)
 
-&startcon start=0 simtype='KHtest' parafile=''/
+&startcon start=0 simtype='sodshock_x test' parafile=''/

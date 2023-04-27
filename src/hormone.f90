@@ -31,6 +31,7 @@ program hormone
   use output_mod
   use gravmod
   use composition_mod
+  use tests_mod
   
   implicit none
 
@@ -138,6 +139,8 @@ program hormone
 ! End integration ------------------------------------------------------------
 
   call output ! To see final state
+
+  if(is_test)call test
 
 !------------------------------- end program ---------------------------------
 

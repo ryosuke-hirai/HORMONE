@@ -10,6 +10,7 @@ subroutine checksetup
   use settings
   use grid
   use physval
+  use tests_mod
   
   implicit none
 
@@ -170,6 +171,9 @@ subroutine checksetup
 
 ! Don't allocate spc if compswitch == 0
   if(compswitch==0) spn = 0
+
+! Check if test data is available
+  if(is_test)call check_testlist(simtype)
 
   return
 end subroutine checksetup

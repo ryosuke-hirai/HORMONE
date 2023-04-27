@@ -75,10 +75,15 @@ subroutine readbin(filename)
  use gravmod
 
  character(len=*),intent(in):: filename
- integer:: un
+ integer:: un,istat
 !-----------------------------------------------------------------------------
 
- open(newunit=un,file=filename,status='old',form='unformatted')
+ open(newunit=un,file=filename,status='old',form='unformatted',iostat=istat)
+ if(istat/=0)then
+  print*,'Binary dump file not found'
+  print'(3a)','File name = "',trim(filename),'"'
+  stop
+ end if
  read(un) tn,time
  read(un) d (is:ie,js:je,ks:ke), &
           v1(is:ie,js:je,ks:ke), &

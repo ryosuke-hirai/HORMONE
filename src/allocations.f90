@@ -73,7 +73,8 @@ subroutine allocations
 
 ! allocate Dirichlet variables if Dirichlet boundary is applied
  if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
-    bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
+    bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9.or. &
+    is_test)then
   allocate( &
    d0 (-1:in,-1:jn,-1:kn), p0 (-1:in,-1:jn,-1:kn), &
    b10(-1:in,-1:jn,-1:kn), b20(-1:in,-1:jn,-1:kn), b30(-1:in,-1:jn,-1:kn), &

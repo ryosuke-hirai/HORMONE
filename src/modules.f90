@@ -22,7 +22,7 @@ module settings
  integer:: imesh, jmesh, kmesh
 ! switches
  logical:: include_extgrv, include_particles, include_cooling, mag_on
- logical:: include_extforce
+ logical:: include_extforce, is_test
  logical:: write_other_vel, write_shock, grav_init_other, write_evo
  character*30:: flux_limiter, simtype
  character*50:: parafile,extrasfile
@@ -96,6 +96,8 @@ module physval
   real*8,allocatable,dimension(:,:,:,:):: spc, spcorg
   real*8,allocatable,dimension(:,:,:,:,:):: dspc, spcflx
   character(len=10),allocatable:: species(:)
+  real*8,allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30
+  real*8,allocatable,dimension(:,:,:,:):: spc0
 
   real*8:: gamma, muconst, ch
 

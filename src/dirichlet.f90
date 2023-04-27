@@ -2,9 +2,6 @@ module dirichlet_mod
 
   implicit none
 
-  real*8,allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30
-  real*8,allocatable,dimension(:,:,:,:):: spc0
-
  contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -18,7 +15,7 @@ subroutine dirichletbound
 
   use grid
   use ejectamod
-  use physval,only:gamma
+  use physval,only:gamma,d0,p0,v10,v20,v30,b10,b20,b30,spc0
 
   implicit none
 

@@ -1,5 +1,8 @@
 module setup_mod
  implicit none
+
+ public:: read_startfile,read_default,read_parameters
+ private::is_it_test
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -12,7 +15,7 @@ contains
 
  subroutine read_startfile
 
-  use settings,only:start,simtype,parafile
+  use settings,only:start,simtype,parafile,is_test
 
 !-----------------------------------------------------------------------------
 
@@ -21,9 +24,38 @@ contains
   open(unit=1,file='startfile',status='old')
   read(1,NML=startcon)
   close(1)
+
+  call is_it_test(simtype,is_test)
   
   return
  end subroutine read_startfile
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                         SUBROUTINE IS_IT_TEST
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To check whether the simulation is a test to be compared against pre-computed data
+
+ subroutine is_it_test(simtype,is_test)
+
+  character(len=*),intent(inout)::simtype
+  logical,intent(out):: is_test
+  integer:: strl
+
+!-----------------------------------------------------------------------------
+  
+  strl = len(trim(simtype))
+  if(simtype(strl-4:strl)==' test')then
+   is_test = .true.
+   simtype = simtype(1:strl-5)
+  else
+   is_test = .false.
+  end if
+
+  return
+ end subroutine is_it_test
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -85,7 +117,7 @@ end subroutine read_default
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE READ_PARAMETERS
+!                       SUBROUTINE READ_PARAMETERS
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

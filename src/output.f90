@@ -18,12 +18,8 @@ module output_mod
 
 subroutine output
 
-  use settings,only:outstyle
-  use grid
-  use physval
-  use constants
-  use gravmod
-  use particle_mod
+  use settings,only:outstyle,is_test
+  use grid,only:tn
 
   implicit none
 
@@ -34,97 +30,99 @@ subroutine output
 
 !----------------------------------------------------------------------------
 
+  if(is_test) return ! do not bother outputting if it is a test
+
   if(tn==0)call write_grid
 
   call write_bin
   
   call write_plt
 
-  if(include_particles)then
-!ptcfile----------------------------------------------------------------
-  if(outstyle==1)then
-   write(ptcfile,'(a8,i11.11,a5)')'data/ptc',nint(time),'s.dat'
-   if(time>2147483647d0)then
-    write(ptcfile,'(a8,i9.9,a7)')'data/ptc',nint(time*0.01d0),'00s.dat'
-   end if
-  elseif(outstyle==2)then
-   write(ptcfile,'(a8,i8.8,a4)')'data/ptc',tn,'.dat'
-  end if
-
-  if(crdnt==1.and.je==1)then
-   do n = 1, np
-    extflag = .false.
-    do k = ks, ke
-     if(ptcx(2,n)>=xi3(k-1))then;if(ptcx(2,n)<xi3(k))then
-      do i = is, ie
-       if(ptcx(1,n)>=xi1(i-1))then;if(ptcx(1,n)<xi1(i))then
-        if(e(i,js,k)+grvphi(i,js,k)*d(i,js,k)>0d0)then
-         ptci(2,n) = 1
-        else
-         ptci(2,n) = 0
-        end if
-        extflag=.true.
-        exit
-       end if;end if
-      end do
-      if(extflag)exit
-     end if;end if
-    end do
-   end do
-  elseif(crdnt==2.and.ke==1)then
-   do n = 1, np
-    extflag = .false.
-    pr = sqrt(ptcx(1,n)**2d0+ptcx(2,n)**2d0)
-    pt = acos(ptcx(2,n)/pr)
-    do j = js, je
-     if(pt>=xi2(j-1))then;if(pt<xi2(j))then
-      do i = is, ie
-       if(pr>=xi1(i-1))then;if(pr<xi1(i))then
-        if(e(i,j,ks)+grvphi(i,j,ks)*d(i,j,ks)>0d0)then
-         ptci(2,n) = 1
-        else
-         ptci(2,n) = 0
-        end if
-        extflag=.true.
-        exit
-       end if;end if
-      end do
-      if(extflag)exit
-     end if;end if
-    end do
-   end do
-  end if
-
-  open(unit=70,file = ptcfile, status='replace')
-
-  write(70,'(a,i7,a,1PE12.4e2,2(a5,i9))')&
-       '#tn =',tn,'  time= ',time,'np= ',np,'npl=',npl
-  write(70,'(a7,2a3,3a15)')'label','ej','ub','mass','x1','x3'
-
-  do i = 1, np
-   write(70,'(i7,2i3,3(1PE15.7e2))')ptci(0:2,i),ptcx(0:2,i)
-  end do
-
-  close(70)
-
-!bptfile----------------------------------------------------------------
-  if(outstyle==1)then
-   write(bptfile,'(a8,i11.11,a5)')'data/bpt',nint(time),'s.dat'
-   if(time>2147483647d0)then
-    write(bptfile,'(a8,i9.9,a7)')'data/bpt',nint(time*0.01d0),'00s.dat'
-   end if
-  elseif(outstyle==2)then
-   write(bptfile,'(a8,i8.8,a4)')'data/bpt',tn,'.dat'
-  end if
-
-  open(unit=80,file = bptfile, status='replace',form='unformatted')
-
-  write(80)np,npl
-  write(80)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
-
-  close(80)
-
-  end if
+!!$  if(include_particles)then
+!!$!ptcfile----------------------------------------------------------------
+!!$  if(outstyle==1)then
+!!$   write(ptcfile,'(a8,i11.11,a5)')'data/ptc',nint(time),'s.dat'
+!!$   if(time>2147483647d0)then
+!!$    write(ptcfile,'(a8,i9.9,a7)')'data/ptc',nint(time*0.01d0),'00s.dat'
+!!$   end if
+!!$  elseif(outstyle==2)then
+!!$   write(ptcfile,'(a8,i8.8,a4)')'data/ptc',tn,'.dat'
+!!$  end if
+!!$
+!!$  if(crdnt==1.and.je==1)then
+!!$   do n = 1, np
+!!$    extflag = .false.
+!!$    do k = ks, ke
+!!$     if(ptcx(2,n)>=xi3(k-1))then;if(ptcx(2,n)<xi3(k))then
+!!$      do i = is, ie
+!!$       if(ptcx(1,n)>=xi1(i-1))then;if(ptcx(1,n)<xi1(i))then
+!!$        if(e(i,js,k)+grvphi(i,js,k)*d(i,js,k)>0d0)then
+!!$         ptci(2,n) = 1
+!!$        else
+!!$         ptci(2,n) = 0
+!!$        end if
+!!$        extflag=.true.
+!!$        exit
+!!$       end if;end if
+!!$      end do
+!!$      if(extflag)exit
+!!$     end if;end if
+!!$    end do
+!!$   end do
+!!$  elseif(crdnt==2.and.ke==1)then
+!!$   do n = 1, np
+!!$    extflag = .false.
+!!$    pr = sqrt(ptcx(1,n)**2d0+ptcx(2,n)**2d0)
+!!$    pt = acos(ptcx(2,n)/pr)
+!!$    do j = js, je
+!!$     if(pt>=xi2(j-1))then;if(pt<xi2(j))then
+!!$      do i = is, ie
+!!$       if(pr>=xi1(i-1))then;if(pr<xi1(i))then
+!!$        if(e(i,j,ks)+grvphi(i,j,ks)*d(i,j,ks)>0d0)then
+!!$         ptci(2,n) = 1
+!!$        else
+!!$         ptci(2,n) = 0
+!!$        end if
+!!$        extflag=.true.
+!!$        exit
+!!$       end if;end if
+!!$      end do
+!!$      if(extflag)exit
+!!$     end if;end if
+!!$    end do
+!!$   end do
+!!$  end if
+!!$
+!!$  open(unit=70,file = ptcfile, status='replace')
+!!$
+!!$  write(70,'(a,i7,a,1PE12.4e2,2(a5,i9))')&
+!!$       '#tn =',tn,'  time= ',time,'np= ',np,'npl=',npl
+!!$  write(70,'(a7,2a3,3a15)')'label','ej','ub','mass','x1','x3'
+!!$
+!!$  do i = 1, np
+!!$   write(70,'(i7,2i3,3(1PE15.7e2))')ptci(0:2,i),ptcx(0:2,i)
+!!$  end do
+!!$
+!!$  close(70)
+!!$
+!!$!bptfile----------------------------------------------------------------
+!!$  if(outstyle==1)then
+!!$   write(bptfile,'(a8,i11.11,a5)')'data/bpt',nint(time),'s.dat'
+!!$   if(time>2147483647d0)then
+!!$    write(bptfile,'(a8,i9.9,a7)')'data/bpt',nint(time*0.01d0),'00s.dat'
+!!$   end if
+!!$  elseif(outstyle==2)then
+!!$   write(bptfile,'(a8,i8.8,a4)')'data/bpt',tn,'.dat'
+!!$  end if
+!!$
+!!$  open(unit=80,file = bptfile, status='replace',form='unformatted')
+!!$
+!!$  write(80)np,npl
+!!$  write(80)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
+!!$
+!!$  close(80)
+!!$
+!!$  end if
 
 !remmassfile---------------------------------------------------------------
 !!$  if(tn==0)then
