@@ -36,6 +36,9 @@ subroutine initialcondition
   case('sedov_default','sedov_other')
    call sedov
 
+  case('KHtest')
+   call KHtest
+
   case('star_sph')
    call star_init
 

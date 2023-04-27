@@ -65,6 +65,8 @@ subroutine read_default
   filename='../para/parameters_shocktube_z'
  case('sedov_default','sedov_other')
   filename='../para/parameters_sedov'
+ case('KHtest')
+  filename='../para/parameters_KHtest'
  case('star_sph')
   filename='../para/parameters_star_sph'
  case('rsg_sph')
