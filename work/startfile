@@ -9,12 +9,14 @@ If start==0, it will set the initial condition based on the choice of simtype.
 	  pre-computed test data. Only certain simtypes have test data available
 
 ++++++ SIMTYPE OPTIONS ++++++
+** Test files available **
 'eostest': Forwards and backwards consistency test for EoS.
+'sodshock_{x,y,z}': Sod shocktube problem in the x/y/z direction
+'briowushock_{x,y,z}': Brio & Wu shocktube problem in the x/y/z direction
 'orszagtang_{xy,yz,xz}': Orszag-Tang test in the xy/yz/xz plane
+** Test files NOT available **
 'sedov_default': Sedov blast wave with default parameters.
 'sedov_other': Sedov blast wave. Set model parameters in extras file.
-'briowushock_{x,y,z}': Brio & Wu shocktube problem in the x/y/z direction
-'sodshock_{x,y,z}': Sod shocktube problem in the x/y/z direction
 'other_shocktube_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
 'KHtest': Kelvin-Helmholtz instability test.
 'star_sph': Do something with a star on spherical coordinates
