@@ -8,93 +8,95 @@
 
 subroutine gravity
 
-  use settings,only:eq_sym,courant
-  use grid
-  use constants
-  use physval
-  use gravmod
+ use settings,only:eq_sym,courant
+ use grid
+ use constants
+ use physval
+ use gravmod
 
-  implicit none
+ implicit none
 
-  integer:: l, flgcg
-  real*8:: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
-  real*8,dimension(1:lmax):: gsrc, pp, absrob
-  real*8,allocatable,dimension(:,:,:):: newphi
-  real*8,allocatable,dimension(:):: intphi
-  real*8,allocatable,dimension(:):: x,y,z,r,aw
+ integer:: l, flgcg
+ real*8:: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
+ real*8,dimension(1:lmax):: gsrc, pp, absrob
+ real*8,allocatable,dimension(:,:,:):: newphi
+ real*8,allocatable,dimension(:):: intphi
+ real*8,allocatable,dimension(:):: x,y,z,r,aw
 
 !-----------------------------------------------------------------------------
-  gin = gie - gis + 1
+ gin = gie - gis + 1
 
-if(gravswitch==0.or.gravswitch==1)then
- grvphi = 0d0
-elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
- allocate( x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax) )
+ if(gravswitch==0)then
+  return
+ elseif(gravswitch==1)then
+  grvphi = 0d0
+ elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+  allocate( x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax) )
  
- if(grav_init_other.and.gravswitch==3)return
+  if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
- call gravbound
+  call gravbound
 
 ! cylindrical (equatorial+axial symmetry) ####################################
- if(je==1.and.crdnt==1.and.dim==2)then
+  if(je==1.and.crdnt==1.and.dim==2)then
 
 ! calculating b for Ax=b
-  mind = minval(d(is:ie,js:je,ks:ke))
-  if(gravswitch==3)then
-   mind = sum(d(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))&
-        / (pi*xi1e**2*(xi3e-xi3s)) * 1d-2
-   hgsrc=mind
-  end if
-  do l = 1, lmax
-   i = modlimax(l) +gis-1
-   k = (l-modlimax(l))/gin + gks
-   x(l) = grvphi(i,js,k)
-   gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
-   if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
-    gsrc(l) = 4d0*pi*G*d(i,js,k)*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
-   end if;end if;end if;end if
-   if(k==gks) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
-   if(i==gie) gsrc(l) = gsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
-   if(k==gke) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
-  end do
+   mind = minval(d(is:ie,js:je,ks:ke))
+   if(gravswitch==3)then
+    mind = sum(d(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))&
+         / (pi*xi1e**2*(xi3e-xi3s)) * 1d-2
+    hgsrc=mind
+   end if
+   do l = 1, lmax
+    i = modlimax(l) +gis-1
+    k = (l-modlimax(l))/gin + gks
+    x(l) = grvphi(i,js,k)
+    gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
+    if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
+     gsrc(l) = 4d0*pi*G*d(i,js,k)*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
+    end if;end if;end if;end if
+    if(k==gks) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
+    if(i==gie) gsrc(l) = gsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
+    if(k==gke) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
+   end do
 
 ! spherical (axial symmetry) #################################################
- elseif(ke==1.and.crdnt==2.and.dim==2)then
+  elseif(ke==1.and.crdnt==2.and.dim==2)then
 
 ! calculating b for Ax=b
-  mind = minval(d(is:ie,js:je,ks:ke))
-  do l=1,lmax
-   i = modlimax(l) +gis-1
-   j = (l-modlimax(l))/gin + gjs
-   k = ks
-   x(l) = grvphi(i,j,k)
-   gsrc(l) = 4d0*pi*G*mind*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
-   if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
-    gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
-   end if;end if;end if;end if
-   if(i==gie) gsrc(l)= gsrc(l) - xi1(i)*xi1(i)*sinc(j)*dxi2(j)*idx1(i+1)&
-        *phiio(i+1,j)
+   mind = minval(d(is:ie,js:je,ks:ke))
+   do l=1,lmax
+    i = modlimax(l) +gis-1
+    j = (l-modlimax(l))/gin + gjs
+    k = ks
+    x(l) = grvphi(i,j,k)
+    gsrc(l) = 4d0*pi*G*mind*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
+    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
+     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
+    end if;end if;end if;end if
+    if(i==gie) gsrc(l)= gsrc(l) - xi1(i)*xi1(i)*sinc(j)*dxi2(j)*idx1(i+1)&
+                                  *phiio(i+1,j)
 !   if(i==gis) gsrc(l)= gsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
 !        *phiii(i-1,j)
-  end do
+   end do
 
- end if
+  end if
 
 
 ! set initial r0=p0
-   call Avec(x)
+  call Avec(x)
 
-   r = gsrc - aw
+  r = gsrc - aw
 
-   call cctr(r)
+  call cctr(r)
 
-   pp = z
-   rrold = dot_product(r,z)
+  pp = z
+  rrold = dot_product(r,z)
 
 ! start iteration --------------------------------------------------------
 
- do n = 1, lmax
+  do n = 1, lmax
 
    call Avec(pp)
 
