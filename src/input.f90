@@ -34,9 +34,26 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 ! list of relevant elements ! ------------------------------------------------
  nrel = 20 ! number of elements in the list
  allocate(element_list(nrel))
- element_list = (/'h1','he3','he4','c12','n14','o16','ne20','mg24',&
-                  'si28','s32','ar36','ca40','ti44','cr48','cr60',&
-                  'fe52','fe54','fe56','co56','ni56'/)
+ element_list( 1) = 'h1'
+ element_list( 2) = 'he3'
+ element_list( 3) = 'he4'
+ element_list( 4) = 'c12'
+ element_list( 5) = 'n14'
+ element_list( 6) = 'o16'
+ element_list( 7) = 'ne20'
+ element_list( 8) = 'mg24'
+ element_list( 9) = 'si28'
+ element_list(10) = 's32'
+ element_list(11) = 'ar36'
+ element_list(12) = 'ca40'
+ element_list(13) = 'ti44'
+ element_list(14) = 'cr48'
+ element_list(15) = 'cr60'
+ element_list(16) = 'fe52'
+ element_list(17) = 'fe54'
+ element_list(18) = 'fe56'
+ element_list(19) = 'co56'
+ element_list(20) = 'ni56'
  
 ! reading data from datafile ! -----------------------------------------------
  open(newunit=ui,file=mesafile,status='old',iostat=istat)

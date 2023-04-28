@@ -176,7 +176,7 @@ subroutine open_evofile
  use settings,only:sigfig,gravswitch,mag_on,crdnt
  use grid,only:tn,dim
  
- character*50:: forma
+ character(50):: forma
 
 !-----------------------------------------------------------------------------
 

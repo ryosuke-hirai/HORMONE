@@ -4,18 +4,6 @@ module tests_mod
  public:: check_testlist
 
  integer,parameter:: ntest=8
-! List of available test data
- character(30),dimension(ntest),parameter:: &
-  testlist = (/ &
-  'sedov_default',&
-  'briowushock_x',&
-  'briowushock_y',&
-  'briowushock_z',&
-  'sodshock_x',&
-  'sodshock_y',&
-  'sodshock_z',&
-  'orszagtang_xy' &
-  /)
 
 contains
 
@@ -31,17 +19,13 @@ contains
 
   character(len=*),intent(in)::simtype
   logical:: test_available
-  integer:: i
+  integer:: ui,istat
+  character(30):: filename
 
 !-----------------------------------------------------------------------------
 
-  test_available = .false.
-  do i = 1, ntest
-   if(trim(simtype)==trim(testlist(i)))then
-    test_available = .true.
-    exit
-   end if
-  end do
+  filename = testfilename(simtype)
+  inquire(file=filename,exist=test_available)
 
   if(.not.test_available)then
    print*,'Test data is not available for the following simtype'
@@ -85,7 +69,7 @@ contains
   b30 = b3
 
 ! Open test data file
-  testfile = '../tests/'//trim(simtype)//'.bin'
+  testfile = testfilename(simtype)
   
   call readbin(testfile)
   
@@ -107,7 +91,13 @@ contains
    print*,trim(simtype),' test: failed'
   end if
   
- return
+  return
  end subroutine test
+
+ function testfilename(simtype) result(file)
+  character(len=*),intent(in)::simtype
+  character(30)::file
+  file = '../tests/'//trim(simtype)//'.bin'
+ end function testfilename
 
 end module tests_mod
