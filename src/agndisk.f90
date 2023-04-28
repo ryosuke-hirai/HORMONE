@@ -1,3 +1,8 @@
+module agndisk_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                            SUBROUTINE AGNDISK
@@ -15,8 +20,6 @@ subroutine agndisk
  use pressure_mod,only:eos_p
  use composition_mod,only:get_imu
  use input_mod,only:error_extras,error_nml
-
- implicit none
 
  integer:: ui,istat
  real*8:: d_disk, d_amb, Eexp, Mexp, Rexp, Vexp, e_bcg, v0, t0, vedge, v0t0
@@ -111,3 +114,4 @@ subroutine agndisk
 return
 end subroutine agndisk
 
+end module agndisk_mod

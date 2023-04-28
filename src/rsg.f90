@@ -1,3 +1,8 @@
+module redsupergiant_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                         SUBROUTINE REDSUPERGIANT
@@ -17,8 +22,6 @@ subroutine redsupergiant
  use gravmod,only:extgrv,mc
  use utils,only:softened_pot
  use output_mod,only:write_extgrv
-
- implicit none
 
  character*100:: mesafile
  real*8,allocatable,dimension(:):: r,m,rho,pres
@@ -85,3 +88,5 @@ subroutine redsupergiant
 
 return
 end subroutine redsupergiant
+
+end module redsupergiant_mod

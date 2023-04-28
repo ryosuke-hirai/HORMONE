@@ -1,7 +1,7 @@
 module timestep_mod
-
+ implicit none
  private:: off
-
+ public:: timestep
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -19,8 +19,6 @@ contains
   use physval
   use constants,only:huge
   use pressure_mod,only:eos_p_cs,get_cf
-
-  implicit none
 
   real*8,allocatable:: dtdist(:,:,:,:), dti(:,:,:)
   real*8:: cfmax, cf1,cf2,cf3

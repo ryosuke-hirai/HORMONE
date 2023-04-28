@@ -1,3 +1,8 @@
+module tools_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                              SUBROUTINE TOOLS
@@ -19,8 +24,6 @@ subroutine tools
  use ionization_mod,only:ionization_setup
  use cooling_mod,only:cooling_setup
  
- implicit none
-
  integer ll
 
 !-----------------------------------------------------------------------------
@@ -186,9 +189,9 @@ subroutine tools
  end if
 
 ! Set cooling parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if(include_cooling)then
- call cooling_setup
-end if
+ if(include_cooling) call cooling_setup
 
 return
 end subroutine tools
+
+end module tools_mod

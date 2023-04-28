@@ -1,3 +1,8 @@
+module shocktube_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                          SUBROUTINE SHOCKTUBE
@@ -11,8 +16,6 @@ subroutine shocktube
  use settings,only:mag_on,simtype,extrasfile
  use physval,only:gamma
  use input_mod,only:error_extras,error_nml
-
- implicit none
 
  integer::dir,ui,strl,istat
  real*8:: dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,b1l,b1r,b2l,b2r,b3l,b3r
@@ -67,8 +70,9 @@ subroutine shocktube
                           dr,pr,v1r,v2r,v3r,b1r,b2r,b3r)
 
  return
- 
-contains
+end subroutine shocktube
+
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                       SUBROUTINE SETUP_SHOCKTUBE
@@ -162,4 +166,4 @@ subroutine setup_shocktube(whichaxis, &
 return
 end subroutine setup_shocktube
 
-end subroutine shocktube
+end module shocktube_mod

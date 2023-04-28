@@ -1,3 +1,7 @@
+module conserve_mod
+ implicit none
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                           SUBROUTINE CONSERVE
@@ -37,4 +41,4 @@ subroutine conserve
 return
 end subroutine conserve
 
-
+end module conserve_mod

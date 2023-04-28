@@ -1,3 +1,8 @@
+module restart_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                           SUBROUTINE RESTART
@@ -19,8 +24,6 @@ subroutine restart
  use output_mod,only:set_file_name
  use readbin_mod
  
- implicit none
-
  real*8:: starttime
  character*30 startfile, bptfile
  integer:: ui
@@ -65,3 +68,5 @@ subroutine restart
  end if
 
 end subroutine restart
+
+end module restart_mod

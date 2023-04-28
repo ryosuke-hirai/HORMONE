@@ -17,7 +17,7 @@ endif
 ifeq (${FC},ifort)
 MODFLAG= -module 
 FCFLAG+= -qopenmp #-heap-arrays
-DBFLAG= -traceback -fpe0 -CB #-pg #-check all
+DBFLAG= -traceback -fpe0 -CB -warn all #-pg #-check all
 PRFLAG= -pg
 endif
 
@@ -29,11 +29,13 @@ BIN_DIR = $(HORMONE_DIR)/bin
 TARGET = hormone
 
 # compile modules that are being depended on first
-MOD = modules.f90 utils.f90 ionization.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 cooling.f90 composition.f90 star.f90 output.f90 smear.f90 input.f90 setup.f90 readbin.f90 tests.f90
+MOD = modules.f90 utils.f90 conserve.f90 ionization.f90 eos.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 cooling.f90 composition.f90 star.f90 shockfind.f90 output.f90 smear.f90 input.f90 setup.f90 readbin.f90 tests.f90 restart.f90
+INI = eostest.f90 shocktube.f90 orszagtang.f90 sedov.f90 KHtests.f90 star_init.f90 rsg.f90 agndisk.f90
 MODF= $(patsubst %,$(SRC_DIR)/%,$(MOD))
+INIF= $(patsubst %,$(SRC_DIR)/%,$(INI))
 TARGETF= $(patsubst %,$(SRC_DIR)/%.f90,$(TARGET))
-SRC = $(MODF) \
-      $(filter-out $(MODF) $(TARGETF), $(sort $(wildcard $(SRC_DIR)/*.f90))) \
+SRC = $(MODF) $(INIF) \
+      $(filter-out $(MODF) $(INIF) $(TARGETF), $(sort $(wildcard $(SRC_DIR)/*.f90))) \
       $(TARGETF)
 OBJ = $(patsubst $(SRC_DIR)/%.f90,%.o,$(SRC))
 OBJ_F = $(patsubst %.o,$(OBJ_DIR)/%.o,$(OBJ))

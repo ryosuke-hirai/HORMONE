@@ -1,61 +1,61 @@
 module readbin_mod
  implicit none
- public:: allocate_readgrid,readbin
+ public:: readbin
 contains
 
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!
-!                     SUBROUTINE ALLOCATE_READGRID
-!
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: To allocate variables and read gridfile
-
- subroutine allocate_readgrid
-
-  use settings
-  use grid
-  use physval
-  use constants
-  use gravmod
-  use ionization_mod,only:ionization_setup
-  use setup_mod,only:read_parameters
-
-!-----------------------------------------------------------------------------
-
-! read parameters
-  call read_parameters('../parameters')
-
-! allocate variables
-  call checksetup
-  call allocations
-
-! read coordinate data
-  call readgrid('gridfile.bin')
-  
-! calculate volume element  
- do k = ks, ke
-  do j = js-1, je+1
-   do i = is-1, ie+1
-    dvol(i,j,k)   = (xi1(i)**3d0-xi1(i-1)**3d0) / 3.d0 &
-                  * (cos(xi2(j-1))-cos(xi2(j))) * dxi3(k)
-!    dvol(i,j,k) = 5.d-1 * (xi1(i)**2.d0-xi1(i-1)**2.d0) * dxi2(j) * dxi3(k)
-!    if(je==1)dvol(i,j,k) = pi * (xi1(i)**2.d0-xi1(i-1)**2.d0) * dxi3(k)
-   end do
-  end do
- end do
- if(ke==1) dvol = 4d0 * dvol
- T = 1d3
- gamma = 5d0/3d0
- fac_egas = kbol/((gamma-1d0)*amu) ! frequently used factor for egas
- fac_pgas = kbol/amu ! frequently used factor for Pgas
-
- if(eostype==2)then
-  call ionization_setup
- end if
-
- return
-end subroutine allocate_readgrid
+!!$!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!!$!
+!!$!                     SUBROUTINE ALLOCATE_READGRID
+!!$!
+!!$!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!!$
+!!$! PURPOSE: To allocate variables and read gridfile
+!!$
+!!$ subroutine allocate_readgrid
+!!$
+!!$  use settings
+!!$  use grid
+!!$  use physval
+!!$  use constants
+!!$  use gravmod
+!!$  use ionization_mod,only:ionization_setup
+!!$  use setup_mod,only:read_parameters
+!!$
+!!$!-----------------------------------------------------------------------------
+!!$
+!!$! read parameters
+!!$  call read_parameters('../parameters')
+!!$
+!!$! allocate variables
+!!$  call checksetup
+!!$  call allocations
+!!$
+!!$! read coordinate data
+!!$  call readgrid('gridfile.bin')
+!!$  
+!!$! calculate volume element  
+!!$ do k = ks, ke
+!!$  do j = js-1, je+1
+!!$   do i = is-1, ie+1
+!!$    dvol(i,j,k)   = (xi1(i)**3d0-xi1(i-1)**3d0) / 3.d0 &
+!!$                  * (cos(xi2(j-1))-cos(xi2(j))) * dxi3(k)
+!!$!    dvol(i,j,k) = 5.d-1 * (xi1(i)**2.d0-xi1(i-1)**2.d0) * dxi2(j) * dxi3(k)
+!!$!    if(je==1)dvol(i,j,k) = pi * (xi1(i)**2.d0-xi1(i-1)**2.d0) * dxi3(k)
+!!$   end do
+!!$  end do
+!!$ end do
+!!$ if(ke==1) dvol = 4d0 * dvol
+!!$ T = 1d3
+!!$ gamma = 5d0/3d0
+!!$ fac_egas = kbol/((gamma-1d0)*amu) ! frequently used factor for egas
+!!$ fac_pgas = kbol/amu ! frequently used factor for Pgas
+!!$
+!!$ if(eostype==2)then
+!!$  call ionization_setup
+!!$ end if
+!!$
+!!$ return
+!!$end subroutine allocate_readgrid
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !

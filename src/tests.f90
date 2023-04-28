@@ -1,9 +1,8 @@
 module tests_mod
  implicit none
 
- public:: check_testlist
-
- integer,parameter:: ntest=8
+ public:: check_testlist,test
+ private:: testfilename
 
 contains
 
@@ -52,7 +51,7 @@ contains
 
   character(30):: testfile
   real*8,parameter:: tolerance=1d-10
-  real*8:: derr,perr,v1err,v2err,v3err,berr
+  real*8:: derr,perr,v1err,v2err,v3err
   
 !-----------------------------------------------------------------------------
 
@@ -70,12 +69,7 @@ contains
   testfile = testfilename(simtype)
   
   call readbin(testfile)
-  print*,is,js,ks,d(348,js,ks),d0(348,js,ks)
-  print*,maxval(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
-                / d(is:ie,js:je,ks:ke))
-  print*,maxloc(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
-                / d(is:ie,js:je,ks:ke))
-  stop
+
   derr = maxval(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
                 / d(is:ie,js:je,ks:ke))
   perr = maxval(abs(p0(is:ie,js:je,ks:ke)-p(is:ie,js:je,ks:ke)) &

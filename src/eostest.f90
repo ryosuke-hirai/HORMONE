@@ -1,3 +1,7 @@
+module eostest_mod
+ implicit none
+
+contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                           SUBROUTINE EOSTEST
@@ -13,8 +17,6 @@ subroutine eostest
  use pressure_mod
  use composition_mod,only:get_imu
  use ionization_mod
-
- implicit none
 
  real*8:: d, p, e, T, imu
  real*8:: X, Y, Z, Xi, Xf, p2, T2, Ti, Tf
@@ -237,3 +239,4 @@ subroutine eostest
 return
 end subroutine eostest
 
+end module eostest_mod

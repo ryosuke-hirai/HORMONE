@@ -1,4 +1,9 @@
-!\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+module allocation_mod
+ implicit none
+
+contains
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                           SUBROUTINE ALLOCATIONS
 !
@@ -13,8 +18,6 @@ subroutine allocations
  use physval
  use gravmod
  use dirichlet_mod
-
- implicit none
 
 !-----------------------------------------------------------------------------
 
@@ -107,3 +110,5 @@ subroutine allocations
  
  return
 end subroutine allocations
+
+end module allocation_mod

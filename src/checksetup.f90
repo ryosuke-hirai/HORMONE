@@ -1,3 +1,8 @@
+module checksetup_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                         SUBROUTINE CHECKSETUP
@@ -12,8 +17,6 @@ subroutine checksetup
   use physval
   use tests_mod
   
-  implicit none
-
 !-----------------------------------------------------------------------------
 
 ! Reading dimension of grid
@@ -176,4 +179,6 @@ subroutine checksetup
   if(is_test)call check_testlist(simtype)
 
   return
-end subroutine checksetup
+ end subroutine checksetup
+
+end module checksetup_mod

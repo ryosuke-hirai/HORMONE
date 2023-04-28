@@ -1,3 +1,8 @@
+module star_init_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                         SUBROUTINE STAR_INIT
@@ -14,8 +19,6 @@ subroutine star_init
  use physval
  use input_mod
  use star_mod
-
- implicit none
 
  character*100:: mesafile
  real*8,allocatable,dimension(:):: r,m,rho,pres
@@ -86,3 +89,5 @@ subroutine star_init
 
 return
 end subroutine star_init
+
+end module star_init_mod

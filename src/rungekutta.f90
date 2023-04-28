@@ -1,3 +1,8 @@
+module rungekutta_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                    　  SUBROUTINE RUNGEKUTTA
@@ -6,15 +11,13 @@
 
 ! PURPOSE: To integrate numflux using Runge-Kutta method
 
-subroutine rungekutta
+ subroutine rungekutta
 
   use settings,only:rktype,compswitch,spn
   use grid
   use physval
   use composition_mod
   use smear_mod
-
-  implicit none
 
 !-----------------------------------------------------------------------
 
@@ -281,5 +284,85 @@ subroutine rungekutta
   call primitive
 
  
-return
-end subroutine rungekutta
+  return
+ end subroutine rungekutta
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE EULER
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To integrate numflux using Euler method
+
+ subroutine euler
+
+  use grid
+  use physval
+
+!--------------------------------------------------------------------
+
+  do ufn = 1,9
+   do k = ks,ke
+    do j = js,je
+     do i = is,ie
+      u(i,j,k,ufn) = u(i,j,k,ufn) - dt * &
+           ( idetg1(i) * &
+             (detg1(i  )*flux1(i,j,k,ufn)-detg1(i-1  )*flux1(i-1,j,k,ufn)) &
+           + idetg2(i,j) * &
+             (detg2(i,j)*flux2(i,j,k,ufn)-detg2(i,j-1)*flux2(i,j-1,k,ufn)) &
+           + idetg3(i,j,k) * (flux3(i,j,k,ufn)-flux3(i,j,k-1,ufn)) &
+           + src(i,j,k,ufn) )
+     end do
+    end do
+   end do
+  end do
+
+  return
+ end subroutine euler
+
+ !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE PRIMITIVE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To convert conserved values to primitive values
+
+ subroutine primitive
+
+  use grid
+  use physval
+  use pressure_mod,only:pressure
+  use composition_mod,only:meanmolweight
+  
+!--------------------------------------------------------------------
+  
+!$omp parallel do private(i,j,k)
+  do k = ks,ke
+   do j = js,je
+    do i = is,ie
+     d(i,j,k)  = u(i,j,k,1)
+     v1(i,j,k) = u(i,j,k,2) / d(i,j,k)
+     v2(i,j,k) = u(i,j,k,3) / d(i,j,k)
+     v3(i,j,k) = u(i,j,k,4) / d(i,j,k)
+     b1(i,j,k) = u(i,j,k,5)
+     b2(i,j,k) = u(i,j,k,6)
+     b3(i,j,k) = u(i,j,k,7)
+     e(i,j,k)  = u(i,j,k,8)
+     ! for 9 wave method
+     phi(i,j,k)= u(i,j,k,9)
+    end do
+   end do
+  end do
+!$omp end parallel do
+
+  call meanmolweight
+  call pressure
+
+  return
+ end subroutine primitive
+
+ 
+end module rungekutta_mod
+

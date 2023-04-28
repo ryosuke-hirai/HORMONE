@@ -1,8 +1,8 @@
 module dirichlet_mod
 
-  implicit none
+ implicit none
 
- contains
+contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                        SUBROUTINE DIRICHLETBOUND
@@ -11,18 +11,23 @@ module dirichlet_mod
 
 ! PURPOSE: To set boundary condition for Dirichlet type.
 
-subroutine dirichletbound
+ subroutine dirichletbound
 
+  use settings,only:mag_on
   use grid
   use ejectamod
   use physval,only:d0,p0,v10,v20,v30,b10,b20,b30,spc0
-
-  implicit none
 
   real*8 v0, mej
   integer nn, mm
 
 !-----------------------------------------------------------------------------
+
+  if(.not.mag_on)then
+   b10 = 0d0
+   b20 = 0d0
+   b30 = 0d0
+  end if
 
   do j = js,je
    do i = is,ie
@@ -42,6 +47,7 @@ subroutine dirichletbound
                     - v_ej(nn+1) * (t_ej(nn)  -time*nsdfr(i,j,k)))  &
                    / (t_ej(nn+1)-t_ej(nn))
         v10(i,j,k) = v0 *   nssin(i,j,k)
+        v20(i,j,k) = 0d0
         v30(i,j,k) = v0 * (-nscos(i,j,k))
         p0 (i,j,k) = 0.5d0*d0(i,j,k)*(v10(i,j,k)**2+v30(i,j,k)**2)*1d-2
         mej = (m_ej(nn)   * (t_ej(nn+1)-time*nsdfr(i,j,k))  &
@@ -66,6 +72,7 @@ subroutine dirichletbound
 !!$                 * nsdfr(i,j,k)**3d0
       v0         = v_ej(count) * (t_ej(count)/(time*nsdfr(i,j,k)))
       v10(i,j,k) = v0 *   nssin(i,j,k)
+      v20(i,j,k) = 0d0
       v30(i,j,k) = v0 * (-nscos(i,j,k))
       p0 (i,j,k) = 0.5d0*d0(i,j,k)*(v10(i,j,k)**2+v30(i,j,k)**2)*1d-2
       mej = m_ej(count)

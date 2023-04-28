@@ -23,14 +23,28 @@ program hormone
   use physval
   use constants
   use setup_mod
+  use allocation_mod
+  use tools_mod
+  use checksetup_mod
+  use gridset_mod
   use pressure_mod
-  use particle_mod
-  use cooling_mod
-  use dirichlet_mod
+  use conserve_mod
   use timestep_mod
+  use metric_mod
+  use initialcondition_mod
   use output_mod
   use gravmod
   use composition_mod
+  use boundary_mod
+  use numflux_mod
+  use source_mod
+  use rungekutta_mod
+
+  use gravity_mod
+  use particle_mod
+  use cooling_mod
+  use dirichlet_mod
+  use shockfind_mod
   use tests_mod
   
   implicit none

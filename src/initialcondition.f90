@@ -1,3 +1,8 @@
+module initialcondition_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                       SUBROUTINE INITIALCONDITION
@@ -13,8 +18,16 @@ subroutine initialcondition
  use physval
  use pressure_mod
  use composition_mod
+ use restart_mod
 
- implicit none
+ use eostest_mod
+ use shocktube_mod
+ use sedov_mod
+ use orszagtang_mod
+ use KHtest_mod
+ use star_init_mod
+ use redsupergiant_mod
+ use agndisk_mod
 
 !----------------------------------------------------------------------------
 
@@ -24,9 +37,6 @@ subroutine initialcondition
   case('eostest')
    call eostest
    
-  case('orszagtang_xy','orszagtang_yz','orszagtang_xz')
-   call orszagtang
-
   case('sodshock_x','sodshock_y','sodshock_z',&
        'briowushock_x','briowushock_y','briowushock_z',&
        'other_shocktube_x','other_shocktube_y','other_shocktube_z')
@@ -34,6 +44,9 @@ subroutine initialcondition
 
   case('sedov_default','sedov_other')
    call sedov
+
+  case('orszagtang_xy','orszagtang_yz','orszagtang_xz')
+   call orszagtang
 
   case('KHtest')
    call KHtest
@@ -82,3 +95,5 @@ subroutine initialcondition
 
 return
 end subroutine initialcondition
+
+end module initialcondition_mod

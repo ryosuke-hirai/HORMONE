@@ -20,9 +20,7 @@ module cooling_mod
 
 subroutine cooling_setup
 
- implicit none
-
- integer k
+ integer:: k
 
 !-----------------------------------------------------------------------------
 ! All based on Townsend 2009
@@ -77,6 +75,7 @@ subroutine cooling
  use physval
  use constants
  use pressure_mod
+ use conserve_mod
 
  implicit none
 

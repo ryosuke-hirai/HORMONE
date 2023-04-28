@@ -1,3 +1,8 @@
+module gridset_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                          SUBROUTINE GRIDSET
@@ -14,8 +19,6 @@ subroutine gridset
   use utils,only:geometrical_series
   use readbin_mod,only:readgrid
   
-  implicit none
-
   integer jetmp,ketmp
 
 !-------------------------------------------------------------------------
@@ -440,9 +443,8 @@ subroutine gridset
 
  end if
  
-return
-
-contains
+ return
+end subroutine gridset
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -453,8 +455,6 @@ contains
 ! PURPOSE: User specified i meshes
 
 subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
-
- implicit none
 
  real*8,intent(in):: xi1s,xi1e
  real*8,intent(inout),allocatable:: dxi1(:)
@@ -523,8 +523,6 @@ end subroutine other_imesh
 ! PURPOSE: User specified j meshes
 
 subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
-
- implicit none
 
  real*8,intent(in):: xi2s,xi2e
  real*8,intent(inout),allocatable:: dxi2(:)
@@ -610,9 +608,7 @@ end subroutine other_jmesh
 
 subroutine other_kmesh(dxi3,ks,ke,xi3s,xi3e)
 
- use grid,only:dxi1,xi1
-
- implicit none
+ use grid,only:dxi1,xi1,is,ie
 
  real*8,intent(inout):: xi3s,xi3e
  real*8,intent(inout),allocatable:: dxi3(:)
@@ -620,8 +616,8 @@ subroutine other_kmesh(dxi3,ks,ke,xi3s,xi3e)
 
 !-----------------------------------------------------------------------------
 
- dxi3(ke/2+is:ke+2)  = dxi1(is:ke/2+2)
- dxi3(ke/2:ks-2:-1) = dxi1(is:ke/2+2)
+ dxi3(ke/2+is:ke+2)  = dxi1(is:ie/2+2)
+ dxi3(ke/2:ks-2:-1) = dxi1(is:ie/2+2)
 ! dxi3(ks:ke+2) = dxi1(is:ke+2)
 ! dxi3(ks-1) = dxi3(ks)
 ! dxi3(ks-2) = dxi3(ks+1)
@@ -638,7 +634,4 @@ subroutine other_kmesh(dxi3,ks,ke,xi3s,xi3e)
 return
 end subroutine other_kmesh
 
-
-end subroutine gridset
-
-
+end module gridset_mod

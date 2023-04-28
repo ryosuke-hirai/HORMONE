@@ -1,3 +1,8 @@
+module interpolation_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                          SUBROUTINE INTERPOLATION
@@ -14,8 +19,6 @@ subroutine interpolation
  use physval
  use fluxlimiter
  use pressure_mod
-
- implicit none
 
  real*8 dl, dr, ptl, ptr, el, er, m1l, m1r, m2l, m2r, m3l, m3r
  real*8 b1l, b1r, b2l, b2r, b3l, b3r, phil, phir, eintl, eintr,imul,imur
@@ -393,3 +396,5 @@ end if
 
 return
 end subroutine interpolation
+
+end module interpolation_mod

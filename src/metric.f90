@@ -1,3 +1,8 @@
+module metric_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                             SUBROUTINE METRIC
@@ -12,8 +17,6 @@ subroutine metric
  use constants,only:pi
  use grid
 
- implicit none
-  
 !----------------------------------------------------------------------------
 
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -138,5 +141,7 @@ subroutine metric
    
   end if
 
-return
-end subroutine metric
+  return
+ end subroutine metric
+
+end module metric_mod

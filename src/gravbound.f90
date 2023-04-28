@@ -1,3 +1,8 @@
+module gravbound_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                           SUBROUTINE GRAVBOUND
@@ -12,8 +17,6 @@
   use grid,only:i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,xi1s,x1,tn
   use constants,only:G
   use gravmod,only:llmax,grvphi,phiii,phiio,phi1o,phi3i,phi3o,mc,Pl,Plc,rdis
-
-  implicit none
 
   integer ll, error1
   real*8 dphiii, dphiio, dphi1o, dphi3i, dphi3o
@@ -311,3 +314,5 @@ contains
   end subroutine multipoleinner
 
  end subroutine gravbound
+
+end module gravbound_mod

@@ -18,7 +18,6 @@ contains
 ! **************************************************************************
  function rapid_tanhs(x)
 ! Rapid hyperbolic tangent function for scalars
-  implicit none
   real*8,intent(in)::x
   real*8:: a,b,x2,rapid_tanhs
   
@@ -34,7 +33,6 @@ contains
 
  function rapid_tanhv(x)
 ! Rapid hyperbolic tangent function for vectors
-  implicit none
   real*8,intent(in)::x(:)
   real*8,dimension(size(x)):: rapid_tanhv
   real*8:: a,b,x2
@@ -54,7 +52,6 @@ contains
 ! **************************************************************************
  function rapid_dtanhs(x)
 ! Rapid hyperbolic tangent derivative (1/cosh^2) for scalars
-  implicit none
   real*8,intent(in)::x
   real*8:: a,b,x2,rapid_dtanhs
   
@@ -70,7 +67,6 @@ contains
 
  function rapid_dtanhv(x)
 ! Rapid hyperbolic tangent derivative (1/cosh^2) for vectors
-  implicit none
   real*8,intent(in)::x(:)
   real*8,dimension(size(x)):: rapid_dtanhv
   real*8:: a,b,x2
@@ -91,7 +87,6 @@ contains
  subroutine ionization_setup
 ! PURPOSE: Set up all fitting coefficients
   use constants,only:amu,kbol
-  implicit none
   real*8:: x
 
   if(allocated(eion))return ! skip if already called
@@ -127,7 +122,6 @@ contains
 ! ***************************************************************************
  real*8 function arec1(x)
 ! molecular hydrogen fit coefficients
-  implicit none
   real*8,intent(in):: x ! logd
 
   if(x<edge)then
@@ -139,7 +133,6 @@ contains
 ! ***************************************************************************
  real*8 function brec1(x)
 ! molecular hydrogen fit coefficients
-  implicit none
   real*8,intent(in):: x
 
   if(x<edge)then
@@ -152,7 +145,6 @@ contains
  
  subroutine get_xion(logd,T,X,Y,xion,dxion)
 ! PURPOSE: Get ionization fractions (and dxdT) given rho and T
-  implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,intent(out):: xion(1:4)
   real*8,intent(out),optional:: dxion(1:4)
@@ -188,7 +180,6 @@ contains
  
  subroutine get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
 ! PURPOSE: Get recombination energy and mean molecular weight given rho and T
-  implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,intent(out):: erec, imurec
   real*8,intent(out),optional:: derecdT, dimurecdT
@@ -225,7 +216,6 @@ contains
  
  subroutine get_imurec(logd,T,X,Y,imurec,dimurecdT)
 ! PURPOSE: Get the mean molecular weight for partially ionised plasma
-  implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,intent(out):: imurec
   real*8,intent(out),optional:: dimurecdT
@@ -251,7 +241,6 @@ contains
 ! ***************************************************************************
  real*8 function get_erec(logd,T,X,Y)
 ! PURPOSE: Get recombination energy given rho and T
-  implicit none
   real*8,intent(in):: logd,T,X,Y
   real*8,dimension(1:4):: e, xi
 

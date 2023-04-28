@@ -1,3 +1,8 @@
+module KHtest_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                         SUBROUTINE KHTESTS
@@ -6,13 +11,11 @@
 
 ! PURPOSE: To set initial condition for Kelvini-Helmholtz instability tests.
 
-subroutine KHtest
+ subroutine KHtest
 
   use grid
   use physval
 
-  implicit none
-  
   real*8 rdm
   real*8,parameter:: ptb = 1d-2
 
@@ -43,3 +46,5 @@ subroutine KHtest
 
 return
 end subroutine KHtest
+
+end module KHtest_mod

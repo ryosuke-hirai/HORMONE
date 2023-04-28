@@ -1,4 +1,3 @@
-
 module merger_mod
 
  use constants
@@ -42,7 +41,7 @@ contains
   if(time==inifile)then
    open(unit=60,file='data/angmom.dat',status='replace')
 
-   call conserve
+!   call conserve
    call pressure
    call output
 
@@ -171,7 +170,7 @@ subroutine merger
     end do
    end do
   end do
-  call conserve
+!  call conserve
   heatdone = .true.
   close(1010)
  end if

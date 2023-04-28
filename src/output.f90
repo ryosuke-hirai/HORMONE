@@ -497,6 +497,7 @@ subroutine write_plt
  use settings
  use grid,only:n,i,j,k,is,ie,js,je,ks,ke,time,tn,dim
  use utils,only:gravpot1d
+ use shockfind_mod,only:shockfind
 
  implicit none
 

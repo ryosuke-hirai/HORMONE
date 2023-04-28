@@ -1,3 +1,8 @@
+module boundary_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                      SUBROUTINE BOUNDARYCONDITION
@@ -14,8 +19,6 @@ subroutine boundarycondition
  use dirichlet_mod
  use pressure_mod
  use composition_mod
-
- implicit none
 
  real*8,allocatable:: plug(:,:,:)
 
@@ -775,3 +778,5 @@ contains
  end subroutine spcboundary
  
 end subroutine boundarycondition
+
+end module boundary_mod

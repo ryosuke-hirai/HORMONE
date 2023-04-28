@@ -1,3 +1,8 @@
+module sedov_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                            SUBROUTINE SEDOV
@@ -13,8 +18,6 @@ subroutine sedov
  use physval
  use pressure_mod,only:eos_p
  use input_mod,only:error_extras,error_nml
-
- implicit none
 
  real*8:: damb, Eexp, ein, pin, pamb, Tin, imuconst
  integer:: i_inj,ui,istat
@@ -50,3 +53,5 @@ subroutine sedov
 
 return
 end subroutine sedov
+
+end module sedov_mod

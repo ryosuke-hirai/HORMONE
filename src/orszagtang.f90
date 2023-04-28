@@ -1,3 +1,8 @@
+module orszagtang_mod
+ implicit none
+
+contains
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                    SUBROUTINE ORSZAG-TANG
@@ -11,8 +16,6 @@ subroutine orszagtang
   use grid
   use physval
   use constants,only:pi
-
-  implicit none
 
   integer:: whichaxis
 !--------------------------------------------------------------------
@@ -78,3 +81,5 @@ subroutine orszagtang
   
 return
 end subroutine orszagtang
+
+end module orszagtang_mod
