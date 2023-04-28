@@ -23,7 +23,7 @@ subroutine numflux
   real*8,dimension(1:9)::tmpflux
   real*8,dimension(1:2):: dx
   real*8,dimension(1:spn):: spcl,spcr
-  real*8 signdflx,ul,ur,fl,fr,rinji, rotfac
+  real*8 signdflx,ul,ur,fl,fr,rinji
   integer ierr
 
 !--------------------------------------------------------------------

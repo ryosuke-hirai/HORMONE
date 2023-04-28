@@ -8,7 +8,7 @@
 
 subroutine gridset
 
-  use settings,only:courant,imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
+  use settings,only:imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
   use grid
   use constants,only:pi
   use utils,only:geometrical_series
@@ -462,9 +462,9 @@ subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
 
 !-----------------------------------------------------------------------------
 
- integer i
- real*8 xrng, irng, xr, xrnew, xrmax, err, maxerr, fx, dfx, xmin
- real*8 radstar
+ integer:: i
+ real*8:: xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx, xmin
+ real*8:: radstar
 
 !-----------------------------------------------------------------------------
 
@@ -532,7 +532,7 @@ subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
 
  integer j
  real*8,allocatable:: xi2(:)
- real*8 dcos, cosnow
+ real*8 dcos
 
 !-----------------------------------------------------------------------------
 
@@ -617,7 +617,6 @@ subroutine other_kmesh(dxi3,ks,ke,xi3s,xi3e)
  real*8,intent(inout):: xi3s,xi3e
  real*8,intent(inout),allocatable:: dxi3(:)
  integer,intent(in):: ks,ke
- integer i
 
 !-----------------------------------------------------------------------------
 

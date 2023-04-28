@@ -8,7 +8,7 @@
 
 subroutine gravity
 
- use settings,only:eq_sym,courant
+ use settings,only:eq_sym
  use grid
  use constants
  use physval

@@ -179,7 +179,7 @@ subroutine geometrical_series(dxi,xmin,is,ie,xis,xie)
  real*8,intent(in):: xis,xie,xmin
  real*8,intent(inout),allocatable:: dxi(:)
  integer i
- real*8 xrng, irng, xr, xrnew, xrmax, err, maxerr, fx, dfx
+ real*8 xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx
 
 !-----------------------------------------------------------------------------
 

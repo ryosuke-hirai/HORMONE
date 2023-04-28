@@ -14,7 +14,7 @@ subroutine redsupergiant
  use physval
  use input_mod
  use star_mod
- use gravmod,only:grvphi,extgrv,mc
+ use gravmod,only:extgrv,mc
  use utils,only:softened_pot
  use output_mod,only:write_extgrv
 
@@ -24,7 +24,7 @@ subroutine redsupergiant
  real*8,allocatable,dimension(:):: r,m,rho,pres
  real*8,allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
- integer nel,nn,sn
+ integer nn,sn
  real*8::rcore,mcore,dbg,mass,spc_bg(1:spn)
  
 !-----------------------------------------------------------------------------

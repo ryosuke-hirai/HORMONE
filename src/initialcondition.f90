@@ -16,7 +16,6 @@ subroutine initialcondition
 
  implicit none
 
- integer:: dir
 !----------------------------------------------------------------------------
 
  if(start==0)then

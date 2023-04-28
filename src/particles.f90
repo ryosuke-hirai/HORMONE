@@ -28,9 +28,6 @@ subroutine particles_setup
 
  implicit none
 
- integer nn
- real*8 rptc, rhoc
-
 !-----------------------------------------------------------------------------
 
 ! ptcx(0,n): mass of nth particle
@@ -125,7 +122,7 @@ subroutine particles
  implicit none
 
  logical extflag
- real*8 v1tmp1, v1tmp2, v2tmp1, v2tmp2, rptc, ptcdfr, ptclr, ptclt
+ real*8 v1tmp1, v1tmp2, v2tmp1, v2tmp2, ptclr, ptclt
 
 !-----------------------------------------------------------------------------
 

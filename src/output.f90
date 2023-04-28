@@ -18,15 +18,8 @@ module output_mod
 
 subroutine output
 
-  use settings,only:outstyle,is_test
+  use settings,only:is_test
   use grid,only:tn
-
-  implicit none
-
-  logical extflag
-  character*35 ptcfile, bptfile
-  real*8 phih, vsq, pr, pt
-  real*8,allocatable:: lapphi(:,:,:)
 
 !----------------------------------------------------------------------------
 
@@ -502,7 +495,7 @@ end subroutine write_bin
 subroutine write_plt
 
  use settings
- use grid,only:n,i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn,dim
+ use grid,only:n,i,j,k,is,ie,js,je,ks,ke,time,tn,dim
  use utils,only:gravpot1d
 
  implicit none
@@ -838,7 +831,7 @@ end subroutine add_column
 
 subroutine write_val(ui,i,j,k,forme,header)
 
- use settings,only:spn,include_extgrv
+ use settings,only:spn
  use physval
  use gravmod,only:grvphi,extgrv
  

@@ -25,7 +25,6 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
  real*8,allocatable,dimension(:,:):: dat
  character*10000 dumc
  integer nn,ui, i,j, lines, rows, nrel, nel,istat
- character(len=10):: element
  character(len=10),allocatable:: element_list(:)
 
  

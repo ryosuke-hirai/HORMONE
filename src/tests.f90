@@ -19,7 +19,6 @@ contains
 
   character(len=*),intent(in)::simtype
   logical:: test_available
-  integer:: ui,istat
   character(30):: filename
 
 !-----------------------------------------------------------------------------
@@ -52,27 +51,31 @@ contains
   use readbin_mod,only:readbin
 
   character(30):: testfile
-  integer:: ui,istat
   real*8,parameter:: tolerance=1d-10
   real*8:: derr,perr,v1err,v2err,v3err,berr
   
 !-----------------------------------------------------------------------------
 
 ! First record variables
-  d0  = d
-  p0  = p
-  v10 = v1
-  v20 = v2
-  v30 = v3
-  b10 = b1
-  b20 = b2
-  b30 = b3
+  d0 (is:ie,js:je,ks:ke) = d (is:ie,js:je,ks:ke) 
+  p0 (is:ie,js:je,ks:ke) = p (is:ie,js:je,ks:ke) 
+  v10(is:ie,js:je,ks:ke) = v1(is:ie,js:je,ks:ke) 
+  v20(is:ie,js:je,ks:ke) = v2(is:ie,js:je,ks:ke) 
+  v30(is:ie,js:je,ks:ke) = v3(is:ie,js:je,ks:ke) 
+  b10(is:ie,js:je,ks:ke) = b1(is:ie,js:je,ks:ke) 
+  b20(is:ie,js:je,ks:ke) = b2(is:ie,js:je,ks:ke) 
+  b30(is:ie,js:je,ks:ke) = b3(is:ie,js:je,ks:ke) 
 
 ! Open test data file
   testfile = testfilename(simtype)
   
   call readbin(testfile)
-  
+  print*,is,js,ks,d(348,js,ks),d0(348,js,ks)
+  print*,maxval(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
+                / d(is:ie,js:je,ks:ke))
+  print*,maxloc(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
+                / d(is:ie,js:je,ks:ke))
+  stop
   derr = maxval(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
                 / d(is:ie,js:je,ks:ke))
   perr = maxval(abs(p0(is:ie,js:je,ks:ke)-p(is:ie,js:je,ks:ke)) &

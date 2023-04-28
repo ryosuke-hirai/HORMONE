@@ -72,7 +72,6 @@ subroutine read_default
  use settings
  use grid
 
- integer:: ui
  character*50:: filename, basefile
 
 !-----------------------------------------------------------------------------

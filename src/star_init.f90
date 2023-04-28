@@ -14,7 +14,6 @@ subroutine star_init
  use physval
  use input_mod
  use star_mod
- use gravmod,only:grvphi
 
  implicit none
 

@@ -16,8 +16,6 @@ subroutine rungekutta
 
   implicit none
 
-  real*8 v0x,v0z,v0p
-
 !-----------------------------------------------------------------------
 
   runge_type: select case (rktype)

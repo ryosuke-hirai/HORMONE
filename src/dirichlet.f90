@@ -15,7 +15,7 @@ subroutine dirichletbound
 
   use grid
   use ejectamod
-  use physval,only:gamma,d0,p0,v10,v20,v30,b10,b20,b30,spc0
+  use physval,only:d0,p0,v10,v20,v30,b10,b20,b30,spc0
 
   implicit none
 

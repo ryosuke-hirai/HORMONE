@@ -16,9 +16,6 @@ subroutine source
  
  implicit none
 
- real*8 uu(1:3), ptd, phil, phir, ul, ur
- real*8,dimension(1:2):: dx
-
 !----------------------------------------------------------------------------
 
 ! To calculate gravitational forces ********************************************
@@ -38,7 +35,7 @@ subroutine source
    end if
 
 
-!$omp parallel do private(i,ul)
+!$omp parallel do private(i)
    do i = is, ie
     grv1(i,js:je,k) = -G*d(i,js:je,k)*mc(i)/x1(i)**2
    end do

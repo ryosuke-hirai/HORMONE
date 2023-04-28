@@ -13,7 +13,7 @@ contains
 
 subroutine smear
 
- use settings,only:rktype,compswitch,spn
+ use settings,only:compswitch,spn
  use grid
  use physval
  use composition_mod
@@ -210,7 +210,7 @@ end subroutine smear
   integer,intent(in)::i,js,je,ks,ke
   integer:: j,k
   real*8:: mtot, etot
-  real*8,dimension(1:3):: vcar, xcar, momtot, vave, btot, bave
+  real*8,dimension(1:3):: vcar, xcar, momtot, vave
   
 !-----------------------------------------------------------------------------
 

@@ -13,15 +13,15 @@ subroutine eci
  use physval
  use constants
  use ejectamod
- use gravmod,only:extgrv,grvtime,include_extgrv,rdis,grvphi,mc,grvphiold,coremass,coscyl,sincyl
+ use gravmod,only:extgrv,grvtime,include_extgrv,rdis,coremass,coscyl,sincyl
  use pressure_mod
 
  implicit none
 
- real*8 mass, radius, coredis, dbg, corerad, outfactor, Ebind, c1, c2, c3, rhoh, rhoph, Mdot, vwind, mej
+ real*8 mass, radius, dbg, corerad, c1, c2, c3, rhoh, rhoph, Mdot, vwind, mej
  real*8 mnow, mold, rnow, shellv, shelld, dr, rsoft, msoft, shellp
- integer nn, nol, ii
- integer lines, rows, iinj
+ integer nn, ii
+ integer lines, rows
  character*10000 dumc
  character*30,allocatable:: header(:),dum(:)
  real*8,allocatable,dimension(:,:):: dat, comp

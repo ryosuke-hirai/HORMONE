@@ -85,7 +85,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
  real*8,allocatable,dimension(:)::gpot
  integer lines,nn,sn
- real*8:: Eexp,PNSmass, mass, radius
+ real*8:: mass, radius
  real*8:: mnow,rnow,volfac
 !-----------------------------------------------------------------------------
 
@@ -221,7 +221,7 @@ subroutine one_shot(Sc,imu,r,mcore,msoft,rho,p,mass)
  real*8,allocatable,dimension(:),intent(inout)::rho,p
  real*8,intent(out)::mass
 
- integer i,j,Nmax
+ integer i,Nmax
  real*8::hsoft
  real*8,allocatable,dimension(:)::dr,vol
 

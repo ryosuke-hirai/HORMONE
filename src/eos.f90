@@ -84,7 +84,7 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
  real*8,intent(in),optional:: X,Y
  real*8,intent(inout):: T,imu
  real*8,intent(out),optional:: erec
- real*8:: corr, imurec, imurecold, dimurecdT, logd
+ real*8:: corr, imurec, dimurecdT, logd
  integer n
 
  if(T<=0d0) T=1d3
@@ -144,7 +144,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
  real*8,intent(inout):: T,imu
  real*8,intent(out):: p,cs
  integer,intent(out):: ierr
- real*8:: gamma_eff,corr,erec,Ttemp
+ real*8:: gamma_eff,erec,Ttemp
 
 !-----------------------------------------------------------------------------
 
@@ -315,7 +315,7 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
  real*8,intent(in):: d,p
  real*8,intent(in),optional:: X,Y
  real*8,intent(inout):: T,imu
- real*8:: entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+ real*8:: entropy
 
  select case(eostype)
  case(0) ! ideal gas
@@ -346,7 +346,7 @@ function entropy_from_de(d,e,T,imu,X,Y) result(entropy)
  real*8,intent(in):: d,e
  real*8,intent(in),optional:: X,Y
  real*8,intent(inout):: T,imu
- real*8:: entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+ real*8:: entropy
 
  select case(eostype)
  case(0) ! ideal gas
@@ -449,7 +449,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
  real*8,intent(in):: d,S
  real*8,intent(inout):: imu
  real*8,intent(in),optional:: X,Y
- real*8:: e,p,corr,corr0,ep,S0,Sp,dSde,T,edot,dt
+ real*8:: e,corr,corr0,ep,S0,Sp,dSde,T,edot,dt
  real*8,parameter:: dfac=1d-8, Serr_rel_eoserr=1d2, W4err=1d-2
  integer n
 

@@ -9,7 +9,7 @@
 subroutine agndisk
 
  use grid
- use settings,only:dt_out,extrasfile
+ use settings,only:extrasfile
  use physval
  use constants,only:pi,clight,G,msun
  use pressure_mod,only:eos_p

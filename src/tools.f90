@@ -21,10 +21,7 @@ subroutine tools
  
  implicit none
 
- integer ll, lines, rows
- character*10000 dumc
- character*30,allocatable:: header(:),dum(:)
- real*8,allocatable,dimension(:,:):: dat, comp
+ integer ll
 
 !-----------------------------------------------------------------------------
 

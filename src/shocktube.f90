@@ -8,7 +8,7 @@
 
 subroutine shocktube
 
- use settings,only:mag_on,simtype,parafile,extrasfile
+ use settings,only:mag_on,simtype,extrasfile
  use physval,only:gamma
  use input_mod,only:error_extras,error_nml
 

@@ -11,7 +11,6 @@
   use settings,only:bc3is,crdnt,grverr
   use grid,only:i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,xi1s,x1,tn
   use constants,only:G
-  use physval,only:d
   use gravmod,only:llmax,grvphi,phiii,phiio,phi1o,phi3i,phi3o,mc,Pl,Plc,rdis
 
   implicit none
