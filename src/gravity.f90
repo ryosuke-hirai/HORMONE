@@ -20,7 +20,7 @@ subroutine gravity
  use gravmod
  use gravbound_mod
 
- integer:: l, flgcg
+ integer:: l, flgcg, gin
  real(8):: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
  real(8),dimension(1:lmax):: gsrc, pp, absrob
  real(8),allocatable,dimension(:,:,:):: newphi
@@ -28,6 +28,7 @@ subroutine gravity
  real(8),allocatable,dimension(:):: x,y,z,r,aw
 
 !-----------------------------------------------------------------------------
+
  gin = gie - gis + 1
 
  if(gravswitch==0)then
@@ -526,7 +527,7 @@ subroutine gravsetup
   use grid
   use gravmod
   
-  integer:: l
+  integer:: l,gin
   real(8):: h
 
 !-----------------------------------------------------------------------------
@@ -648,10 +649,9 @@ subroutine gravsetup
 ! for axisymmetric cylindrical
   if(je==1.and.dim==2.and.crdnt==1)then
 ! Cartoon mesh method
-   gin = gie + 2
-   allocate( hg123(gis-1:gin,1:1,gks-1:gkn), &
-             lag(-1:1,gis-1:gin),&
-             orgdis(gis-1:gin,1:1,gks-1:gkn) )
+   allocate( hg123(gis-1:gie+1,1:1,gks-1:gke+1), &
+             lag(-1:1,gis-1:gie+1),&
+             orgdis(gis-1:gie+1,1:1,gks-1:gke+1) )
    allocate( hg11,hg12,hg21,hg22, mold=x1 )
    allocate( hg31,hg32, mold=x3 )
 
@@ -713,8 +713,7 @@ subroutine gravsetup
 ! for axisymmetrical spherical 
   elseif(crdnt==2.and.ke==1.and.dim==2)then
 ! Normal discretization
-   gin = gie + 2; gjn = gje + 2
-   allocate( hg123(gis-1:gin,gjs-1:gjn,1:1) )
+   allocate( hg123(gis-1:gie+2,gjs-1:gje+2,1:1) )
    allocate( hg11,hg12, mold=x1 )
    allocate( hg21,hg22, mold=x2 )
 
@@ -739,7 +738,6 @@ subroutine gravsetup
 ! for 3D spherical
   elseif(crdnt==2.and.dim==3)then
 ! Normal discretization
-   gin = gie + 2; gjn = gje + 2
    allocate( hg11,hg12, mold=x1 )
    allocate( hg21,hg22, mold=x2 )
    allocate( hg31,hg32, mold=x3 )
@@ -799,6 +797,7 @@ contains
   implicit none
 
   real(8):: micpara
+  integer:: gin
 
 !----------------------------------------------------------------------------
 

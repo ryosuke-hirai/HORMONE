@@ -21,8 +21,6 @@ subroutine allocations
 
 !-----------------------------------------------------------------------------
 
- in = ie + 2 ; jn = je + 2 ; kn = ke + 2
- gin = gie + 2 ; gjn = gje + 2 ; gkn = gke + 2
  lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
 
 ! 1 dimensional arrays

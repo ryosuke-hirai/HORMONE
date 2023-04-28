@@ -33,11 +33,11 @@ subroutine tools
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  if(crdnt==1)then
 !   allocate( rdis(-1:in,-1:kn), sincyl(-1:in,-1:kn),coscyl(-1:in,-1:kn) )
-  allocate( rdis(-1:gin,gks-2:gkn), &
-            sincyl(-1:gin,gks-2:gkn),coscyl(-1:gin,gks-2:gkn) )
+  allocate( rdis(-1:gie+2,gks-2:gke+2), &
+            sincyl(-1:gie+2,gks-2:gke+2),coscyl(-1:gie+2,gks-2:gke+2) )
   do i = gis-1, gie+2
    do k = gks-2, gke+2
-    rdis(i,k) = sqrt( x1(i)*x1(i)+x3(k)*x3(k) )
+    rdis(i,k) = sqrt( x1(i)**2+x3(k)**2 )
     sincyl(i,k) = x1(i)/rdis(i,k)
     coscyl(i,k) = x3(k)/rdis(i,k)
    end do
@@ -46,7 +46,7 @@ subroutine tools
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  if(crdnt==2)then
-  allocate( sinc(-1:jn), sini(-1:jn), cosc(-1:jn), cosi(-1:jn) )
+  allocate( sinc, sini, cosc, cosi, mold=x2 )
   do j = js-2, je+2
    sinc(j)=sin(x2 (j))
    sini(j)=sin(xi2(j))
@@ -59,7 +59,7 @@ subroutine tools
 
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  if(crdnt==1)then
-  allocate( Plc(0:llmax,0:gin,gks-2:gkn) )
+  allocate( Plc(0:llmax,gis:gie+2,gks-2:gke+2) )
   do k = gks-2, gke+2
    do i = gis, gie+2
     Plc(0,i,k) = 1d0
@@ -76,7 +76,7 @@ subroutine tools
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  if(crdnt==2)then
-  allocate( Pl(0:llmax,0:jn) )
+  allocate( Pl(0:llmax,js-1:je+1) )
   do j=js-1,je+1
    Pl(0,j) = 1d0
    Pl(1,j) = cosc(j)

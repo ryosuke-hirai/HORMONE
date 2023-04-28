@@ -38,8 +38,8 @@ module grid
   implicit none
 
 ! number of grids
-  integer:: is, ie, js, je, ks, ke, in, jn, kn
-  integer:: gis, gie, gjs, gje, gks, gke, gin, gjn, gkn
+  integer:: is, ie, js, je, ks, ke
+  integer:: gis, gie, gjs, gje, gks, gke
   integer:: i,j,k,n,tn,dim
   integer:: rungen, ufn
   integer:: musize,sphrn,trnsn16,trnsn8,trnsn4,trnsn2!,,trnsn1,trnsn2,trnsn3
@@ -109,7 +109,7 @@ end module physval
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module gravmod
 
-  use grid,only:ie,je,ke,in,jn,kn
+  use grid,only:ie,je,ke
   use settings,only:gravswitch,grverr,cgerr,include_extgrv,hgcfl,HGfac,&
                     grav_init_other,gbtype
 
