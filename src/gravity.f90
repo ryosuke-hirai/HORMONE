@@ -21,11 +21,11 @@ subroutine gravity
  use gravbound_mod
 
  integer:: l, flgcg
- real*8:: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
- real*8,dimension(1:lmax):: gsrc, pp, absrob
- real*8,allocatable,dimension(:,:,:):: newphi
- real*8,allocatable,dimension(:):: intphi
- real*8,allocatable,dimension(:):: x,y,z,r,aw
+ real(8):: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
+ real(8),dimension(1:lmax):: gsrc, pp, absrob
+ real(8),allocatable,dimension(:,:,:):: newphi
+ real(8),allocatable,dimension(:):: intphi
+ real(8),allocatable,dimension(:):: x,y,z,r,aw
 
 !-----------------------------------------------------------------------------
  gin = gie - gis + 1
@@ -436,7 +436,7 @@ contains
 
   ! Subroutine to calculate A*vector
 
-     real*8,intent(in),dimension(1:lmax)::w
+     real(8),intent(in),dimension(1:lmax)::w
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -470,7 +470,7 @@ contains
 
 ! subroutine to calculate (CC^T)^{-1}r for preconditioned CG method
 
-    real*8,intent(in),dimension(1:lmax):: rrr
+    real(8),intent(in),dimension(1:lmax):: rrr
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -525,8 +525,8 @@ subroutine gravsetup
   use grid
   use gravmod
   
-  integer l
-  real*8:: h
+  integer:: l
+  real(8):: h
 
 !-----------------------------------------------------------------------------
  gin = gie-gis+1
@@ -796,7 +796,7 @@ contains
 
   implicit none
 
-  real*8 micpara
+  real(8):: micpara
 
 !----------------------------------------------------------------------------
 

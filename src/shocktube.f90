@@ -18,7 +18,7 @@ subroutine shocktube
  use input_mod,only:error_extras,error_nml
 
  integer::dir,ui,strl,istat
- real*8:: dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,b1l,b1r,b2l,b2r,b3l,b3r
+ real(8):: dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,b1l,b1r,b2l,b2r,b3l,b3r
 !-----------------------------------------------------------------------------
 
  namelist /tubecon/ mag_on,gamma,&
@@ -91,7 +91,7 @@ subroutine setup_shocktube(whichaxis, &
   implicit none
 
   integer,intent(in):: whichaxis
-  real*8,intent(in):: dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,&
+  real(8),intent(in):: dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,&
                                   b1l,b1r,b2l,b2r,b3l,b3r
 
 !--------------------------------------------------------------------

@@ -24,8 +24,8 @@ subroutine restart
  use output_mod,only:set_file_name
  use readbin_mod
  
- real*8:: starttime
- character*30 startfile, bptfile
+ real(8):: starttime
+ character(len=30):: startfile, bptfile
  integer:: ui
 
 !-----------------------------------------------------------------------------

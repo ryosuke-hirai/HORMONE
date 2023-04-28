@@ -16,7 +16,7 @@ contains
   use grid
   use physval
   
-  real*8 :: divergence, gradT(1:dim), gradd(1:dim), Mjump
+  real(8):: divergence, gradT(1:dim), gradd(1:dim), Mjump
 
 !-----------------------------------------------------------------------------
 
@@ -29,8 +29,11 @@ contains
    do k = ks, ke
     do j = js, je
      do i = is, ie
-      divergence = (dx1(i)**2d0*v1(i+1,j,k)-dx1(i+1)**2d0*v1(i-1,j,k)+(dx1(i+1)**2d0-dx1(i)**2d0)*v1(i,j,k))*idx1(i)*idx1(i+1)/sum(dx1(i:i+1)) + 2d0*v1(i,j,k)/x1(i) &
-       + ((dx2(j)**2d0*v2(i,j+1,k)-dx2(j+1)**2d0*v2(i,j-1,k)+(dx2(j+1)**2d0-dx2(j)**2d0)*v2(i,j,k))*idx2(j)*idx2(j+1)/sum(dx2(j:j+1))+v2(i,j,k)/tan(x2(j)))/x1(i)
+      divergence = (dx1(i)**2*v1(i+1,j,k)-dx1(i+1)**2*v1(i-1,j,k)&
+       + (dx1(i+1)**2-dx1(i)**2)*v1(i,j,k))*idx1(i)*idx1(i+1)/sum(dx1(i:i+1)) &
+       + 2d0*v1(i,j,k)/x1(i) &
+       + ((dx2(j)**2*v2(i,j+1,k)-dx2(j+1)**2*v2(i,j-1,k)&
+         +(dx2(j+1)**2-dx2(j)**2)*v2(i,j,k))*idx2(j)*idx2(j+1)/sum(dx2(j:j+1))+v2(i,j,k)/tan(x2(j)))/x1(i)
       if(divergence<0d0)then
        gradT(1) = T(i+1,j,k) - T(i-1,j,k)
        gradT(2) = T(i,j+1,k) - T(i,j-1,k)
@@ -52,8 +55,12 @@ contains
    do k = ks, ke
     do j = js, je
      do i = is, ie
-      divergence = (dx1(i)**2d0*v1(i+1,j,k)-dx1(i+1)**2d0*v1(i-1,j,k)+(dx1(i+1)**2d0-dx1(i)**2d0)*v1(i,j,k))*idx1(i)*idx1(i+1)/sum(dx1(i:i+1)) + v1(i,j,k)/x1(i) &
-       + (dx3(k)**2d0*v3(i,j,k+1)-dx3(k+1)**2d0*v3(i,j,k-1)+(dx3(k+1)**2d0-dx3(k)**2d0)*v3(i,j,k))*idx3(k)*idx3(k+1)/sum(dx3(k:k+1))
+      divergence = (dx1(i)**2*v1(i+1,j,k)-dx1(i+1)**2*v1(i-1,j,k)&
+                    +(dx1(i+1)**2-dx1(i)**2)*v1(i,j,k))&
+                    *idx1(i)*idx1(i+1)/sum(dx1(i:i+1)) &
+                 + v1(i,j,k)/x1(i) &
+                 + (dx3(k)**2*v3(i,j,k+1)-dx3(k+1)**2*v3(i,j,k-1)+(dx3(k+1)**2-dx3(k)**2)*v3(i,j,k))&
+                 *idx3(k)*idx3(k+1)/sum(dx3(k:k+1))
       if(divergence<0d0)then
        gradT(1) = T(i+1,j,k) - T(i-1,j,k)
        gradT(2) = T(i,j,k+1) - T(i,j,k-1)
@@ -83,7 +90,7 @@ contains
  function Mach(ii,jj,kk)
   use physval,only:cs,v1,v2,v3
   integer,intent(in):: ii,jj,kk
-  real*8:: Mach
+  real(8):: Mach
   Mach = sqrt( v1(ii,jj,kk)**2   &
              + v2(ii,jj,kk)**2   &
              + v3(ii,jj,kk)**2 ) &

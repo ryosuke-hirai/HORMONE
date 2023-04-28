@@ -18,11 +18,11 @@ subroutine eostest
  use composition_mod,only:get_imu
  use ionization_mod
 
- real*8:: d, p, e, T, imu
- real*8:: X, Y, Z, Xi, Xf, p2, T2, Ti, Tf
- real*8:: Qi, Qf, Q, erec, imu2, imu3, T0, cs
- real*8:: T3, p3, p4, d2, S, T4
- real*8:: rerrp1,rerrp2,rerrp3,rerrT1,rerrT2,rerrd1
+ real(8):: d, p, e, T, imu
+ real(8):: X, Y, Z, Xi, Xf, p2, T2, Ti, Tf
+ real(8):: Qi, Qf, Q, erec, imu2, imu3, T0, cs
+ real(8):: T3, p3, p4, d2, S, T4
+ real(8):: rerrp1,rerrp2,rerrp3,rerrT1,rerrT2,rerrd1
  integer:: iie, jje, kke, ierr, ui
  character(len=100):: form1
 

@@ -16,13 +16,13 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  use constants,only:pi
  use composition_mod,only:get_imu
 
- real*8,intent(inout)::rcore
- real*8,allocatable,dimension(:),intent(inout):: r, m, rho, pres
- real*8,allocatable,dimension(:,:),intent(inout):: comp
+ real(8),intent(inout)::rcore
+ real(8),allocatable,dimension(:),intent(inout):: r, m, rho, pres
+ real(8),allocatable,dimension(:,:),intent(inout):: comp
  character(len=10),allocatable,intent(in):: comp_list(:)
- integer i,j,ih1,ihe4,ierr
- real*8:: mcore,mpt,imuh
- real*8,allocatable,dimension(:):: softr,softrho,softp
+ integer::i,j,ih1,ihe4,ierr
+ real(8):: mcore,mpt,imuh
+ real(8),allocatable,dimension(:):: softr,softrho,softp
  
 !-----------------------------------------------------------------------------
 
@@ -80,13 +80,13 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use gravmod,only:gravswitch,grvphi,grvphiold,mc
  use utils,only:intpol
  
- real*8,allocatable,dimension(:),intent(in):: r,m,rho,pres
- real*8,allocatable,dimension(:,:),intent(in),optional:: comp
+ real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
+ real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
- real*8,allocatable,dimension(:)::gpot
- integer lines,nn,sn
- real*8:: mass, radius
- real*8:: mnow,rnow,volfac
+ real(8),allocatable,dimension(:)::gpot
+ integer::lines,nn,sn
+ real(8):: mass, radius
+ real(8):: mnow,rnow,volfac
 !-----------------------------------------------------------------------------
 
  lines = size(r)-1
@@ -215,15 +215,15 @@ subroutine one_shot(Sc,imu,r,mcore,msoft,rho,p,mass)
  use pressure_mod,only:get_d_from_ps
  use utils,only:softened_acc
  
- real*8,intent(in)::Sc,mcore,msoft
- real*8,intent(inout)::imu
- real*8,allocatable,dimension(:),intent(in)::r
- real*8,allocatable,dimension(:),intent(inout)::rho,p
- real*8,intent(out)::mass
+ real(8),intent(in)::Sc,mcore,msoft
+ real(8),intent(inout)::imu
+ real(8),allocatable,dimension(:),intent(in)::r
+ real(8),allocatable,dimension(:),intent(inout)::rho,p
+ real(8),intent(out)::mass
 
- integer i,Nmax
- real*8::hsoft
- real*8,allocatable,dimension(:)::dr,vol
+ integer::i,Nmax
+ real(8)::hsoft
+ real(8),allocatable,dimension(:)::dr,vol
 
 !-----------------------------------------------------------------------------
 
@@ -261,14 +261,14 @@ subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
  use settings,only:eostype
  use pressure_mod,only:entropy_from_dp
 
- real*8,allocatable,dimension(:),intent(in)::r
- real*8,intent(in)::mh,imuh
- real*8,intent(inout)::mpt
- real*8,allocatable,dimension(:),intent(inout)::rho,p
+ real(8),allocatable,dimension(:),intent(in)::r
+ real(8),intent(in)::mh,imuh
+ real(8),intent(inout)::mpt
+ real(8),allocatable,dimension(:),intent(inout)::rho,p
  integer,intent(out)::ierr
 
- integer Nmax,i
- real*8::Sc,mass,mold,msoft,fac,Sedge,T,imu,eostype0
+ integer::Nmax,i
+ real(8)::Sc,mass,mold,msoft,fac,Sedge,T,imu,eostype0
 
 !-----------------------------------------------------------------------------
 

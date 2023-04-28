@@ -17,14 +17,14 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 
  implicit none
 
- character*100,intent(in):: mesafile
- character*30,allocatable::header(:),dum(:)
- real*8,allocatable,dimension(:),intent(out):: r, m, rho, pres
- real*8,allocatable,dimension(:,:),intent(out),optional:: comp
- character*10,allocatable,intent(out),optional::comp_list(:)
- real*8,allocatable,dimension(:,:):: dat
- character*10000 dumc
- integer nn,ui, i,j, lines, rows, nrel, nel,istat
+ character(len=100),intent(in):: mesafile
+ character(len=30),allocatable::header(:),dum(:)
+ real(8),allocatable,dimension(:),intent(out):: r, m, rho, pres
+ real(8),allocatable,dimension(:,:),intent(out),optional:: comp
+ character(len=10),allocatable,intent(out),optional::comp_list(:)
+ real(8),allocatable,dimension(:,:):: dat
+ character(len=10000):: dumc
+ integer:: nn,ui, i,j, lines, rows, nrel, nel,istat
  character(len=10),allocatable:: element_list(:)
 
  

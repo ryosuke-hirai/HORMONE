@@ -23,12 +23,12 @@ subroutine redsupergiant
  use utils,only:softened_pot
  use output_mod,only:write_extgrv
 
- character*100:: mesafile
- real*8,allocatable,dimension(:):: r,m,rho,pres
- real*8,allocatable,dimension(:,:):: comp
+ character(len=100):: mesafile
+ real(8),allocatable,dimension(:):: r,m,rho,pres
+ real(8),allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
- integer nn,sn
- real*8::rcore,mcore,dbg,mass,spc_bg(1:spn)
+ integer:: nn,sn
+ real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn)
  
 !-----------------------------------------------------------------------------
 

@@ -22,8 +22,8 @@ subroutine agndisk
  use input_mod,only:error_extras,error_nml
 
  integer:: ui,istat
- real*8:: d_disk, d_amb, Eexp, Mexp, Rexp, Vexp, e_bcg, v0, t0, vedge, v0t0
- real*8:: M_SMBH, r_disk, rgrav, aspratio, hdisk, qkin, mass
+ real(8):: d_disk, d_amb, Eexp, Mexp, Rexp, Vexp, e_bcg, v0, t0, vedge, v0t0
+ real(8):: M_SMBH, r_disk, rgrav, aspratio, hdisk, qkin, mass
 
 !-----------------------------------------------------------------------------
 

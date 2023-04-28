@@ -12,13 +12,13 @@ contains
 subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 ! PURPOSE: To calculate temperature from density and internal energy
  implicit none
- real*8,intent(in):: d,eint
- real*8,intent(inout):: T,imu
- real*8,intent(in),optional:: X,Y
- real*8,intent(out),optional:: erec_out
- real*8:: corr, erec, derecdT, dimurecdT, Tdot, logd, dt
- real*8,parameter:: W4err = 1d-2
- integer n
+ real(8),intent(in):: d,eint
+ real(8),intent(inout):: T,imu
+ real(8),intent(in),optional:: X,Y
+ real(8),intent(out),optional:: erec_out
+ real(8):: corr, erec, derecdT, dimurecdT, Tdot, logd, dt
+ real(8),parameter:: W4err = 1d-2
+ integer:: n
 
  if(T<=0d0) T=1d3
 
@@ -80,12 +80,12 @@ end subroutine getT_from_de
 subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
 ! PURPOSE: To calculate temperature from density and pressure
  implicit none
- real*8,intent(in):: d,p
- real*8,intent(in),optional:: X,Y
- real*8,intent(inout):: T,imu
- real*8,intent(out),optional:: erec
- real*8:: corr, imurec, dimurecdT, logd
- integer n
+ real(8),intent(in):: d,p
+ real(8),intent(in),optional:: X,Y
+ real(8),intent(inout):: T,imu
+ real(8),intent(out),optional:: erec
+ real(8):: corr, imurec, dimurecdT, logd
+ integer:: n
 
  if(T<=0d0) T=1d3
  
@@ -139,12 +139,12 @@ end subroutine getT_from_dp
 subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
 
  implicit none
- real*8,intent( in):: d,eint
- real*8,intent( in),optional:: X,Y
- real*8,intent(inout):: T,imu
- real*8,intent(out):: p,cs
+ real(8),intent( in):: d,eint
+ real(8),intent( in),optional:: X,Y
+ real(8),intent(inout):: T,imu
+ real(8),intent(out):: p,cs
  integer,intent(out):: ierr
- real*8:: gamma_eff,erec,Ttemp
+ real(8):: gamma_eff,erec,Ttemp
 
 !-----------------------------------------------------------------------------
 
@@ -184,12 +184,13 @@ return
 end subroutine eos_p_cs
 
 ! ***************************************************************************
-real*8 function eos_p(d,eint,T,imu,X,Y)
+function eos_p(d,eint,T,imu,X,Y)
 ! PURPOSE: To calculate pressure from density and internal energy without B field
  implicit none
- real*8,intent(in):: d,eint
- real*8,intent(inout):: T,imu
- real*8,intent(in),optional:: X,Y
+ real(8),intent(in):: d,eint
+ real(8),intent(inout):: T,imu
+ real(8),intent(in),optional:: X,Y
+ real(8):: eos_p
 
  select case (eostype)
  case(0) ! ideal gas
@@ -212,13 +213,13 @@ end function eos_p
 
 ! **************************************************************************
 
-real*8 function eos_e(d,p,T,imu,X,Y)
+function eos_e(d,p,T,imu,X,Y)
 ! PURPOSE: To calculate internal energy from density and pressure
  implicit none
- real*8,intent(in):: d,p
- real*8,intent(in),optional:: X,Y
- real*8,intent(inout):: imu,T
- real*8:: erec
+ real(8),intent(in):: d,p
+ real(8),intent(in),optional:: X,Y
+ real(8),intent(inout):: imu,T
+ real(8):: eos_e, erec
  
  select case (eostype)
  case(0) ! ideal gas
@@ -244,8 +245,8 @@ end function eos_e
 pure function get_cf(d,cs,b1,b2,b3) result(cf)
 ! PURPOSE: To calculate full sound speed from thermal sound speed and B field
 !          Note that this is the sound speed in the b1 direction
- real*8,intent(in):: d,cs,b1,b2,b3
- real*8:: cf,asq,bbsq,bb1,bb2,bb3
+ real(8),intent(in):: d,cs,b1,b2,b3
+ real(8):: cf,asq,bbsq,bb1,bb2,bb3
  asq = cs**2
 
  bb1  = b1**2 / d
@@ -263,10 +264,10 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
  use constants
 ! PURPOSE: To calculate entropy from density and temperature
  implicit none
- real*8,intent(in):: d,T
- real*8,intent(in),optional:: X,Y
- real*8,intent(inout):: imu
- real*8:: p,entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+ real(8),intent(in):: d,T
+ real(8),intent(in),optional:: X,Y
+ real(8),intent(inout):: imu
+ real(8):: p,entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
 
  select case(eostype)
  case(0) ! ideal gas
@@ -312,10 +313,10 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
  use constants
 ! PURPOSE: To calculate entropy from density and pressure
  implicit none
- real*8,intent(in):: d,p
- real*8,intent(in),optional:: X,Y
- real*8,intent(inout):: T,imu
- real*8:: entropy
+ real(8),intent(in):: d,p
+ real(8),intent(in),optional:: X,Y
+ real(8),intent(inout):: T,imu
+ real(8):: entropy
 
  select case(eostype)
  case(0) ! ideal gas
@@ -343,10 +344,10 @@ function entropy_from_de(d,e,T,imu,X,Y) result(entropy)
  use constants
 ! PURPOSE: To calculate entropy from density and internal energy
  implicit none
- real*8,intent(in):: d,e
- real*8,intent(in),optional:: X,Y
- real*8,intent(inout):: T,imu
- real*8:: entropy
+ real(8),intent(in):: d,e
+ real(8),intent(in),optional:: X,Y
+ real(8),intent(inout):: T,imu
+ real(8):: entropy
 
  select case(eostype)
  case(0) ! ideal gas
@@ -374,12 +375,12 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
 ! PURPOSE: Calculate density given pressure and entropy​
  implicit none
 
- real*8,intent(in):: p,S
- real*8,intent(inout):: imu
- real*8,intent(in),optional:: X,Y
- real*8:: d,corr,corr0,dp,S0,Sp,dSdd,T,ddot,dt
- real*8,parameter:: dfac=1d-8, Serr_rel_eoserr=7d0, W4err=1d-2
- integer n
+ real(8),intent(in):: p,S
+ real(8),intent(inout):: imu
+ real(8),intent(in),optional:: X,Y
+ real(8):: d,corr,corr0,dp,S0,Sp,dSdd,T,ddot,dt
+ real(8),parameter:: dfac=1d-8, Serr_rel_eoserr=7d0, W4err=1d-2
+ integer:: n
 
 !-----------------------------------------------------------------------------
 
@@ -446,12 +447,12 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
 ! PURPOSE: Calculate internal energy given density and entropy​
  implicit none
 
- real*8,intent(in):: d,S
- real*8,intent(inout):: imu
- real*8,intent(in),optional:: X,Y
- real*8:: e,corr,corr0,ep,S0,Sp,dSde,T,edot,dt
- real*8,parameter:: dfac=1d-8, Serr_rel_eoserr=1d2, W4err=1d-2
- integer n
+ real(8),intent(in):: d,S
+ real(8),intent(inout):: imu
+ real(8),intent(in),optional:: X,Y
+ real(8):: e,corr,corr0,ep,S0,Sp,dSde,T,edot,dt
+ real(8),parameter:: dfac=1d-8, Serr_rel_eoserr=1d2, W4err=1d-2
+ integer:: n
 
 !-----------------------------------------------------------------------------
 
@@ -518,10 +519,10 @@ function get_p_from_ds(d,S,imu,X,Y) result(p)
 ! PURPOSE: Calculate internal energy given density and entropy​
  implicit none
 
- real*8,intent(in):: d,S
- real*8,intent(inout):: imu
- real*8,intent(in),optional:: X,Y
- real*8:: eint,p,T
+ real(8),intent(in):: d,S
+ real(8),intent(inout):: imu
+ real(8),intent(in),optional:: X,Y
+ real(8):: eint,p,T
 
 !-----------------------------------------------------------------------------
  
@@ -557,7 +558,7 @@ subroutine pressure
 
  implicit none
 
- real*8 bsq
+ real(8):: bsq
  integer:: ierr
 
 !-----------------------------------------------------------------------------
@@ -647,9 +648,9 @@ end subroutine internalenergy
 function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
 !PURPOSE: To calculate eint from etot, v and B
  implicit none
- real*8,intent(in):: etot,d,v1,v2,v3,b1,b2,b3
+ real(8),intent(in):: etot,d,v1,v2,v3,b1,b2,b3
  integer,intent(out),optional::ierr
- real*8:: eint, vsq, bsq
+ real(8):: eint, vsq, bsq
 
  ierr=0
  vsq = v1**2 + v2**2 + v3**2

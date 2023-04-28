@@ -24,7 +24,7 @@ subroutine tools
  use ionization_mod,only:ionization_setup
  use cooling_mod,only:cooling_setup
  
- integer ll
+ integer:: ll
 
 !-----------------------------------------------------------------------------
 

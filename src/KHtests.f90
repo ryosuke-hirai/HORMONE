@@ -16,8 +16,8 @@ contains
   use grid
   use physval
 
-  real*8 rdm
-  real*8,parameter:: ptb = 1d-2
+  real(8)::rdm
+  real(8),parameter:: ptb = 1d-2
 
 !--------------------------------------------------------------------
 

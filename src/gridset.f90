@@ -19,7 +19,7 @@ subroutine gridset
   use utils,only:geometrical_series
   use readbin_mod,only:readgrid
   
-  integer jetmp,ketmp
+  integer::jetmp,ketmp
 
 !-------------------------------------------------------------------------
 
@@ -456,15 +456,15 @@ end subroutine gridset
 
 subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
 
- real*8,intent(in):: xi1s,xi1e
- real*8,intent(inout),allocatable:: dxi1(:)
+ real(8),intent(in):: xi1s,xi1e
+ real(8),intent(inout),allocatable:: dxi1(:)
  integer,intent(in):: is,ie
 
 !-----------------------------------------------------------------------------
 
  integer:: i
- real*8:: xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx, xmin
- real*8:: radstar
+ real(8):: xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx, xmin
+ real(8):: radstar
 
 !-----------------------------------------------------------------------------
 
@@ -524,13 +524,13 @@ end subroutine other_imesh
 
 subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
 
- real*8,intent(in):: xi2s,xi2e
- real*8,intent(inout),allocatable:: dxi2(:)
+ real(8),intent(in):: xi2s,xi2e
+ real(8),intent(inout),allocatable:: dxi2(:)
  integer,intent(in):: js,je
 
- integer j
- real*8,allocatable:: xi2(:)
- real*8 dcos
+ integer::j
+ real(8),allocatable:: xi2(:)
+ real(8):: dcos
 
 !-----------------------------------------------------------------------------
 
@@ -610,8 +610,8 @@ subroutine other_kmesh(dxi3,ks,ke,xi3s,xi3e)
 
  use grid,only:dxi1,xi1,is,ie
 
- real*8,intent(inout):: xi3s,xi3e
- real*8,intent(inout),allocatable:: dxi3(:)
+ real(8),intent(inout):: xi3s,xi3e
+ real(8),intent(inout),allocatable:: dxi3(:)
  integer,intent(in):: ks,ke
 
 !-----------------------------------------------------------------------------

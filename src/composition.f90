@@ -105,8 +105,8 @@ end subroutine meanmolweight
 
 function get_imu(spc) result(imu)
  implicit none
- real*8,intent(in)::spc(1:2)
- real*8:: imu
+ real(8),intent(in)::spc(1:2)
+ real(8):: imu
 
  imu = 0.25d0*(6d0*spc(1)+spc(2)+2d0)
  

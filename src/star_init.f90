@@ -20,13 +20,13 @@ subroutine star_init
  use input_mod
  use star_mod
 
- character*100:: mesafile
- real*8,allocatable,dimension(:):: r,m,rho,pres
- real*8,allocatable,dimension(:,:):: comp
+ character(len=100):: mesafile
+ real(8),allocatable,dimension(:):: r,m,rho,pres
+ real(8),allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
  character(len=10)::spc_list(1:1000)
- integer nn,sn,istat
- real*8::dbg,mass,radius,spc_bg(1:spn)
+ integer::nn,sn,istat
+ real(8)::dbg,mass,radius,spc_bg(1:spn)
  
 !-----------------------------------------------------------------------------
 

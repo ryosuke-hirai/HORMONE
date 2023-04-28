@@ -20,7 +20,7 @@ subroutine smear
 
  implicit none
 
- integer jb,kb
+ integer:: jb,kb
 
 !-----------------------------------------------------------------------------
 
@@ -209,8 +209,8 @@ end subroutine smear
 
   integer,intent(in)::i,js,je,ks,ke
   integer:: j,k
-  real*8:: mtot, etot
-  real*8,dimension(1:3):: vcar, xcar, momtot, vave
+  real(8):: mtot, etot
+  real(8),dimension(1:3):: vcar, xcar, momtot, vave
   
 !-----------------------------------------------------------------------------
 

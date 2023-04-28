@@ -6,8 +6,8 @@ contains
 ! convert polar to cartesian coordinates
  pure function polcar(xp) result(x)
   implicit none
-  real*8,intent(in):: xp(1:3)
-  real*8:: x(1:3)
+  real(8),intent(in):: xp(1:3)
+  real(8):: x(1:3)
   x(1) = xp(1)*sin(xp(2))*cos(xp(3))
   x(2) = xp(1)*sin(xp(2))*sin(xp(3))
   x(3) = xp(1)*cos(xp(2))
@@ -16,8 +16,8 @@ contains
 ! convert cartesian to polar coordinates
  pure function carpol(x) result(xp)
   implicit none
-  real*8,intent(in):: x(1:3)
-  real*8:: xp(1:3)
+  real(8),intent(in):: x(1:3)
+  real(8):: xp(1:3)
   xp(1) = norm2(x)
   xp(2) = acos(x(3)/xp(1))
   xp(3) = atan2(x(2),x(1))
@@ -27,8 +27,8 @@ contains
  pure function softened_pot(r,hsoft) result(phi)
 ! Softened potential from Price & Monaghan 2007 Appendix A
   implicit none
-  real*8,intent(in):: r,hsoft
-  real*8:: phi,h,q
+  real(8),intent(in):: r,hsoft
+  real(8):: phi,h,q
   h = 0.5d0*hsoft
   q=r/h
   if(q>=2d0)then
@@ -44,8 +44,8 @@ contains
  pure function softened_acc(r,hsoft) result(acc)
 ! Softened acceleration from Price & Monaghan 2007 Appendix A
   implicit none
-  real*8,intent(in):: r,hsoft
-  real*8::acc,h,q
+  real(8),intent(in):: r,hsoft
+  real(8)::acc,h,q
   h = 0.5d0*hsoft
   q = r/h
   if(q<1d0)then
@@ -71,9 +71,9 @@ subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
  
  implicit none
 
- real*8,intent(in):: xcar(1:3),x3,v1,v2,v3
- real*8,intent(out)::vcar(1:3)
- real*8,dimension(1:3)::uvec1,uvec2,uvec3
+ real(8),intent(in):: xcar(1:3),x3,v1,v2,v3
+ real(8),intent(out)::vcar(1:3)
+ real(8),dimension(1:3)::uvec1,uvec2,uvec3
 
 !-----------------------------------------------------------------------------
 
@@ -99,9 +99,9 @@ subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
  
  implicit none
 
- real*8,intent(in):: xcar(1:3),x3,vcar(1:3)
- real*8,intent(out)::v1,v2,v3
- real*8,dimension(1:3)::uvec1,uvec2,uvec3
+ real(8),intent(in):: xcar(1:3),x3,vcar(1:3)
+ real(8),intent(out)::v1,v2,v3
+ real(8),dimension(1:3)::uvec1,uvec2,uvec3
 
 !-----------------------------------------------------------------------------
 
@@ -119,8 +119,8 @@ end subroutine get_vpol
 ! rotate about the x axis
  pure function rotx(x,theta) result(xp)
   implicit none
-  real*8,intent(in):: x(1:3), theta
-  real*8:: xp(1:3)
+  real(8),intent(in):: x(1:3), theta
+  real(8):: xp(1:3)
   xp(1) = x(1)
   xp(2) = cos(theta)*x(2) - sin(theta)*x(3)
   xp(3) = sin(theta)*x(2) + cos(theta)*x(3)
@@ -129,8 +129,8 @@ end subroutine get_vpol
 ! rotate about the y axis
  pure function roty(x,theta) result(xp)
   implicit none
-  real*8,intent(in):: x(1:3), theta
-  real*8:: xp(1:3)
+  real(8),intent(in):: x(1:3), theta
+  real(8):: xp(1:3)
   xp(1) = cos(theta)*x(1) + sin(theta)*x(3)
   xp(2) = x(2)
   xp(3) =-sin(theta)*x(1) + cos(theta)*x(3)
@@ -139,8 +139,8 @@ end subroutine get_vpol
 ! rotate about the z axis
  pure function rotz(x,theta) result(xp)
   implicit none
-  real*8,intent(in):: x(1:3), theta
-  real*8:: xp(1:3)
+  real(8),intent(in):: x(1:3), theta
+  real(8):: xp(1:3)
   xp(1) = cos(theta)*x(1) - sin(theta)*x(2)
   xp(2) = sin(theta)*x(1) + cos(theta)*x(2)
   xp(3) = x(3)
@@ -149,8 +149,8 @@ end subroutine get_vpol
 ! cross product
  pure function cross(x,y) result(z)
   implicit none
-  real*8,intent(in):: x(1:3),y(1:3)
-  real*8:: z(1:3)
+  real(8),intent(in):: x(1:3),y(1:3)
+  real(8):: z(1:3)
   z(1) = x(2)*y(3)-x(3)*y(2)
   z(2) = x(3)*y(1)-x(1)*y(3)
   z(3) = x(1)*y(2)-x(2)*y(1)
@@ -159,9 +159,9 @@ end subroutine get_vpol
  ! linear interpolation
  pure function intpol(x,y,z) result(val)
   implicit none
-  real*8,intent(in):: x(1:2), y(1:2)
-  real*8,intent(in):: z
-  real*8:: val
+  real(8),intent(in):: x(1:2), y(1:2)
+  real(8),intent(in):: z
+  real(8):: val
   val = ((x(2)-z)*y(1)+(z-x(1))*y(2))/(x(2)-x(1))
  end function intpol
 
@@ -176,10 +176,10 @@ subroutine geometrical_series(dxi,xmin,is,ie,xis,xie)
  implicit none
 
  integer,intent(in):: is,ie
- real*8,intent(in):: xis,xie,xmin
- real*8,intent(inout),allocatable:: dxi(:)
- integer i
- real*8 xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx
+ real(8),intent(in):: xis,xie,xmin
+ real(8),intent(inout),allocatable:: dxi(:)
+ integer:: i
+ real(8):: xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx
 
 !-----------------------------------------------------------------------------
 

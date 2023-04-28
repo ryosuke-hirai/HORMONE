@@ -169,7 +169,7 @@ subroutine open_evofile
  use settings,only:sigfig,gravswitch,mag_on,crdnt
  use grid,only:tn,dim
  
- character(50):: forma
+ character(len=50):: forma
 
 !-----------------------------------------------------------------------------
 
@@ -208,8 +208,8 @@ subroutine evo_output
 
  implicit none
 
- character*50:: forme
- real*8:: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot
+ character(len=50):: forme
+ real(8):: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot
 
 !-----------------------------------------------------------------------------
  
@@ -291,7 +291,7 @@ subroutine write_grid
 
  implicit none
 
- character*50:: formhead,formval,formnum
+ character(len=50):: formhead,formval,formnum
  integer:: ui
 
 !-----------------------------------------------------------------------------
@@ -455,7 +455,7 @@ subroutine write_bin
 
  implicit none
 
- character*50:: binfile
+ character(len=50):: binfile
  integer:: un
  
 !-----------------------------------------------------------------------------
@@ -501,8 +501,8 @@ subroutine write_plt
 
  implicit none
 
- character*50:: pltfile
- character*20:: header(50)='aaa',forma,forme,formi
+ character(len=50):: pltfile
+ character(len=20):: header(50)='aaa',forma,forme,formi
  integer:: ui,columns
 
 !-----------------------------------------------------------------------------
@@ -687,10 +687,10 @@ subroutine set_file_name(prefix,tn,time,filename)
 
  implicit none
 
- character(*),intent(in):: prefix
- character(*),intent(out)::filename
+ character(len=*),intent(in):: prefix
+ character(len=*),intent(out)::filename
  integer,intent(in):: tn
- real*8,intent(in):: time
+ real(8),intent(in):: time
  
 !-----------------------------------------------------------------------------
  select case(outstyle)
@@ -723,9 +723,9 @@ subroutine get_header(header,columns)
 
  implicit none
 
- character(*),intent(inout):: header(50)
+ character(len=*),intent(inout):: header(50)
  integer,intent(out):: columns
- integer n
+ integer::n
 
 !-----------------------------------------------------------------------------
 ! Output density/internal energy/pressure by default
@@ -812,8 +812,8 @@ pure subroutine add_column(string,columns,header)
 
  implicit none
 
- character(*),intent(inout):: header(50)
- character(*),intent(in):: string
+ character(len=*),intent(inout):: header(50)
+ character(len=*),intent(in):: string
  integer,intent(inout):: columns
 
 !-----------------------------------------------------------------------------
@@ -839,7 +839,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  implicit none
 
  integer,intent(in):: ui,i,j,k
- character(*),intent(in):: forme, header(:)
+ character(len=*),intent(in):: forme, header(:)
  integer:: n, nn
 
 !-----------------------------------------------------------------------------
@@ -898,8 +898,8 @@ end subroutine write_val
 subroutine write_anyval(ui,forme,val)
 
  integer,intent(in):: ui
- character(*),intent(in):: forme
- real*8,intent(in):: val
+ character(len=*),intent(in):: forme
+ real(8),intent(in):: val
 !-----------------------------------------------------------------------------
 
  write(ui,forme,advance='no')val

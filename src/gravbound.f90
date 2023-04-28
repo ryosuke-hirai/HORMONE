@@ -18,9 +18,9 @@ contains
   use constants,only:G
   use gravmod,only:llmax,grvphi,phiii,phiio,phi1o,phi3i,phi3o,mc,Pl,Plc,rdis
 
-  integer ll, error1
-  real*8 dphiii, dphiio, dphi1o, dphi3i, dphi3o
-  real*8,dimension(0:llmax):: ml
+  integer:: ll, error1
+  real(8):: dphiii, dphiio, dphi1o, dphi3i, dphi3o
+  real(8),dimension(0:llmax):: ml
 
 !------------------------------------------------------------------------------
 
@@ -248,8 +248,8 @@ contains
    implicit none
 
    integer,intent(in):: ll
-   real*8,intent(out):: ml
-   integer ii, jj, kk
+   real(8),intent(out):: ml
+   integer:: ii, jj, kk
 
    ml = 0d0
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -293,7 +293,7 @@ contains
    implicit none
 
    integer,intent(in):: ll
-   integer ii, jj, kk
+   integer:: ii, jj, kk
 
 !------------------------------------------------------------------------------
 

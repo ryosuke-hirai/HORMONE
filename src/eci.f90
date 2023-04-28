@@ -12,20 +12,20 @@ subroutine eci
  use settings,only:dt_out
  use physval
  use constants
+ use utils,only:intpol
  use ejectamod
  use gravmod,only:extgrv,grvtime,include_extgrv,rdis,coremass,coscyl,sincyl
  use pressure_mod
 
  implicit none
 
- real*8 mass, radius, dbg, corerad, c1, c2, c3, rhoh, rhoph, Mdot, vwind, mej
- real*8 mnow, mold, rnow, shellv, shelld, dr, rsoft, msoft, shellp
- integer nn, ii
- integer lines, rows
- character*10000 dumc
- character*30,allocatable:: header(:),dum(:)
- real*8,allocatable,dimension(:,:):: dat, comp
- real*8,allocatable,dimension(:):: m, r, pres,rho,ene, XX, YY, ZZ, mumu, Temp
+ real(8):: mass, radius, dbg, corerad, c1, c2, c3, rhoh, rhoph, Mdot, vwind, mej
+ real(8):: mnow, mold, rnow, shellv, shelld, dr, rsoft, msoft, shellp
+ integer:: nn, ii, lines, rows
+ character(10000):: dumc
+ character(30),allocatable:: header(:),dum(:)
+ real(8),allocatable,dimension(:,:):: dat, comp
+ real(8),allocatable,dimension(:):: m, r, pres,rho,ene, XX, YY, ZZ, mumu, Temp
  logical setcore
 
 !-----------------------------------------------------------------------------
@@ -124,13 +124,13 @@ subroutine eci
    if(rdis(i,k)<radius)then
     do n = 1, lines-1
      if(rdis(i,k)>r(n).and.rdis(i,k)<=r(n+1))then
-      spc(2,i,j,k) = intpol(rdis(i,k),r(n:n+1),comp(2,n:n+1))
-      spc(3,i,j,k) = intpol(rdis(i,k),r(n:n+1),comp(3,n:n+1))
-      spc(4,i,j,k) = intpol(rdis(i,k),r(n:n+1),comp(4,n:n+1))
-      spc(5,i,j,k) = intpol(rdis(i,k),r(n:n+1),comp(5,n:n+1))
-      spc(6,i,j,k) = intpol(rdis(i,k),r(n:n+1),comp(6,n:n+1))
-      spc(7,i,j,k) = intpol(rdis(i,k),r(n:n+1),comp(7,n:n+1))
-      spc(8,i,j,k) = intpol(rdis(i,k),r(n:n+1),comp(8,n:n+1))
+      spc(2,i,j,k) = intpol(r(n:n+1),comp(2,n:n+1),rdis(i,k))
+      spc(3,i,j,k) = intpol(r(n:n+1),comp(3,n:n+1),rdis(i,k))
+      spc(4,i,j,k) = intpol(r(n:n+1),comp(4,n:n+1),rdis(i,k))
+      spc(5,i,j,k) = intpol(r(n:n+1),comp(5,n:n+1),rdis(i,k))
+      spc(6,i,j,k) = intpol(r(n:n+1),comp(6,n:n+1),rdis(i,k))
+      spc(7,i,j,k) = intpol(r(n:n+1),comp(7,n:n+1),rdis(i,k))
+      spc(8,i,j,k) = intpol(r(n:n+1),comp(8,n:n+1),rdis(i,k))
       spc(1,i,j,k) = 1d0-sum(spc(2:8,i,j,k))
       exit
      end if
@@ -145,10 +145,10 @@ subroutine eci
  ! find boundary value between softened core and envelope
  do n = 1, lines-1
   if(r(n)<rsoft.and.r(n+1)>=rsoft)then
-   rhoh = intpol(rsoft,r(n:n+1),rho(n:n+1))
+   rhoh = intpol(r(n:n+1),rho(n:n+1),rsoft)
    rhoph = (rho(n+1)-rho(n))/(r(n+1)-r(n))
-   shellp = intpol(rsoft,r(n:n+1),pres(n:n+1))
-   msoft = intpol(rsoft,r(n:n+1),m(n:n+1))-coremass
+   shellp = intpol(r(n:n+1),pres(n:n+1),rsoft)
+   msoft = intpol(r(n:n+1),m(n:n+1),rsoft)-coremass
    exit
   end if
  end do
@@ -166,7 +166,7 @@ subroutine eci
   else
    do n = 1, lines-1
     if(rnow>r(n).and.rnow<=r(n+1))then
-     mnow = intpol(rnow,r(n:n+1),m(n:n+1))-coremass
+     mnow = intpol(r(n:n+1),m(n:n+1),rnow)-coremass
 !     shellp = intpol(rnow,r(n:n+1),pres(n:n+1))
      exit
     end if
@@ -310,22 +310,8 @@ close(9191)
   end do
  end do
 
-
  grvtime = time
 
-return
-
-contains
-
- real*8 function intpol(x,rr,u)
-  implicit none
-  real*8 x
-  real*8,dimension(1:2):: rr, u
-
-  intpol = ( u(1)*(rr(2)-x) + u(2)*(x-rr(1)) ) / (rr(2)-rr(1))
- end function intpol
-
-
-
+ return
 end subroutine eci
 

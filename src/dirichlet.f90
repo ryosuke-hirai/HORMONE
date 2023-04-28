@@ -18,8 +18,8 @@ contains
   use ejectamod
   use physval,only:d0,p0,v10,v20,v30,b10,b20,b30,spc0
 
-  real*8 v0, mej
-  integer nn, mm
+  real(8):: v0, mej
+  integer:: nn, mm
 
 !-----------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ subroutine outgoingboundary(i_,j_)
   implicit none
 
   integer,intent(in):: i_,j_
-  integer kk
+  integer:: kk
 !----------------------------------------------------------------------
   do kk = ks,ke
    d0 (i_,j_,kk) = d(ie,j_,kk)
@@ -130,7 +130,7 @@ subroutine freeboundary(i_,m_)
   implicit none
 
   integer,intent(in):: i_,m_
-  integer j_
+  integer:: j_
 !----------------------------------------------------------------------
   do j_ = js,je
    d0 (i_,j_,m_) = d(i_,j_,ke)

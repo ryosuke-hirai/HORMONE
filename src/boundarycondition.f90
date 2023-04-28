@@ -20,7 +20,7 @@ subroutine boundarycondition
  use pressure_mod
  use composition_mod
 
- real*8,allocatable:: plug(:,:,:)
+ real(8),allocatable:: plug(:,:,:)
 
 !-------------------------------------------------------------------------
 

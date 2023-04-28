@@ -3,8 +3,8 @@ module cooling_mod
 
  private
  integer,parameter:: NN = 5
- real*8:: Yint(0:NN), Tint(0:NN), lint(0:NN), alph(0:NN-1), tcool, lambda, Y
- real*8,parameter:: Tref = 1d8
+ real(8):: Yint(0:NN), Tint(0:NN), lint(0:NN), alph(0:NN-1), tcool, lambda, Y
+ real(8),parameter:: Tref = 1d8
 
  public cooling_setup,cooling
  
@@ -79,7 +79,7 @@ subroutine cooling
 
  implicit none
 
- real*8 YY
+ real(8):: YY
 
 !-----------------------------------------------------------------------------
 
@@ -140,11 +140,11 @@ return
 
 end subroutine cooling
 
-real*8 function Yinv(yy,kk)
+function Yinv(yy,kk)
  implicit none
  integer,intent(in)::kk
- real*8,intent(in)::yy
-
+ real(8),intent(in)::yy
+ real(8):: Yinv
  Yinv = Tint(kk)*&
       ( 1d0 - (1d0-alph(kk))*lint(kk)/lint(NN)*Tint(NN)/Tint(kk)&
              *(yy-Yint(kk)) ) **(1d0/(1d0-alph(kk)))

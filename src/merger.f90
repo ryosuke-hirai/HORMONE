@@ -3,16 +3,16 @@ module merger_mod
  use constants
  
  implicit none
- real*8,parameter:: sep = 20d0*rsun
- real*8,allocatable:: spin_coeffr(:), spin_coefft(:)
- real*8 Mtot, M1, Einject, Jinject, Tinject
- real*8 Iinertia, Jinitial, Einitial
- real*8 domega_dt, de_dt, iniEtot, iniJtot, curEtot, curJtot, inifile, inifile2
+ real(8),parameter:: sep = 20d0*rsun
+ real(8),allocatable:: spin_coeffr(:), spin_coefft(:)
+ real(8):: Mtot, M1, Einject, Jinject, Tinject
+ real(8):: Iinertia, Jinitial, Einitial
+ real(8):: domega_dt, de_dt, iniEtot, iniJtot, curEtot, curJtot, inifile, inifile2
 
  logical:: heatdone
  integer:: iedge
- real*8:: v2old, Erot, edge, din, dout
- real*8,allocatable:: heatV(:), Edistorg(:), Edist(:)
+ real(8):: v2old, Erot, edge, din, dout
+ real(8),allocatable:: heatV(:), Edistorg(:), Edist(:)
 
 contains
 

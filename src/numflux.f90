@@ -21,14 +21,14 @@ contains
   use composition_mod
   use interpolation_mod
   
-  real*8:: cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
+  real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
            v2l, v2r, v3l, v3r, eil, eir, csl, csr, fix
-  real*8,dimension(1:9)::tmpflux
-  real*8,dimension(1:2):: dx
-  real*8,dimension(1:spn):: spcl,spcr
-  real*8 signdflx,ul,ur,fl,fr,rinji
-  integer ierr
+  real(8),dimension(1:9)::tmpflux
+  real(8),dimension(1:2):: dx
+  real(8),dimension(1:spn):: spcl,spcr
+  real(8):: signdflx,ul,ur,fl,fr,rinji
+  integer:: ierr
 
 !--------------------------------------------------------------------
 

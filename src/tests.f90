@@ -50,8 +50,8 @@ contains
   use readbin_mod,only:readbin
 
   character(30):: testfile
-  real*8,parameter:: tolerance=1d-10
-  real*8:: derr,perr,v1err,v2err,v3err
+  real(8),parameter:: tolerance=1d-10
+  real(8):: derr,perr,v1err,v2err,v3err
   
 !-----------------------------------------------------------------------------
 

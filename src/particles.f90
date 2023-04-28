@@ -4,10 +4,10 @@ module particle_mod
 
  implicit none
  
- integer np, jmax, npl
+ integer:: np, jmax, npl
  integer,allocatable,dimension(:,:):: ptci
  integer,allocatable,dimension(:):: ptc_in
- real*8,allocatable:: ptcx(:,:), cosiptc(:), sincptc(:), coscptc(:)
+ real(8),allocatable:: ptcx(:,:), cosiptc(:), sincptc(:), coscptc(:)
  
 contains
 
@@ -121,8 +121,8 @@ subroutine particles
 
  implicit none
 
- logical extflag
- real*8 v1tmp1, v1tmp2, v2tmp1, v2tmp2, ptclr, ptclt
+ logical:: extflag
+ real(8):: v1tmp1, v1tmp2, v2tmp1, v2tmp2, ptclr, ptclt
 
 !-----------------------------------------------------------------------------
 

@@ -20,8 +20,8 @@ contains
   use constants,only:huge
   use pressure_mod,only:eos_p_cs,get_cf
 
-  real*8,allocatable:: dtdist(:,:,:,:), dti(:,:,:)
-  real*8:: cfmax, cf1,cf2,cf3
+  real(8),allocatable:: dtdist(:,:,:,:), dti(:,:,:)
+  real(8):: cfmax, cf1,cf2,cf3
   integer:: ierr
   
 !-------------------------------------------------------------------------
@@ -246,7 +246,7 @@ contains
 
  pure function off(is,ie)
   integer,intent(in)::is,ie
-  real*8:: off
+  real(8):: off
   if(ie==is)then
    off = 0d0
   else

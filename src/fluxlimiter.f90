@@ -5,9 +5,9 @@ subroutine minmod(mm,u,dx)
 
   implicit none
 
-  real*8,intent(in ):: u(1:3),dx(1:2)
-  real*8,intent(out):: mm
-  real*8 x,y,z
+  real(8),intent(in ):: u(1:3),dx(1:2)
+  real(8),intent(out):: mm
+  real(8):: x,y,z
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -30,9 +30,9 @@ subroutine modified_mc(mm,u,x,xi)
 
  implicit none
 
- real*8,intent(in ):: u(1:3),x(1:3),xi(1:2)
- real*8,intent(out):: mm
- real*8 cf,cb,top,bot,sig
+ real(8),intent(in ):: u(1:3),x(1:3),xi(1:2)
+ real(8),intent(out):: mm
+ real(8):: cf,cb,top,bot,sig
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

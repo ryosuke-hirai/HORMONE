@@ -72,7 +72,7 @@ subroutine read_default
  use settings
  use grid
 
- character*50:: filename, basefile
+ character(len=50):: filename, basefile
 
 !-----------------------------------------------------------------------------
 ! Read base file to set all parameters to default
