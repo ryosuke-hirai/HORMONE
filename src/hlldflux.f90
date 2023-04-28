@@ -44,13 +44,13 @@ contains
   sl  = min(v1r-cfr,v1l-cfl,0.d0)
   sr  = max(v1r+cfr,v1l+cfl,0.d0)
 ! sr & sl set to 0 for supersonic states
-!print *,v1l,cfl
+
   sm  = ( (sr-v1r)*dr*v1r - (sl-v1l)*dl*v1l - ptr + ptl ) &
         / ( (sr-v1r)*dr - (sl-v1l)*dl )
-!print *,(sr-v1r)*dr*v1r, - (sl-v1l)*dl*v1l, - ptr + ptl
+
   dla = dl * (sl-v1l)/(sl-sm)
   dra = dr * (sr-v1r)/(sr-sm)
-!print *,sr,sm,v1r,dra,dla
+
   sla = sm - abs(b1)/sqrt(dla)
   sra = sm + abs(b1)/sqrt(dra)
 
@@ -106,13 +106,13 @@ contains
 
 ! start sorting
 
-! set frequently used variables --------!
+! set frequently used variables -------!
   signsm  = sign(0.5d0,sm)             !
   sortsla = 0.5d0+sign(0.5d0, sla)     !
   sortsra = 0.5d0+sign(0.5d0,-sra)     !
   sortslr = 0.5d0-sign(0.5d0,sla*sra)  !
-!---------------------------------------!
-!print *,sortsla,sortsra,sortslr
+!--------------------------------------!
+
   dla  =   (0.5d0+signsm) * dla  &
          + (0.5d0-signsm) * dra
 
