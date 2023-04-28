@@ -1,5 +1,4 @@
 module pressure_mod
- use ionization_mod
  use constants,only:fac_egas,fac_pgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr
@@ -10,6 +9,7 @@ contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
+ use ionization_mod,only:get_erec_imurec
 ! PURPOSE: To calculate temperature from density and internal energy
  implicit none
  real(8),intent(in):: d,eint
@@ -78,6 +78,7 @@ end subroutine getT_from_de
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
+ use ionization_mod,only:get_erec,get_imurec
 ! PURPOSE: To calculate temperature from density and pressure
  implicit none
  real(8),intent(in):: d,p
@@ -262,6 +263,7 @@ end function get_cf
 
 function entropy_from_dT(d,T,imu,X,Y) result(entropy)
  use constants
+ use ionization_mod,only:get_xion
 ! PURPOSE: To calculate entropy from density and temperature
  implicit none
  real(8),intent(in):: d,T

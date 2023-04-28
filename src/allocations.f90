@@ -25,88 +25,92 @@ subroutine allocations
  gin = gie + 2 ; gjn = gje + 2 ; gkn = gke + 2
  lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
 
- allocate( &
-  x1(-1:gin),xi1(-1:gin),dx1(-1:gin),dxi1(-1:gin),idx1(-1:gin),idxi1(-1:gin), &
-  x2(-1:gjn),xi2(-1:gjn),dx2(-1:gjn),dxi2(-1:gjn),idx2(-1:gjn),idxi2(-1:gjn), &
-  x3(-1:gkn),xi3(-1:gkn),dx3(-1:gkn),dxi3(-1:gkn),idx3(-1:gkn),idxi3(-1:gkn), &
+! 1 dimensional arrays
+! grid-related variables
+ allocate(x1(gis-2:gie+2)); x1=0d0
+ allocate(xi1,dx1,dxi1,idx1,idxi1,source=x1)
 
-  d (-1:in,-1:jn,-1:kn), p (-1:in,-1:jn,-1:kn), e (-1:in,-1:jn,-1:kn), &
-  v1(-1:in,-1:jn,-1:kn), v2(-1:in,-1:jn,-1:kn), v3(-1:in,-1:jn,-1:kn), &
-  b1(-1:in,-1:jn,-1:kn), b2(-1:in,-1:jn,-1:kn), b3(-1:in,-1:jn,-1:kn), &
-  ptot(-1:in,-1:jn,-1:kn), cs(-1:in,-1:jn,-1:kn), phi(-1:in,-1:jn,-1:kn), &
-  T(-1:in,-1:jn,-1:kn), eint(-1:in,-1:jn,-1:kn), imu (-1:in,-1:jn,-1:kn), &
-  shock(-1:in,-1:jn,-1:kn),&
-  
-  dd (-1:in,-1:jn,-1:kn,1:3), de(-1:in,-1:jn,-1:kn,1:3), dphi(-1:in,-1:jn,-1:kn,1:3),&
-  dm1(-1:in,-1:jn,-1:kn,1:3), dm2(-1:in,-1:jn,-1:kn,1:3), dm3(-1:in,-1:jn,-1:kn,1:3),&
-  db1(-1:in,-1:jn,-1:kn,1:3), db2(-1:in,-1:jn,-1:kn,1:3), db3(-1:in,-1:jn,-1:kn,1:3),&
-  dmu(-1:in,-1:jn,-1:kn,1:3), &
+ allocate(x2(gjs-2:gje+2)); x2=0d0
+ allocate(xi2,dx2,dxi2,idx2,idxi2,source=x2)
 
-  u(-1:in,-1:jn,-1:kn,1:9), uorg(is:ie,js:je,ks:ke,1:9), &
-  flux1(-1:in,-1:jn,-1:kn,1:9), &
-  flux2(-1:in,-1:jn,-1:kn,1:9), &
-  flux3(-1:in,-1:jn,-1:kn,1:9), &
-  src  (is:ie,js:je,ks:ke,1:9), &
-  grv1(-1:in,-1:jn,-1:kn), grv2(-1:in,-1:jn,-1:kn),grv3(-1:in,-1:jn,-1:kn), &
+ allocate(x3(gks-2:gke+2)); x3=0d0
+ allocate(xi3,dx3,dxi3,idx3,idxi3,source=x3)
 
-  detg1(-1:in), idetg1(-1:in), sx1(-1:in), g22(-1:in), &
-  scot(-1:jn), sisin(-1:jn), &
-  detg2(-1:in,-1:jn), idetg2(-1:in,-1:jn), g33(-1:in,-1:jn), &
-  idetg3(-1:in,-1:jn,-1:kn), dvol(-1:in,-1:jn,-1:kn), &
-  sa1(-1:in,-1:jn,-1:kn), sa2(-1:in,-1:jn,-1:kn), sa3(-1:in,-1:jn,-1:kn)  &
- )
+!  metric-related variables
+ allocate(detg1(is-2:ie+2)); detg1=0d0
+ allocate(idetg1,sx1,g22,source=detg1)
 
-! allocate gravity related quantities if gravswitch>=1
+ allocate(scot(js-2:je+2)); scot=0d0
+ allocate(sisin,source=scot)
+
+ allocate(detg2(is-2:ie+2,js-2:je+2)); detg2=0d0
+ allocate(idetg2,g33,source=detg2)
+
+ allocate(dvol(is-2:ie+2,js-2:je+2,ks-2:ke+2)); dvol=0d0
+ allocate(idetg3,sa1,sa2,sa3,source=dvol)
+
+! 3 dimensional arrays
+! physical variables
+!  Strictly non-zero quantities
+ allocate(d(is-2:ie+2,js-2:je+2,ks-2:ke+2)); d = 1d0
+ allocate(p,e,T,ptot,cs,eint,imu,source=d)
+
+!  Initially zero quantities
+ allocate(phi(is-2:ie+2,js-2:je+2,ks-2:ke+2)); phi = 0d0
+ allocate(v1,v2,v3,b1,b2,b3,grv1,grv2,grv3,source=phi)
+ allocate(shock(is-2:ie+2,js-2:je+2,ks-2:ke+2)); shock = 0
+
+! 4 dimensional  arrays
+! gradients
+ allocate(dd(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:3)); dd = 0d0
+ allocate(de,dphi,dm1,dm2,dm3,db1,db2,db3,dmu,source=dd)
+
+! conserved quantities and flux
+ allocate(u(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:9)); u = 0d0
+ allocate(flux1,flux2,flux3,source=u)
+ allocate(src(is:ie,js:je,ks:ke,1:9)); src = 0d0
+ allocate(uorg,source=src)
+
+! gravity-related variables
  if(gravswitch>=1)then
-  allocate( &
-   grvphi   (gis-2:gin,gjs-2:gjn,gks-2:gkn), &
-   grvphiold(gis-2:gin,gjs-2:gjn,gks-2:gkn), &
-   hgsrc(gis:gie,gjs:gje,gks:gke), &
-
-   modlimax(1:lmax), &
-   a1(0:lmax), a2(0:lmax), a3(0:lmax), &
-   preca(0:lmax), precb(0:lmax), precc(0:lmax), precd(0:lmax), prece(0:lmax), &
- 
-   phiio(gie+1:gin,gjs-2:gjn), phiii(gis-2:gis-1,gjs-2:gjn), &
-   phi1o(gie+1:gin,gks-2:gkn), phi3i(gis-2:gin,gks-2:gks-1), &
-   phi3o(gis-2:gin,gke+1:gkn), &
-   mc(is-1:in) &
-  )
+  allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)); grvphi=0d0
+  allocate(grvphiold,source=grvphi)
+  allocate(hgsrc(gis:gie,gjs:gje,gks:gke))
+!  for MICCG method
+  allocate(modlimax(1:lmax)); modlimax=0d0
+  allocate(a1(0:lmax)); a1=0d0
+  allocate(a2,a3,preca,precb,precc,precd,prece,source=a1)
+!  for gravbound
+  allocate(phiio(gie+1:gie+2,gjs-2:gje+2), phiii(gis-2:gis-1,gjs-2:gje+2), &
+           phi1o(gie+1:gie+2,gks-2:gke+2), phi3i(gis-2:gie+2,gks-2:gks-1), &
+           phi3o(gis-2:gie+2,gke+1:gke+2), mc(is-1:ie+2) )
  end if
 
 ! allocate Dirichlet variables if Dirichlet boundary is applied
  if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
     bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9.or. &
     is_test)then
-  allocate( &
-   d0 (-1:in,-1:jn,-1:kn), p0 (-1:in,-1:jn,-1:kn), &
-   b10(-1:in,-1:jn,-1:kn), b20(-1:in,-1:jn,-1:kn), b30(-1:in,-1:jn,-1:kn), &
-   v10(-1:in,-1:jn,-1:kn), v20(-1:in,-1:jn,-1:kn), v30(-1:in,-1:jn,-1:kn)  &
-  )
+  allocate(d0(is-2:ie+2,js-2:je+2,ks-2:ke+2)); d0=0d0
+  allocate(p0,v10,v20,v30,b10,b20,b30,source=d0)
  end if
 
 ! allocate chemical composition if compswitch/=0
  if(compswitch>0)then
   allocate( &
-   spc(1:spn,-1:in,-1:jn,-1:kn), spcorg(1:spn,is:ie,js:je,ks:ke), &
+   spc(1:spn,is-2:ie+2,js-2:je+2,ks-2:ke+2), spcorg(1:spn,is:ie,js:je,ks:ke), &
    dspc  (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
    spcflx(1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
    species(1:spn) )
   if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
      bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
-   allocate( spc0(1:spn,-1:in,-1:jn,-1:kn) )
+   allocate( spc0,source=spc )
   end if
  end if
 
 ! allocate external gravitational field if necessary
- if(include_extgrv)then
-  allocate( extgrv(gis-2:gin,gjs-2:gjn,gks-2:gkn) )
- end if
+ if(include_extgrv)allocate(extgrv,source=grvphi)
  
- d = 1d0  ! set for numerical reasons
  T = 1d3  ! initial guess for temperature
- cs = 1d0
- b1 = 0d0; b2 = 0d0; b3 = 0d0
  
  return
 end subroutine allocations

@@ -39,7 +39,7 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  
  rcore = r(i)
  mcore = m(i)
- imuh = get_imu((/comp(ih1,i),comp(ihe4,i)/))
+ imuh = get_imu([comp(ih1,i),comp(ihe4,i)])
  allocate(softr(0:i+1),softrho(0:i),softp(0:i+1))
  softr(0:i+1) = r(0:i+1)
  softrho(0:i) = rho(0:i)

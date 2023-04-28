@@ -217,7 +217,7 @@ end subroutine smear
   momtot=0d0;etot=0d0
   do j = js, je
    do k = ks, ke
-    xcar = polcar((/x1(i),x2(j),x3(k)/))
+    xcar = polcar([x1(i),x2(j),x3(k)])
     call get_vcar(xcar,x3(k),u(i,j,k,2),u(i,j,k,3),u(i,j,k,4),vcar)
     momtot = momtot + vcar*dvol(i,j,k)! add up momenta
     etot = etot + u(i,j,k,8)*dvol(i,j,k)! add up energy
@@ -235,7 +235,7 @@ end subroutine smear
 
   do j = js, je
    do k = ks, ke
-    xcar = polcar((/x1(i),x2(j),x3(k)/))
+    xcar = polcar([x1(i),x2(j),x3(k)])
     call get_vpol(xcar,x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
     u(i,j,k,2) = v1(i,j,k)*u(i,j,k,1)
     u(i,j,k,3) = v2(i,j,k)*u(i,j,k,1)

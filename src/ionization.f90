@@ -7,6 +7,9 @@ module ionization_mod
  real(8),private:: frec, edge, tanh_c, dtanh_c
  real(8),parameter,private:: tanh_edge = 3.64673859532966d0
 
+ public::ionization_setup,get_xion,get_erec_imurec,get_erec,get_imurec
+ private::rapid_tanh,rapid_dtanh,arec1,brec1
+
  interface rapid_tanh
     module procedure rapid_tanhs,rapid_tanhv
  end interface rapid_tanh
@@ -16,7 +19,7 @@ module ionization_mod
 
 contains
 ! **************************************************************************
- function rapid_tanhs(x)
+ pure function rapid_tanhs(x)
 ! Rapid hyperbolic tangent function for scalars
   real(8),intent(in)::x
   real(8):: a,b,x2,rapid_tanhs
@@ -24,14 +27,14 @@ contains
   if(abs(x)>=tanh_edge)then
    rapid_tanhs = sign(1d0,x)-tanh_c/x
   else
-   x2 = x*x
+   x2 = x**2
    a = ((x2+105d0)*x2+945d0)*x
    b = ((x2+28d0)*x2+63d0)*15d0
    rapid_tanhs = a/b
   end if
  end function rapid_tanhs
 
- function rapid_tanhv(x)
+ pure function rapid_tanhv(x)
 ! Rapid hyperbolic tangent function for vectors
   real(8),intent(in)::x(:)
   real(8),dimension(size(x)):: rapid_tanhv
@@ -42,7 +45,7 @@ contains
    if(abs(x(i))>=tanh_edge)then
     rapid_tanhv(i) = sign(1d0,x(i))-tanh_c/x(i)
    else
-    x2 = x(i)*x(i)
+    x2 = x(i)**2
     a = ((x2+105d0)*x2+945d0)*x(i)
     b = ((x2+28d0)*x2+63d0)*15d0
     rapid_tanhv(i) = a/b
@@ -50,7 +53,7 @@ contains
   end do
  end function rapid_tanhv
 ! **************************************************************************
- function rapid_dtanhs(x)
+ pure function rapid_dtanhs(x)
 ! Rapid hyperbolic tangent derivative (1/cosh^2) for scalars
   real(8),intent(in)::x
   real(8):: a,b,x2,rapid_dtanhs
@@ -65,7 +68,7 @@ contains
   end if
  end function rapid_dtanhs
 
- function rapid_dtanhv(x)
+ pure function rapid_dtanhv(x)
 ! Rapid hyperbolic tangent derivative (1/cosh^2) for vectors
   real(8),intent(in)::x(:)
   real(8),dimension(size(x)):: rapid_dtanhv
@@ -102,13 +105,13 @@ contains
 
 ! These fitting parameters are tuned for eosDT in the range X=0.6-0.8
   frec = 0.005d0
-  arec(2:4) = (/ 0.821d0, 0.829d0, 0.846d0 /)
-  brec(2:4) = (/ 0.055d0, 0.055d0, 0.055d0 /)
-  crec(1:4) = (/ 0.02d0, 0.025d0, 0.015d0, 0.015d0 /)
-  drec(1:4) = (/ 0.05d0, 0.05d0, 0.05d0, 0.05d0 /)
+  arec(2:4) = [ 0.821d0, 0.829d0, 0.846d0 ]
+  brec(2:4) = [ 0.055d0, 0.055d0, 0.055d0 ]
+  crec(1:4) = [ 0.02d0, 0.025d0, 0.015d0, 0.015d0 ]
+  drec(1:4) = [ 0.05d0, 0.05d0, 0.05d0, 0.05d0 ]
 
-  arec1c(1:2) = (/ log10(3500d0)/logeion(1), 0.753d0 /)
-  brec1c(1:2) = (/ 0d0, 0.055d0 /)
+  arec1c(1:2) = [ log10(3500d0)/logeion(1), 0.753d0 ]
+  brec1c(1:2) = [ 0d0, 0.055d0 ]
   edge = -9.4d0
 
 ! Parameter for rapid tanh function
@@ -120,7 +123,7 @@ contains
   return
  end subroutine ionization_setup
 ! ***************************************************************************
- function arec1(x)
+ pure function arec1(x)
 ! molecular hydrogen fit coefficients
   real(8),intent(in):: x ! logd
   real(8):: arec1
@@ -132,7 +135,7 @@ contains
   end if
  end function arec1
 ! ***************************************************************************
- function brec1(x)
+ pure function brec1(x)
 ! molecular hydrogen fit coefficients
   real(8),intent(in):: x
   real(8):: brec1
@@ -145,7 +148,7 @@ contains
  end function brec1
 ! ***************************************************************************
  
- subroutine get_xion(logd,T,X,Y,xion,dxion)
+ pure subroutine get_xion(logd,T,X,Y,xion,dxion)
 ! PURPOSE: Get ionization fractions (and dxdT) given rho and T
   real(8),intent(in):: logd,T,X,Y
   real(8),intent(out):: xion(1:4)
@@ -180,7 +183,7 @@ contains
 
 ! ***************************************************************************
  
- subroutine get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
+ pure subroutine get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
 ! PURPOSE: Get recombination energy and mean molecular weight given rho and T
   real(8),intent(in):: logd,T,X,Y
   real(8),intent(out):: erec, imurec
@@ -216,7 +219,7 @@ contains
 
 ! ***************************************************************************
  
- subroutine get_imurec(logd,T,X,Y,imurec,dimurecdT)
+ pure subroutine get_imurec(logd,T,X,Y,imurec,dimurecdT)
 ! PURPOSE: Get the mean molecular weight for partially ionised plasma
   real(8),intent(in):: logd,T,X,Y
   real(8),intent(out):: imurec
@@ -241,7 +244,7 @@ contains
  end subroutine get_imurec
 
 ! ***************************************************************************
- function get_erec(logd,T,X,Y)
+ pure function get_erec(logd,T,X,Y)
 ! PURPOSE: Get recombination energy given rho and T
   real(8),intent(in):: logd,T,X,Y
   real(8),dimension(1:4):: e, xi

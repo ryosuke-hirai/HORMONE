@@ -194,7 +194,8 @@ if(gravswitch==3.and.tn/=0)then
 
  if(crdnt==1.and.je==1)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates %%%%%%%%%%
-  allocate( newphi(gis:gie,js:je,gks:gke), intphi(1:4) )
+  allocate( intphi(1:4) )
+  allocate( newphi, mold=hgsrc )
 
   cgrav2 = HGfac*max(maxval(cs(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
                      maxval(cs(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
@@ -277,7 +278,7 @@ if(gravswitch==3.and.tn/=0)then
 
  elseif(crdnt==2.and.ke==1)then
 ! Axisymmetric spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  allocate( newphi(gis:gie,gjs:gje,gks:gke) )
+  allocate( newphi, mold=hgsrc )
 
   cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
                      maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))) )
@@ -344,7 +345,7 @@ if(gravswitch==3.and.tn/=0)then
 
  elseif(crdnt==2.and.dim==3)then
 ! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  allocate( newphi(gis:gie,gjs:gje,gks:gke) )
+  allocate( newphi, mold=hgsrc )
 
   cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
                      maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))), &
@@ -648,10 +649,12 @@ subroutine gravsetup
   if(je==1.and.dim==2.and.crdnt==1)then
 ! Cartoon mesh method
    gin = gie + 2
-   allocate( hg11(gis-1:gin),hg12(gis-1:gin),hg21(gis-1:gin),hg22(gis-1:gin),&
-             hg31(gks-1:gkn),hg32(gks-1:gkn),hg123(gis-1:gin,1:1,gks-1:gkn), &
+   allocate( hg123(gis-1:gin,1:1,gks-1:gkn), &
              lag(-1:1,gis-1:gin),&
              orgdis(gis-1:gin,1:1,gks-1:gkn) )
+   allocate( hg11,hg12,hg21,hg22, mold=x1 )
+   allocate( hg31,hg32, mold=x3 )
+
    do i = gis-1, gie+1
     hg11(i) = idx1(i+1)/sum(dx1(i:i+1))
     hg12(i) = idx1(i  )/sum(dx1(i:i+1))
@@ -676,11 +679,8 @@ subroutine gravsetup
    end do
 
 !Experimental for mapping non-uniform mesh to uniform mesh Laplacian
-   allocate( lag11(-1:1,gis:gie,js:je,gks:gke), &
-             lag12(-1:1,gis:gie,js:je,gks:gke), &
-             lag21(-1:1,gis:gie,js:je,gks:gke), &
-             lag31(-1:1,gis:gie,js:je,gks:gke), &
-             lag32(-1:1,gis:gie,js:je,gks:gke) )
+   allocate( lag11(-1:1,gis:gie,js:je,gks:gke) )
+   allocate( lag12,lag21,lag31,lag32,mold=lag11 )
    do k = gks, gke
     do j = js, je
      do i = gis, gie
@@ -714,8 +714,9 @@ subroutine gravsetup
   elseif(crdnt==2.and.ke==1.and.dim==2)then
 ! Normal discretization
    gin = gie + 2; gjn = gje + 2
-   allocate( hg11(gis-1:gin),hg12(gis-1:gin),hg21(gjs-1:gjn),hg22(gjs-1:gjn),&
-             hg123(gis-1:gin,gjs-1:gjn,1:1) )
+   allocate( hg123(gis-1:gin,gjs-1:gjn,1:1) )
+   allocate( hg11,hg12, mold=x1 )
+   allocate( hg21,hg22, mold=x2 )
 
    do i = gis-1, gie+1
     hg11(i) = 2d0*(x1(i)+dx1(i  ))/x1(i)*idx1(i+1)/sum(dx1(i:i+1))
@@ -739,10 +740,11 @@ subroutine gravsetup
   elseif(crdnt==2.and.dim==3)then
 ! Normal discretization
    gin = gie + 2; gjn = gje + 2
-   allocate( hg11(gis-1:gin),hg12(gis-1:gin),hg21(gjs-1:gjn),hg22(gjs-1:gjn),&
-             hg31(gks-1:gkn),hg32(gks-1:gkn), &
-             hg123(gis-1:gin,gjs-1:gjn,gks-1:gke+1) )
-
+   allocate( hg11,hg12, mold=x1 )
+   allocate( hg21,hg22, mold=x2 )
+   allocate( hg31,hg32, mold=x3 )
+   allocate( hg123, mold=hgsrc )
+   
    do i = gis-1, gie+1
     hg11(i) = 2d0*(x1(i)+dx1(i  ))/x1(i)*idx1(i+1)/sum(dx1(i:i+1))
     hg12(i) = 2d0*(x1(i)-dx1(i+1))/x1(i)*idx1(i  )/sum(dx1(i:i+1))
