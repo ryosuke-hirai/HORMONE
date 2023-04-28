@@ -7,6 +7,7 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'simtype' specifies the type of simulation. Available options are listed below.
           Type " test" after the simtype if you want to compare results against
 	  pre-computed test data. Only certain simtypes have test data available
+          Tests should be run with compiler optimization switched off
 
 ++++++ SIMTYPE OPTIONS ++++++
 ** Test files available **
@@ -23,4 +24,4 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 'agndisk': Explosions in AGN disks (Grishin+2021)
 
-&startcon start=0 simtype='sodshock_x test' parafile=''/
+&startcon start=0 simtype='orszagtang_xz test' parafile=''/

@@ -44,7 +44,7 @@ contains
    end do
   end do
 
-return
-end subroutine KHtest
+  return
+ end subroutine KHtest
 
 end module KHtest_mod
