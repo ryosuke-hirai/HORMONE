@@ -66,7 +66,7 @@ contains
      elseif(time*nsdfr(i,j,k)<tstart)then !free until the ejecta comes
       call freeboundary(i,k)
      elseif(time*nsdfr(i,j,k)>t_ej(count))then ! extrapolation of data
-      d0 (i,j,k) = d_ej(count) * (t_ej(count)/(time*nsdfr(i,j,k)))**2d0 &
+      d0 (i,j,k) = d_ej(count) * (t_ej(count)/(time*nsdfr(i,j,k)))**2 &
                  * nsdfr(i,j,k)**3d0
 !!$      p0 (i,j,k) = p_ej(count) * (t_ej(count)/(time*nsdfr(i,j,k)))**4d0 &
 !!$                 * nsdfr(i,j,k)**3d0

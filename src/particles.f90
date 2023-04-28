@@ -221,7 +221,7 @@ subroutine particles
    end do
 
    ! to remove particles that have exceeded boundaries
-   if(ptcx(1,n)**2d0+ptcx(2,n)**2d0>xi1e*xi1e.or.ptcx(1,n)**2d0+ptcx(2,n)**2d0<xi1s*xi1s)then
+   if(ptcx(1,n)**2+ptcx(2,n)**2>xi1e**2.or.ptcx(1,n)**2+ptcx(2,n)**2<xi1s**2)then
     ptcx(0:2,n) = ptcx(0:2,np)
     ptci(0:2,n) = ptci(0:2,np)
     np = np-1

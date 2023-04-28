@@ -160,7 +160,7 @@ subroutine eci
  do while(rnow<=radius)
   ! first set distribution in softened core
   if(rnow<=rsoft)then
-   mnow = 4d0*pi*rnow**3d0*(c1*rnow**3d0/6d0+0.2d0*c2*rnow**2d0+c3/3d0)
+   mnow = 4d0*pi*rnow**3d0*(c1*rnow**3d0/6d0+0.2d0*c2*rnow**2+c3/3d0)
 !   shellp = shellp - G*mnow/rnow/rnow*shelld*dr
   ! then set distribution in star
   else
@@ -240,7 +240,7 @@ if(include_extgrv)then
  do k = gks-2, gke+2
   do i = is-2, gie+2
    if(rdis(i,k)<rsoft)then
-    extgrv(i,j,k) = G*coremass/(2d0*rsoft)*((rdis(i,k)/rsoft)**2d0-3d0)
+    extgrv(i,j,k) = G*coremass/(2d0*rsoft)*((rdis(i,k)/rsoft)**2-3d0)
    else
     extgrv(i,j,k) = -G*coremass/rdis(i,k)
    end if

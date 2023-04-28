@@ -164,20 +164,6 @@ subroutine tools
   spc(3,:,:,:) = 1d0-spc(1,:,:,:)-spc(3,:,:,:)
  end if
 
-! set external gravitational field %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-!!$if(include_extgrv)then
-!!$ coremass = 8d0
-!!$ do k = ks-2, ke+2
-!!$  do i = is-2, ie+2
-!!$   extgrv(i,js,k) = -coremass*msun*G/sqrt(x1(i)*x1(i)+x3(k)*x3(k)+(3d0*dx1(is))**2d0)!-1.4d0*msun*G/nsdis(i,j,k)
-!!$  end do
-!!$ end do
-!!$ extgrv(is-1,js:je,ks:ke) = extgrv(is,js:je,ks:ke)
-!!$ extgrv(is-2,js:je,ks:ke) = extgrv(is+1,js:je,ks:ke)
-!!$end if
-
-!!$ grvtime = time
-
 ! EoS parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  gamma = 5.d0/3.d0 ! for EoS
  fac_egas = kbol/((gamma-1d0)*amu) ! frequently used factor for egas

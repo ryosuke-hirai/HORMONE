@@ -65,7 +65,7 @@ subroutine output
 !!$  elseif(crdnt==2.and.ke==1)then
 !!$   do n = 1, np
 !!$    extflag = .false.
-!!$    pr = sqrt(ptcx(1,n)**2d0+ptcx(2,n)**2d0)
+!!$    pr = sqrt(ptcx(1,n)**2+ptcx(2,n)**2)
 !!$    pt = acos(ptcx(2,n)/pr)
 !!$    do j = js, je
 !!$     if(pt>=xi2(j-1))then;if(pt<xi2(j))then
@@ -143,7 +143,7 @@ subroutine output
 !!$      remmass = remmass + d(i,j,k)*dvol(i,j,k)
 !!$      vel = vel + d(i,j,k)*dvol(i,j,k)*v3(i,j,k)
 !!$     end if
-!!$     if(v1(i,j,k)**2d0+v3(i,j,k)**2d0+(grvphi(i,j,k)+extgrv(i,j,k))<=0d0)then
+!!$     if(v1(i,j,k)**2+v3(i,j,k)**2+(grvphi(i,j,k)+extgrv(i,j,k))<=0d0)then
 !!$      belmass = belmass + d(i,j,k)*dvol(i,j,k)
 !!$      velb = velb + d(i,j,k)*dvol(i,j,k)*v3(i,j,k)
 !!$     end if
