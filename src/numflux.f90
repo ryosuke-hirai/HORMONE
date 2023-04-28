@@ -3,11 +3,11 @@ module numflux_mod
 
 contains
 
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE NUMFLUX
+!                          SUBROUTINE NUMFLUX
 !
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calcaulte numflux
 
@@ -30,14 +30,14 @@ contains
   real(8):: signdflx,ul,ur,fl,fr,rinji
   integer:: ierr
 
-!--------------------------------------------------------------------
+!------------------------------------------------------------------------------
 
 ! calculate flux
 
 ! use MUSCL interpolation
   call interpolation
 
-! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(ie/=1)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
@@ -105,7 +105,7 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
 
 !!$     if(maxval(shock(i:i+1,j-1:j+1,k-1:k+1))==1)then ! if supersonic
 !!$      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v2l),abs(v2r),abs(v1l),abs(v1r)))then ! and aligned
@@ -183,7 +183,7 @@ contains
 !$omp end parallel do
   end if
  
-! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(je/=1)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
@@ -251,7 +251,7 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
 
 
 !!$     if(maxval(shock(i-1:i+1,j:j+1,k-1:k+1))==1)then ! if shock
@@ -335,7 +335,7 @@ contains
 !$omp end parallel do
   end if
 
-! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(ke/=1)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
@@ -403,7 +403,7 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
 
 !!$     if(maxval(shock(i-1:i+1,j,k:k+1))==1)then ! if supersonic
 !!$      if(max(abs(v2l),abs(v2r))>1d-1*max(abs(v1l),abs(v1r),abs(v3l),abs(v3r)))then ! and aligned
