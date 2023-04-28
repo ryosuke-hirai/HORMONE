@@ -7,7 +7,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE READ_STARTFILE
+!                       SUBROUTINE READ_STARTFILE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -26,6 +26,7 @@ contains
   close(1)
 
   call is_it_test(simtype,is_test)
+  if(is_test) parafile = ''
   
   return
  end subroutine read_startfile
