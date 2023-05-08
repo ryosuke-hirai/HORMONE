@@ -204,12 +204,12 @@ end subroutine set_star_cyl_grid
  
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE ONE_SHOT
+!                       SUBROUTINE ONE_SHOT_INWARDS
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Calculate a hydrostatic structure for a given entropy
 
-subroutine one_shot(Sc,imu,r,mcore,msoft,rho,p,mass)
+subroutine one_shot_inwards(Sc,imu,r,mcore,msoft,rho,p,mass)
 
  use constants,only:G,pi
  use pressure_mod,only:get_d_from_ps
@@ -221,7 +221,7 @@ subroutine one_shot(Sc,imu,r,mcore,msoft,rho,p,mass)
  real(8),allocatable,dimension(:),intent(inout)::rho,p
  real(8),intent(out)::mass
 
- integer::i,Nmax
+ integer i,Nmax
  real(8)::hsoft
  real(8),allocatable,dimension(:)::dr,vol
 
@@ -248,7 +248,67 @@ subroutine one_shot(Sc,imu,r,mcore,msoft,rho,p,mass)
  end do
 
 return
-end subroutine one_shot
+end subroutine one_shot_inwards
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                       SUBROUTINE ISENTROPIC_STAR1
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Calculate a hydrostatic structure for a given entropy
+
+subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
+
+ use constants,only:G,pi
+ use pressure_mod,only:get_d_from_ps
+ use utils,only:softened_acc
+ 
+ real(8),intent(in)::Sc,rsoft
+ real(8),intent(inout)::imu
+ real(8),allocatable,dimension(:),intent(in)::m
+ real(8),allocatable,dimension(:),intent(inout)::r,rho,p
+ integer i,Nmax,which
+ real(8):: fac
+ real(8),parameter:: err=1d-8
+
+!-----------------------------------------------------------------------------
+
+ Nmax=size(rho)-1
+ p = -1d0
+ fac = 0.5d0
+
+ p(0:1) = G*(m(Nmax)-m(0))**2/r(Nmax)**4/(8d0*pi) ! Initial guess
+ which = 0
+
+ convergence_loop:do
+  rho(0:1) = get_d_from_ps(p(0),Sc,imu)
+  r(1) = ((m(1)-m(0))/(4d0*pi/3d0*rho(1)))**(1d0/3d0)
+  shot_loop:do i = 2, Nmax
+   p(i) = p(i-1) - (m(i)-m(i-2))*G/(8d0*pi*r(i-1)**2) &
+                 *((m(i-1)-m(0))/r(i-1)**2+m(0)*softened_acc(r(i-1),rsoft))
+   if(p(i)<=0d0)exit shot_loop
+   rho(i) = get_d_from_ps(p(i),Sc,imu)
+   r(i) = (r(i-1)**3+3d0*(m(i)-m(i-1))/(4d0*pi*rho(i)))**(1d0/3d0)
+  end do shot_loop
+
+  if(p(Nmax)/(p(0)*1d-8)-1d0>err)then
+   p(Nmax) = -1d0
+   p(0:1)=p(0)*(1d0-fac)
+   if(which>0)fac=fac*0.5d0
+   which=-1
+  elseif(p(Nmax)/(p(0)*1d-8)-1d0<-err)then
+   p(0:1)=p(0)*(1d0+fac)
+   if(which<0)fac=fac*0.5d0
+   which=1
+  else
+   exit convergence_loop
+  end if
+
+ end do convergence_loop
+
+! print'(4(1PE13.5e2))',r(i),m(i),rho(i),p(i)
+ 
+return
+end subroutine isentropic_star1
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                     SUBROUTINE GET_SOFTENED_PROFILE
@@ -267,7 +327,7 @@ subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
  real(8),allocatable,dimension(:),intent(inout)::rho,p
  integer,intent(out)::ierr
 
- integer::Nmax,i
+ integer Nmax,i
  real(8)::Sc,mass,mold,msoft,fac,Sedge,T,imu,eostype0
 
 !-----------------------------------------------------------------------------
@@ -303,7 +363,7 @@ subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
  Sc=Sedge
  do i = 1, 500
   mold=mass
-  call one_shot(Sc,imu,r,mpt,msoft,rho,p,mass)
+  call one_shot_inwards(Sc,imu,r,mpt,msoft,rho,p,mass)
   if(mass<0d0)then
    mpt=mpt*(1d0-fac)
    msoft=mh-mpt
@@ -322,6 +382,81 @@ subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
 
 return
 end subroutine get_softened_profile
+
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE ISENTROPIC_STAR
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To make polytropic (isentropic) stars with arbitrary cores
+
+subroutine isentropic_star(mass,radius,mcore,rsoft,imu,m,r,rho,p)
+
+ use constants,only:G,pi
+ use pressure_mod,only:eostype,entropy_from_dp
+ use utils,only:geometrical_series
+ 
+ real(8),intent(in)::mass,radius,mcore,rsoft
+ real(8),intent(inout):: imu
+ real(8),allocatable,dimension(:),intent(inout)::m,r,rho,p
+ real(8):: Sc, fac, T, err, dmmin
+ real(8),allocatable::dm(:)
+ integer:: i,Nmax,eostype0,which
+
+!-----------------------------------------------------------------------------
+
+! Can only do uniform composition for now
+! This module does not work with non-ideal EoSs
+ eostype0 = eostype
+ if(eostype>=2) eostype = 1
+ 
+ Nmax = 3000
+ allocate( m(0:Nmax),r(0:Nmax),rho(0:Nmax),p(0:Nmax),dm(-1:Nmax+2) )
+ m(0) = mcore
+ dmmin = (mass-mcore)/dble(Nmax)*1d-3
+ call geometrical_series(dm,dmmin,1,Nmax/2,0d0,(mass-mcore)/2d0)
+ do i = 1, Nmax/2
+  m(i) = m(i-1) + dm(i)
+ end do
+ do i = Nmax/2+1, Nmax
+  m(i) = m(i-1) + dm(Nmax-i+1)
+ end do
+
+ fac = 0.05d0
+ err = 1d-5
+ which=0
+
+! Initial guess
+ p(0) = G*(mass-mcore)**2/radius**4/(8d0*pi)
+ rho(0) = (mass-mcore)/(4d0*pi/3d0*radius**3)
+ T = 1d3
+ Sc = entropy_from_dp(rho(0),p(0),T,imu)
+
+ do
+  r(Nmax) = radius
+  call isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
+
+  if(r(Nmax)/radius-1d0>err)then
+   Sc=Sc*(1d0-fac)
+   if(which>0)fac=fac*0.5d0
+   which=-1
+  elseif(r(Nmax)/radius-1d0<-err)then
+   Sc=Sc*(1d0+fac)
+   if(which<0)fac=fac*0.5d0
+   which=1
+  else
+   exit
+  end if
+
+ end do
+
+ eostype = eostype0 ! set back to original eostype
+
+
+return
+end subroutine isentropic_star
 
 
 end module star_mod

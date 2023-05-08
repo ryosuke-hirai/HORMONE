@@ -13,31 +13,54 @@ contains
 
 subroutine redsupergiant
 
- use settings,only:compswitch,spn
+ use settings,only:compswitch,spn,extrasfile
  use constants,only:G
  use grid
  use physval
  use input_mod
- use star_mod
+ use star_mod,only:isentropic_star,replace_core,set_star_sph_grid
  use gravmod,only:extgrv,mc
  use utils,only:softened_pot
  use output_mod,only:write_extgrv
+ use composition_mod,only:get_imu
 
  character(len=100):: mesafile
  real(8),allocatable,dimension(:):: r,m,rho,pres
  real(8),allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
- integer:: nn,sn
- real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn)
+ character(len=10)::spc_list(1:1000)
+ integer:: istat,nn,sn,ih1,ihe4
+ real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const
+ real(8),allocatable:: comptmp(:)
+ logical::isentropic
  
 !-----------------------------------------------------------------------------
 
+ namelist /rsg_con/ mesafile,spc_list,rcore,isentropic
+
+ spc_list='aaa'
 ! Specify input file, elements you want to track, and a softening length
- mesafile='16lateRSG.data'
- species(1:spn) = [character(len=10):: &
-                  'h1','he4','he3','c12','n14','o16','fe56','others']
- rcore = 1.5e12
- 
+ open(newunit=nn,file=extrasfile,status='old',iostat=istat)
+ if(istat/=0)call error_extras('rsg',extrasfile)
+ read(nn,NML=rsg_con,iostat=istat)
+ if(istat/=0)call error_nml('rsg',extrasfile)
+ close(nn)
+
+! Re-count spn based on spc_list and reallocate relevant arrays
+ spn=-1
+ do nn = 1, 1000
+  spn = spn + 1
+  if(spc_list(nn)=='aaa')exit
+ end do
+ deallocate(spc,spcorg,dspc,spcflx,species)
+ allocate(spc    (1:spn,is-2:ie+2,js-2:je+2,ks-2:ke+2), &
+          spcorg (1:spn,is:ie,js:je,ks:ke), &
+          dspc   (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
+          spcflx (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
+          species(1:spn) )
+ species(1:spn) = spc_list(1:spn)
+
+! Read MESA file
  call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 
  mass = m(size(m)-1)
@@ -63,7 +86,30 @@ subroutine redsupergiant
  extgrv(is-1,js-2:je+2,ks-2:ke+2) =  extgrv(is,js-2:je+2,ks-2:ke+2)
  
  mcore = m(0)
- 
+ mass  = m(size(m)-1)
+ radius= r(size(r)-1)
+
+! Isentropic envelope
+ if(isentropic)then
+! get indices for hydrogen and helium
+  do i = 1, size(comp_list)
+   if(trim(comp_list(i))=='h1')ih1=i
+   if(trim(comp_list(i))=='he4')ihe4=i
+  end do
+! remember central composition
+  allocate(comptmp(1:size(comp_list)))
+  comptmp = comp(1:size(comp_list),1)
+  imu_const = get_imu((/comp(ih1,1),comp(ihe4,1)/))
+
+  deallocate(m,r,rho,pres,comp)
+  call isentropic_star(mass,radius,mcore,rcore,imu_const,m,r,rho,pres)
+! re-insert composition
+  allocate(comp(1:size(comp_list),0:size(m)-1))
+  do i = 0, size(m)-1
+   comp(:,i) = comptmp
+  end do
+ end if
+
 ! Place the star at the origin
  m = m-mcore
  call set_star_sph_grid(r,m,rho,pres,comp,comp_list)
