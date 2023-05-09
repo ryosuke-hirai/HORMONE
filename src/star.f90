@@ -113,7 +113,8 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   end if
   do n = 0, lines-1
    if(r(n+1)>xi1(i).and.r(n)<=xi1(i))then
-    mc(i) = intpol(r(n:n+1),m(n:n+1),xi1(i))
+    ! Interpolate as m \propto r^3 (maybe not the best way?)
+    mc(i) = intpol((r(n:n+1)/xi1(i))**3,m(n:n+1),1d0)
     exit
    end if
   end do
@@ -131,7 +132,17 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
     d(i,j,k) = (mc(i)-mc(i-1))/(volfac*sum(dvol(i,js:je,ks:ke)))
     if(x1(i)<r(1))then
      p(i,j,k) = pres(1)
-     if(compswitch==2)spc(1:spn,i,j,k) = comp(1:spn,1)
+     if(compswitch==2)then
+      do nn = 1, spn-1
+       do sn = 1, size(comp_list)-1
+        if(trim(comp_list(sn))==trim(species(nn)))then
+         spc(nn,i,j,k) = comp(sn,1)
+         exit
+        end if
+       end do
+      end do
+      spc(spn,i,j,k) = 1d0-sum(spc(1:spn-1,i,j,k)) !dump the rest into others
+     end if
     elseif(x1(i)<radius)then
      do n = 0, lines-1
       if(r(n+1)>x1(i).and.r(n)<=x1(i))then
