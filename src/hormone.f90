@@ -100,7 +100,7 @@ program hormone
 
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
-   do
+   main_loop:do
 
     call timestep
     print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
@@ -121,38 +121,39 @@ program hormone
 
     time = time + dt ; tn = tn + 1
 ! Output sequence ---------------------- !
-    if(outstyle==2)then                  !
-     if(tn/=0.and.mod(tn,tn_out)==0)then !
-      call boundarycondition             !
-      call output                        !
-     end if                              !
-    elseif(outstyle==1)then              !
+    select case(outstyle)                !
+    case(1) ! output by time             !
      if(time>=t_out)then                 !
       call boundarycondition             !
       call output                        !
       t_out = t_out + dt_out             !
      end if                              !
-    else                                 !
+    case(2) ! output by timestep         !
+     if(tn/=0.and.mod(tn,tn_out)==0)then !
+      call boundarycondition             !
+      call output                        !
+     end if                              !
+    case default                         !
      print *,'outstyle out of range'     !
      stop                                !
-    end if                               !
+    end select                           !
     if(write_evo)call evo_output         !
 ! -------------------------------------- !
 
-! End sequence -------------!
-    select case (endstyle)  ! 
-    case(1) ! time up       ! 
-     if(time>=t_end)exit    ! 
-    case(2) ! timestep up   !
-     if(tn>=tnlim)exit      !
-    end select              ! 
-! --------------------------!
+! End sequence ------------------- !
+    select case (endstyle)         !
+    case(1) ! time up              !
+     if(time>=t_end)exit main_loop ! 
+    case(2) ! timestep up          !
+     if(tn>=tnlim)exit main_loop   !
+    end select                     !
+! -------------------------------- !
 
-   end do
+   end do main_loop
   end if
 ! End integration ------------------------------------------------------------
 
-  call output ! To see final state
+  if(tn/=0)call output ! To see final state
 
   if(is_test)call test
 
