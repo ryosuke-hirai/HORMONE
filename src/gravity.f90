@@ -200,8 +200,7 @@ if(gravswitch==3.and.tn/=0)then
 
   cgrav2 = HGfac*max(maxval(cs(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
                      maxval(cs(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
-  dtgrav = min(minval(dxi1(gis:gie)),minval(dxi3(gks:gke)))/cgrav2
-  dtgrav = dtgrav*hgcfl
+  dtgrav = hgcfl*hg_dx/cgrav2
   cgrav2 = cgrav2**2
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
@@ -238,7 +237,7 @@ if(gravswitch==3.and.tn/=0)then
       intphi(4) = sum( lag32(-1:1,i,j,k)*grvphi(i,j,k-1:k+1) ) ! phi(i,j,k+1)
       phih = sum( lag21(-1:1,i,j,k)*grvphi(i-1:i+1,j,k) ) ! phi(i,j-1/j+1,k)
       newphi(i,j,k) = 0.5d0*cgrav2*dtgrav*(dtgrav+dt_old)* &
-                    ( (sum(intphi(1:4))+2d0*phih-6d0*grvphi(i,j,k))/(h*h) &
+                    ( (sum(intphi(1:4))+2d0*phih-6d0*grvphi(i,j,k))/h**2 &
                       - 4d0*pi*G*hgsrc(i,j,k) ) & ! source term
                     - dtgrav/dt_old*grvphiold(i,j,k) &
                     + (1d0+dtgrav/dt_old)*grvphi(i,j,k)
@@ -249,7 +248,6 @@ if(gravswitch==3.and.tn/=0)then
 !$omp workshare
    grvphiold = grvphi
    grvphi(gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
-
    grvphi(gis-1,js:je,gks:gke) = grvphi(gis,js:je,gks:gke)
 !$omp end workshare
 !$omp end parallel
@@ -259,7 +257,7 @@ if(gravswitch==3.and.tn/=0)then
     grvphi(gis:gie,js:je,ks-2) = newphi(gis:gie,js:je,ks+1)
    end if
 
-   dt_old = dtgrav
+   dt_old  = dtgrav
    grvtime = grvtime + dtgrav
 
    if(maxval(grvphi(gis:gie,js:je,gks:gke))>=0d0)then
@@ -267,11 +265,6 @@ if(gravswitch==3.and.tn/=0)then
     print*,'e.g. (i,j,k)=',maxloc(grvphi(gis:gie,js:je,gks:gke))
     stop
    end if
-
-   if(grvtime>=time+dt)then
-    exit
-   end if
-
 
   end do
 
@@ -283,9 +276,7 @@ if(gravswitch==3.and.tn/=0)then
 
   cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
                      maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))) )
-
-  dtgrav = min(minval(dxi1(gis:gie)),x1(is)*minval(dxi2(gjs:gje)))/cgrav2
-  dtgrav = dtgrav*hgcfl
+  dtgrav = hgcfl*hg_dx/cgrav2
   cgrav2 = cgrav2**2
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
@@ -315,7 +306,7 @@ if(gravswitch==3.and.tn/=0)then
      newphi(i,j,k) = 0.5d0*cgrav2*dtgrav*(dtgrav+dt_old)* &
                    ( hg11(i)*grvphi(i+1,j,k) + hg12(i)*grvphi(i-1,j,k) + &
                     (hg21(j)*grvphi(i,j+1,k) + hg22(j)*grvphi(i,j-1,k)) &
-                     / (x1(i)*x1(i)) + &
+                     / x1(i)**2 + &
                      hg123(i,j,k)*grvphi(i,j,k) &
                    - 4d0*pi*G*hgsrc(i,j,k) ) & ! source term
                    - dtgrav/dt_old*grvphiold(i,j,k) &
@@ -325,16 +316,12 @@ if(gravswitch==3.and.tn/=0)then
 !$omp end do
 !$omp workshare
    grvphiold(gis:gie,js:je,gks:gke) = grvphi(gis:gie,js:je,gks:gke)
-   grvphi(gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
+   grvphi   (gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
 !$omp end workshare
 !$omp end parallel
 
-   dt_old = dtgrav
+   dt_old  = dtgrav
    grvtime = grvtime + dtgrav
-
-!!$   if(grvtime>=time+dt)then
-!!$    exit
-!!$   end if
 
   end do
 
@@ -351,10 +338,7 @@ if(gravswitch==3.and.tn/=0)then
   cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
                      maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))), &
                      maxval(cs(is:ie,js:je,ks)+abs(v3(is:ie,js:je,ks))) )
-
-  dtgrav = min(minval(dxi1(gis:gie)),g22(is)*minval(dxi2(gjs:gje)), &
-               minval(g33(is:ie,js:je)*dxi3(gks)))/cgrav2
-  dtgrav = dtgrav*hgcfl
+  dtgrav = hgcfl*hg_dx/cgrav2
   cgrav2 = cgrav2**2
 
   hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
@@ -403,11 +387,11 @@ if(gravswitch==3.and.tn/=0)then
 !$omp end do
 !$omp workshare
    grvphiold(gis:gie,gjs:gje,gks:gke) = grvphi(gis:gie,gjs:gje,gks:gke)
-   grvphi(gis:gie,gjs:gje,gks:gke) = newphi(gis:gie,gjs:gje,gks:gke)
+   grvphi   (gis:gie,gjs:gje,gks:gke) = newphi(gis:gie,gjs:gje,gks:gke)
 !$omp end workshare
 !$omp end parallel
 
-   dt_old = dtgrav
+   dt_old  = dtgrav
    grvtime = grvtime + dtgrav
 
   end do
@@ -523,12 +507,13 @@ end subroutine gravity
 
 subroutine gravsetup
   
-  use settings,only:eq_sym,courant
-  use grid
-  use gravmod
+ use settings,only:eq_sym,courant
+ use constants,only:huge
+ use grid
+ use gravmod
   
-  integer:: l,gin
-  real(8):: h
+ integer:: l,gin
+ real(8):: h
 
 !-----------------------------------------------------------------------------
  gin = gie-gis+1
@@ -710,6 +695,13 @@ subroutine gravsetup
     end do
    end do
 
+   hg_dx = huge
+   do k = ks, ke
+    do i = is, ie
+     hg_dx = min(hg_dx,dxi1(i)*dxi3(k)/sqrt(dxi1(i)**2+dxi3(k)**2))
+    end do
+   end do
+
 ! for axisymmetrical spherical 
   elseif(crdnt==2.and.ke==1.and.dim==2)then
 ! Normal discretization
@@ -735,6 +727,14 @@ subroutine gravsetup
     end do
    end do
 
+   hg_dx = huge
+   do j = js, je
+    do i = is, ie
+     hg_dx = min(hg_dx,dxi1(i)*x1(i)*dxi2(j) &
+                       /sqrt(dxi1(i)**2+(x1(i)*dxi2(j))**2))
+    end do
+   end do
+   
 ! for 3D spherical
   elseif(crdnt==2.and.dim==3)then
 ! Normal discretization
@@ -764,6 +764,19 @@ subroutine gravsetup
                        *idx2(j)*idx2(j+1)/x1(i)  &
                      - 2d0*idx3(k)*idx3(k+1)/x1(i)/sinc(j)**2 ) &
                    / x1(i)
+     end do
+    end do
+   end do
+
+   hg_dx = huge
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      hg_dx = min(hg_dx,dxi1(i)*x1(i)*dxi2(j)*x1(i)*dxi3(k) &
+                        / sqrt((dxi1(i)*x1(i)*dxi2(j))**2 &
+                               + (x1(i)*dxi2(j)*x1(i)*dxi3(k))**2 &
+                               + (x1(i)*dxi3(k)*dxi1(i))**2 )&
+                 )
      end do
     end do
    end do

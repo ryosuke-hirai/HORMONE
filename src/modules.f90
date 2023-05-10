@@ -109,7 +109,6 @@ end module physval
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module gravmod
 
-  use grid,only:ie,je,ke
   use settings,only:gravswitch,grverr,cgerr,include_extgrv,hgcfl,HGfac,&
                     grav_init_other,gbtype
 
@@ -129,7 +128,7 @@ module gravmod
   real(8),allocatable,dimension(:,:):: lag
   real(8),allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc
   real(8),allocatable,dimension(:,:,:,:):: lag11,lag12,lag21,lag22,lag31,lag32
-  real(8):: coremass
+  real(8):: coremass,hg_dx
 
 end module gravmod
 
