@@ -215,19 +215,27 @@ subroutine evo_output
  
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
 
- Mtot = sum(d(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
- Etot = sum(e(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
+ Mtot  = sum(d   (is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
+ Etot  = sum(e   (is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
  Eitot = sum(eint(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
  Ektot = 0.5d0*sum(d(is:ie,js:je,ks:ke)&
                    * ( v1(is:ie,js:je,ks:ke)**2 &
                      + v2(is:ie,js:je,ks:ke)**2 &
                      + v3(is:ie,js:je,ks:ke)**2 ) &
                    * dvol(is:ie,js:je,ks:ke) )
+ if(eq_sym)then
+  Mtot  = 2d0*Mtot
+  Etot  = 2d0*Etot
+  Eitot = 2d0*Eitot
+  Ektot = 2d0*Ektot
+ end if
+
  if(mag_on)then
   Ebtot = 0.5d0*sum( ( b1(is:ie,js:je,ks:ke)**2 &
                      + b2(is:ie,js:je,ks:ke)**2 &
                      + b3(is:ie,js:je,ks:ke)**2 ) &
                    * dvol(is:ie,js:je,ks:ke) )
+  if(eq_sym) Ebtot = 2d0*Ebtot
  end if
  if(gravswitch>=1)then
   if(include_extgrv)then
@@ -235,10 +243,12 @@ subroutine evo_output
    Egtot = sum(d(is:ie,js:je,ks:ke) &
               *(0.5d0*grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
               *dvol(is:ie,js:je,ks:ke))
+   Mtot = Mtot + mc(is-1)
   else
    Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke)*grvphi(is:ie,js:je,ks:ke) &
                     *dvol(is:ie,js:je,ks:ke))
   end if
+  if(eq_sym) Egtot = 2d0*Egtot
  end if
 
  if(dim>=2.and.crdnt>=1)then
@@ -261,6 +271,7 @@ subroutine evo_output
     end do
    end do
   end select
+  if(eq_sym) Jtot = 2d0*Jtot
  end if
 
  write(ievo,'(i10)',advance='no')tn
