@@ -129,7 +129,33 @@ subroutine readgrid(filename)
          x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
  close(ui)
 
-return
+ return
 end subroutine readgrid
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                         SUBROUTINE READEXTGRV
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To read gridfile.bin
+
+subroutine readextgrv(filename)
+
+ use grid,only:gis,gie,gjs,gje,gks,gke
+ use gravmod,only:coremass,extgrv
+
+ character(len=*),intent(in)::filename
+ integer:: ui
+!-----------------------------------------------------------------------------
+
+ open(newunit=ui,file=filename,status='old',form='unformatted')
+ extgrv = 0d0
+ read(ui)coremass
+ read(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
+ close(ui)
+
+ return
+end subroutine readextgrv
 
 end module readbin_mod

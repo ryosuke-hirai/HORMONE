@@ -654,9 +654,7 @@ subroutine write_plt
   stop 'Something wrong with dimension'
  end select
 
-
  close(ui)
- 
 
 return
 end subroutine write_plt
@@ -680,7 +678,7 @@ subroutine write_extgrv
 
  open(newunit=ui,file='data/extgrv.bin',status='replace',form='unformatted')
  write(ui)mc(is-1)
- write(ui)extgrv(gis-2:gie+2,gjs:gje,gks-2:gke+2)
+ write(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
  close(ui)
 
 return

@@ -22,7 +22,7 @@ subroutine restart
  use particle_mod
  use dirichlet_mod
  use output_mod,only:set_file_name
- use readbin_mod
+ use readbin_mod,only:readbin,read_extgrv
  
  real(8):: starttime
  character(len=30):: startfile, bptfile
@@ -59,13 +59,7 @@ subroutine restart
  if(gravswitch==3)grvtime = time
 
 !extgrvfile-------------------------------------------------------------
- if(include_extgrv)then
-  extgrv = 0d0
-  open(newunit=ui,file='data/extgrv.bin',status='old',form='unformatted')
-  read(ui)coremass
-  read(ui)extgrv(gis-2:gie+2,gjs:gje,gks-2:gke+2)
-  close(ui)
- end if
+ if(include_extgrv)call read_extgrv
 
 end subroutine restart
 
