@@ -1,6 +1,6 @@
 module readbin_mod
  implicit none
- public:: readbin
+ public:: readbin,read_extgrv,readgrid
 contains
 
 !!$!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -140,10 +140,10 @@ end subroutine readgrid
 
 ! PURPOSE: To read gridfile.bin
 
-subroutine readextgrv(filename)
+subroutine read_extgrv(filename)
 
- use grid,only:gis,gie,gjs,gje,gks,gke
- use gravmod,only:coremass,extgrv
+ use grid,only:is,gis,gie,gjs,gje,gks,gke
+ use gravmod,only:coremass,extgrv,mc
 
  character(len=*),intent(in)::filename
  integer:: ui
@@ -155,7 +155,9 @@ subroutine readextgrv(filename)
  read(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
  close(ui)
 
+ mc(is-1) = coremass
+ 
  return
-end subroutine readextgrv
+end subroutine read_extgrv
 
 end module readbin_mod
