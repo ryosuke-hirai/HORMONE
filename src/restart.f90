@@ -59,7 +59,7 @@ subroutine restart
  if(gravswitch==3)grvtime = time
 
 !extgrvfile-------------------------------------------------------------
- if(include_extgrv)call read_extgrv('extgrv.bin')
+ if(include_extgrv)call read_extgrv('data/extgrv.bin')
 
 end subroutine restart
 

@@ -1,6 +1,8 @@
 module readbin_mod
  implicit none
- public:: readbin,read_extgrv,readgrid
+
+ public:: readbin,readgrid,read_extgrv
+
 contains
 
 !!$!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -134,7 +136,7 @@ end subroutine readgrid
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE READEXTGRV
+!                        SUBROUTINE READ_EXTGRV
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
