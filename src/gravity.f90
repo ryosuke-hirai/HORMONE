@@ -698,7 +698,7 @@ subroutine gravsetup
    hg_dx = huge
    do k = ks, ke
     do i = is, ie
-     hg_dx = min(hg_dx,dxi1(i)*dxi3(k)/sqrt(dxi1(i)**2+dxi3(k)**2))
+     hg_dx = min(hg_dx,dxi1(i)*dxi3(k)/(dxi1(i)+dxi3(k)))
     end do
    end do
 
@@ -730,8 +730,7 @@ subroutine gravsetup
    hg_dx = huge
    do j = js, je
     do i = is, ie
-     hg_dx = min(hg_dx,dxi1(i)*x1(i)*dxi2(j) &
-                       /sqrt(dxi1(i)**2+(x1(i)*dxi2(j))**2))
+     hg_dx = min(hg_dx,dxi1(i)*x1(i)*dxi2(j)/(dxi1(i)+x1(i)*dxi2(j)))
     end do
    end do
    
@@ -773,9 +772,9 @@ subroutine gravsetup
     do j = js, je
      do i = is, ie
       hg_dx = min(hg_dx,dxi1(i)*x1(i)*dxi2(j)*x1(i)*dxi3(k) &
-                        / sqrt((dxi1(i)*x1(i)*dxi2(j))**2 &
-                               + (x1(i)*dxi2(j)*x1(i)*dxi3(k))**2 &
-                               + (x1(i)*dxi3(k)*dxi1(i))**2 )&
+                        / ( dxi1(i)*x1(i)*dxi2(j) &
+                          + x1(i)*dxi2(j)*x1(i)*dxi3(k)  &
+                          + x1(i)*dxi3(k)*dxi1(i) ) &
                  )
      end do
     end do
