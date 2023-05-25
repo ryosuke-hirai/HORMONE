@@ -18,7 +18,7 @@ ifeq (${FC},ifort)
 MODFLAG= -module 
 FCFLAG:= $(CFLAG) -qopenmp #-heap-arrays
 DBFLAG= -traceback -fpe0 -CB -warn all -O0 -std #-pg #-check all
-PRFLAG= -pg
+PRFLAG= -pg -save-temps
 endif
 
 # directories
