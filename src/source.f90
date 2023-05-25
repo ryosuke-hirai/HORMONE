@@ -47,8 +47,7 @@ subroutine source
   grv2 = 0d0 ; grv3 = 0d0
 
  elseif(gravswitch==2.or.gravswitch==3)then
-!$omp parallel
-!$omp do private (i,j,k)
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -71,8 +70,8 @@ subroutine source
     end do
    end do
   end do
-!$omp end do
-!$omp end parallel
+!$omp end parallel do
+
   if(eq_sym.and.crdnt==1)grv3(is:ie,js:je,ks) = 0d0
 
   if(include_extgrv)call externalfield
@@ -88,6 +87,7 @@ subroutine source
 
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  if(crdnt==0)then
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -99,10 +99,11 @@ subroutine source
     end do
    end do
   end do
+!$omp end parallel do
 
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  elseif(crdnt==1)then
-!$omp parallel do private (i,j,k)
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -128,8 +129,7 @@ subroutine source
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  elseif(crdnt==2)then
-!$omp parallel
-!$omp do private (i,j,k)
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -159,8 +159,8 @@ subroutine source
     end do
    end do
   end do
-!$omp end do
-!$omp end parallel
+!$omp end parallel do
+
  else
   print *,'Error from source.f90'
   stop

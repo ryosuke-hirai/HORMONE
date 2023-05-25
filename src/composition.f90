@@ -53,8 +53,7 @@ subroutine meanmolweight
   imu(ie+1:ie+2,js,ks) = imu(ie,js,ks)
 
  case(2) composition_type ! for composition advection
-!$omp parallel
-!$omp do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -62,8 +61,7 @@ subroutine meanmolweight
     end do
    end do
   end do
-!$omp end do
-!$omp end parallel
+!$omp end parallel do
   do k = ks, ke
    do j = js-2, js-1
     do i = is, ie

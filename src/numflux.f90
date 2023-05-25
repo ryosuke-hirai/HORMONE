@@ -38,10 +38,11 @@ contains
   call interpolation
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  if(ie/=1)then
+  if(ie/=is)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
-!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
+!$omp collapse(3)
    do k = ks,ke
     do j = js,je
      do i = is-1, ie
@@ -184,10 +185,10 @@ contains
   end if
  
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  if(je/=1)then
+  if(je/=js)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
-!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr)
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr) collapse(3)
    do k = ks,ke
     do j = js-1,je
      do i = is, ie
@@ -336,10 +337,11 @@ contains
   end if
 
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  if(ke/=1)then
+  if(ke/=ks)then
 !$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
-!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr)
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
+!$omp collapse(3)
    do k = ks-1,ke
     do j = js,je
      do i = is, ie
