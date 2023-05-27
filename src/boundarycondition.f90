@@ -33,9 +33,7 @@ subroutine boundarycondition
 !  5: Linear Extrapolation but Outgoing (only for vectors)
 !  9: Dirichlet b.c. (boundary values should be given elsewhere!)
 
- call pressure
  if(compswitch==2)call spcboundary
- call meanmolweight
 
 ! x1-direction ***********************************************************
 
