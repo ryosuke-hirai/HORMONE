@@ -2,6 +2,8 @@ module pressure_mod
  use constants,only:fac_egas,fac_pgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr
+ implicit none
+ 
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -555,12 +557,12 @@ end function get_p_from_ds
 ! PURPOSE: To calculate pressure in all cells based on EoS.
 
 subroutine pressure
+
+ use settings,only:mag_on
  use grid
  use physval
 
- implicit none
-
- real(8):: bsq
+ real(8):: bsq=0d0
  integer:: ierr
 
 !-----------------------------------------------------------------------------
@@ -573,10 +575,9 @@ subroutine pressure
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
-!     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
-     call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                   p(i,j,k), cs(i,j,k), ierr=ierr )
+     if(mag_on)bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
+     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
+
      ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
     end do
    end do
@@ -588,7 +589,7 @@ subroutine pressure
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
+     if(mag_on)bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
                       spc(1,i,j,k),spc(2,i,j,k)) ! gets T too
 
@@ -605,6 +606,7 @@ subroutine pressure
  return
 end subroutine pressure
 
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                       SUBROUTINE INTERNALENERGY
@@ -620,11 +622,12 @@ subroutine internalenergy
 
  implicit none
 
- integer:: ierr
+ logical:: err=.false.
+ integer:: ierr,erri,errj,errk
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private(i,j,k) collapse(3)
+!$omp parallel do private(i,j,k,ierr) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
@@ -632,16 +635,22 @@ subroutine internalenergy
                            v1(i,j,k),v2(i,j,k),v3(i,j,k),&
                            b1(i,j,k),b2(i,j,k),b3(i,j,k),ierr )
     if(ierr==1)then
-     print*,'Error in internalenergy, Negative internal energy'
-     print'("i=",i4,", j=",i4,", k=",i4)',i,j,k
-     print*,'etot=',e(i,j,k),'eint=',eint(i,j,k)
-     stop
+     err = .true.
+     erri = i; errj = j; errk = k
     end if
    end do
   end do
  end do
 !$omp end parallel do
 
+ if(err)then
+  i = erri; j = errj; k = errk
+  print*,'Error in internalenergy, Negative internal energy'
+  print'("i=",i4,", j=",i4,", k=",i4)',i,j,k
+  print*,'etot=',e(i,j,k),'eint=',eint(i,j,k)
+  stop
+ end if
+ 
 return
 end subroutine internalenergy
 
