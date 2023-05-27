@@ -100,7 +100,7 @@ subroutine boundarycondition
  end select x1_inner_vector
 
 ! set e and ptot
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is-2, is-1
@@ -155,7 +155,7 @@ subroutine boundarycondition
                        * dx1(ie+1)/dx1(ie)
   p (ie+1,:,:) = p (ie  ,:,:) + (p (ie,:,:)-p (ie-1,:,:)) * dx1(ie)/dx1(ie-1)
   p (ie+2,:,:) = p (ie+1,:,:) + (p (ie+1,:,:)-p (ie,:,:)) * dx1(ie+1)/dx1(ie)
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapase(3)
   do k = ks, ke
    do j = js, je
     do i = ie+1, ie+2
@@ -235,7 +235,7 @@ subroutine boundarycondition
  end select x1_outer_vector
 
 ! set e and ptot
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = ie+1, ie+2
@@ -277,7 +277,7 @@ if(je>1)then
   b2(is:ie,js-2:js-1,ks:ke) = b2(is:ie,js+1:js:-1,ks:ke)
   b3(is:ie,js-2:js-1,ks:ke) = b3(is:ie,js+1:js:-1,ks:ke)
  case(2:3) x2_inner_scalar ! outgoing/free
-!$omp parallel do private (i,j,k)
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke ; do j = js-2, js-1 ; do i = is, ie
    d (i,j,k) = d (i,js,k) ; p (i,j,k) = p (i,js,k)
    b1(i,j,k) = b1(i,js,k) ; b2(i,j,k) = b2(i,js,k)
@@ -336,7 +336,7 @@ if(je>1)then
  end select x2_inner_vector
 
 ! set e and ptot
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js-2, js-1
    do i = is, ie
@@ -436,7 +436,7 @@ if(je>1)then
  end select x2_outer_vector
 
 ! set e and ptot
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = je+1, je+2
    do i = is, ie
@@ -489,7 +489,7 @@ if(ke>1)then
   d (:,:,ks-2) = d (:,:,ks-1) - (d (:,:,ks)-d (:,:,ks-1)) * dx3(ks-1)/dx3(ks)
   p (:,:,ks-1) = p (:,:,ks  ) - (p (:,:,ks+1)-p (:,:,ks)) * dx3(ks)/dx3(ks+1)
   p (:,:,ks-2) = p (:,:,ks-1) - (p (:,:,ks)-p (:,:,ks-1)) * dx3(ks-1)/dx3(ks)
-!$omp parallel do private (i,j,k)
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ks-2, ks-1
    do j = js, je
     do i = is, ie
@@ -569,7 +569,7 @@ if(ke>1)then
  end select x3_inner_vector
 
 ! set e and ptot
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks-2, ks-1
   do j = js, je
    do i = is, ie
@@ -619,7 +619,7 @@ if(ke>1)then
   d (:,:,ke+2) = d (:,:,ke+1) + (d (:,:,ke+1)-d (:,:,ke)) * dx3(ke+1)/dx3(ke)
   p (:,:,ke+1) = p (:,:,ke  ) + (p (:,:,ke)-p (:,:,ke-1)) * dx3(ke)/dx3(ke-1)
   p (:,:,ke+2) = p (:,:,ke+1) + (p (:,:,ke+1)-p (:,:,ke)) * dx3(ke+1)/dx3(ke)
-!$omp parallel do private (i,j,k)
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ke+1, ke+2
    do j = js, je
     do i = is, ie
@@ -699,7 +699,7 @@ if(ke>1)then
  end select x3_outer_vector
 
 ! set e and ptot
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ke+1, ke+2
   do j = js, je
    do i = is, ie
