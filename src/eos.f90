@@ -569,11 +569,11 @@ subroutine pressure
 
  select case (eostype)
  case(0:1) ! EoSs that don't require composition
-!$omp parallel do private(i,j,k,bsq)
+!$omp parallel do private(i,j,k,bsq) collapse(3)
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)
+     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
 !     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
                    p(i,j,k), cs(i,j,k), ierr=ierr )
@@ -584,11 +584,11 @@ subroutine pressure
 !$omp end parallel do
 
  case (2) ! EoSs that require composition
-!$omp parallel do private(i,j,k,bsq)
+!$omp parallel do private(i,j,k,bsq) collapse(3)
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)
+     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
                       spc(1,i,j,k),spc(2,i,j,k)) ! gets T too
 
@@ -624,7 +624,7 @@ subroutine internalenergy
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
