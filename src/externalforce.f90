@@ -42,8 +42,8 @@ subroutine externalfield
  implicit none
 
 !-----------------------------------------------------------------------------
-!$omp parallel
-!$omp do private (i,j,k)
+
+!$omp parallel do private (i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
@@ -68,8 +68,8 @@ subroutine externalfield
    end do
   end do
  end do
-!$omp end do
-!$omp end parallel
+!$omp end parallel do
+
  return
 end subroutine externalfield
 
