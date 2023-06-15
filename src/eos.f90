@@ -658,6 +658,7 @@ end subroutine internalenergy
 
 function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
 !PURPOSE: To calculate eint from etot, v and B
+ use settings,only:mag_on
  implicit none
  real(8),intent(in):: etot,d,v1,v2,v3,b1,b2,b3
  integer,intent(out),optional::ierr
@@ -665,7 +666,11 @@ function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
 
  ierr=0
  vsq = v1**2 + v2**2 + v3**2
- bsq = b1**2 + b2**2 + b3**2
+ if(mag_on)then
+  bsq = b1**2 + b2**2 + b3**2
+ else
+  bsq = 0d0
+ end if
 
  eint = etot-0.5d0*d*vsq-0.5d0*bsq
  if(present(ierr).and.eint<=0d0)ierr=1

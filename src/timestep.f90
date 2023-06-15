@@ -51,7 +51,7 @@ contains
 
   dti = huge
   cfmax = 0d0
-!$omp parallel do private(i,j,k,cf1,cf2,cf3) collapse(3)
+!$omp parallel do private(i,j,k,cf1,cf2,cf3) reduction (max:cfmax) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
