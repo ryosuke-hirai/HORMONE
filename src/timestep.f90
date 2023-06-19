@@ -14,226 +14,92 @@ contains
 
  subroutine timestep
 
-  use settings,only:courant,outstyle,eostype,mag_on
+  use settings,only:courant,outstyle,wtime,itim
   use grid
   use physval
-  use constants,only:huge
-  use pressure_mod,only:eos_p_cs,get_cf
+  use omp_lib
 
-  real(8),allocatable:: dtdist(:,:,:,:), dti(:,:,:)
-  real(8):: cfmax, cf1,cf2,cf3
-  integer:: ierr
+  real(8),allocatable:: dti(:,:,:)
+  real(8):: cfmax0,cfmax
+  integer:: ierr, jb,kb
   
 !-------------------------------------------------------------------------
 
+  wtime(itim) = wtime(itim) - omp_get_wtime()
 
-  allocate( dtdist(is:ie,js:je,ks:ke,1:3), dti(is:ie,js:je,ks:ke) )
-!!$  dtdist = huge
-!!$!$omp parallel do private(i,j,k)
-!!$  do k = ks, ke
-!!$   do j = js, je
-!!$    do i = is, ie
-!!$     if(ie>1)then
-!!$      dtdist(i,j,k,1) = dxi1(i) / ( abs(v1(i,j,k))+abs(v3(i,j,k))+cs(i,j,k) )
-!!$     end if
-!!$     if(je>1)then
-!!$      dtdist(i,j,k,2) = g22(i)*dxi2(j) &
-!!$                      / ( abs(v2(i,j,k))+abs(v3(i,j,k))+cs(i,j,k) )
-!!$     end if
-!!$     if(ke>1)then
-!!$      dtdist(i,j,k,3) = g33(i,j)*dxi3(k) &
-!!$                      / ( abs(v3(i,j,k)+cs(i,j,k) ) )
-!!$     end if
-!!$    end do
-!!$   end do
-!!$  end do
-!!$!$omp end parallel do
+  allocate( dti(is:ie,js:je,ks:ke) )
 
-  dti = huge
   cfmax = 0d0
-!$omp parallel do private(i,j,k,cf1,cf2,cf3) reduction (max:cfmax) collapse(3)
+!$omp parallel do private(i,j,k,cfmax0) reduction(max:cfmax) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     select case(eostype)
-     case(0:1)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), ierr=ierr )
-     case(2)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
-     end select
-
-     if(mag_on)then
-      cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-      cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
-      cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b2(i,j,k),b1(i,j,k))
-     else
-      cf1 = cs(i,j,k)
-      cf2 = cs(i,j,k)
-      cf3 = cs(i,j,k)
-     end if
-
-     dti(i,j,k) = dvol(i,j,k) / &
-                ( ( cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j,k)) &
-                + ( cf2 + abs(v2(i,j,k)) )*off(js,je) * sum(sa2(i,j-1:j,k)) &
-                + ( cf3 + abs(v3(i,j,k)) )*off(ks,ke) * sum(sa3(i,j,k-1:k)) )
-
-     cfmax = max(cfmax,cf1,cf2,cf3)
+     call dti_cell(i,j,k,dti,cfmax=cfmax0)
+     cfmax = max(cfmax,cfmax0)
     end do
    end do
   end do
 !$omp end parallel do
 
-! Temporary (for workaround mesh)
-!!$  if(sphrn>0.and.crdnt==2)then
-!!$   do i = is, is+2
-!!$    dtdist(i,js:je,ks:ke,2) = sum( dtdist(i,js:je,ks:ke,2) )
-!!$   end do
-!!$   do i = is+3, sphrn
-!!$    do j = js, je,40
-!!$     dtdist(i,j:j+39,ks:ke,2) = sum( dtdist(i,j:j+39,ks:ke,2) )
-!!$    end do
-!!$   end do
-!!$   do i = sphrn+1, sphrn+trnsn1
-!!$    do j = js, je,8
-!!$     dtdist(i,j:j+7,ks:ke,2) = sum( dtdist(i,j:j+7,ks:ke,2) )    
-!!$    end do
-!!$   end do
-!!$   do i = sphrn+trnsn1+1, sphrn+trnsn1+trnsn2
-!!$    do j = js, je,4
-!!$     dtdist(i,j:j+3,ks:ke,2) = sum( dtdist(i,j:j+3,ks:ke,2) )
-!!$    end do
-!!$   end do
-!!$   do i = sphrn+trnsn1+trnsn2+1, sphrn+trnsn1+trnsn2+trnsn3
-!!$    do j = js, je,2
-!!$     dtdist(i,j:j+1,ks:ke,2) = sum( dtdist(i,j:j+1,ks:ke,2) )
-!!$    end do
-!!$   end do
-!!$  end if
-
-  if(sphrn>0.and.crdnt==2.and.ke==ks)then
+  if(sphrn>0.and.crdnt==2)then
+!$omp parallel
+! Spherical symmetry for innermost few cells
+   jb=je;kb=ke
+!$omp do private(i,j,k)
    do i = is, is+sphrn-1
     j=js;k=ks
-    select case(eostype)
-    case(0:1)
-     call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                   p(i,j,k), cs(i,j,k), ierr=ierr )
-    case(2)
-     call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                   p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
-    end select
-
-    if(mag_on)then
-     cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-    else
-     cf1 = cs(i,j,k)
-    end if
-    dti(i,js:je,ks:ke) = sum(dvol(i,js:je,ks:ke)) / &
-                ( ( cf1+abs(v1(i,j,k)) )*off(is,ie)*sum(sa1(i-1:i,js:je,k)))
+    call dti_cell(i,j,k,dti,jb=jb,kb=kb)
    end do
+!$omp end do nowait
+
+! Smear out over jb x kb cells for inner cells
+   jb = 16 ; kb = 16
+!$omp do private(i,j,k) collapse(3)
    do i = is+sphrn, is+sphrn+trnsn16-1
-    do j = js, je,16
-     k=ks
-     select case(eostype)
-     case(0:1)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), ierr=ierr )
-     case(2)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
-     end select
-
-     if(mag_on)then
-      cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-      cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
-     else
-      cf1 = cs(i,j,k)
-      cf2 = cs(i,j,k)
-     end if
-     dti(i,j:j+15,ks:ke) = sum(dvol(i,j:j+15,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+15,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+15,k))  )
+    do k = ks, ke, kb
+     do j = js, je, jb
+      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+     end do
     end do
    end do
+!$omp end do
+   jb = 8 ; kb = 8
+!$omp do private(i,j,k) collapse(3)
    do i = is+sphrn+trnsn16, is+sphrn+trnsn16+trnsn8-1
-    do j = js, je,8
-     k=ks
-     select case(eostype)
-     case(0:1)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), ierr=ierr )
-     case(2)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
-     end select
-
-     if(mag_on)then
-      cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-      cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
-     else
-      cf1 = cs(i,j,k)
-      cf2 = cs(i,j,k)
-     end if
-     dti(i,j:j+7,ks:ke) = sum(dvol(i,j:j+7,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+7,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+7,k))  )
+    do k = ks, ke, kb
+     do j = js, je, jb
+      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+     end do
     end do
    end do
+!$omp end do
+   jb = 4 ; kb = 4
+!$omp do private(i,j,k) collapse(3)
    do i = is+sphrn+trnsn16+trnsn8, is+sphrn+trnsn16+trnsn8+trnsn4-1
-    do j = js, je,4
-     k=ks
-     select case(eostype)
-     case(0:1)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), ierr=ierr )
-     case(2)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
-     end select
-
-     if(mag_on)then
-      cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-      cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
-     else
-      cf1 = cs(i,j,k)
-      cf2 = cs(i,j,k)
-     end if
-     dti(i,j:j+3,ks:ke) = sum(dvol(i,j:j+3,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+3,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+3,k))  )
+    do k = ks, ke, kb
+     do j = js, je, jb
+      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+     end do
     end do
    end do
+!$omp end do
+   jb = 2 ; kb = 2
+!$omp do private(i,j,k) collapse(3)
    do i = is+sphrn+trnsn16+trnsn8+trnsn4, is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1
-    do j = js, je,2
-     k=ks
-     select case(eostype)
-     case(0:1)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), ierr=ierr )
-     case(2)
-      call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                    p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
-     end select
-
-     if(mag_on)then
-      cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-      cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
-     else
-      cf1 = cs(i,j,k)
-      cf2 = cs(i,j,k)
-     end if
-     dti(i,j:j+1,ks:ke) = sum(dvol(i,j:j+1,ks:ke)) / &
-      ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+1,k)) &
-      + (cf2 + abs(v2(i,j,k)) )*off(js,je) * (sa2(i,j-1,k)+sa2(i,j+1,k))  )
+    do k = ks, ke, kb
+     do j = js, je, jb
+      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+     end do
     end do
    end do
+!$omp end do
+!$omp end parallel
   end if
 
 !  dt = minval( dtdist(is:ie,js:je,ks:ke,1:3) )
   dt = minval( dti(is:ie,js:je,ks:ke) )
 
-  cfmax = maxval(abs(cs))
+!  cfmax = maxval(abs(cs))
 
   dt = courant * dt
 
@@ -241,6 +107,8 @@ contains
 
   ch = cfmax
 
+  wtime(itim) = wtime(itim) + omp_get_wtime()
+  
  return
  end subroutine timestep
 
@@ -254,4 +122,60 @@ contains
   end if
  end function off
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE DTI_CELL
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute time step for a cell smeared over j-k coordinates
+
+subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
+
+ use settings,only:mag_on,eostype
+ use grid,only:is,ie,js,je,ks,ke,sa1,sa2,sa3,dvol
+ use physval,only:d,eint,T,imu,p,cs,v1,v2,v3,b1,b2,b3,spc
+ use pressure_mod,only:eos_p_cs,get_cf
+
+ integer,intent(in):: i,j,k
+ real(8),allocatable,intent(inout)::dti(:,:,:)
+ integer,intent(in),optional:: jb,kb
+ real(8),intent(out),optional:: cfmax
+ integer:: jn,kn,ierr
+ real(8):: cf1,cf2,cf3
+!-----------------------------------------------------------------------------
+
+ jn=0;kn=0
+ if(present(jb)) jn = min(jb-1,je-js)
+ if(present(kb)) kn = min(kb-1,ke-ks)
+
+ select case(eostype)
+ case(0:1)
+  call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
+                p(i,j,k), cs(i,j,k), ierr=ierr )
+ case(2)
+  call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
+                p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
+ end select
+  
+ if(mag_on)then
+  cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
+  cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
+  cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b1(i,j,k),b2(i,j,k))
+ else
+  cf1 = cs(i,j,k)
+  cf2 = cs(i,j,k)
+  cf3 = cs(i,j,k)
+ end if
+
+ dti(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) / &
+  ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+jn,k:k+kn)) &
+  + (cf2 + abs(v2(i,j,k)) )*off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
+  + (cf3 + abs(v3(i,j,k)) )*off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
+
+ cfmax = max(cf1,cf2,cf3)
+
+return
+end subroutine dti_cell
+ 
 end module timestep_mod
