@@ -14,13 +14,16 @@ contains
 subroutine source
 
  use grid
- use settings,only:eq_sym,include_extforce
+ use settings,only:eq_sym,include_extforce,wtime,isrc
  use physval
  use constants
  use gravmod
  use externalforce_mod
+ use omp_lib
  
 !----------------------------------------------------------------------------
+
+ wtime(isrc) = wtime(isrc) - omp_get_wtime()
 
 ! To calculate gravitational forces ********************************************
  if(gravswitch==0)then ! gravity off
@@ -76,18 +79,18 @@ subroutine source
 
   if(include_extgrv)call externalfield
 
-  if(ie==1)grv1 = 0d0; if(je==1)grv2 = 0d0; if(ke==1)grv3 = 0d0
-  if(abs(xi1s)<=tiny)grv1(is,js:je,ks:ke) = 0d0
-  if(crdnt==2)grv2(is:ie,js,ks:ke) = 0d0
-  if(crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
+  if(ie==1)grv1 = 0d0; if(je==1)grv2 = 0d0!; if(ke==1)grv3 = 0d0
+!  if(abs(xi1s)<=tiny)grv1(is,js:je,ks:ke) = 0d0
+!  if(crdnt==2)grv2(is:ie,js,ks:ke) = 0d0
+!  if(crdnt==2)grv2(is:ie,je,ks:ke) = 0d0
  else
   print *,"Error from gravswitch (source.f90)"
   stop
  end if
 
+ select case(crdnt)
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- if(crdnt==0)then
-!$omp parallel do private (i,j,k) collapse(3)
+ case(0)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -99,10 +102,9 @@ subroutine source
     end do
    end do
   end do
-!$omp end parallel do
 
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- elseif(crdnt==1)then
+ case(1)
 !$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
@@ -128,7 +130,7 @@ subroutine source
 !$omp end parallel do
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- elseif(crdnt==2)then
+ case(2)
 !$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
@@ -160,17 +162,18 @@ subroutine source
    end do
   end do
 !$omp end parallel do
-
- else
+ case default
   print *,'Error from source.f90'
   stop
- end if
+ end select
 
  if(include_extforce)call externalforce
  
  if(ie==1)src(is:ie,js:je,ks:ke,2) = 0d0
  if(je<=2.and.crdnt==2)src(is:ie,js:je,ks:ke,3) = 0d0
 ! if(ke==1)src(is:ie,js:je,ks:ke,4) = 0d0
+
+ wtime(isrc) = wtime(isrc) + omp_get_wtime()
 
  return
 end subroutine source

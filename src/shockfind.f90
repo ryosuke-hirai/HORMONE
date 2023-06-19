@@ -13,19 +13,23 @@ contains
 
  subroutine shockfind
 
+  use settings,only:wtime,isho
   use grid
   use physval
+  use omp_lib
   
   real(8):: divergence, gradT(1:dim), gradd(1:dim), Mjump
 
 !-----------------------------------------------------------------------------
 
+  wtime(isho) = wtime(isho) - omp_get_wtime()
+  
   if(dim==1)return
  
   shock = 0
 
   if(crdnt==2.and.ke==1)then
-!$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump)
+!$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
    do k = ks, ke
     do j = js, je
      do i = is, ie
@@ -51,7 +55,7 @@ contains
    end do
 !$omp end parallel do
   elseif(crdnt==1.and.je==1)then
-!$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump)
+!$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
    do k = ks, ke
     do j = js, je
      do i = is, ie
@@ -84,6 +88,8 @@ contains
 !$omp end parallel do
   end if
 
+  wtime(isho) = wtime(isho) + omp_get_wtime()
+  
   return
  end subroutine shockfind
 
