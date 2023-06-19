@@ -173,7 +173,7 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
   + (cf2 + abs(v2(i,j,k)) )*off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
   + (cf3 + abs(v3(i,j,k)) )*off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
 
- cfmax = max(cf1,cf2,cf3)
+ if(present(cfmax))cfmax = max(cf1,cf2,cf3)
 
 return
 end subroutine dti_cell
