@@ -13,13 +13,14 @@ contains
 
  subroutine numflux
 
-  use settings,only:compswitch,spn,eq_sym,eostype,mag_on
+  use settings,only:compswitch,spn,eq_sym,eostype,mag_on,wtime,iflx
   use grid
   use physval
   use hllflux_mod
   use pressure_mod
   use composition_mod
   use interpolation_mod
+  use omp_lib
   
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
@@ -36,16 +37,20 @@ contains
 
 ! use MUSCL interpolation
   call interpolation
+  
+  wtime(iflx) = wtime(iflx) - omp_get_wtime()
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!$omp parallel
   if(ie/=is)then
-!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks,ke
     do j = js,je
      do i = is-1, ie
+!      if(k==ks-1.or.k==ke+1.or.j==js-1.or.j==je+1.or.i==ie+1)cycle
       dx(1) = xi1(i)-x1(i) ; dx(2) = x1(i+1)-xi1(i)
 
       dl = d(i  ,j,k) + dx(1) * dd(i  ,j,k,1)
@@ -181,18 +186,18 @@ contains
      end do
     end do
    end do
-!$omp end parallel do
+!$omp end do nowait
   end if
  
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(je/=js)then
-!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr) collapse(3)
    do k = ks,ke
     do j = js-1,je
      do i = is, ie
-
+!      if(k==ks-1.or.k==ke+1.or.j==je+1.or.i==is-1.or.i==ie+1)cycle
       dx(1) = xi2(j)-x2(j) ; dx(2) = x2(j+1)-xi2(j)
 
       dl = d(i,j  ,k) + dx(1) * dd(i,j  ,k,2)
@@ -333,12 +338,12 @@ contains
      end do
     end do
    end do
-!$omp end parallel do
+!$omp end do nowait
   end if
 
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(ke/=ks)then
-!$omp parallel do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
+!$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
@@ -485,18 +490,20 @@ contains
      end do
     end do
    end do
-!$omp end parallel do
+!$omp end do 
   end if
-
+!$omp end parallel
 
   if(ie==1)flux1=0d0
   if(je==1)flux2=0d0
-  if(ke==1)flux3=0d0
+!  if(ke==1)flux3=0d0
   if(ie==1.and.compswitch>=2)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
   if(je==1.and.compswitch>=2)spcflx(1:spn,is:ie,js-1:je,ks:ke,2)=0d0
-  if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
+!  if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
   if(je<=2.and.crdnt==2)flux2=0d0
   if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
+
+  wtime(iflx) = wtime(iflx) + omp_get_wtime()
 
   return
  end subroutine numflux

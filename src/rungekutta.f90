@@ -13,13 +13,16 @@ contains
 
  subroutine rungekutta
 
-  use settings,only:rktype,compswitch,spn
+  use settings,only:rktype,compswitch,spn,wtime,irng
   use grid
   use physval
   use composition_mod
   use smear_mod
+  use omp_lib
 
 !-----------------------------------------------------------------------
+
+  wtime(irng) = wtime(irng) - omp_get_wtime()
 
   runge_type: select case (rktype)
   case(3) runge_type
@@ -27,7 +30,7 @@ contains
    rk3_number: select case (rungen)
    case(1) rk3_number
 !$omp parallel
-!$omp do private (ufn,i,j,k)
+!$omp do private (ufn,i,j,k) collapse(4)
     do ufn = 1,9
 
      do k = ks,ke
@@ -48,7 +51,7 @@ contains
     end do
 !$omp end do
     if(compswitch>=2)then
-!$omp do private (i,j,k,n)
+!$omp do private (i,j,k,n) collapse(4)
      do k = ks, ke
       do j = js, je
        do i = is, ie
@@ -73,7 +76,7 @@ contains
 !$omp end parallel
    case(2) rk3_number
 !$omp parallel
-!$omp do private(ufn,i,j,k)
+!$omp do private(ufn,i,j,k) collapse(4)
     do ufn = 1,9
      
      do k = ks,ke
@@ -95,7 +98,7 @@ contains
 !$omp end do
 
     if(compswitch>=2)then
-!$omp do private(i,j,k,n)
+!$omp do private(i,j,k,n) collapse(4)
      do k = ks, ke
       do j = js, je
        do i = is, ie
@@ -121,7 +124,7 @@ contains
 !$omp end parallel
    case default rk3_number
 !$omp parallel
-!$omp do private(ufn,i,j,k)
+!$omp do private(ufn,i,j,k) collapse(4)
     do ufn = 1,9
 
      do k = ks,ke
@@ -143,7 +146,7 @@ contains
 !$omp end do
 
     if(compswitch>=2)then
-!$omp do private(i,j,k,n)
+!$omp do private(i,j,k,n) collapse(4)
      do k = ks, ke
       do j = js, je
        do i = is, ie
@@ -175,7 +178,7 @@ contains
    rk2_number: select case (rungen)
    case(1) rk2_number
 !$omp parallel
-!$omp do private(ufn,i,j,k)
+!$omp do private(ufn,i,j,k) collapse(4)
     do ufn = 1,9
 
      do k = ks,ke
@@ -196,7 +199,7 @@ contains
     end do
 !$omp end do
     if(compswitch>=2)then
-!$omp do private(i,j,k,n)
+!$omp do private(i,j,k,n) collapse(4)
      do k = ks, ke
       do j = js, je
        do i = is, ie
@@ -222,7 +225,7 @@ contains
 
    case default rk2_number
 !$omp parallel
-!$omp do private(ufn,i,j,k)
+!$omp do private(ufn,i,j,k) collapse(4)
     do ufn = 1,9
      
      do k = ks,ke
@@ -243,7 +246,7 @@ contains
     end do
 !$omp end do
     if(compswitch>=2)then
-!$omp do private(i,j,k,n)
+!$omp do private(i,j,k,n) collapse(4)
      do k = ks, ke
       do j = js, je
        do i = is, ie
@@ -278,12 +281,11 @@ contains
    stop
   end select runge_type
 
-
   call smear
-
   call primitive
+  
+  wtime(irng) = wtime(irng) + omp_get_wtime()
 
- 
   return
  end subroutine rungekutta
 
@@ -302,6 +304,7 @@ contains
 
 !--------------------------------------------------------------------
 
+!$omp parallel do private(i,j,k,ufn) collapse(4)
   do ufn = 1,9
    do k = ks,ke
     do j = js,je
@@ -317,6 +320,7 @@ contains
     end do
    end do
   end do
+!$omp end parallel do
 
   return
  end subroutine euler
@@ -338,7 +342,7 @@ contains
   
 !--------------------------------------------------------------------
   
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(3)
   do k = ks,ke
    do j = js,je
     do i = is,ie
