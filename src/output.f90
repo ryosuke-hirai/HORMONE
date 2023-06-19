@@ -18,12 +18,15 @@ module output_mod
 
 subroutine output
 
-  use settings,only:is_test
+  use settings,only:is_test,wtime,iout
   use grid,only:tn
+  use omp_lib
 
 !----------------------------------------------------------------------------
-
+  
   if(is_test) return ! do not bother outputting if it is a test
+
+  wtime(iout) = wtime(iout) - omp_get_wtime()
 
   if(tn==0)call write_grid
 
@@ -153,6 +156,10 @@ subroutine output
 !!$  write(60,'(7(1PE16.8e2))') time, remmass/msun, belmass/msun, vel/remmass, velb/belmass
 !!$  call flush(60)
 
+  wtime(iout) = wtime(iout) + omp_get_wtime()
+
+  call profiler_output
+
 return
 end subroutine output
 
@@ -167,14 +174,17 @@ end subroutine output
 subroutine open_evofile
 
  use settings,only:sigfig,gravswitch,mag_on,crdnt
- use grid,only:tn,dim
- 
+ use grid,only:dim
+
+ integer::ierr
  character(len=50):: forma
 
 !-----------------------------------------------------------------------------
 
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
- if(tn==0)then
+ open(newunit=ievo,file='data/evo.dat',status='old',position='append',iostat=ierr)
+   
+ if(ierr/=0)then
   open(newunit=ievo,file='data/evo.dat',status='replace')
   write(ievo,'(a10)',advance='no')'tn'
   write(ievo,forma,advance="no")'time'
@@ -183,11 +193,12 @@ subroutine open_evofile
   write(ievo,forma,advance="no")'tot_eint'
   write(ievo,forma,advance="no")'tot_ekin'
   if(gravswitch>=1)write(ievo,forma,advance="no")'tot_egrv'
+  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_mass'
+  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_e'
+  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_angmom'
   if(mag_on)write(ievo,forma,advance="no")'tot_emag'
   if(dim>=2.and.crdnt>=1)write(ievo,forma,advance="no")'tot_angmom'
   write(ievo,'()')
- else
-  open(newunit=ievo,file='data/evo.dat',status='old',position='append')
  end if
 
 return
@@ -209,7 +220,7 @@ subroutine evo_output
  implicit none
 
  character(len=50):: forme
- real(8):: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot
+ real(8):: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot, Mbound, Ebound, Jbound
 
 !-----------------------------------------------------------------------------
  
@@ -244,11 +255,55 @@ subroutine evo_output
               *(0.5d0*grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
               *dvol(is:ie,js:je,ks:ke))
    Mtot = Mtot + mc(is-1)
+
+   Mbound=0d0;Ebound=0d0;Jbound=0d0
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      if(grvphi(i,j,k)+extgrv(i,j,k)+(e(i,j,k)-eint(i,j,k))/d(i,j,k)<=0d0)then
+       Mbound = Mbound + d(i,j,k)*dvol(i,j,k)
+       Ebound = Ebound + (e(i,j,k)+d(i,j,k)*(0.5d0*grvphi(i,j,k)+extgrv(i,j,k))) &
+                         *dvol(i,j,k)
+       select case(crdnt)
+       case(1)
+        Jbound = Jbound + d(i,j,k)*x1(i)*v2(i,j,k)*dvol(i,j,k)
+       case(2)
+        Jbound = Jbound + d(i,j,k)*x1(i)*sinc(j)*v3(i,j,k)*dvol(i,j,k)
+       end select
+      end if
+     end do
+    end do
+   end do
   else
    Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke)*grvphi(is:ie,js:je,ks:ke) &
                     *dvol(is:ie,js:je,ks:ke))
+
+   Mbound=0d0;Ebound=0d0
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      if(grvphi(i,j,k)+(e(i,j,k)-eint(i,j,k))/d(i,j,k)<=0d0)then
+       Mbound = Mbound + d(i,j,k)*dvol(i,j,k)
+       Ebound = Ebound + (e(i,j,k)+d(i,j,k)*0.5d0*grvphi(i,j,k)) &
+                         *dvol(i,j,k)
+       select case(crdnt)
+       case(1)
+        Jbound = Jbound + d(i,j,k)*x1(i)*v2(i,j,k)*dvol(i,j,k)
+       case(2)
+        Jbound = Jbound + d(i,j,k)*x1(i)*sinc(j)*v3(i,j,k)*dvol(i,j,k)
+       end select
+      end if
+     end do
+    end do
+   end do
   end if
-  if(eq_sym) Egtot = 2d0*Egtot
+  if(eq_sym)then
+   Egtot  = 2d0*Egtot
+   Mbound = 2d0*Mbound
+   Ebound = 2d0*Ebound
+   Jbound = 2d0*Jbound
+  end if
+  if(include_extgrv)Mbound = Mbound+mc(is-1)
  end if
 
  if(dim>=2.and.crdnt>=1)then
@@ -281,6 +336,9 @@ subroutine evo_output
  call write_anyval(ievo,forme,Eitot)
  call write_anyval(ievo,forme,Ektot)
  if(gravswitch>=1)call write_anyval(ievo,forme,Egtot)
+ if(gravswitch>=1)call write_anyval(ievo,forme,Mbound)
+ if(gravswitch>=1)call write_anyval(ievo,forme,Ebound)
+ if(gravswitch>=1)call write_anyval(ievo,forme,Jbound)
  if(mag_on)call write_anyval(ievo,forme,Ebtot)
  if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
  write(ievo,'()')
@@ -683,6 +741,47 @@ subroutine write_extgrv
 
 return
 end subroutine write_extgrv
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE PROFILER_OUTPUT
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output wall time for each subroutine
+
+subroutine profiler_output
+
+ use settings
+ use omp_lib
+
+ character(30):: form1
+ integer:: ui
+
+!-----------------------------------------------------------------------------
+
+ wtime(itot) = wtime(itot) + omp_get_wtime()
+ 
+ open(newunit=ui,file='walltime.dat',status='replace')
+
+ form1 = '(a,2(1X,F10.3,a))'
+ write(ui,form1)'Hydro          :',sum(wtime(iflx:itim)),'s',sum(wtime(iflx:itim))/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Numflux     :',wtime(iflx),'s',wtime(iflx)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Timestep    :',wtime(itim),'s',wtime(itim)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- RungeKutta  :',wtime(irng),'s',wtime(irng)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Source      :',wtime(isrc),'s',wtime(isrc)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Interpolate :',wtime(iint),'s',wtime(iint)/wtime(itot)*1d2,'%'
+ write(ui,form1)'Gravity        :',wtime(igrv),'s',wtime(igrv)/wtime(itot)*1d2,'%'
+ write(ui,form1)'Output         :',wtime(iout),'s',wtime(iout)/wtime(itot)*1d2,'%'
+ write(ui,form1)'Shockfind      :',wtime(isho),'s',wtime(isho)/wtime(itot)*1d2,'%'
+ write(ui,'(a)')'---------------------------------------------'
+ write(ui,'(a,F10.3,a)')'Total time     :',wtime(itot),'s'
+
+ wtime(itot) = wtime(itot) - omp_get_wtime()
+
+ return
+end subroutine profiler_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                       SUBROUTINE SET_FILE_NAME
