@@ -26,6 +26,10 @@ module settings
  logical:: write_other_vel, write_shock, grav_init_other, write_evo
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
+! profiler
+ real(8):: wtime(0:11)
+ integer,parameter::iini=1,iflx=2,irng=3,ibnd=4,isrc=5,iint=6,&
+                    itim=7,igrv=8,iout=9,isho=10,itot=0
 
 end module settings
 
@@ -53,7 +57,8 @@ module grid
   real(8),allocatable,dimension(:,:,:):: dvol, idetg3
   real(8),allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
   real(8),allocatable,dimension(:,:):: detg2, idetg2, g33
-  real(8),allocatable,dimension(:,:,:):: sa1, sa2, sa3
+  real(8),allocatable,dimension(:,:,:):: sa1, sa2, sa3, Imom
+  real(8),allocatable,dimension(:,:,:,:):: car_x
   real(8),allocatable,dimension(:):: spinc_r,spinc_t
 
 end module grid
