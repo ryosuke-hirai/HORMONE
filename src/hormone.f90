@@ -46,11 +46,15 @@ program hormone
   use dirichlet_mod
   use shockfind_mod
   use tests_mod
+  use omp_lib
   
   implicit none
 
 !############################## start program ################################
 
+  wtime = 0d0
+  wtime(iini) = -omp_get_wtime()
+  
 ! Initial setups -------------------------------------------------------------
 
   time = 0.d0; tn = 0
@@ -97,10 +101,14 @@ program hormone
    call evo_output
   end if
 
+  wtime(iini) = wtime(iini) + omp_get_wtime()
 
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
+
    main_loop:do
+
+    wtime(itot) = wtime(itot) - omp_get_wtime()
 
     call timestep
     print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
@@ -137,7 +145,8 @@ program hormone
      print *,'outstyle out of range'     !
      stop                                !
     end select                           !
-    if(write_evo)call evo_output         !
+    if(write_evo.and.&                   !
+       mod(tn,10)==0)call evo_output     !
 ! -------------------------------------- !
 
 ! End sequence ------------------- !
@@ -148,6 +157,8 @@ program hormone
      if(tn>=tnlim)exit main_loop   !
     end select                     !
 ! -------------------------------- !
+    
+    wtime(itot) = wtime(itot) + omp_get_wtime()
 
    end do main_loop
   end if
@@ -160,5 +171,19 @@ program hormone
 !------------------------------- end program ---------------------------------
 
   print *, 'Calculation complete! tn = ',tn
+
+!$omp parallel
+  n=omp_get_num_threads()
+!$omp end parallel
+  wtime(itot) = wtime(itot) + omp_get_wtime()
+  open(newunit=j,file='scaling.dat',status='old',position='append',iostat=i)
+  if(i/=0)then
+   open(newunit=j,file='scaling.dat',status='new')
+   write(j,'(a8,11a14)')&
+   'threads','total','setup','numflux','RungeKutta','boundary',&
+   'source','interpolation','timestep','gravity','output','shock'
+  end if
+  write(j,'(i8,11(F14.6))')n,wtime(itot:isho)
+  close(j)
 
 end program hormone

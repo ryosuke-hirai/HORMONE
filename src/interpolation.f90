@@ -14,11 +14,12 @@ contains
 
 subroutine interpolation
 
- use settings,only:compswitch,spn,eostype,mag_on,flux_limiter
+ use settings,only:compswitch,spn,eostype,mag_on,flux_limiter,wtime,iint
  use grid
  use physval
  use fluxlimiter
  use pressure_mod
+ use omp_lib
 
  real(8):: dl, dr, ptl, ptr, el, er, m1l, m1r, m2l, m2r, m3l, m3r
  real(8):: b1l, b1r, b2l, b2r, b3l, b3r, phil, phir, eintl, eintr,imul,imur
@@ -26,6 +27,8 @@ subroutine interpolation
  real(8):: dx(1:2), x(1:3), xi(1:2)
 
 !-----------------------------------------------------------------------------
+
+ wtime(iint) = wtime(iint) - omp_get_wtime()
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! Notations !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! slopes : dd, de, dm1, dm2, dm3, db1, db2, db3
@@ -44,7 +47,7 @@ subroutine interpolation
 if(ie/=is)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr,Tini)
+!$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
  do k = ks,ke
   do j = js,je
    do i = is-1,ie+1
@@ -155,7 +158,7 @@ if(ie/=is)then
    end do
   end do
  end do
-!$omp end do
+!$omp end do nowait
 end if
 
 
@@ -163,7 +166,7 @@ end if
 if(je/=js)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr,Tini)
+!$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
  do k = ks,ke
   do j = js-1,je+1
    do i = is,ie
@@ -272,7 +275,7 @@ if(je/=js)then
    end do
   end do
  end do
-!$omp end do
+!$omp end do nowait
 end if
 
 
@@ -280,7 +283,7 @@ end if
 if(ke/=ks)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr,Tini)
+!$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
 
  do k = ks-1,ke+1
   do j = js,je
@@ -331,38 +334,38 @@ if(ke/=ks)then
 
 ! check stability at cell boundary ---------------------------------------- !
     ! first calculate mean molecular weight at boundaries
-!!$    select case (compswitch)
-!!$    case(0) ! uniform composition
-!!$     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,3) = 0d0
-!!$    case(1:2) ! nonuniform composition
-!!$     uu(1:3) = 1d0/imu(i,j,k-1:k+1)
-!!$     call minmod(du,uu,dx) ; dmu(i,j,k,3) = du
-!!$     imul = uu(2) - (x3(k)-xi3(k-1))*du ; imur = uu(2) + (xi3(k)-x3(k))*du
-!!$     imul = 1d0/imul ; imur = 1d0/imur
-!!$     if(compswitch==2)then
-!!$      do n = 1, spn
-!!$       uu(1:3) = spc(n,i,j,k-1:k+1)
-!!$       call minmod(du,uu,dx) ; dspc(n,i,j,k,3) = du
-!!$      end do
-!!$     end if
-!!$    case default
-!!$     print *, "Error in compswitch",compswitch
-!!$     stop
-!!$    end select
-!!$    ! then calculate the condition at boundaries
-!!$    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
-!!$    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
-!!$    if(mag_on)then
-!!$     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
-!!$     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
-!!$    end if
-!!$    if( eintl>=maxval(eint(i,j,k-1:k)).or.eintl<=minval(eint(i,j,k-1:k)).or.&
-!!$        eintr>=maxval(eint(i,j,k:k+1)).or.eintr<=minval(eint(i,j,k:k+1)))then
-!!$     dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
-!!$     dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
-!!$     db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
-!!$     dphi(i,j,k,3) = 0d0
-!!$    else
+    select case (compswitch)
+    case(0) ! uniform composition
+     imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,3) = 0d0
+    case(1:2) ! nonuniform composition
+     uu(1:3) = 1d0/imu(i,j,k-1:k+1)
+     call minmod(du,uu,dx) ; dmu(i,j,k,3) = du
+     imul = uu(2) - (x3(k)-xi3(k-1))*du ; imur = uu(2) + (xi3(k)-x3(k))*du
+     imul = 1d0/imul ; imur = 1d0/imur
+     if(compswitch==2)then
+      do n = 1, spn
+       uu(1:3) = spc(n,i,j,k-1:k+1)
+       call minmod(du,uu,dx) ; dspc(n,i,j,k,3) = du
+      end do
+     end if
+    case default
+     print *, "Error in compswitch",compswitch
+     stop
+    end select
+    ! then calculate the condition at boundaries
+    eintl = el - 0.5d0*(m1l**2+m2l**2+m3l**2)/dl
+    eintr = er - 0.5d0*(m1r**2+m2r**2+m3r**2)/dr
+    if(mag_on)then
+     eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
+     eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
+    end if
+    if( eintl>=maxval(eint(i,j,k-1:k)).or.eintl<=minval(eint(i,j,k-1:k)).or.&
+        eintr>=maxval(eint(i,j,k:k+1)).or.eintr<=minval(eint(i,j,k:k+1)))then
+     dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
+     dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
+     db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
+     dphi(i,j,k,3) = 0d0
+    else
 !!$     Tini = T(i,j,k)
 !!$     select case (eostype)
 !!$     case(0:1) ! without recombination
@@ -384,15 +387,17 @@ if(ke/=ks)then
 !!$      db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
 !!$      dphi(i,j,k,3) = 0d0
 !!$     end if
-!!$    end if
+    end if
 ! -------------------------------------------------------------------------- !
 
    end do
   end do
  end do
-!$omp end do
+!$omp end do nowait
 end if
 !$omp end parallel
+
+wtime(iint) = wtime(iint) + omp_get_wtime()
 
 return
 end subroutine interpolation

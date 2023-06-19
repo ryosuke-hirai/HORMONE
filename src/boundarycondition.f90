@@ -19,6 +19,7 @@ subroutine boundarycondition
  use dirichlet_mod
  use pressure_mod
  use composition_mod
+ use omp_lib
 
  real(8),allocatable:: plug(:,:,:)
 
@@ -33,6 +34,8 @@ subroutine boundarycondition
 !  5: Linear Extrapolation but Outgoing (only for vectors)
 !  9: Dirichlet b.c. (boundary values should be given elsewhere!)
 
+ wtime(ibnd) = wtime(ibnd) - omp_get_wtime()
+ 
  if(compswitch==2)call spcboundary
 
 ! x1-direction ***********************************************************
@@ -155,7 +158,7 @@ subroutine boundarycondition
                        * dx1(ie+1)/dx1(ie)
   p (ie+1,:,:) = p (ie  ,:,:) + (p (ie,:,:)-p (ie-1,:,:)) * dx1(ie)/dx1(ie-1)
   p (ie+2,:,:) = p (ie+1,:,:) + (p (ie+1,:,:)-p (ie,:,:)) * dx1(ie+1)/dx1(ie)
-!$omp parallel do private(i,j,k) collapase(3)
+!$omp parallel do private(i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = ie+1, ie+2
@@ -722,6 +725,8 @@ if(ke>1)then
  end do
 !$omp end parallel do
 end if
+
+wtime(ibnd) = wtime(ibnd) + omp_get_wtime()
 
 return
 contains
