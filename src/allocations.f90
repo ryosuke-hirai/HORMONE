@@ -69,7 +69,7 @@ subroutine allocations
  allocate(flux1,flux2,flux3,mold=u)
  allocate(src(is:ie,js:je,ks:ke,1:9))!; src = 0d0
  allocate(uorg,mold=src)
-!$omp parallel do private(i,j,k,n) collapse(4)
+!$omp parallel do private(i,j,k,n) collapse(4) schedule(static)
  do n = 1, 9
   do k = ks, ke
    do j = js, je
@@ -88,7 +88,7 @@ subroutine allocations
   allocate(grvphiold,mold=grvphi)
   allocate(hgsrc(gis:gie,gjs:gje,gks:gke))
 ! Parallel first touch for OpenMP optimization on NUMA cores
-!$omp parallel do private(i,j,k) collapse(3)
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
   do k = gks, gke
    do j = gjs, gje
     do i = gis, gie
@@ -131,7 +131,7 @@ subroutine allocations
    allocate( spc0,source=spc )
   end if
  end if
-!$omp parallel do private(i,j,k,n) collapse(4)
+!$omp parallel do private(i,j,k,n) collapse(4) schedule(static)
  do k = ks, ke
   do j = js, je
    do i = is, ie

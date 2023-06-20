@@ -13,22 +13,25 @@ contains
 
 subroutine gravity
 
- use settings,only:eq_sym
+ use settings,only:eq_sym,wtime,igrv
  use grid
  use constants
  use physval
  use gravmod
  use gravbound_mod
+ use omp_lib
 
- integer:: l, flgcg, gin
+ integer:: l, flgcg, gin, tngrav
  real(8):: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
  real(8),dimension(1:lmax):: gsrc, pp, absrob
- real(8),allocatable,dimension(:,:,:):: newphi
+ real(8),allocatable,dimension(:,:,:):: lapphi,newphi
  real(8),allocatable,dimension(:):: intphi
  real(8),allocatable,dimension(:):: x,y,z,r,aw
 
 !-----------------------------------------------------------------------------
 
+ wtime(igrv) = wtime(igrv) - omp_get_wtime()
+ 
  gin = gie - gis + 1
 
  if(gravswitch==0)then
@@ -195,8 +198,8 @@ if(gravswitch==3.and.tn/=0)then
 
  if(crdnt==1.and.je==1)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates %%%%%%%%%%
+  allocate(newphi,mold=hgsrc)
   allocate( intphi(1:4) )
-  allocate( newphi, mold=hgsrc )
 
   cgrav2 = HGfac*max(maxval(cs(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
                      maxval(cs(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
@@ -270,37 +273,30 @@ if(gravswitch==3.and.tn/=0)then
 
   deallocate(newphi,intphi)
 
- elseif(crdnt==2.and.ke==1)then
+ elseif(crdnt==2.and.ke==ks)then
 ! Axisymmetric spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  allocate( newphi, mold=hgsrc )
 
-  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
-                     maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))) )
+  allocate(newphi,mold=hgsrc)
+  
+  k = gks
+
+  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,k)+abs(v1(is:ie,js:je,k)) &
+                                             +abs(v3(is:ie,js:je,k))) , &
+                     maxval(cs(is:ie,js:je,k)+abs(v2(is:ie,js:je,k))) )
   dtgrav = hgcfl*hg_dx/cgrav2
+  tngrav = ceiling((time+dt-grvtime)/dtgrav)
+  dtgrav = (time+dt-grvtime)/dble(tngrav)
   cgrav2 = cgrav2**2
-
-  hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
 
   if(gbtype==0)call gravbound
 
-  do while (grvtime<time+dt)
-   if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
-   k = gks
-
-   if(gbtype==1)then
-!$omp parallel workshare
-     grvphi(gie+1,gjs:gje,k) = x1(gie)/x1(gie+1) * grvphi(gie,gjs:gje,k)
-!$omp end parallel workshare
-   end if
-   
-!$omp parallel
+!$omp parallel private(i,j,l)
 !$omp workshare
-   grvphi(gis-1,gjs:gje,k) = grvphi(gis,gjs:gje,k)
-   grvphi(gis:gie,gjs-1,k) = grvphi(gis:gie,gjs,k)
-   grvphi(gis:gie,gje+1,k) = grvphi(gis:gie,gje,k)
+  hgsrc(is:ie,js:je,k) = 4d0*pi*G*d(is:ie,js:je,k)
 !$omp end workshare
 
-!$omp do private(i,j)
+  do l = 1, tngrav
+!$omp do collapse(2) schedule(static)
    do j = gjs, gje
     do i = gis, gie
      newphi(i,j,k) = 0.5d0*cgrav2*dtgrav*(dtgrav+dt_old)* &
@@ -308,66 +304,84 @@ if(gravswitch==3.and.tn/=0)then
                     (hg21(j)*grvphi(i,j+1,k) + hg22(j)*grvphi(i,j-1,k)) &
                      / x1(i)**2 + &
                      hg123(i,j,k)*grvphi(i,j,k) &
-                   - 4d0*pi*G*hgsrc(i,j,k) ) & ! source term
+                   - hgsrc(i,j,k) ) & ! source term
                    - dtgrav/dt_old*grvphiold(i,j,k) &
                    + (1d0+dtgrav/dt_old)*grvphi(i,j,k)
     end do
    end do
 !$omp end do
-!$omp workshare
-   grvphiold(gis:gie,js:je,gks:gke) = grvphi(gis:gie,js:je,gks:gke)
-   grvphi   (gis:gie,js:je,gks:gke) = newphi(gis:gie,js:je,gks:gke)
-!$omp end workshare
-!$omp end parallel
 
+! This has to be written this way for OpenMP optimization on NUMA processors
+!$omp do collapse(2) schedule(static)
+   do j = gjs, gje
+    do i = gis, gie
+     grvphiold(i,j,k) = grvphi(i,j,k)
+     grvphi(i,j,k) = newphi(i,j,k)
+    end do
+   end do
+!$omp end do 
+
+!$omp single
    dt_old  = dtgrav
    grvtime = grvtime + dtgrav
+!$omp end single nowait
 
   end do
 
-  grvphi(gis-1,gjs:gje,gks) = grvphi(gis,gjs:gje,gks)
-  grvphi(gis:gie,gjs-1,gks) = grvphi(gis:gje,gjs,gks)
-  grvphi(gis:gie,gje+1,gks) = grvphi(gis:gje,gje,gks)
+! Boundary conditions
+!$omp do
+  do j = gjs, gje
+   grvphi(gis-1,j,gks) = grvphi(gis,j,gks)   
+  end do
+!$omp end do nowait
+!$omp do
+  do i = gis, gie
+   grvphi(i,gjs-1,gks) = grvphi(i,gjs,gks)
+   grvphi(i,gje+1,gks) = grvphi(i,gje,gks)
+  end do
+!$omp end do nowait
+
+  if(gbtype==1)then
+!$omp workshare
+   grvphi(gie+1,gjs:gje,k) = x1(gie)/x1(gie+1) * grvphi(gie,gjs:gje,k)
+!$omp end workshare nowait
+  end if
+!$omp end parallel
 
   deallocate(newphi)
 
  elseif(crdnt==2.and.dim==3)then
-! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  allocate( newphi, mold=hgsrc )
+! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  allocate(newphi,mold=hgsrc)
 
   cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
                      maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))), &
                      maxval(cs(is:ie,js:je,ks)+abs(v3(is:ie,js:je,ks))) )
   dtgrav = hgcfl*hg_dx/cgrav2
+  tngrav = ceiling((time+dt-grvtime)/dtgrav)
+  dtgrav = (time+dt-grvtime)/dble(tngrav)
   cgrav2 = cgrav2**2
-
-  hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
-
+ 
   if(gbtype==0)call gravbound
-
-  do while (grvtime<time+dt)
-   if(grvtime+dtgrav>time+dt)dtgrav=time+dt-grvtime
-
-   if(gbtype==1)then ! Set Robin boundary condition
- !$omp do private(j)
-    do k = gks, gke
-     do j = gjs, gje
-      grvphi(gie+1,j,k) = x1(gie)/x1(gie+1) * grvphi(gie,j,k)
-     end do
-    end do
-!$omp end do
-   end if
 
 !$omp parallel
 !$omp workshare
-   grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
-   grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gie,gjs,gks:gke)
-   grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gie,gje,gks:gke)
-   grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
-   grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
+  hgsrc(is:ie,js:je,ks:ke) = 4d0*pi*G*d(is:ie,js:je,ks:ke)
 !$omp end workshare
 
-!$omp do private(i,j,k)
+  do l = 1, tngrav
+
+!$omp do private(i,j) collapse(2)
+   do j = gjs, gje
+    do i = gis, gie
+     grvphi(i,j,gks-1) = grvphi(i,j,gke)
+     grvphi(i,j,gke+1) = grvphi(i,j,gks)
+    end do
+   end do
+!$omp end do
+   
+!$omp do private(i,j,k) collapse(3) schedule(static)
    do k = gks, gke
     do j = gjs, gje
      do i = gis, gie
@@ -378,37 +392,49 @@ if(gravswitch==3.and.tn/=0)then
                     +(hg31(k)*grvphi(i,j,k+1) + hg32(k)*grvphi(i,j,k-1)) &
                       / (x1(i)*sinc(j))**2 &
                     + hg123(i,j,k)*grvphi(i,j,k) &
-                    - 4d0*pi*G*hgsrc(i,j,k) ) & ! source term
+                    - hgsrc(i,j,k) ) & ! source term
                     - dtgrav/dt_old*grvphiold(i,j,k) &
                     + (1d0+dtgrav/dt_old)*grvphi(i,j,k)
      end do
     end do
    end do
 !$omp end do
-!$omp workshare
-   grvphiold(gis:gie,gjs:gje,gks:gke) = grvphi(gis:gie,gjs:gje,gks:gke)
-   grvphi   (gis:gie,gjs:gje,gks:gke) = newphi(gis:gie,gjs:gje,gks:gke)
-!$omp end workshare
-!$omp end parallel
 
+! This has to be written this way for OpenMP optimization on NUMA processors
+!$omp do private(i,j,k) schedule(static) collapse(3)
+   do k = gks, gke
+    do j = gjs, gje
+     do i = gis, gie
+      grvphiold(i,j,k) = grvphi(i,j,k)
+      grvphi(i,j,k)    = newphi(i,j,k)
+     end do
+    end do
+   end do
+!$omp end do nowait
+
+!$omp single
    dt_old  = dtgrav
    grvtime = grvtime + dtgrav
-
+!$omp end single nowait
   end do
 
+!$omp workshare
   grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
   grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gie,gjs,gks:gke)
   grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gie,gje,gks:gke)
   grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
   grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
-
+!$omp end workshare
+!$omp end parallel
+  
   deallocate(newphi)
-
+  
  end if
 
 
 end if
 
+wtime(igrv) = wtime(igrv) + omp_get_wtime()
 
 contains
 
@@ -526,7 +552,7 @@ subroutine gravsetup
   end do
 
 ! Constructing matrix A
-!  2D cylindrical coordinates
+!  2D cylindrical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if(je==1.and.crdnt==1.and.dim==2)then
   
    do l = 1,lmax-gin ! calculating diagonal elements
@@ -571,7 +597,7 @@ subroutine gravsetup
 
    call mic
 
-! 2D spherical coordinates
+! 2D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   elseif(ke==1.and.crdnt==2.and.dim==2)then
   
    do l = 1,lmax-gin ! calculating diagonal elements
@@ -631,7 +657,7 @@ subroutine gravsetup
 
 ! For Hyperbolic gravity solver ----------------------------------------------
  if(gravswitch==3)then
-! for axisymmetric cylindrical
+! for axisymmetric cylindrical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if(je==1.and.dim==2.and.crdnt==1)then
 ! Cartoon mesh method
    allocate( hg123(gis-1:gie+1,1:1,gks-1:gke+1), &
@@ -702,70 +728,104 @@ subroutine gravsetup
     end do
    end do
 
-! for axisymmetrical spherical 
+! for axisymmetrical spherical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   elseif(crdnt==2.and.ke==1.and.dim==2)then
 ! Normal discretization
-   allocate( hg123(gis-1:gie+2,gjs-1:gje+2,1:1) )
-   allocate( hg11,hg12, mold=x1 )
-   allocate( hg21,hg22, mold=x2 )
+   allocate( hg123(gis:gie,gjs:gje,1:1) )
+   allocate( hg11(gis:gie),hg12(gis:gie) )
+   allocate( hg21(gjs:gje),hg22(gjs:gje) )
 
-   do i = gis-1, gie+1
+!$omp parallel
+!$omp do private(i) schedule(static)
+   do i = gis, gie
     hg11(i) = 2d0*(x1(i)+dx1(i  ))/x1(i)*idx1(i+1)/sum(dx1(i:i+1))
     hg12(i) = 2d0*(x1(i)-dx1(i+1))/x1(i)*idx1(i  )/sum(dx1(i:i+1))
    end do
-   do j = gjs-1, gje+1
+!$omp end do
+!$omp do private(j) schedule(static)
+   do j = gjs, gje
     hg21(j) = ( dx2(j  )/tan(x2(j))+2d0)*idx2(j+1)/sum(dx2(j:j+1))
     hg22(j) = (-dx2(j+1)/tan(x2(j))+2d0)*idx2(j  )/sum(dx2(j:j+1))
    end do
+!$omp end do
    k = ks
-   do j = gjs-1, gje+1
-    do i = gis-1, gie+1
+!$omp do private(i,j) schedule(static) collapse(2)
+   do j = gjs, gje
+    do i = gis, gie
      hg123(i,j,k) = ( 2d0*(dx1(i+1)-dx1(i)-x1(i))*idx1(i)*idx1(i+1) &
                     + ((dx2(j+1)-dx2(j))/tan(x2(j))-2d0) &
                       *idx2(j)*idx2(j+1)/x1(i) ) &
                   / x1(i)
+     if(i==gis) hg123(i,j,k) = hg123(i,j,k) + hg12(i)
+     if(j==gjs) hg123(i,j,k) = hg123(i,j,k) + hg22(j)/x1(i)**2
+     if(j==gje) hg123(i,j,k) = hg123(i,j,k) + hg21(j)/x1(i)**2
+     if(gbtype==1.and.i==gie)hg123(i,j,k) = hg123(i,j,k) + hg11(i)*x1(i)/x1(i+1)
     end do
    end do
-
+!$omp end do
+!$omp end parallel
+   hg12(gis) = 0d0
+   if(gbtype==1)hg11(gie) = 0d0
+   hg21(gje) = 0d0
+   hg22(gjs) = 0d0
+   
    hg_dx = huge
    do j = js, je
     do i = is, ie
      hg_dx = min(hg_dx,dxi1(i)*x1(i)*dxi2(j)/(dxi1(i)+x1(i)*dxi2(j)))
     end do
    end do
-   
-! for 3D spherical
+
+! for 3D spherical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   elseif(crdnt==2.and.dim==3)then
 ! Normal discretization
-   allocate( hg11,hg12, mold=x1 )
-   allocate( hg21,hg22, mold=x2 )
-   allocate( hg31,hg32, mold=x3 )
+   allocate( hg11(gis:gie),hg12(gis:gie) )
+   allocate( hg21(gjs:gje),hg22(gjs:gje) )
+   allocate( hg31(gks:gke),hg32(gks:gke) )
    allocate( hg123, mold=hgsrc )
-   
-   do i = gis-1, gie+1
+
+!$omp parallel
+!$omp do private(i)
+   do i = gis, gie
     hg11(i) = 2d0*(x1(i)+dx1(i  ))/x1(i)*idx1(i+1)/sum(dx1(i:i+1))
     hg12(i) = 2d0*(x1(i)-dx1(i+1))/x1(i)*idx1(i  )/sum(dx1(i:i+1))
    end do
-   do j = gjs-1, gje+1
+!$omp end do
+!$omp do private(j)
+   do j = gjs, gje
     hg21(j) = ( dx2(j  )/tan(x2(j))+2d0)*idx2(j+1)/sum(dx2(j:j+1))
     hg22(j) = (-dx2(j+1)/tan(x2(j))+2d0)*idx2(j  )/sum(dx2(j:j+1))
    end do
-   do k = gks-1, gke+1
+!$omp end do
+!$omp do private(k)
+   do k = gks, gke
     hg31(k) = 2d0*idx3(k+1)/sum(dx3(k:k+1))
     hg32(k) = 2d0*idx3(k  )/sum(dx3(k:k+1))
    end do
+!$omp end do
 
-   do k = gks-1, gke+1
-    do j = gjs-1, gje+1
-     do i = gis-1, gie+1
+!$omp do private(i,j,k) collapse(3)
+   do k = gks, gke
+    do j = gjs, gje
+     do i = gis, gie
       hg123(i,j,k) = ( 2d0*(dx1(i+1)-dx1(i)-x1(i))*idx1(i)*idx1(i+1) &
                      + ((dx2(j+1)-dx2(j))/tan(x2(j))-2d0) &
                        *idx2(j)*idx2(j+1)/x1(i)  &
                      - 2d0*idx3(k)*idx3(k+1)/x1(i)/sinc(j)**2 ) &
                    / x1(i)
+     if(i==gis) hg123(i,j,k) = hg123(i,j,k) + hg12(i)
+     if(j==gjs) hg123(i,j,k) = hg123(i,j,k) + hg22(j)/x1(i)**2
+     if(j==gje) hg123(i,j,k) = hg123(i,j,k) + hg21(j)/x1(i)**2
+     if(gbtype==1.and.i==gie)hg123(i,j,k) = hg123(i,j,k) + hg11(i)*x1(i)/x1(i+1)
      end do
     end do
    end do
+!$omp end do
+!$omp end parallel
+   hg12(gis) = 0d0
+   if(gbtype==1)hg11(gie) = 0d0
+   hg21(gje) = 0d0
+   hg22(gjs) = 0d0
 
    hg_dx = huge
    do k = ks, ke
