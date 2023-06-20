@@ -22,10 +22,10 @@ contains
 
 !-----------------------------------------------------------------------------
 
+  if(dim==1)return
+
   wtime(isho) = wtime(isho) - omp_get_wtime()
   
-  if(dim==1)return
- 
   shock = 0
 
   if(crdnt==2.and.ke==1)then

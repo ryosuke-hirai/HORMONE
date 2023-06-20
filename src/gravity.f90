@@ -30,15 +30,13 @@ subroutine gravity
 
 !-----------------------------------------------------------------------------
 
+ if(gravswitch==0.or.gravswitch==1)return
+ 
  wtime(igrv) = wtime(igrv) - omp_get_wtime()
  
  gin = gie - gis + 1
 
- if(gravswitch==0)then
-  return
- elseif(gravswitch==1)then
-  grvphi = 0d0
- elseif(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+ if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
   allocate( x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax) )
  
   if(grav_init_other.and.gravswitch==3)return

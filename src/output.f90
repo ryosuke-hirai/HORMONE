@@ -2,7 +2,7 @@ module output_mod
  implicit none
 
  integer:: ievo
- public:: output,set_file_name,write_extgrv,evo_output
+ public:: output,set_file_name,write_extgrv,evo_output,scaling_output
  private:: write_grid,write_bin,write_plt,get_header,add_column, &
            write_val
 
@@ -119,42 +119,6 @@ subroutine output
 !!$  close(80)
 !!$
 !!$  end if
-
-!remmassfile---------------------------------------------------------------
-!!$  if(tn==0)then
-!!$   open(unit=60,file='data/remmass.dat',status='replace')
-!!$   inimass = 0d0
-!!$   do k = ks, ke ; do j = js, je ; do i = is, ie
-!!$    if(e(i,j,k)+d(i,j,k)*grvphi(i,j,k)<=0d0)then
-!!$     inimass = inimass + dvol(i,j,k)*d(i,j,k) + coremass
-!!$    end if
-!!$   end do ; end do ; end do
-!!$   write(60,'(a,1PE16.8e2,a15,1PE16.8e2)') &
-!!$    'initial_env_mass = ',inimass/msun,'core_mass = ',coremass/msun
-!!$   write(60,'(7a16)')'time','remmass','belmass','v_kick','v_kickb'
-!!$  else
-!!$   open(unit=60,file='data/remmass.dat',status='old',position='append')
-!!$  end if
-!!$
-!!$  remmass = coremass ; belmass = coremass
-!!$  centre_of_mass = 0d0 ; centre_of_massb = 0d0
-!!$  vel = 0d0 ; velb = 0d0
-!!$  do k = ks, ke
-!!$   do j = js, je
-!!$    do i = is, ie
-!!$     if(e(i,j,k)+d(i,j,k)*(grvphi(i,j,k)+extgrv(i,j,k))<=0d0)then
-!!$      remmass = remmass + d(i,j,k)*dvol(i,j,k)
-!!$      vel = vel + d(i,j,k)*dvol(i,j,k)*v3(i,j,k)
-!!$     end if
-!!$     if(v1(i,j,k)**2+v3(i,j,k)**2+(grvphi(i,j,k)+extgrv(i,j,k))<=0d0)then
-!!$      belmass = belmass + d(i,j,k)*dvol(i,j,k)
-!!$      velb = velb + d(i,j,k)*dvol(i,j,k)*v3(i,j,k)
-!!$     end if
-!!$    end do
-!!$   end do
-!!$  end do
-!!$  write(60,'(7(1PE16.8e2))') time, remmass/msun, belmass/msun, vel/remmass, velb/belmass
-!!$  call flush(60)
 
   wtime(iout) = wtime(iout) + omp_get_wtime()
 
@@ -351,7 +315,7 @@ end subroutine evo_output
 !                          SUBROUTINE WRITE_GRID
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To output gridfile.bin
+! PURPOSE: To output gridfile.bin and gridfile.dat
 
 subroutine write_grid
 
@@ -471,9 +435,10 @@ subroutine write_grid
   
   write(ui,formhead)'  i','j','k','x1','x2','x3','dvol'
   if(crdnt==2)then
+   k=ks-1
    do j = je, je
     do i = is, ie
-     write(ui,formval)i,j,k,x1(i),x2(j),xi3(ks-1),dvol(i,j,k)
+     write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
@@ -489,9 +454,10 @@ subroutine write_grid
   end do
 
   if(crdnt==2)then
+   k=ke+1
    do j = je, je
     do i = is, ie
-     write(ui,formval)i,j,k,x1(i),x2(j),xi3(ke),dvol(i,j,k)
+     write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
@@ -782,6 +748,50 @@ subroutine profiler_output
 
  return
 end subroutine profiler_output
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                      SUBROUTINE SCALING_OUTPUT
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output scaling.dat file for scaling tests
+
+subroutine scaling_output
+
+ use settings
+ use omp_lib
+
+ integer:: i,un,n
+ character(len=4):: is_scaling_test
+
+!-----------------------------------------------------------------------------
+
+ call get_environment_variable("HORMONE_SCALING_TEST",is_scaling_test)
+
+ if(is_scaling_test/='true')return
+
+!$omp parallel
+  n=omp_get_num_threads()
+!$omp end parallel
+
+  wtime(itot) = wtime(itot) + omp_get_wtime()
+
+  open(newunit=un,file='scaling.dat',status='old',position='append',iostat=i)
+
+  if(i/=0)then
+   open(newunit=un,file='scaling.dat',status='new')
+   write(un,'(a8,11a14)')&
+   'threads','total','setup','numflux','RungeKutta','boundary',&
+   'source','interpolation','timestep','gravity','output','shock'
+  end if
+
+  write(un,'(i8,11(F14.6))')n,wtime(itot:isho)
+
+  close(un)
+
+return
+end subroutine scaling_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                       SUBROUTINE SET_FILE_NAME

@@ -106,9 +106,9 @@ program hormone
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
 
-   main_loop:do
+   wtime(itot) = wtime(itot) - omp_get_wtime()
 
-    wtime(itot) = wtime(itot) - omp_get_wtime()
+   main_loop:do
 
     call timestep
     print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
@@ -170,18 +170,6 @@ program hormone
 
   print *, 'Calculation complete! tn = ',tn
 
-!$omp parallel
-  n=omp_get_num_threads()
-!$omp end parallel
-  wtime(itot) = wtime(itot) + omp_get_wtime()
-  open(newunit=j,file='scaling.dat',status='old',position='append',iostat=i)
-  if(i/=0)then
-   open(newunit=j,file='scaling.dat',status='new')
-   write(j,'(a8,11a14)')&
-   'threads','total','setup','numflux','RungeKutta','boundary',&
-   'source','interpolation','timestep','gravity','output','shock'
-  end if
-  write(j,'(i8,11(F14.6))')n,wtime(itot:isho)
-  close(j)
+  call scaling_output
 
 end program hormone
