@@ -28,6 +28,7 @@ subroutine initialcondition
  use star_init_mod
  use redsupergiant_mod
  use agndisk_mod
+ use modify_mod
 
 !----------------------------------------------------------------------------
 
@@ -59,6 +60,9 @@ subroutine initialcondition
 
   case('agndisk')
    call agndisk
+
+  case('modify')
+   call modify
 
   case default
    print*,'Chosen simtype not available, simtype = ',simtype
