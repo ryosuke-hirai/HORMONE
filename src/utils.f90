@@ -265,6 +265,7 @@ end subroutine gravpot1d
 
 subroutine masscoordinate
 
+ use settings,only:eq_sym
  use grid,only:is,ie,js,je,ks,ke,dvol
  use physval,only:d
  use gravmod,only:mc
@@ -272,11 +273,18 @@ subroutine masscoordinate
  implicit none
 
  integer:: i
+ real(8):: fac
 
 !-----------------------------------------------------------------------------
 
+ if(eq_sym)then
+  fac=2d0
+ else
+  fac=1d0
+ end if
+ 
  do i = is, ie
-  mc(i) = mc(i-1) + sum( d(i,js:je,ks:ke) * dvol(i,js:je,ks:ke) )
+  mc(i) = mc(i-1) + fac*sum( d(i,js:je,ks:ke) * dvol(i,js:je,ks:ke) )
  end do
 
 return
