@@ -50,7 +50,7 @@ contains
     j=js;k=ks
     call dti_cell(i,j,k,dti,jb=jb,kb=kb)
    end do
-!$omp end do nowait
+!$omp end do
 
 ! Smear out over jb x kb cells for inner cells
    jb = 16 ; kb = 16
