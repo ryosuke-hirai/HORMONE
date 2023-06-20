@@ -158,8 +158,6 @@ program hormone
     end select                     !
 ! -------------------------------- !
     
-    wtime(itot) = wtime(itot) + omp_get_wtime()
-
    end do main_loop
   end if
 ! End integration ------------------------------------------------------------
