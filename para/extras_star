@@ -3,7 +3,7 @@ c Model parameters for star_sph
 c mesafile: Name of MESA profile file to be read.
 c spc_list: List of all elements to be tracked in the simulation.
 &starcon
- mesafile='sun_profile.data'
+ mesafile='../tests/sun_profile.data'
  spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
 
 /
