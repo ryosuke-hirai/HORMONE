@@ -454,7 +454,7 @@ subroutine write_grid
   end do
 
   if(crdnt==2)then
-   k=ke+1
+   k=ke
    do j = je, je
     do i = is, ie
      write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
@@ -680,6 +680,8 @@ subroutine write_plt
 
  close(ui)
 
+ print*,"Outputted: ",trim(pltfile)
+ 
 return
 end subroutine write_plt
 

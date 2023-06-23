@@ -47,7 +47,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
   do n = 1, 500
    call get_erec_imurec(logd,T,X,Y,erec,imu,derecdT,dimurecdT)
    if(d*erec>=eint)then ! avoid negative thermal energy
-    T = 0.9d0*T; Tdot=0d0;cycle
+    T = 0.95d0*T; Tdot=0d0;cycle
    end if
    corr = (eint-(arad*T**3+d*fac_egas*imu)*T-d*erec) &
     / ( -4d0*arad*T**3-d*(fac_egas*(imu+dimurecdT*T)+derecdT) )

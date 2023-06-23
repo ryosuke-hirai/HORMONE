@@ -13,20 +13,22 @@ contains
 
 subroutine gravity
 
- use settings,only:eq_sym,wtime,igrv
+ use settings,only:eq_sym,wtime,igrv,courant
  use grid
  use constants
  use physval
  use gravmod
  use gravbound_mod
+ use utils,only:masscoordinate
  use omp_lib
 
- integer:: l, flgcg, gin, tngrav
+ integer:: l, flgcg, gin, tngrav, grungen, jb, kb
  real(8):: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
  real(8),dimension(1:lmax):: gsrc, pp, absrob
  real(8),allocatable,dimension(:,:,:):: lapphi,newphi
  real(8),allocatable,dimension(:):: intphi
  real(8),allocatable,dimension(:):: x,y,z,r,aw
+ real(8):: faco, facn, fact
 
 !-----------------------------------------------------------------------------
 
@@ -353,79 +355,223 @@ if(gravswitch==3.and.tn/=0)then
 
   allocate(newphi,mold=hgsrc)
 
-  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks)+abs(v1(is:ie,js:je,ks))), &
-                     maxval(cs(is:ie,js:je,ks)+abs(v2(is:ie,js:je,ks))), &
-                     maxval(cs(is:ie,js:je,ks)+abs(v3(is:ie,js:je,ks))) )
-  dtgrav = hgcfl*hg_dx/cgrav2
+!!$  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks:ke)+abs(v1(is:ie,js:je,ks:ke))), &
+!!$                     maxval(cs(is:ie,js:je,ks:ke)+abs(v2(is:ie,js:je,ks:ke))), &
+!!$                     maxval(cs(is:ie,js:je,ks:ke)+abs(v3(is:ie,js:je,ks:ke))) )
+  cgrav2 = HGfac*ch
+!  dtgrav = hgcfl*hg_dx/cgrav2
+  dtgrav = hgcfl/courant/HGfac*dt
   tngrav = ceiling((time+dt-grvtime)/dtgrav)
   dtgrav = (time+dt-grvtime)/dble(tngrav)
   cgrav2 = cgrav2**2
  
   if(gbtype==0)call gravbound
-
+  call masscoordinate
 !$omp parallel
-!$omp workshare
-  hgsrc(is:ie,js:je,ks:ke) = 4d0*pi*G*d(is:ie,js:je,ks:ke)
-!$omp end workshare
-
   do l = 1, tngrav
+!$omp workshare
+   grvphi(is-1,js:je,ks:ke) = grvphi(is,js:je,ks:ke)
+   grvphi(is:ie,js-1,ks:ke) = grvphi(is:ie,js,ks:ke)
+   grvphi(is:ie,je+1,ks:ke) = grvphi(is:ie,je,ks:ke)   
+   grvphi(is:ie,js:je,ks-1) = grvphi(is:ie,js:je,ke)
+   grvphi(is:ie,js:je,ke+1) = grvphi(is:ie,js:je,ks)
+!$omp end workshare
+   do grungen = 1, 3
+! First set flux and source term
+!$omp do private (i,j,k) collapse(3)
+   do k = ks-1, ke
+    do j = js-1, je
+     do i = is-1, ie
+      grv1(i,j,k) = -cgrav2*(grvphi(i+1,j,k)-grvphi(i,j,k))*idx1(i+1)
+      grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/x1(i)
+      grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/x1(i)/sin(x2(j))
 
-!$omp do private(i,j) collapse(2)
-   do j = gjs, gje
-    do i = gis, gie
-     grvphi(i,j,gks-1) = grvphi(i,j,gke)
-     grvphi(i,j,gke+1) = grvphi(i,j,gks)
-    end do
-   end do
-!$omp end do
-   
-!$omp do private(i,j,k) collapse(3) schedule(static)
-   do k = gks, gke
-    do j = gjs, gje
-     do i = gis, gie
-      newphi(i,j,k) = 0.5d0*cgrav2*dtgrav*(dtgrav+dt_old)* &
-                    ( hg11(i)*grvphi(i+1,j,k) + hg12(i)*grvphi(i-1,j,k)  &
-                    +(hg21(j)*grvphi(i,j+1,k) + hg22(j)*grvphi(i,j-1,k)) &
-                      / x1(i)**2 &
-                    +(hg31(k)*grvphi(i,j,k+1) + hg32(k)*grvphi(i,j,k-1)) &
-                      / (x1(i)*sinc(j))**2 &
-                    + hg123(i,j,k)*grvphi(i,j,k) &
-                    - hgsrc(i,j,k) ) & ! source term
-                    - dtgrav/dt_old*grvphiold(i,j,k) &
-                    + (1d0+dtgrav/dt_old)*grvphi(i,j,k)
+      if(i>is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1)then
+      elseif(i<=is+sphrn-1)then
+       grv2(i,j,k) = 0d0;grv3(i,j,k) = 0d0
+      elseif(i<=is+sphrn+trnsn16-1)then
+       grv2(i,j,k) = grv2(i,j,k)/16d0 ; grv3(i,j,k) = grv3(i,j,k)/16d0
+      elseif(i<=is+sphrn+trnsn16+trnsn8-1)then
+       grv2(i,j,k) = grv2(i,j,k)/8d0 ; grv3(i,j,k) = grv3(i,j,k)/8d0
+      elseif(i<=is+sphrn+trnsn16+trnsn8+trnsn4-1)then
+       grv2(i,j,k) = grv2(i,j,k)/4d0 ; grv3(i,j,k) = grv3(i,j,k)/4d0
+      elseif(i<=is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1)then
+       grv2(i,j,k) = grv2(i,j,k)/2d0 ; grv3(i,j,k) = grv3(i,j,k)/2d0
+      end if
+      if(i==is-1.or.j==js-1.or.k==ks-1)cycle
+      hgsrc(i,j,k) = -cgrav2*4d0*pi*G*d(i,j,k)
      end do
     end do
    end do
 !$omp end do
 
-! This has to be written this way for OpenMP optimization on NUMA processors
-!$omp do private(i,j,k) schedule(static) collapse(3)
-   do k = gks, gke
-    do j = gjs, gje
-     do i = gis, gie
-      grvphiold(i,j,k) = grvphi(i,j,k)
-      grvphi(i,j,k)    = newphi(i,j,k)
+   grk3_number: select case (grungen)
+   case(1) grk3_number
+    faco = 1d0 ; fact = 1d0 ; facn = 0d0
+   case(2) grk3_number
+    faco = 0.75d0 ; fact = 0.25d0 ; facn = fact
+   case(3) grk3_number
+    faco = 1d0/3d0 ; fact = 2d0/3d0 ; facn = fact
+   end select grk3_number
+
+!$omp do private (i,j,k) collapse(3)
+    do k = ks,ke
+     do j = js,je
+      do i = is,ie
+       if(grungen==1)then
+        grvphiorg(i,j,k,1) = grvphi(i,j,k)
+        grvphiorg(i,j,k,2) = grvphidot(i,j,k)
+       end if
+       grvphi(i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi(i,j,k) &
+                     + fact*dtgrav*grvphidot(i,j,k)
+       grvphidot(i,j,k) = faco*grvphiorg(i,j,k,2) + facn*grvphidot(i,j,k) &
+             + fact*dtgrav * &
+             ( idetg1(i) * &
+               (detg1(i-1  )*grv1(i-1,j,k)-detg1(i  )*grv1(i,j,k)) &
+             + idetg2(i,j) * &
+               (detg2(i,j-1)*grv2(i,j-1,k)-detg2(i,j)*grv2(i,j,k)) &
+             + idetg3(i,j,k) * (grv3(i,j,k-1)-grv3(i,j,k)) &
+             + hgsrc(i,j,k) )
+      end do
      end do
     end do
-   end do
-!$omp end do nowait
+!$omp end do
 
 !$omp single
-   dt_old  = dtgrav
-   grvtime = grvtime + dtgrav
-!$omp end single nowait
+    do i = sphrn, is, -1
+     grvphi(i,js:je,ks:ke) = sum(grvphi(i+1,js:je,ks:ke)*dvol(i+1,js:je,ks:ke))&
+      / sum(dvol(i+1,js:je,ks:ke)) &
+      - G*mc(i)/xi1(i)**2*dx1(i+1)
+    end do
+!$omp end single
+    
+!!$!$omp do private(i)
+!!$   do i = is, is+sphrn-1
+!!$    grvphi(i,js:je,ks:ke) = sum(grvphi(i,js:je,ks:ke)*dvol(i,js:je,ks:ke)) &
+!!$                          / sum(dvol(i,js:je,ks:ke))
+!!$    grvphidot(i,js:je,ks:ke) = sum(grvphidot(i,js:je,ks:ke)*dvol(i,js:je,ks:ke))&
+!!$                             / sum(dvol(i,js:je,ks:ke))
+!!$   end do
+!!$!$omp end do
+!!$   jb=15;kb=15
+!!$   if(ke==1)kb=0
+!!$!$omp do private(i,j,k) collapse(3)
+!!$   do i = is+sphrn, is+sphrn+trnsn16-1
+!!$    do k = ks, ke, 16
+!!$     do j = js, je, 16
+!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$     end do
+!!$    end do
+!!$   end do
+!!$!$omp end do
+!!$   jb=7;kb=7
+!!$   if(ke==1)kb=0
+!!$!$omp do private(i,j,k) collapse(3)
+!!$   do i = is+sphrn+trnsn16, is+sphrn+trnsn16+trnsn8-1
+!!$    do k = ks, ke, 8
+!!$     do j = js, je, 8
+!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$     end do
+!!$    end do
+!!$   end do
+!!$!$omp end do
+!!$   jb=3;kb=3
+!!$   if(ke==1)kb=0
+!!$!$omp do private(i,j,k) collapse(3)
+!!$   do i = is+sphrn+trnsn16+trnsn8, is+sphrn+trnsn16+trnsn8+trnsn4-1
+!!$    do k = ks, ke, 4
+!!$     do j = js, je, 4
+!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$     end do
+!!$    end do
+!!$   end do
+!!$!$omp end do
+!!$   jb=1;kb=1
+!!$   if(ke==1)kb=0
+!!$!$omp do private(i,j,k) collapse(3)
+!!$   do i = is+sphrn+trnsn16+trnsn8+trnsn4, is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1
+!!$    do k = ks, ke, 2
+!!$     do j = js, je, 2
+!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
+!!$     end do
+!!$    end do
+!!$   end do
+!!$!$omp end do
   end do
-
-!$omp workshare
-  grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
-  grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gie,gjs,gks:gke)
-  grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gie,gje,gks:gke)
-  grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
-  grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
-!$omp end workshare
+!$omp single
+  grvtime = grvtime + dtgrav
+!$omp end single
+ end do
 !$omp end parallel
-  
-  deallocate(newphi)
+
+
+!!$!$omp parallel
+!!$!$omp workshare
+!!$  hgsrc(is:ie,js:je,ks:ke) = 4d0*pi*G*d(is:ie,js:je,ks:ke)
+!!$!$omp end workshare
+!!$
+!!$  do l = 1, tngrav
+!!$
+!!$!$omp do private(i,j) collapse(2)
+!!$   do j = gjs, gje
+!!$    do i = gis, gie
+!!$     grvphi(i,j,gks-1) = grvphi(i,j,gke)
+!!$     grvphi(i,j,gke+1) = grvphi(i,j,gks)
+!!$    end do
+!!$   end do
+!!$!$omp end do
+!!$   
+!!$!$omp do private(i,j,k) collapse(3) schedule(static)
+!!$   do k = gks, gke
+!!$    do j = gjs, gje
+!!$     do i = gis, gie
+!!$      newphi(i,j,k) = 0.5d0*cgrav2*dtgrav*(dtgrav+dt_old)* &
+!!$                    ( hg11(i)*grvphi(i+1,j,k) + hg12(i)*grvphi(i-1,j,k)  &
+!!$                    +(hg21(j)*grvphi(i,j+1,k) + hg22(j)*grvphi(i,j-1,k)) &
+!!$                      / x1(i)**2 &
+!!$                    +(hg31(k)*grvphi(i,j,k+1) + hg32(k)*grvphi(i,j,k-1)) &
+!!$                      / (x1(i)*sinc(j))**2 &
+!!$                    + hg123(i,j,k)*grvphi(i,j,k) &
+!!$                    - hgsrc(i,j,k) ) & ! source term
+!!$                    - dtgrav/dt_old*grvphiold(i,j,k) &
+!!$                    + (1d0+dtgrav/dt_old)*grvphi(i,j,k)
+!!$     end do
+!!$    end do
+!!$   end do
+!!$!$omp end do
+!!$
+!!$! This has to be written this way for OpenMP optimization on NUMA processors
+!!$!$omp do private(i,j,k) schedule(static) collapse(3)
+!!$   do k = gks, gke
+!!$    do j = gjs, gje
+!!$     do i = gis, gie
+!!$      grvphiold(i,j,k) = grvphi(i,j,k)
+!!$      grvphi(i,j,k)    = newphi(i,j,k)
+!!$     end do
+!!$    end do
+!!$   end do
+!!$!$omp end do nowait
+!!$
+!!$!$omp single
+!!$   dt_old  = dtgrav
+!!$   grvtime = grvtime + dtgrav
+!!$!$omp end single nowait
+!!$  end do
+!!$
+!!$!$omp workshare
+!!$  grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis,gjs:gje,gks:gke)
+!!$  grvphi(gis:gie,gjs-1,gks:gke) = grvphi(gis:gie,gjs,gks:gke)
+!!$  grvphi(gis:gie,gje+1,gks:gke) = grvphi(gis:gie,gje,gks:gke)
+!!$  grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gke)
+!!$  grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
+!!$!$omp end workshare
+!!$!$omp end parallel
+!!$  
+!!$  deallocate(newphi)
   
  end if
 

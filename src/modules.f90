@@ -122,7 +122,8 @@ module gravmod
   integer:: lmax
   integer,parameter:: llmax = 1000
   integer,allocatable,dimension(:):: modlimax
-  real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold
+  real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold, grvphidot
+  real(8),allocatable,dimension(:,:,:,:):: grvphiorg
   real(8),allocatable,dimension(:):: a1,a2,a3, preca, precb, precc, precd, prece
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc

@@ -91,6 +91,7 @@ subroutine source
  select case(crdnt)
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(0)
+!$omp parallel do private(i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -102,6 +103,7 @@ subroutine source
     end do
    end do
   end do
+!$omp end parallel do
 
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(1)
@@ -177,5 +179,40 @@ subroutine source
 
  return
 end subroutine source
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                         SUBROUTINE PHIDAMP
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Damping term for divergence cleaning 9-wave method
+! Ref    : Mignone & Tzeferacos 2010, JComP, 229, 2117
+
+subroutine phidamp
+
+ use settings,only:courant
+ use grid
+ use physval,only:phi
+
+ real(8):: alpha9wave
+
+!-----------------------------------------------------------------------------
+
+! ratio between diffusive and advection timescales (td/ta)
+ alpha9wave = 0.1d0
+ 
+!$omp parallel do private(i,j,k) collapse(3)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    phi(i,j,k) = phi(i,j,k)*exp(-alpha9wave*courant)
+   end do
+  end do
+ end do
+!$omp end parallel do
+
+return
+end subroutine phidamp
 
 end module source_mod

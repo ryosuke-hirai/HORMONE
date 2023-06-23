@@ -124,6 +124,7 @@ program hormone
      call rungekutta
     end do
 
+    if(mag_on)           call phidamp
     if(include_cooling)  call cooling
     if(include_particles)call particles
 
@@ -157,7 +158,7 @@ program hormone
      if(tn>=tnlim)exit main_loop   !
     end select                     !
 ! -------------------------------- !
-    
+
    end do main_loop
   end if
 ! End integration ------------------------------------------------------------
