@@ -29,8 +29,8 @@ subroutine checksetup
   if(ie/=1.and.je==1.and.ke/=1) dim=2
   if(ie==1.and.je/=1.and.ke/=1) dim=2
   if(ie/=1.and.je/=1.and.ke/=1) dim=3
-  courant = courant / dble(dim) ! To set a consistent courant number.
-  hgcfl   = hgcfl   / dble(dim) ! To set a consistent hgcfl number.
+!  courant = courant / dble(dim) ! To set a consistent courant number.
+!  hgcfl   = hgcfl   / dble(dim) ! To set a consistent hgcfl number.
   if(dim/=2) write_other_vel = .false.
 
 ! Set uniform mesh if that dimension it not used
