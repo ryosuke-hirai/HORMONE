@@ -5,11 +5,12 @@ msun = 1.989e33
 
 set size ratio 1
 
-box = 15 #3e13/rsun
+box = 30000 #3e13/rsun
+
 set xr [-box:box]
 set yr [-box:box]
 
-#set log cb
+set log cb
 #set form cb '10^{%L}'
 
 set pm3d map

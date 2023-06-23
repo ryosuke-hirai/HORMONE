@@ -571,7 +571,7 @@ subroutine pressure
 
  select case (eostype)
  case(0:1) ! EoSs that don't require composition
-!$omp parallel do private(i,j,k,bsq) collapse(3)
+!$omp parallel do private(i,j,k) firstprivate(bsq) collapse(3)
   do k = ks,ke
    do j = js,je
     do i = is,ie
@@ -585,7 +585,7 @@ subroutine pressure
 !$omp end parallel do
 
  case (2) ! EoSs that require composition
-!$omp parallel do private(i,j,k,bsq) collapse(3)
+!$omp parallel do private(i,j,k) firstprivate(bsq) collapse(3)
   do k = ks,ke
    do j = js,je
     do i = is,ie

@@ -36,9 +36,9 @@ subroutine smear
 
    do i = is, is+sphrn-1
     do n = 1, spn
-     spc(n,i,js:je,ks:ke) = sum( u(i,js:je,ks:ke,1)*spc(n,i,js:je,ks:ke) &
+     spc(n,i,js:je,ks:ke) = sum( d(i,js:je,ks:ke)*spc(n,i,js:je,ks:ke) &
                                 *dvol(i,js:je,ks:ke) ) &
-                          / sum( u(i,js:je,ks:ke,1)*dvol(i,js:je,ks:ke) )
+                          / sum( d(i,js:je,ks:ke)*dvol(i,js:je,ks:ke) )
     end do
    end do
    jb=15;kb=15
@@ -47,9 +47,9 @@ subroutine smear
     do n = 1, spn
      do k = ks, ke,16
       do j = js, je,16
-       spc(n,i,j:j+jb,k:k+kb)=sum( u(i,j:j+jb,k:k+kb,1)*spc(n,i,j:j+jb,k:k+kb) &
+       spc(n,i,j:j+jb,k:k+kb)=sum( d(i,j:j+jb,k:k+kb)*spc(n,i,j:j+jb,k:k+kb) &
                                   *dvol(i,j:j+jb,k:k+kb) ) &
-                             / sum( u(i,j:j+jb,k:k+kb,1)*dvol(i,j:j+jb,k:k+kb) )
+                             / sum( d(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb) )
       end do
      end do
     end do
@@ -60,9 +60,9 @@ subroutine smear
     do n = 1, spn
      do k = ks, ke,8
       do j = js, je,8
-       spc(n,i,j:j+jb,k:k+kb) = sum( u(i,j:j+jb,k:k+kb,1)*spc(n,i,j:j+jb,k:k+kb) &
+       spc(n,i,j:j+jb,k:k+kb) = sum( d(i,j:j+jb,k:k+kb)*spc(n,i,j:j+jb,k:k+kb) &
                                   *dvol(i,j:j+jb,k:k+kb) ) &
-                            / sum( u(i,j:j+jb,k:k+kb,1)*dvol(i,j:j+jb,k:k+kb) )
+                            / sum( d(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb) )
       end do
      end do
     end do
@@ -73,9 +73,9 @@ subroutine smear
     do n = 1, spn
      do k = ks, ke,4
       do j = js, je,4
-       spc(n,i,j:j+jb,k:k+kb) = sum( u(i,j:j+jb,k:k+kb,1)*spc(n,i,j:j+jb,k:k+kb) &
+       spc(n,i,j:j+jb,k:k+kb) = sum( d(i,j:j+jb,k:k+kb)*spc(n,i,j:j+jb,k:k+kb) &
                                   *dvol(i,j:j+jb,k:k+kb) ) &
-                            / sum( u(i,j:j+jb,k:k+kb,1)*dvol(i,j:j+jb,k:k+kb) )
+                            / sum( d(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb) )
       end do
      end do
     end do
@@ -86,9 +86,9 @@ subroutine smear
     do n = 1, spn
      do k = ks, ke,2
       do j = js, je,2
-       spc(n,i,j:j+jb,k:k+kb) = sum( u(i,j:j+jb,k:k+kb,1)*spc(n,i,j:j+jb,k:k+kb) &
+       spc(n,i,j:j+jb,k:k+kb) = sum( d(i,j:j+jb,k:k+kb)*spc(n,i,j:j+jb,k:k+kb) &
                                   *dvol(i,j:j+jb,k:k+kb) ) &
-                            / sum( u(i,j:j+jb,k:k+kb,1)*dvol(i,j:j+jb,k:k+kb) )
+                            / sum( d(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb) )
       end do
      end do
     end do
@@ -200,7 +200,7 @@ end subroutine smear
  subroutine angular_smear(i,js,je,ks,ke)
 
   use grid,only:x1,x2,x3,dvol
-  use physval,only:u,v1,v2,v3
+  use physval,only:u,v1,v2,v3,icnt,iene,imo1,imo2,imo3
   use utils
   use gravmod,only:grvphi,extgrv,gravswitch,include_extgrv
   
@@ -218,38 +218,38 @@ end subroutine smear
   do j = js, je
    do k = ks, ke
     xcar = polcar([x1(i),x2(j),x3(k)])
-    call get_vcar(xcar,x3(k),u(i,j,k,2),u(i,j,k,3),u(i,j,k,4),vcar)
+    call get_vcar(xcar,x3(k),u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
     momtot = momtot + vcar*dvol(i,j,k)! add up momenta
-    etot = etot + u(i,j,k,8)*dvol(i,j,k)! add up energy
+    etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
     if(gravswitch>0)then
-     etot = etot + u(i,j,k,1)*grvphi(i,j,k)*dvol(i,j,k)! and gravitational ene
+     etot = etot + u(i,j,k,icnt)*grvphi(i,j,k)*dvol(i,j,k)! and gravitational ene
     end if
     if(include_extgrv)then
-     etot = etot + u(i,j,k,1)*extgrv(i,j,k)*dvol(i,j,k)! and external gravity
+     etot = etot + u(i,j,k,icnt)*extgrv(i,j,k)*dvol(i,j,k)! and external gravity
     end if
    end do
   end do
-  mtot = sum( u(i,js:je,ks:ke,1)*dvol(i,js:je,ks:ke) )
+  mtot = sum( u(i,js:je,ks:ke,icnt)*dvol(i,js:je,ks:ke) )
   vave = momtot/mtot ! get average cartesian velocity
-  u(i,js:je,ks:ke,1) = mtot/sum( dvol(i,js:je,ks:ke) ) ! density
+  u(i,js:je,ks:ke,icnt) = mtot/sum( dvol(i,js:je,ks:ke) ) ! density
 
   do j = js, je
    do k = ks, ke
     xcar = polcar([x1(i),x2(j),x3(k)])
     call get_vpol(xcar,x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
-    u(i,j,k,2) = v1(i,j,k)*u(i,j,k,1)
-    u(i,j,k,3) = v2(i,j,k)*u(i,j,k,1)
-    u(i,j,k,4) = v3(i,j,k)*u(i,j,k,1)
+    u(i,j,k,2) = v1(i,j,k)*u(i,j,k,icnt)
+    u(i,j,k,3) = v2(i,j,k)*u(i,j,k,icnt)
+    u(i,j,k,4) = v3(i,j,k)*u(i,j,k,icnt)
     if(gravswitch>0)then
-     etot = etot - u(i,j,k,1)*grvphi(i,j,k)*dvol(i,j,k)
+     etot = etot - u(i,j,k,icnt)*grvphi(i,j,k)*dvol(i,j,k)
     end if
     if(include_extgrv)then
-     etot = etot - u(i,j,k,1)*extgrv(i,j,k)*dvol(i,j,k)
+     etot = etot - u(i,j,k,icnt)*extgrv(i,j,k)*dvol(i,j,k)
     end if
    end do
   end do
 
-  u(i,js:je,ks:ke,8) = etot / sum( dvol(i,js:je,ks:ke) )
+  u(i,js:je,ks:ke,iene) = etot / sum( dvol(i,js:je,ks:ke) )
 !  u(i,js:je,ks:ke,8) = sum( u(i,js:je,ks:ke,8)*dvol(i,js:je,ks:ke) )&
 !                      / sum( dvol(i,js:je,ks:ke) )
   

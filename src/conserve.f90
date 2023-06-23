@@ -12,6 +12,7 @@ contains
 
 subroutine conserve
 
+  use settings,only:mag_on
   use grid
   use physval
 
@@ -24,15 +25,16 @@ subroutine conserve
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     u(i,j,k,1) = d(i,j,k)
-     u(i,j,k,2) = d(i,j,k) * v1(i,j,k)
-     u(i,j,k,3) = d(i,j,k) * v2(i,j,k)
-     u(i,j,k,4) = d(i,j,k) * v3(i,j,k)
-     u(i,j,k,5) = b1(i,j,k)
-     u(i,j,k,6) = b2(i,j,k)
-     u(i,j,k,7) = b3(i,j,k)
-     u(i,j,k,8) = e(i,j,k)
-     u(i,j,k,9) = phi(i,j,k)
+     u(i,j,k,icnt) = d(i,j,k)
+     u(i,j,k,imo1) = d(i,j,k) * v1(i,j,k)
+     u(i,j,k,imo2) = d(i,j,k) * v2(i,j,k)
+     u(i,j,k,imo3) = d(i,j,k) * v3(i,j,k)
+     u(i,j,k,iene) = e(i,j,k)
+     if(.not.mag_on)cycle
+     u(i,j,k,img1) = b1(i,j,k)
+     u(i,j,k,img2) = b2(i,j,k)
+     u(i,j,k,img3) = b3(i,j,k)
+     u(i,j,k,idcl) = phi(i,j,k)
     end do
    end do
   end do

@@ -91,6 +91,7 @@ module physval
   
   implicit none
 
+  integer:: icnt,imo1,imo2,imo3,iene,img1,img2,img3,idcl,ufnmax
   real(8),allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3, ptot
   real(8),allocatable,dimension(:,:,:):: T, eint, imu
   real(8),allocatable,dimension(:,:,:,:):: dd, de, dm1, dm2, dm3

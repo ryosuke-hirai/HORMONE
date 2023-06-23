@@ -159,10 +159,10 @@ contains
   tmpflux(2) = d*v1*v1 + p - b1*b1
   tmpflux(3) = d*v1*v2 - b1*b2 
   tmpflux(4) = d*v1*v3 - b1*b3
-  tmpflux(5) = phi
-  tmpflux(6) = b2*v1 - b1*v2 
-  tmpflux(7) = b3*v1 - b1*v3 
-  tmpflux(8) = (e+p)*v1 - b1*(v1*b1+v2*b2+v3*b3 )
+  tmpflux(5) = (e+p)*v1 - b1*(v1*b1+v2*b2+v3*b3 )
+  tmpflux(6) = phi
+  tmpflux(7) = b2*v1 - b1*v2 
+  tmpflux(8) = b3*v1 - b1*v3 
 ! for 9wave method
   tmpflux(9) = ch**2 * b1
 ! end 9wave method
