@@ -14,7 +14,7 @@ contains
 subroutine source
 
  use grid
- use settings,only:eq_sym,include_extforce,wtime,isrc
+ use settings,only:eq_sym,include_extforce,wtime,isrc,mag_on
  use physval
  use constants
  use gravmod
@@ -91,17 +91,21 @@ subroutine source
  select case(crdnt)
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(0)
+!$omp parallel do private (i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     src(i,j,k,2) = grv1(i,j,k)
-     src(i,j,k,3) = grv2(i,j,k)
-     src(i,j,k,4) = grv3(i,j,k)
-     src(i,j,k,8) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k) &
-                  + grv3(i,j,k)*v3(i,j,k)
+     if(gravswitch>=1)then
+      src(i,j,k,imo1) = grv1(i,j,k)
+      src(i,j,k,imo2) = grv2(i,j,k)
+      src(i,j,k,imo3) = grv3(i,j,k)
+      src(i,j,k,iene) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k) &
+                      + grv3(i,j,k)*v3(i,j,k)
+     end if
     end do
    end do
   end do
+!$omp end parallel do
 
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(1)
@@ -109,21 +113,22 @@ subroutine source
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     src(i,j,k,2) = ( d(i,j,k)*v2(i,j,k)*v2(i,j,k) - b2(i,j,k)*b2(i,j,k)   &
-                    + ptot(i,j,k) ) * sx1(i) &
-                  + grv1(i,j,k)
+     src(i,j,k,imo1) = ( d(i,j,k)*v2(i,j,k)*v2(i,j,k) + ptot(i,j,k) ) * sx1(i)
 
-     src(i,j,k,3) = ( b1(i,j,k)*b2(i,j,k) - d(i,j,k)*v1(i,j,k)*v2(i,j,k) ) &
-                    * sx1(i) &
-                  + grv2(i,j,k) * sx1(i)
+     src(i,j,k,imo2) = - d(i,j,k)*v1(i,j,k)*v2(i,j,k) * sx1(i)
 
-     src(i,j,k,4) = grv3(i,j,k)
-
-     src(i,j,k,6) = ( b1(i,j,k)*v3(i,j,k) - b3(i,j,k)*v1(i,j,k) ) * sx1(i)
-
-     src(i,j,k,8) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k)*sx1(i) &
-                  + grv3(i,j,k)*v3(i,j,k)
-
+     if(mag_on)then
+      src(i,j,k,imo1) = src(i,j,k,imo1) - b2(i,j,k)**2*sx1(i)
+      src(i,j,k,imo2) = src(i,j,k,imo2) + b1(i,j,k)*b2(i,j,k)*sx1(i)
+      src(i,j,k,img2) = ( b1(i,j,k)*v3(i,j,k) - b3(i,j,k)*v1(i,j,k) ) * sx1(i)
+     end if
+     if(gravswitch>=1)then
+      src(i,j,k,imo1) = src(i,j,k,imo1) + grv1(i,j,k)
+      src(i,j,k,imo2) = src(i,j,k,imo2) + grv2(i,j,k) * sx1(i)
+      src(i,j,k,imo3) = grv3(i,j,k)
+      src(i,j,k,iene) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k)*sx1(i) &
+                      + grv3(i,j,k)*v3(i,j,k)
+     end if
     end do
    end do
   end do
@@ -135,29 +140,38 @@ subroutine source
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     src(i,j,k,2) = ( d(i,j,k)*( v2(i,j,k)*v2(i,j,k) + v3(i,j,k)*v3(i,j,k) ) &
-                    - ( b2(i,j,k)*b2(i,j,k) + b3(i,j,k)*b3(i,j,k) )          &
-                    + 2.d0*ptot(i,j,k) ) * sx1(i) &
-                  + grv1(i,j,k)
+     src(i,j,k,imo1) = ( d(i,j,k)*( v2(i,j,k)**2 + v3(i,j,k)**2 ) &
+                     + 2d0*ptot(i,j,k) ) * sx1(i)
 
-     src(i,j,k,3) = ( b1(i,j,k)*b2(i,j,k) - d(i,j,k)*v1(i,j,k)*v2(i,j,k)     &
-                  + ( d(i,j,k)*v3(i,j,k)*v3(i,j,k) - b3(i,j,k)*b3(i,j,k)     &
-                    + ptot(i,j,k) ) * scot(j) ) * sx1(i) &
-                  + grv2(i,j,k)*sx1(i)
+     if(je>js)then
+      src(i,j,k,imo2) = (- d(i,j,k)*v1(i,j,k)*v2(i,j,k) &
+                      + ( d(i,j,k)*v3(i,j,k)**2 + ptot(i,j,k) ) * scot(j) ) &
+                      * sx1(i)
+     else
+      src(i,j,k,imo2) = 0d0
+     end if
 
-     src(i,j,k,4) = ( b1(i,j,k)*b3(i,j,k) - d(i,j,k)*v1(i,j,k)*v3(i,j,k)     &
-                  + ( b2(i,j,k)*b3(i,j,k) - d(i,j,k)*v2(i,j,k)*v3(i,j,k) )   &
-                  * scot(j) ) * sx1(i) &
-                  + grv3(i,j,k)*sx1(i)*sisin(j)
+     src(i,j,k,imo3) = ( - d(i,j,k)*v1(i,j,k)*v3(i,j,k)     &
+                         - d(i,j,k)*v2(i,j,k)*v3(i,j,k) * scot(j) ) * sx1(i)
 
-     src(i,j,k,6) = ( b2(i,j,k)*v1(i,j,k) - b1(i,j,k)*v2(i,j,k) ) * sx1(i)
+     if(mag_on)then
+      src(i,j,k,imo1) = src(i,j,k,imo1) - (b2(i,j,k)**2+b3(i,j,k)**2)*sx1(i)
+      src(i,j,k,imo2) = src(i,j,k,imo2) &
+                      + (b1(i,j,k)*b2(i,j,k)-b3(i,j,k)**2*scot(j))*sx1(i)
+      src(i,j,k,imo3) = src(i,j,k,imo3) &
+                      + (b1(i,j,k)*b3(i,j,k)+b2(i,j,k)*b3(i,j,k)*scot(j))*sx1(i)
+      src(i,j,k,img2) = ( b2(i,j,k)*v1(i,j,k) - b1(i,j,k)*v2(i,j,k) ) * sx1(i)
+      src(i,j,k,img3) = ( (v2(i,j,k)*b3(i,j,k) - b2(i,j,k)*v3(i,j,k))*scot(j) &
+                      - (b1(i,j,k)*v3(i,j,k)-b3(i,j,k)*v1(i,j,k)) ) * sx1(i)
+     end if
+     if(gravswitch>=1)then
+      src(i,j,k,imo1) = src(i,j,k,imo1) + grv1(i,j,k)
+      src(i,j,k,imo2) = src(i,j,k,imo2) + grv2(i,j,k)*sx1(i)
+      src(i,j,k,imo3) = src(i,j,k,imo3) + grv3(i,j,k)*sx1(i)*sisin(j)
+      src(i,j,k,iene) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k)*sx1(i) &
+                      + grv3(i,j,k)*v3(i,j,k) * sx1(i)*sisin(j)
 
-     src(i,j,k,7) = ( (v2(i,j,k)*b3(i,j,k) - b2(i,j,k)*v3(i,j,k))*scot(j)    &
-                    - (b1(i,j,k)*v3(i,j,k)-b3(i,j,k)*v1(i,j,k)) ) * sx1(i)
-
-     src(i,j,k,8) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k)*sx1(i) &
-                  + grv3(i,j,k)*v3(i,j,k) * sx1(i)*sisin(j)
-
+     end if
     end do
    end do
   end do
@@ -169,13 +183,44 @@ subroutine source
 
  if(include_extforce)call externalforce
  
- if(ie==1)src(is:ie,js:je,ks:ke,2) = 0d0
- if(je<=2.and.crdnt==2)src(is:ie,js:je,ks:ke,3) = 0d0
-! if(ke==1)src(is:ie,js:je,ks:ke,4) = 0d0
-
  wtime(isrc) = wtime(isrc) + omp_get_wtime()
 
  return
 end subroutine source
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                         SUBROUTINE PHIDAMP
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Damping term for divergence cleaning 9-wave method
+! Ref    : Mignone & Tzeferacos 2010, JComP, 229, 2117
+
+subroutine phidamp
+
+ use settings,only:courant
+ use grid
+ use physval,only:phi
+
+ real(8):: alpha9wave
+
+!-----------------------------------------------------------------------------
+
+! ratio between diffusive and advection timescales (td/ta)
+ alpha9wave = 0.1d0
+ 
+!$omp parallel do private(i,j,k) collapse(3)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    phi(i,j,k) = phi(i,j,k)*exp(-alpha9wave*courant)
+   end do
+  end do
+ end do
+!$omp end parallel do
+
+return
+end subroutine phidamp
 
 end module source_mod

@@ -20,19 +20,31 @@ subroutine checksetup
 !-----------------------------------------------------------------------------
 
 ! Reading dimension of grid
-  if(ie==1.and.je==1.and.ke==1) print *,"Error from gridset"
-  if(ie==1.and.je==1.and.ke==1) stop
-  if(ie/=1.and.je==1.and.ke==1) dim=1
-  if(ie==1.and.je/=1.and.ke==1) dim=1
-  if(ie==1.and.je==1.and.ke/=1) dim=1
-  if(ie/=1.and.je/=1.and.ke==1) dim=2
-  if(ie/=1.and.je==1.and.ke/=1) dim=2
-  if(ie==1.and.je/=1.and.ke/=1) dim=2
-  if(ie/=1.and.je/=1.and.ke/=1) dim=3
-  courant = courant / dble(dim) ! To set a consistent courant number.
-  hgcfl   = hgcfl   / dble(dim) ! To set a consistent hgcfl number.
+  if(ie==is.and.je==js.and.ke==ks) print *,"Error from gridset"
+  if(ie==is.and.je==js.and.ke==ks) stop
+  if(ie/=is.and.je==js.and.ke==ks) dim=1
+  if(ie==is.and.je/=js.and.ke==ks) dim=1
+  if(ie==is.and.je==js.and.ke/=ks) dim=1
+  if(ie/=is.and.je/=js.and.ke==ks) dim=2
+  if(ie/=is.and.je==js.and.ke/=ks) dim=2
+  if(ie==is.and.je/=js.and.ke/=ks) dim=2
+  if(ie/=is.and.je/=js.and.ke/=ks) dim=3
   if(dim/=2) write_other_vel = .false.
 
+! Count number of equations
+  ufnmax = 0
+  call add_equation(icnt,ufnmax) ! Continuity equation
+  call add_equation(imo1,ufnmax) ! Momentum equation 1
+  call add_equation(imo2,ufnmax) ! Momentum equation 2
+  call add_equation(imo3,ufnmax) ! Momentum equation 3
+  call add_equation(iene,ufnmax) ! Energy equation
+  if(mag_on)then
+   call add_equation(img1,ufnmax) ! Magnetic field equation 1
+   call add_equation(img2,ufnmax) ! Magnetic field equation 2
+   call add_equation(img3,ufnmax) ! Magnetic field equation 3
+   call add_equation(idcl,ufnmax) ! Divergence cleaning (9-wave method)
+  end if
+  
 ! Set uniform mesh if that dimension it not used
   if(ie==0)imesh=0
   if(je==0)jmesh=0
@@ -181,4 +193,11 @@ subroutine checksetup
   return
  end subroutine checksetup
 
+ subroutine add_equation(i,ufnmax)
+  integer,intent(out)::i
+  integer,intent(inout)::ufnmax
+  ufnmax = ufnmax + 1
+  i = ufnmax
+ end subroutine add_equation
+ 
 end module checksetup_mod

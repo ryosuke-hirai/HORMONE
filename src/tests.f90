@@ -49,8 +49,9 @@ contains
   use physval
   use readbin_mod,only:readbin
 
+  integer:: ncells
   character(30):: testfile
-  real(8),parameter:: tolerance=1d-10
+  real(8),parameter:: tol=1d-10
   real(8):: derr,perr,v1err,v2err,v3err
   
 !-----------------------------------------------------------------------------
@@ -75,14 +76,32 @@ contains
   perr = maxval(abs(p0(is:ie,js:je,ks:ke)-p(is:ie,js:je,ks:ke)) &
                 / p(is:ie,js:je,ks:ke))
   v1err = maxval(abs(v10(is:ie,js:je,ks:ke)-v1(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tolerance))
+                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
   v2err = maxval(abs(v20(is:ie,js:je,ks:ke)-v2(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tolerance))
+                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
   v3err = maxval(abs(v30(is:ie,js:je,ks:ke)-v3(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tolerance))
+                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
   
-  print*,'Maximum error is =',max(derr,perr,v1err,v2err,v3err)
-  if(max(derr,perr,v1err,v2err,v3err)<tolerance)then
+  print*,'L1 norm error is =',max(derr,perr,v1err,v2err,v3err)
+
+  ncells = (ie-is+1)*(je-js+1)*(ke-ks+1)
+  derr = norm2(d0(is:ie,js:je,ks:ke)/d(is:ie,js:je,ks:ke)-1d0)&
+       / sqrt(dble(ncells))
+  perr = norm2(p0(is:ie,js:je,ks:ke)/p(is:ie,js:je,ks:ke)-1d0)&
+       / sqrt(dble(ncells))
+  v1err = norm2(max(abs(v10(is:ie,js:je,ks:ke)),tol) &
+               /max(abs(v1 (is:ie,js:je,ks:ke)),tol)-1d0)&
+        / sqrt(dble(ncells))
+  v2err = norm2(max(abs(v20(is:ie,js:je,ks:ke)),tol) &
+               /max(abs(v2 (is:ie,js:je,ks:ke)),tol)-1d0)&
+        / sqrt(dble(ncells))
+  v3err = norm2(max(abs(v30(is:ie,js:je,ks:ke)),tol) &
+               /max(abs(v3 (is:ie,js:je,ks:ke)),tol)-1d0)&
+        / sqrt(dble(ncells))
+
+  print*,'L2 norm error is =',max(derr,perr,v1err,v2err,v3err)
+  
+  if(max(derr,perr,v1err,v2err,v3err)<tol)then
    print*,trim(simtype),' test: passed'
   else
    print*,trim(simtype),' test: failed'

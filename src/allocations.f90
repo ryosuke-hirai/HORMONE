@@ -65,17 +65,45 @@ subroutine allocations
  allocate(de,dphi,dm1,dm2,dm3,db1,db2,db3,dmu,mold=dd)
 
 ! conserved quantities and flux
- allocate(u(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:9))!; u = 0d0
+ allocate(u(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:ufnmax))!; u = 0d0
  allocate(flux1,flux2,flux3,mold=u)
- allocate(src(is:ie,js:je,ks:ke,1:9))!; src = 0d0
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js, je
+   do i = is-1, ie
+    flux1(i,j,k,1:ufnmax) = 0d0
+   end do
+  end do
+ end do
+!$omp end parallel do
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js-1, je
+   do i = is, ie
+    flux2(i,j,k,1:ufnmax) = 0d0
+   end do
+  end do
+ end do
+!$omp end parallel do
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
+ do k = ks-1, ke
+  do j = js, je
+   do i = is, ie
+    flux3(i,j,k,1:ufnmax) = 0d0
+   end do
+  end do
+ end do
+!$omp end parallel do
+ allocate(src(is:ie,js:je,ks:ke,1:ufnmax))!; src = 0d0
  allocate(uorg,mold=src)
 !$omp parallel do private(i,j,k,n) collapse(4) schedule(static)
- do n = 1, 9
+ do n = 1, ufnmax
   do k = ks, ke
    do j = js, je
     do i = is, ie
      uorg(i,j,k,n) = 0d0
      u(i,j,k,n) = 0d0
+     src(i,j,k,n) = 0d0
     end do
    end do
   end do

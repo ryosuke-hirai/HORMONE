@@ -159,19 +159,19 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
  end select
   
  if(mag_on)then
-  cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))
-  cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))
-  cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b1(i,j,k),b2(i,j,k))
+  cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))+abs(v1(i,j,k)) 
+  cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))+abs(v2(i,j,k)) 
+  cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b1(i,j,k),b2(i,j,k))+abs(v3(i,j,k)) 
  else
-  cf1 = cs(i,j,k)
-  cf2 = cs(i,j,k)
-  cf3 = cs(i,j,k)
+  cf1 = cs(i,j,k)+abs(v1(i,j,k))
+  cf2 = cs(i,j,k)+abs(v2(i,j,k))
+  cf3 = cs(i,j,k)+abs(v3(i,j,k))
  end if
 
  dti(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) / &
-  ( (cf1 + abs(v1(i,j,k)) )*off(is,ie) * sum(sa1(i-1:i,j:j+jn,k:k+kn)) &
-  + (cf2 + abs(v2(i,j,k)) )*off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
-  + (cf3 + abs(v3(i,j,k)) )*off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
+                      ( cf1*off(is,ie) * sum(sa1(i-1:i,j:j+jn,k:k+kn)) &
+                      + cf2*off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
+                      + cf3*off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
 
  if(present(cfmax))cfmax = max(cf1,cf2,cf3)
 

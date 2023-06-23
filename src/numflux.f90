@@ -165,7 +165,7 @@ contains
 !!$     end if
 
 
-      do ufn = 1,9
+      do ufn = 1,ufnmax
        flux1(i,j,k,ufn) = tmpflux(ufn)
       end do
 
@@ -186,7 +186,7 @@ contains
      end do
     end do
    end do
-!$omp end do nowait
+!$omp end do
   end if
  
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -315,11 +315,13 @@ contains
       flux2(i,j,k,2) = tmpflux(4)
       flux2(i,j,k,3) = tmpflux(2)
       flux2(i,j,k,4) = tmpflux(3)
-      flux2(i,j,k,5) = tmpflux(7)
-      flux2(i,j,k,6) = tmpflux(5)
-      flux2(i,j,k,7) = tmpflux(6)
-      flux2(i,j,k,8) = tmpflux(8)
-      flux2(i,j,k,9) = tmpflux(9)
+      flux2(i,j,k,5) = tmpflux(5)
+      if(mag_on)then
+       flux2(i,j,k,6) = tmpflux(8)
+       flux2(i,j,k,7) = tmpflux(6)
+       flux2(i,j,k,8) = tmpflux(7)
+       flux2(i,j,k,9) = tmpflux(9)
+      end if
 
       if(compswitch>=2)then
        do n = 1, spn
@@ -338,7 +340,7 @@ contains
      end do
     end do
    end do
-!$omp end do nowait
+!$omp end do
   end if
 
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -467,11 +469,13 @@ contains
       flux3(i,j,k,2) = tmpflux(3)
       flux3(i,j,k,3) = tmpflux(4)
       flux3(i,j,k,4) = tmpflux(2)
-      flux3(i,j,k,5) = tmpflux(6)
-      flux3(i,j,k,6) = tmpflux(7)
-      flux3(i,j,k,7) = tmpflux(5)
-      flux3(i,j,k,8) = tmpflux(8)
-      flux3(i,j,k,9) = tmpflux(9)
+      flux3(i,j,k,5) = tmpflux(5)
+      if(mag_on)then
+       flux3(i,j,k,6) = tmpflux(7)
+       flux3(i,j,k,7) = tmpflux(8)
+       flux3(i,j,k,8) = tmpflux(6)
+       flux3(i,j,k,9) = tmpflux(9)
+      end if
 
       if(compswitch>=2)then
        do n = 1, spn
@@ -494,12 +498,6 @@ contains
   end if
 !$omp end parallel
 
-  if(ie==1)flux1=0d0
-  if(je==1)flux2=0d0
-!  if(ke==1)flux3=0d0
-  if(ie==1.and.compswitch>=2)spcflx(1:spn,is-1:ie,js:je,ks:ke,1)=0d0
-  if(je==1.and.compswitch>=2)spcflx(1:spn,is:ie,js-1:je,ks:ke,2)=0d0
-!  if(ke==1.and.compswitch>=2)spcflx(1:spn,is:ie,js:je,ks-1:ke,3)=0d0
   if(je<=2.and.crdnt==2)flux2=0d0
   if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 

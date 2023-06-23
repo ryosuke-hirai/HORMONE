@@ -124,6 +124,7 @@ program hormone
      call rungekutta
     end do
 
+    if(mag_on)           call phidamp
     if(include_cooling)  call cooling
     if(include_particles)call particles
 
