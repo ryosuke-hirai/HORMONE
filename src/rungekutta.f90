@@ -109,7 +109,6 @@ contains
   wtime(ieos) = wtime(ieos) - omp_get_wtime()
   call smear
   call primitive
-  
   wtime(ieos) = wtime(ieos) + omp_get_wtime()
 
   return

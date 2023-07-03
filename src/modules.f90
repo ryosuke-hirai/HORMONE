@@ -46,7 +46,7 @@ module grid
   integer:: gis, gie, gjs, gje, gks, gke
   integer:: i,j,k,n,tn,dim
   integer:: rungen, ufn
-  integer:: musize,sphrn,trnsn16,trnsn8,trnsn4,trnsn2!,,trnsn1,trnsn2,trnsn3
+  integer:: musize,fmr_max,fmr_lvl(0:20)
 ! grid center = x, grid interface = xi
   real(8),allocatable,dimension(:):: x1, xi1, dx1, dxi1, idx1, idxi1
   real(8),allocatable,dimension(:):: x2, xi2, dx2, dxi2, idx2, idxi2

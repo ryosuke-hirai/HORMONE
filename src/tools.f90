@@ -177,6 +177,9 @@ subroutine tools
 ! Set cooling parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if(include_cooling) call cooling_setup
 
+! Set Fixed Mesh Refinement parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ fmr_lvl(0) = 0
+ 
 return
 end subroutine tools
 

@@ -1,9 +1,7 @@
 ----------------------------- parameters --------------------------------
 c i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
-c sphrn : Central sphrn cells will be treated in 1D (spherical coord.)
-c         sphrn==0 to do full multi-D. Keep it small (sphrn<<ie) anyway.
-c trnsn1/2/3 : Number of cells in transition layer from fully 1D to multi-D.
-c              Every 8/4/2 cells will be grouped up.
+c fmr_max   : Maximum levels of fixed mesh refinement
+c fmr_lvl(i): Number of layers in a given FMR level
 &gridcon   /
 
 c outstyle/endstyle : time=1, timestep=2

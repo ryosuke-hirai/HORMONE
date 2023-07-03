@@ -190,6 +190,13 @@ subroutine checksetup
 ! Check if test data is available
   if(is_test)call check_testlist(simtype)
 
+! Check if fmr_max is reasonable for the grid resolution
+  if(2**(fmr_max-1) > max(je,ke))then
+   print*,'fmr_max should be smaller so that 2**(fmr_max-1) >= max(je,ke)'
+   print*,'fmr_max=',fmr_max,', max(je,ke)=',max(je,ke)
+   stop
+  end if
+
   return
  end subroutine checksetup
 
