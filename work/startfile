@@ -15,8 +15,8 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'sodshock_{x,y,z}': Sod shocktube problem in the x/y/z direction
 'briowushock_{x,y,z}': Brio & Wu shocktube problem in the x/y/z direction
 'orszagtang_{xy,yz,xz}': Orszag-Tang test in the xy/yz/xz plane
-** Test files NOT available **
 'sedov_default': Sedov blast wave with default parameters.
+** Test files NOT available **
 'sedov_other': Sedov blast wave. Set model parameters in extras file.
 'other_shocktube_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
 'KHtest': Kelvin-Helmholtz instability test.
@@ -25,4 +25,4 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'agndisk': Explosions in AGN disks (Grishin+2021)
 'modify': Modify and restart from an existing binfile
 
-&startcon start=0 simtype='sodshock_x' parafile=''/
+&startcon start=0 simtype='sodshock_x test' parafile=''/
