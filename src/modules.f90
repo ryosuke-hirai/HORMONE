@@ -29,7 +29,7 @@ module settings
 ! profiler
  real(8):: wtime(0:11)
  integer,parameter::iini=1,iflx=2,irng=3,ibnd=4,isrc=5,iint=6,&
-                    itim=7,igrv=8,iout=9,isho=10,itot=0
+                    ieos=7,itim=8,igrv=9,iout=10,isho=11,itot=0
 
 end module settings
 

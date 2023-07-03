@@ -13,7 +13,7 @@ contains
 
  subroutine rungekutta
 
-  use settings,only:rktype,compswitch,spn,wtime,irng
+  use settings,only:rktype,compswitch,spn,wtime,irng,ieos
   use grid
   use physval
   use composition_mod
@@ -57,14 +57,14 @@ contains
     
 !$omp parallel
 !$omp do private (ufn,i,j,k) collapse(4)
-    do ufn = 1,ufnmax
+  do ufn = 1,ufnmax
 
-     do k = ks,ke
-      do j = js,je
-       do i = is,ie
-        if(rungen==1)uorg(i,j,k,ufn) = u(i,j,k,ufn)
-        u(i,j,k,ufn) = faco*uorg(i,j,k,ufn) &
-                     + facn*u(i,j,k,ufn) &
+   do k = ks,ke
+    do j = js,je
+     do i = is,ie
+      if(rungen==1)uorg(i,j,k,ufn) = u(i,j,k,ufn)
+      u(i,j,k,ufn) = faco*uorg(i,j,k,ufn) &
+                   + facn*u(i,j,k,ufn) &
              + fact*dt * &
              ( idetg1(i) * &
                (detg1(i-1  )*flux1(i-1,j,k,ufn)-detg1(i  )*flux1(i,j,k,ufn)) &
@@ -72,20 +72,20 @@ contains
                (detg2(i,j-1)*flux2(i,j-1,k,ufn)-detg2(i,j)*flux2(i,j,k,ufn)) &
              + idetg3(i,j,k) * (flux3(i,j,k-1,ufn)-flux3(i,j,k,ufn)) &
              + src(i,j,k,ufn) )
-       end do
-      end do
      end do
-
     end do
+   end do
+
+  end do
 !$omp end do
-    if(compswitch>=2)then
+  if(compswitch>=2)then
 !$omp do private (i,j,k,n) collapse(4)
-     do k = ks, ke
-      do j = js, je
-       do i = is, ie
-        do n = 1, spn
-         if(rungen==1)spcorg(n,i,j,k) = spc(n,i,j,k)*uorg(i,j,k,icnt)
-         spc(n,i,j,k) = (faco*spcorg(n,i,j,k) + facn*spcorg(n,i,j,k)+fact*dt * &
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      do n = 1, spn
+       if(rungen==1)spcorg(n,i,j,k) = spc(n,i,j,k)*uorg(i,j,k,icnt)
+       spc(n,i,j,k) = (faco*spcorg(n,i,j,k) + facn*spcorg(n,i,j,k)+fact*dt * &
               ( idetg1(i) * &
                 ( detg1(i-1)*spcflx(n,i-1,j,k,1)   &
                 - detg1(i  )*spcflx(n,i  ,j,k,1) ) &
@@ -95,18 +95,22 @@ contains
               + idetg3(i,j,k) * &
                 ( spcflx(n,i,j,k-1,3) &
                 - spcflx(n,i,j,k  ,3) ) ) ) / u(i,j,k,icnt)
-        end do
-       end do
       end do
      end do
+    end do
+   end do
 !$omp end do
-    end if
+  end if
 !$omp end parallel
 
+  wtime(irng) = wtime(irng) + omp_get_wtime()
+
+
+  wtime(ieos) = wtime(ieos) - omp_get_wtime()
   call smear
   call primitive
   
-  wtime(irng) = wtime(irng) + omp_get_wtime()
+  wtime(ieos) = wtime(ieos) + omp_get_wtime()
 
   return
  end subroutine rungekutta

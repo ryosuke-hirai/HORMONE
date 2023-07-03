@@ -740,6 +740,7 @@ subroutine profiler_output
  write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- Source      :',wtime(isrc),'s',wtime(isrc)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- Interpolate :',wtime(iint),'s',wtime(iint)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- EoS         :',wtime(ieos),'s',wtime(ieos)/wtime(itot)*1d2,'%'
  write(ui,form1)'Gravity        :',wtime(igrv),'s',wtime(igrv)/wtime(itot)*1d2,'%'
  write(ui,form1)'Output         :',wtime(iout),'s',wtime(iout)/wtime(itot)*1d2,'%'
  write(ui,form1)'Shockfind      :',wtime(isho),'s',wtime(isho)/wtime(itot)*1d2,'%'
@@ -783,15 +784,16 @@ subroutine scaling_output
 
   if(i/=0)then
    open(newunit=un,file='scaling.dat',status='new')
-   write(un,'(a8,11a14)')&
+   write(un,'(a8,12a14)')&
    'threads','total','setup','numflux','RungeKutta','boundary',&
-   'source','interpolation','timestep','gravity','output','shock'
+   'source','interpolation','eos','timestep','gravity','output','shock'
   end if
 
-  write(un,'(i8,11(F14.6))')n,wtime(itot:isho)
+  write(un,'(i8,12(F14.6))')n,wtime(itot:isho)
 
   close(un)
 
+  stop
 return
 end subroutine scaling_output
 
