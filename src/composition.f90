@@ -63,7 +63,7 @@ subroutine meanmolweight
    end do
   end do
 !$omp end do
-!$omp do private(i,j,k) collapse(2)
+!$omp do private(i,j,k)
   do k = ks, ke
    do j = js-2, js-1
     do i = is, ie
