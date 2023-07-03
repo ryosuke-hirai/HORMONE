@@ -571,29 +571,33 @@ subroutine pressure
 
  select case (eostype)
  case(0:1) ! EoSs that don't require composition
-!$omp parallel do private(i,j,k) firstprivate(bsq) collapse(3)
+!$omp parallel do private(i,j,k,bsq) collapse(3)
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     if(mag_on)bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
+     ptot(i,j,k) = p(i,j,k)
 
-     ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
+     if(mag_on)cycle
+     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
+     ptot(i,j,k) = ptot(i,j,k) + 0.5d0*bsq
     end do
    end do
   end do
 !$omp end parallel do
 
  case (2) ! EoSs that require composition
-!$omp parallel do private(i,j,k) firstprivate(bsq) collapse(3)
+!$omp parallel do private(i,j,k,bsq) collapse(3)
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     if(mag_on)bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
                       spc(1,i,j,k),spc(2,i,j,k)) ! gets T too
+     ptot(i,j,k) = p(i,j,k)
 
-     ptot(i,j,k) = p(i,j,k) + 0.5d0*bsq
+     if(mag_on)cycle
+     bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
+     ptot(i,j,k) = ptot(i,j,k) + 0.5d0*bsq
     end do
    end do
   end do
@@ -666,13 +670,13 @@ function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
 
  ierr=0
  vsq = v1**2 + v2**2 + v3**2
+
+ eint = etot-0.5d0*d*vsq
  if(mag_on)then
   bsq = b1**2 + b2**2 + b3**2
- else
-  bsq = 0d0
+  eint = eint - 0.5d0*bsq
  end if
 
- eint = etot-0.5d0*d*vsq-0.5d0*bsq
  if(present(ierr).and.eint<=0d0)ierr=1
  
 end function get_eint
