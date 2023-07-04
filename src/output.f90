@@ -18,113 +18,32 @@ module output_mod
 
 subroutine output
 
-  use settings,only:is_test,wtime,iout
-  use grid,only:tn
-  use omp_lib
+ use settings,only:is_test,wtime,iout
+ use grid,only:tn
+ use omp_lib
 
 !----------------------------------------------------------------------------
   
-  if(is_test) return ! do not bother outputting if it is a test
+ if(is_test) return ! do not bother outputting anything if it is a test
 
-  wtime(iout) = wtime(iout) - omp_get_wtime()
+ wtime(iout) = wtime(iout) - omp_get_wtime()
 
-  if(tn==0)call write_grid
+ if(tn==0)call write_grid
 
-  call write_bin
-  
-  call write_plt
+ call write_bin
 
-!!$  if(include_particles)then
-!!$!ptcfile----------------------------------------------------------------
-!!$  if(outstyle==1)then
-!!$   write(ptcfile,'(a8,i11.11,a5)')'data/ptc',nint(time),'s.dat'
-!!$   if(time>2147483647d0)then
-!!$    write(ptcfile,'(a8,i9.9,a7)')'data/ptc',nint(time*0.01d0),'00s.dat'
-!!$   end if
-!!$  elseif(outstyle==2)then
-!!$   write(ptcfile,'(a8,i8.8,a4)')'data/ptc',tn,'.dat'
-!!$  end if
-!!$
-!!$  if(crdnt==1.and.je==1)then
-!!$   do n = 1, np
-!!$    extflag = .false.
-!!$    do k = ks, ke
-!!$     if(ptcx(2,n)>=xi3(k-1))then;if(ptcx(2,n)<xi3(k))then
-!!$      do i = is, ie
-!!$       if(ptcx(1,n)>=xi1(i-1))then;if(ptcx(1,n)<xi1(i))then
-!!$        if(e(i,js,k)+grvphi(i,js,k)*d(i,js,k)>0d0)then
-!!$         ptci(2,n) = 1
-!!$        else
-!!$         ptci(2,n) = 0
-!!$        end if
-!!$        extflag=.true.
-!!$        exit
-!!$       end if;end if
-!!$      end do
-!!$      if(extflag)exit
-!!$     end if;end if
-!!$    end do
-!!$   end do
-!!$  elseif(crdnt==2.and.ke==1)then
-!!$   do n = 1, np
-!!$    extflag = .false.
-!!$    pr = sqrt(ptcx(1,n)**2+ptcx(2,n)**2)
-!!$    pt = acos(ptcx(2,n)/pr)
-!!$    do j = js, je
-!!$     if(pt>=xi2(j-1))then;if(pt<xi2(j))then
-!!$      do i = is, ie
-!!$       if(pr>=xi1(i-1))then;if(pr<xi1(i))then
-!!$        if(e(i,j,ks)+grvphi(i,j,ks)*d(i,j,ks)>0d0)then
-!!$         ptci(2,n) = 1
-!!$        else
-!!$         ptci(2,n) = 0
-!!$        end if
-!!$        extflag=.true.
-!!$        exit
-!!$       end if;end if
-!!$      end do
-!!$      if(extflag)exit
-!!$     end if;end if
-!!$    end do
-!!$   end do
-!!$  end if
-!!$
-!!$  open(unit=70,file = ptcfile, status='replace')
-!!$
-!!$  write(70,'(a,i7,a,1PE12.4e2,2(a5,i9))')&
-!!$       '#tn =',tn,'  time= ',time,'np= ',np,'npl=',npl
-!!$  write(70,'(a7,2a3,3a15)')'label','ej','ub','mass','x1','x3'
-!!$
-!!$  do i = 1, np
-!!$   write(70,'(i7,2i3,3(1PE15.7e2))')ptci(0:2,i),ptcx(0:2,i)
-!!$  end do
-!!$
-!!$  close(70)
-!!$
-!!$!bptfile----------------------------------------------------------------
-!!$  if(outstyle==1)then
-!!$   write(bptfile,'(a8,i11.11,a5)')'data/bpt',nint(time),'s.dat'
-!!$   if(time>2147483647d0)then
-!!$    write(bptfile,'(a8,i9.9,a7)')'data/bpt',nint(time*0.01d0),'00s.dat'
-!!$   end if
-!!$  elseif(outstyle==2)then
-!!$   write(bptfile,'(a8,i8.8,a4)')'data/bpt',tn,'.dat'
-!!$  end if
-!!$
-!!$  open(unit=80,file = bptfile, status='replace',form='unformatted')
-!!$
-!!$  write(80)np,npl
-!!$  write(80)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
-!!$
-!!$  close(80)
-!!$
-!!$  end if
+ call write_plt
 
-  wtime(iout) = wtime(iout) + omp_get_wtime()
+! Tracer particle outputs
+ call write_bpt
+ call write_ptc
 
-  call profiler_output
 
-return
+ wtime(iout) = wtime(iout) + omp_get_wtime()
+
+ call profiler_output
+
+ return
 end subroutine output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -165,7 +84,7 @@ subroutine open_evofile
   write(ievo,'()')
  end if
 
-return
+ return
 end subroutine open_evofile
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -546,12 +465,11 @@ subroutine write_plt
  if(gravswitch==1) call gravpot1d
 ! Calculate shock position if required
  if(write_shock)call shockfind
- 
+
 ! Set format
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
  write(formi,'("(i",i2,")")')sigfig+8 ! for integers
-! ui = 30
  
 ! Open file
  call set_file_name('plt',tn,time,pltfile)
@@ -709,6 +627,123 @@ subroutine write_extgrv
 
 return
 end subroutine write_extgrv
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE WRITE_PTC
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Output ascii file for tracer particles
+! WARNING: This routine is not tested yet
+
+subroutine write_ptc
+
+ use settings,only:crdnt,include_particles
+ use grid,only:tn,time,xi1,xi2,xi3,is,ie,js,je,ks,ke
+ use physval,only:d,e
+ use particle_mod
+ use gravmod,only:grvphi
+
+ character(len=50):: ptcfile
+ integer::ui,i,j,k,n
+ logical:: extflag
+ real(8):: pr,pt
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_particles) return
+
+ call set_file_name('ptc',tn,time,ptcfile)
+
+ if(crdnt==1.and.je==js)then
+  do n = 1, np
+   extflag = .false.
+   do k = ks, ke
+    if(ptcx(2,n)>=xi3(k-1))then;if(ptcx(2,n)<xi3(k))then
+     do i = is, ie
+      if(ptcx(1,n)>=xi1(i-1))then;if(ptcx(1,n)<xi1(i))then
+       if(e(i,js,k)+grvphi(i,js,k)*d(i,js,k)>0d0)then
+        ptci(2,n) = 1
+       else
+        ptci(2,n) = 0
+       end if
+       extflag=.true.
+       exit
+      end if;end if
+     end do
+     if(extflag)exit
+    end if;end if
+   end do
+  end do
+
+ elseif(crdnt==2.and.ke==ks)then
+  do n = 1, np
+   extflag = .false.
+   pr = sqrt(ptcx(1,n)**2+ptcx(2,n)**2)
+   pt = acos(ptcx(2,n)/pr)
+   do j = js, je
+    if(pt>=xi2(j-1))then;if(pt<xi2(j))then
+     do i = is, ie
+      if(pr>=xi1(i-1))then;if(pr<xi1(i))then
+       if(e(i,j,ks)+grvphi(i,j,ks)*d(i,j,ks)>0d0)then
+        ptci(2,n) = 1
+       else
+        ptci(2,n) = 0
+       end if
+       extflag=.true.
+       exit
+      end if;end if
+     end do
+     if(extflag)exit
+    end if;end if
+   end do
+  end do
+ end if
+
+ open(newunit=ui,file = ptcfile, status='replace')
+
+ write(ui,'(a,i7,a,1PE12.4e2,2(a5,i9))')&
+  '#tn =',tn,'  time= ',time,'np= ',np,'npl=',npl
+ write(ui,'(a7,2a3,3a15)')'label','ej','ub','mass','x1','x3'
+
+ do i = 1, np
+  write(ui,'(i7,2i3,3(1PE15.7e2))')ptci(0:2,i),ptcx(0:2,i)
+ end do
+
+ close(ui)
+
+ return
+end subroutine write_ptc
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE WRITE_BPT
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Output binary file for tracer particles
+
+subroutine write_bpt
+
+ use settings,only:outstyle,include_particles
+ use grid,only:tn,time
+ use particle_mod
+
+ character(len=50):: bptfile
+ integer::ui
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_particles) return
+
+ call set_file_name('bpt',tn,time,bptfile)
+
+ open(newunit=ui,file = bptfile, status='replace',form='unformatted')
+
+ write(ui)np,npl
+ write(ui)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
+
+ close(ui)
+
+ return
+end subroutine write_bpt
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
