@@ -30,6 +30,7 @@ subroutine checksetup
   if(ie==is.and.je/=js.and.ke/=ks) dim=2
   if(ie/=is.and.je/=js.and.ke/=ks) dim=3
   if(dim/=2) write_other_vel = .false.
+  if(dim/=3) write_other_slice = .false.
 
 ! Count number of equations
   ufnmax = 0

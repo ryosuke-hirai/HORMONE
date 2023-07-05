@@ -14,6 +14,7 @@ c sigfig : How many significant figures in output values
 c outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
 c write_other_vel : Set to .true. if 2.5D
 c write_shock : Output shock switch
+c write_other_slice : Output an alternative slice for 3D
 &out_con   /
 
 c eostype : 0='ideal gas', 1='ideal gas + radiation pressure'

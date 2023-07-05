@@ -24,6 +24,7 @@ module settings
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, is_test
  logical:: write_other_vel, write_shock, grav_init_other, write_evo
+ logical:: write_other_slice
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
 ! profiler

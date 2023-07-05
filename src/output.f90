@@ -256,6 +256,8 @@ subroutine write_grid
           x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
  close(ui)
 
+ print*,"Outputted: ",'gridfile.bin'
+
 !gridfile---------------------------------------------------------------------
 
  open(newunit=ui,file='data/gridfile.dat',status='replace')
@@ -387,8 +389,64 @@ subroutine write_grid
  end select
 
  close(ui)
+
+ print*,"Outputted: ",'gridfile.dat'
+
+!othergrid--------------------------------------------------------------------
+
+ if(write_other_slice)then
+
+  open(newunit=ui,file='data/othergrid.dat',status='replace')
+  write(ui,'()')
+  write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')2,2+1,sigfig+8
+  write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
+        2,2+1,sigfig+7,sigfig-1
+
+  write(formnum,'("(",a4,"i4,i5,4i",i2,")")')'"#",',sigfig+8
+  write(ui,formnum)1,2,3,4,5
+
+  write(ui,formhead)'  i','j','x1','x2','dvol'
+
+  if(crdnt==2)then
+   k = ks
+   do i = is, ie
+    write(ui,formval)i,-je-1,x1(i),-xi2(je),dvol(i,je,k)
+   end do
+   write(ui,'()')
+   do j = je, js, -1
+    do i = is, ie
+     write(ui,formval)i,-j,x1(i),-x2(j),dvol(i,j,k)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    write(ui,formval)i,0,x1(i),-xi2(js-1),dvol(i,js,k)
+   end do
+   write(ui,'()')
+
+   k = (ks+ke-1)/2
+   do i = is, ie
+    write(ui,formval)i,0,x1(i),xi2(js-1),dvol(i,js,k)
+   end do
+   write(ui,'()')
+   do j = js, je
+    do i = is, ie
+     write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    write(ui,formval)i,je+1,x1(i),xi2(je),dvol(i,je,k)
+   end do
+  end if
+
+  close(ui)
+
+  print*,"Outputted: ",'othergrid.dat'
+
+ end if
  
-return
+ return
 end subroutine write_grid
 
 
@@ -434,6 +492,8 @@ subroutine write_bin
  end if
 
  close(un)
+
+ print*,"Outputted: ",trim(binfile)
  
 return
 end subroutine write_bin
@@ -515,7 +575,7 @@ subroutine write_plt
 ! 2D outputs
  case(2)
   
-  if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
+  if(ke==ks)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
@@ -542,7 +602,7 @@ subroutine write_plt
     write(ui,'()')
    end if
    
-  elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
+  elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    j=js
    do k = ks, ke, outres
 ! writing inner boundary for polar coordinates
@@ -565,6 +625,7 @@ subroutine write_plt
   end if
 
  case(3)
+
   if(crdnt==2)then
    do j = je, je
     do i = is, ie
@@ -599,8 +660,71 @@ subroutine write_plt
  close(ui)
 
  print*,"Outputted: ",trim(pltfile)
- 
-return
+
+!othfile----------------------------------------------------------------------
+
+ if(write_other_slice)then
+
+! Open file
+  call set_file_name('oth',tn,time,pltfile)
+  open(newunit=ui,file = pltfile, status='replace')
+
+! Write time and time step
+  write(ui,'(a,i7,a,1PE12.4e2,a)')&
+   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
+! Decide what quantities to write
+  call get_header(header,columns)
+  do n = 1, columns
+   write(ui,formi,advance='no') n+2*dim+1
+  end do
+  write(ui,'()')
+  do n = 1, columns
+   write(ui,forma,advance="no") trim(adjustl(header(n)))
+  end do
+  write(ui,'()')
+
+  if(crdnt==2)then
+
+   k = ks
+   do i = is, ie
+    call write_val(ui,i,je,k,forme,header)
+   end do
+   write(ui,'()')
+   do j = je, js, -1
+    do i = is, ie
+     call write_val(ui,i,j,k,forme,header)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    call write_val(ui,i,js,k,forme,header)
+   end do
+   write(ui,'()')
+
+   k = (ks+ke-1)/2
+   do i = is, ie
+    call write_val(ui,i,js,k,forme,header)
+   end do
+   write(ui,'()')
+   do j = js, je
+    do i = is, ie
+     call write_val(ui,i,j,k,forme,header)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    call write_val(ui,i,je,k,forme,header)
+   end do
+
+  end if
+
+  close(ui)
+
+  print*,"Outputted: ",trim(pltfile)
+
+ end if
+
+ return
 end subroutine write_plt
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -625,6 +749,8 @@ subroutine write_extgrv
  write(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
  close(ui)
 
+ print*,"Outputted: ",'extgrv.bin'
+ 
 return
 end subroutine write_extgrv
 
@@ -770,12 +896,12 @@ subroutine profiler_output
  form1 = '(a,2(1X,F10.3,a))'
  write(ui,form1)'Hydro          :',sum(wtime(iflx:itim)),'s',sum(wtime(iflx:itim))/wtime(itot)*1d2,'%'
  write(ui,form1)'|- Numflux     :',wtime(iflx),'s',wtime(iflx)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Timestep    :',wtime(itim),'s',wtime(itim)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- RungeKutta  :',wtime(irng),'s',wtime(irng)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Source      :',wtime(isrc),'s',wtime(isrc)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- Interpolate :',wtime(iint),'s',wtime(iint)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- EoS         :',wtime(ieos),'s',wtime(ieos)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Source      :',wtime(isrc),'s',wtime(isrc)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Timestep    :',wtime(itim),'s',wtime(itim)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
  write(ui,form1)'Gravity        :',wtime(igrv),'s',wtime(igrv)/wtime(itot)*1d2,'%'
  write(ui,form1)'Output         :',wtime(iout),'s',wtime(iout)/wtime(itot)*1d2,'%'
  write(ui,form1)'Shockfind      :',wtime(isho),'s',wtime(isho)/wtime(itot)*1d2,'%'
@@ -789,7 +915,7 @@ end subroutine profiler_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE SCALING_OUTPUT
+!                         SUBROUTINE SCALING_OUTPUT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

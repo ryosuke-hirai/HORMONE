@@ -142,7 +142,7 @@ subroutine read_parameters(filename)
                     fmr_max, fmr_lvl
  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
                     dt_unit, sigfig, outres, write_other_vel, write_shock, &
-                    write_evo
+                    write_evo, write_other_slice
  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt,courant, rktype, mag_on, flux_limiter, &
                     include_cooling, include_extforce, extrasfile

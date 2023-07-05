@@ -19,10 +19,12 @@ c outres : Resolution of output grid (1 means output everything, 2 means every 2
 c write_other_vel : Set to .true. if 2.5D
 c write_shock : Output shock switch
 c write_evo : Output evofile
+c write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
           tnlim=0 t_end=0d0 dt_out=1d0 tn_out=1
           dt_unit='s' sigfig=7 outres=1
-	  write_other_vel =.false. write_shock =.false. write_evo=.false./
+	  write_other_vel =.false. write_shock =.false. write_evo=.false.
+	  write_other_slice=.false. /
 
 c eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
 c compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
