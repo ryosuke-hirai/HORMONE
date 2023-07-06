@@ -25,4 +25,4 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'agndisk': Explosions in AGN disks (Grishin+2021)
 'modify': Modify and restart from an existing binfile
 
-&startcon start=0 simtype='sodshock_x' parafile=''/
+&startcon start=0 simtype='eostest' parafile=''/
