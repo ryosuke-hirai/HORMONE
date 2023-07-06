@@ -41,65 +41,30 @@ contains
   end do
 !$omp end parallel do
 
-  if(sphrn>0.and.crdnt==2)then
+  if(fmr_max>0.and.crdnt==2)then
 !$omp parallel
-! Spherical symmetry for innermost few cells
-   jb=je;kb=ke
-!$omp do private(i,j,k)
-   do i = is, is+sphrn-1
-    j=js;k=ks
-    call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-   end do
+   do n = 1, fmr_max
+    if(fmr_lvl(n)==0)cycle
+    if(n==1)then
+     jb=je;kb=ke
+    else
+     jb=min(2**(fmr_max-n+1),je) ; kb=min(2**(fmr_max-n+1),ke)
+    end if
+!$omp do private(i,j,k) collapse(3)
+    do k = ks, ke, kb
+     do j = js, je, jb
+      do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
+       call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+      end do
+     end do
+    end do
 !$omp end do
+   end do
 
-! Smear out over jb x kb cells for inner cells
-   jb = 16 ; kb = 16
-!$omp do private(i,j,k) collapse(3)
-   do i = is+sphrn, is+sphrn+trnsn16-1
-    do k = ks, ke, kb
-     do j = js, je, jb
-      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-     end do
-    end do
-   end do
-!$omp end do
-   jb = 8 ; kb = 8
-!$omp do private(i,j,k) collapse(3)
-   do i = is+sphrn+trnsn16, is+sphrn+trnsn16+trnsn8-1
-    do k = ks, ke, kb
-     do j = js, je, jb
-      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-     end do
-    end do
-   end do
-!$omp end do
-   jb = 4 ; kb = 4
-!$omp do private(i,j,k) collapse(3)
-   do i = is+sphrn+trnsn16+trnsn8, is+sphrn+trnsn16+trnsn8+trnsn4-1
-    do k = ks, ke, kb
-     do j = js, je, jb
-      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-     end do
-    end do
-   end do
-!$omp end do
-   jb = 2 ; kb = 2
-!$omp do private(i,j,k) collapse(3)
-   do i = is+sphrn+trnsn16+trnsn8+trnsn4, is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1
-    do k = ks, ke, kb
-     do j = js, je, jb
-      call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-     end do
-    end do
-   end do
-!$omp end do
 !$omp end parallel
   end if
 
-!  dt = minval( dtdist(is:ie,js:je,ks:ke,1:3) )
   dt = minval( dti(is:ie,js:je,ks:ke) )
-
-!  cfmax = maxval(abs(cs))
 
   dt = courant * dt
 

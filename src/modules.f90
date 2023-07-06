@@ -24,12 +24,13 @@ module settings
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, is_test
  logical:: write_other_vel, write_shock, grav_init_other, write_evo
+ logical:: write_other_slice
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
 ! profiler
  real(8):: wtime(0:11)
  integer,parameter::iini=1,iflx=2,irng=3,ibnd=4,isrc=5,iint=6,&
-                    itim=7,igrv=8,iout=9,isho=10,itot=0
+                    ieos=7,itim=8,igrv=9,iout=10,isho=11,itot=0
 
 end module settings
 
@@ -46,7 +47,7 @@ module grid
   integer:: gis, gie, gjs, gje, gks, gke
   integer:: i,j,k,n,tn,dim
   integer:: rungen, ufn
-  integer:: musize,sphrn,trnsn16,trnsn8,trnsn4,trnsn2!,,trnsn1,trnsn2,trnsn3
+  integer:: musize,fmr_max,fmr_lvl(0:20)
 ! grid center = x, grid interface = xi
   real(8),allocatable,dimension(:):: x1, xi1, dx1, dxi1, idx1, idxi1
   real(8),allocatable,dimension(:):: x2, xi2, dx2, dxi2, idx2, idxi2
@@ -123,7 +124,8 @@ module gravmod
   integer:: lmax
   integer,parameter:: llmax = 1000
   integer,allocatable,dimension(:):: modlimax
-  real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold
+  real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold, grvphidot
+  real(8),allocatable,dimension(:,:,:,:):: grvphiorg
   real(8),allocatable,dimension(:):: a1,a2,a3, preca, precb, precc, precd, prece
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc

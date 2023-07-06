@@ -158,11 +158,13 @@ program hormone
      if(tn>=tnlim)exit main_loop   !
     end select                     !
 ! -------------------------------- !
-    
+
    end do main_loop
   end if
 ! End integration ------------------------------------------------------------
 
+  call scaling_output
+  
   if(tn/=0)call output ! To see final state
 
   if(is_test)call test
@@ -170,7 +172,5 @@ program hormone
 !------------------------------- end program ---------------------------------
 
   print *, 'Calculation complete! tn = ',tn
-
-  call scaling_output
 
 end program hormone

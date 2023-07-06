@@ -25,14 +25,13 @@ contains
   if(dim==1)return
 
   wtime(isho) = wtime(isho) - omp_get_wtime()
-  
-  shock = 0
 
   if(crdnt==2.and.ke==1)then
 !$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
    do k = ks, ke
     do j = js, je
      do i = is, ie
+      shock(i,j,k) = 0
       divergence = (dx1(i)**2*v1(i+1,j,k)-dx1(i+1)**2*v1(i-1,j,k)&
        + (dx1(i+1)**2-dx1(i)**2)*v1(i,j,k))*idx1(i)*idx1(i+1)/sum(dx1(i:i+1)) &
        + 2d0*v1(i,j,k)/x1(i) &
@@ -59,6 +58,7 @@ contains
    do k = ks, ke
     do j = js, je
      do i = is, ie
+      shock(i,j,k) = 0
       divergence = (dx1(i)**2*v1(i+1,j,k)-dx1(i+1)**2*v1(i-1,j,k)&
                     +(dx1(i+1)**2-dx1(i)**2)*v1(i,j,k))&
                     *idx1(i)*idx1(i+1)/sum(dx1(i:i+1)) &

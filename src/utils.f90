@@ -272,8 +272,8 @@ subroutine masscoordinate
 
  implicit none
 
- integer:: i
- real(8):: fac
+ integer:: i,j,k
+ real(8):: fac, shellmass
 
 !-----------------------------------------------------------------------------
 
@@ -282,10 +282,22 @@ subroutine masscoordinate
  else
   fac=1d0
  end if
- 
+
+!$omp parallel
  do i = is, ie
-  mc(i) = mc(i-1) + fac*sum( d(i,js:je,ks:ke) * dvol(i,js:je,ks:ke) )
+  shellmass = 0d0
+!$omp do private(j,k) reduction(+:shellmass)
+  do k = ks, ke
+   do j = js, je
+    shellmass = shellmass + d(i,j,k)*dvol(i,j,k)
+   end do
+  end do
+!$omp end do
+!$omp single
+  mc(i) = mc(i-1) + fac*shellmass
+!$omp end single
  end do
+!$omp end parallel
 
 return
 end subroutine masscoordinate

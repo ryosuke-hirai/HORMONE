@@ -53,7 +53,8 @@ subroutine meanmolweight
   imu(ie+1:ie+2,js,ks) = imu(ie,js,ks)
 
  case(2) composition_type ! for composition advection
-!$omp parallel do private(i,j,k) collapse(3)
+!$omp parallel
+!$omp do private(i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -61,7 +62,8 @@ subroutine meanmolweight
     end do
    end do
   end do
-!$omp end parallel do
+!$omp end do
+!$omp do private(i,j,k)
   do k = ks, ke
    do j = js-2, js-1
     do i = is, ie
@@ -82,13 +84,16 @@ subroutine meanmolweight
     end do
    end do
   end do
+!$omp end do nowait
+!$omp do private(i,j) collapse(2)
   do j = js, je
    do i = is, ie
     imu(i,j,ks-2:ks-1) = imu(i,j,ks)
     imu(i,j,ke+1:ke+2) = imu(i,j,ke)
    end do
   end do
-
+!$omp end do
+!$omp end parallel
  case default composition_type
   print *, 'Error in compswitch',compswitch
   stop

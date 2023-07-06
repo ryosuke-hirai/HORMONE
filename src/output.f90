@@ -18,113 +18,32 @@ module output_mod
 
 subroutine output
 
-  use settings,only:is_test,wtime,iout
-  use grid,only:tn
-  use omp_lib
+ use settings,only:is_test,wtime,iout
+ use grid,only:tn
+ use omp_lib
 
 !----------------------------------------------------------------------------
   
-  if(is_test) return ! do not bother outputting if it is a test
+ if(is_test) return ! do not bother outputting anything if it is a test
 
-  wtime(iout) = wtime(iout) - omp_get_wtime()
+ wtime(iout) = wtime(iout) - omp_get_wtime()
 
-  if(tn==0)call write_grid
+ if(tn==0)call write_grid
 
-  call write_bin
-  
-  call write_plt
+ call write_bin
 
-!!$  if(include_particles)then
-!!$!ptcfile----------------------------------------------------------------
-!!$  if(outstyle==1)then
-!!$   write(ptcfile,'(a8,i11.11,a5)')'data/ptc',nint(time),'s.dat'
-!!$   if(time>2147483647d0)then
-!!$    write(ptcfile,'(a8,i9.9,a7)')'data/ptc',nint(time*0.01d0),'00s.dat'
-!!$   end if
-!!$  elseif(outstyle==2)then
-!!$   write(ptcfile,'(a8,i8.8,a4)')'data/ptc',tn,'.dat'
-!!$  end if
-!!$
-!!$  if(crdnt==1.and.je==1)then
-!!$   do n = 1, np
-!!$    extflag = .false.
-!!$    do k = ks, ke
-!!$     if(ptcx(2,n)>=xi3(k-1))then;if(ptcx(2,n)<xi3(k))then
-!!$      do i = is, ie
-!!$       if(ptcx(1,n)>=xi1(i-1))then;if(ptcx(1,n)<xi1(i))then
-!!$        if(e(i,js,k)+grvphi(i,js,k)*d(i,js,k)>0d0)then
-!!$         ptci(2,n) = 1
-!!$        else
-!!$         ptci(2,n) = 0
-!!$        end if
-!!$        extflag=.true.
-!!$        exit
-!!$       end if;end if
-!!$      end do
-!!$      if(extflag)exit
-!!$     end if;end if
-!!$    end do
-!!$   end do
-!!$  elseif(crdnt==2.and.ke==1)then
-!!$   do n = 1, np
-!!$    extflag = .false.
-!!$    pr = sqrt(ptcx(1,n)**2+ptcx(2,n)**2)
-!!$    pt = acos(ptcx(2,n)/pr)
-!!$    do j = js, je
-!!$     if(pt>=xi2(j-1))then;if(pt<xi2(j))then
-!!$      do i = is, ie
-!!$       if(pr>=xi1(i-1))then;if(pr<xi1(i))then
-!!$        if(e(i,j,ks)+grvphi(i,j,ks)*d(i,j,ks)>0d0)then
-!!$         ptci(2,n) = 1
-!!$        else
-!!$         ptci(2,n) = 0
-!!$        end if
-!!$        extflag=.true.
-!!$        exit
-!!$       end if;end if
-!!$      end do
-!!$      if(extflag)exit
-!!$     end if;end if
-!!$    end do
-!!$   end do
-!!$  end if
-!!$
-!!$  open(unit=70,file = ptcfile, status='replace')
-!!$
-!!$  write(70,'(a,i7,a,1PE12.4e2,2(a5,i9))')&
-!!$       '#tn =',tn,'  time= ',time,'np= ',np,'npl=',npl
-!!$  write(70,'(a7,2a3,3a15)')'label','ej','ub','mass','x1','x3'
-!!$
-!!$  do i = 1, np
-!!$   write(70,'(i7,2i3,3(1PE15.7e2))')ptci(0:2,i),ptcx(0:2,i)
-!!$  end do
-!!$
-!!$  close(70)
-!!$
-!!$!bptfile----------------------------------------------------------------
-!!$  if(outstyle==1)then
-!!$   write(bptfile,'(a8,i11.11,a5)')'data/bpt',nint(time),'s.dat'
-!!$   if(time>2147483647d0)then
-!!$    write(bptfile,'(a8,i9.9,a7)')'data/bpt',nint(time*0.01d0),'00s.dat'
-!!$   end if
-!!$  elseif(outstyle==2)then
-!!$   write(bptfile,'(a8,i8.8,a4)')'data/bpt',tn,'.dat'
-!!$  end if
-!!$
-!!$  open(unit=80,file = bptfile, status='replace',form='unformatted')
-!!$
-!!$  write(80)np,npl
-!!$  write(80)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
-!!$
-!!$  close(80)
-!!$
-!!$  end if
+ call write_plt
 
-  wtime(iout) = wtime(iout) + omp_get_wtime()
+! Tracer particle outputs
+ call write_bpt
+ call write_ptc
 
-  call profiler_output
 
-return
+ wtime(iout) = wtime(iout) + omp_get_wtime()
+
+ call profiler_output
+
+ return
 end subroutine output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -165,7 +84,7 @@ subroutine open_evofile
   write(ievo,'()')
  end if
 
-return
+ return
 end subroutine open_evofile
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -337,6 +256,8 @@ subroutine write_grid
           x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
  close(ui)
 
+ print*,"Outputted: ",'gridfile.bin'
+
 !gridfile---------------------------------------------------------------------
 
  open(newunit=ui,file='data/gridfile.dat',status='replace')
@@ -454,7 +375,7 @@ subroutine write_grid
   end do
 
   if(crdnt==2)then
-   k=ke+1
+   k=ke
    do j = je, je
     do i = is, ie
      write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
@@ -468,8 +389,64 @@ subroutine write_grid
  end select
 
  close(ui)
+
+ print*,"Outputted: ",'gridfile.dat'
+
+!othergrid--------------------------------------------------------------------
+
+ if(write_other_slice)then
+
+  open(newunit=ui,file='data/othergrid.dat',status='replace')
+  write(ui,'()')
+  write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')2,2+1,sigfig+8
+  write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
+        2,2+1,sigfig+7,sigfig-1
+
+  write(formnum,'("(",a4,"i4,i5,4i",i2,")")')'"#",',sigfig+8
+  write(ui,formnum)1,2,3,4,5
+
+  write(ui,formhead)'  i','j','x1','x2','dvol'
+
+  if(crdnt==2)then
+   k = ks
+   do i = is, ie
+    write(ui,formval)i,-je-1,x1(i),-xi2(je),dvol(i,je,k)
+   end do
+   write(ui,'()')
+   do j = je, js, -1
+    do i = is, ie
+     write(ui,formval)i,-j,x1(i),-x2(j),dvol(i,j,k)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    write(ui,formval)i,0,x1(i),-xi2(js-1),dvol(i,js,k)
+   end do
+   write(ui,'()')
+
+   k = (ks+ke-1)/2
+   do i = is, ie
+    write(ui,formval)i,0,x1(i),xi2(js-1),dvol(i,js,k)
+   end do
+   write(ui,'()')
+   do j = js, je
+    do i = is, ie
+     write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    write(ui,formval)i,je+1,x1(i),xi2(je),dvol(i,je,k)
+   end do
+  end if
+
+  close(ui)
+
+  print*,"Outputted: ",'othergrid.dat'
+
+ end if
  
-return
+ return
 end subroutine write_grid
 
 
@@ -515,6 +492,8 @@ subroutine write_bin
  end if
 
  close(un)
+
+ print*,"Outputted: ",trim(binfile)
  
 return
 end subroutine write_bin
@@ -546,12 +525,11 @@ subroutine write_plt
  if(gravswitch==1) call gravpot1d
 ! Calculate shock position if required
  if(write_shock)call shockfind
- 
+
 ! Set format
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
  write(formi,'("(i",i2,")")')sigfig+8 ! for integers
-! ui = 30
  
 ! Open file
  call set_file_name('plt',tn,time,pltfile)
@@ -597,7 +575,7 @@ subroutine write_plt
 ! 2D outputs
  case(2)
   
-  if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
+  if(ke==ks)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
@@ -624,7 +602,7 @@ subroutine write_plt
     write(ui,'()')
    end if
    
-  elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
+  elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    j=js
    do k = ks, ke, outres
 ! writing inner boundary for polar coordinates
@@ -647,6 +625,7 @@ subroutine write_plt
   end if
 
  case(3)
+
   if(crdnt==2)then
    do j = je, je
     do i = is, ie
@@ -680,7 +659,72 @@ subroutine write_plt
 
  close(ui)
 
-return
+ print*,"Outputted: ",trim(pltfile)
+
+!othfile----------------------------------------------------------------------
+
+ if(write_other_slice)then
+
+! Open file
+  call set_file_name('oth',tn,time,pltfile)
+  open(newunit=ui,file = pltfile, status='replace')
+
+! Write time and time step
+  write(ui,'(a,i7,a,1PE12.4e2,a)')&
+   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
+! Decide what quantities to write
+  call get_header(header,columns)
+  do n = 1, columns
+   write(ui,formi,advance='no') n+2*dim+1
+  end do
+  write(ui,'()')
+  do n = 1, columns
+   write(ui,forma,advance="no") trim(adjustl(header(n)))
+  end do
+  write(ui,'()')
+
+  if(crdnt==2)then
+
+   k = ks
+   do i = is, ie
+    call write_val(ui,i,je,k,forme,header)
+   end do
+   write(ui,'()')
+   do j = je, js, -1
+    do i = is, ie
+     call write_val(ui,i,j,k,forme,header)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    call write_val(ui,i,js,k,forme,header)
+   end do
+   write(ui,'()')
+
+   k = (ks+ke-1)/2
+   do i = is, ie
+    call write_val(ui,i,js,k,forme,header)
+   end do
+   write(ui,'()')
+   do j = js, je
+    do i = is, ie
+     call write_val(ui,i,j,k,forme,header)
+    end do
+    write(ui,'()')
+   end do
+   do i = is, ie
+    call write_val(ui,i,je,k,forme,header)
+   end do
+
+  end if
+
+  close(ui)
+
+  print*,"Outputted: ",trim(pltfile)
+
+ end if
+
+ return
 end subroutine write_plt
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -705,8 +749,127 @@ subroutine write_extgrv
  write(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
  close(ui)
 
+ print*,"Outputted: ",'extgrv.bin'
+ 
 return
 end subroutine write_extgrv
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE WRITE_PTC
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Output ascii file for tracer particles
+! WARNING: This routine is not tested yet
+
+subroutine write_ptc
+
+ use settings,only:crdnt,include_particles
+ use grid,only:tn,time,xi1,xi2,xi3,is,ie,js,je,ks,ke
+ use physval,only:d,e
+ use particle_mod
+ use gravmod,only:grvphi
+
+ character(len=50):: ptcfile
+ integer::ui,i,j,k,n
+ logical:: extflag
+ real(8):: pr,pt
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_particles) return
+
+ call set_file_name('ptc',tn,time,ptcfile)
+
+ if(crdnt==1.and.je==js)then
+  do n = 1, np
+   extflag = .false.
+   do k = ks, ke
+    if(ptcx(2,n)>=xi3(k-1))then;if(ptcx(2,n)<xi3(k))then
+     do i = is, ie
+      if(ptcx(1,n)>=xi1(i-1))then;if(ptcx(1,n)<xi1(i))then
+       if(e(i,js,k)+grvphi(i,js,k)*d(i,js,k)>0d0)then
+        ptci(2,n) = 1
+       else
+        ptci(2,n) = 0
+       end if
+       extflag=.true.
+       exit
+      end if;end if
+     end do
+     if(extflag)exit
+    end if;end if
+   end do
+  end do
+
+ elseif(crdnt==2.and.ke==ks)then
+  do n = 1, np
+   extflag = .false.
+   pr = sqrt(ptcx(1,n)**2+ptcx(2,n)**2)
+   pt = acos(ptcx(2,n)/pr)
+   do j = js, je
+    if(pt>=xi2(j-1))then;if(pt<xi2(j))then
+     do i = is, ie
+      if(pr>=xi1(i-1))then;if(pr<xi1(i))then
+       if(e(i,j,ks)+grvphi(i,j,ks)*d(i,j,ks)>0d0)then
+        ptci(2,n) = 1
+       else
+        ptci(2,n) = 0
+       end if
+       extflag=.true.
+       exit
+      end if;end if
+     end do
+     if(extflag)exit
+    end if;end if
+   end do
+  end do
+ end if
+
+ open(newunit=ui,file = ptcfile, status='replace')
+
+ write(ui,'(a,i7,a,1PE12.4e2,2(a5,i9))')&
+  '#tn =',tn,'  time= ',time,'np= ',np,'npl=',npl
+ write(ui,'(a7,2a3,3a15)')'label','ej','ub','mass','x1','x3'
+
+ do i = 1, np
+  write(ui,'(i7,2i3,3(1PE15.7e2))')ptci(0:2,i),ptcx(0:2,i)
+ end do
+
+ close(ui)
+
+ return
+end subroutine write_ptc
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE WRITE_BPT
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Output binary file for tracer particles
+
+subroutine write_bpt
+
+ use settings,only:outstyle,include_particles
+ use grid,only:tn,time
+ use particle_mod
+
+ character(len=50):: bptfile
+ integer::ui
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_particles) return
+
+ call set_file_name('bpt',tn,time,bptfile)
+
+ open(newunit=ui,file = bptfile, status='replace',form='unformatted')
+
+ write(ui)np,npl
+ write(ui)ptci(0:2,1:np),ptcx(0:2,1:np),ptc_in(1:jmax)
+
+ close(ui)
+
+ return
+end subroutine write_bpt
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -733,11 +896,12 @@ subroutine profiler_output
  form1 = '(a,2(1X,F10.3,a))'
  write(ui,form1)'Hydro          :',sum(wtime(iflx:itim)),'s',sum(wtime(iflx:itim))/wtime(itot)*1d2,'%'
  write(ui,form1)'|- Numflux     :',wtime(iflx),'s',wtime(iflx)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Timestep    :',wtime(itim),'s',wtime(itim)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- RungeKutta  :',wtime(irng),'s',wtime(irng)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Source      :',wtime(isrc),'s',wtime(isrc)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- Interpolate :',wtime(iint),'s',wtime(iint)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- EoS         :',wtime(ieos),'s',wtime(ieos)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Source      :',wtime(isrc),'s',wtime(isrc)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Timestep    :',wtime(itim),'s',wtime(itim)/wtime(itot)*1d2,'%'
+ write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
  write(ui,form1)'Gravity        :',wtime(igrv),'s',wtime(igrv)/wtime(itot)*1d2,'%'
  write(ui,form1)'Output         :',wtime(iout),'s',wtime(iout)/wtime(itot)*1d2,'%'
  write(ui,form1)'Shockfind      :',wtime(isho),'s',wtime(isho)/wtime(itot)*1d2,'%'
@@ -751,7 +915,7 @@ end subroutine profiler_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE SCALING_OUTPUT
+!                         SUBROUTINE SCALING_OUTPUT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -781,15 +945,16 @@ subroutine scaling_output
 
   if(i/=0)then
    open(newunit=un,file='scaling.dat',status='new')
-   write(un,'(a8,11a14)')&
+   write(un,'(a8,12a14)')&
    'threads','total','setup','numflux','RungeKutta','boundary',&
-   'source','interpolation','timestep','gravity','output','shock'
+   'source','interpolation','eos','timestep','gravity','output','shock'
   end if
 
-  write(un,'(i8,11(F14.6))')n,wtime(itot:isho)
+  write(un,'(i8,12(F14.6))')n,wtime(itot:isho)
 
   close(un)
 
+  stop
 return
 end subroutine scaling_output
 

@@ -91,7 +91,7 @@ subroutine source
  select case(crdnt)
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(0)
-!$omp parallel do private (i,j,k) collapse(3)
+!$omp parallel do private(i,j,k) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
