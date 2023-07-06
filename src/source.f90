@@ -70,6 +70,19 @@ subroutine source
                       /sum(dx3(k:k+1)) &
                     + (dx3(k+1)-dx3(k))*idx3(k)*idx3(k+1)*grvphi(i,j,k) ) &
                   * d(i,j,k)
+     if(i<=is+sum(fmr_lvl(1:fmr_max))-1)then
+      if(i<=is+fmr_lvl(1)-1)then
+       grv2(i,j,k) = 0d0;grv3(i,j,k) = 0d0
+      else
+       fmr_loop: do n = 2, fmr_max
+        if(i<=is+sum(fmr_lvl(1:n))-1)then
+         grv2(i,j,k) = grv2(i,j,k)/dble(2**(fmr_max-n+1))
+         exit fmr_loop
+        end if
+       end do fmr_loop
+      end if
+     end if
+
     end do
    end do
   end do

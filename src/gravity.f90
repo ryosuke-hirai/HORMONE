@@ -28,7 +28,7 @@ subroutine gravity
  real(8),allocatable,dimension(:,:,:):: lapphi,newphi
  real(8),allocatable,dimension(:):: intphi
  real(8),allocatable,dimension(:):: x,y,z,r,aw
- real(8):: faco, facn, fact
+ real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
 
@@ -38,7 +38,7 @@ subroutine gravity
  
  gin = gie - gis + 1
 
- if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+ if(gravswitch==2.or.(gravswitch==3.and.tn==0.and.dim==2))then
   allocate( x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax) )
  
   if(grav_init_other.and.gravswitch==3)return
@@ -196,7 +196,7 @@ endif
 if(gravswitch==3.and.tn/=0)then
 ! Hyperbolic Self-Gravity $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
- if(crdnt==1.and.je==1)then
+ if(crdnt==1.and.je==js)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates %%%%%%%%%%
   allocate(newphi,mold=hgsrc)
   allocate( intphi(1:4) )
@@ -367,52 +367,74 @@ if(gravswitch==3.and.tn/=0)then
  
   if(gbtype==0)call gravbound
   call masscoordinate
+
 !$omp parallel
+! Boundary conditions
+!$omp do private(j,k) collapse(2)
+    do k = ks, ke
+     do j = js, je
+      grvphi(is-1,j,k) = grvphi(is,j,k)
+      grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
+     end do
+    end do
+!$omp end do nowait
+!$omp do private(i,k) collapse(2)
+    do k = ks, ke
+     do i = is, ie
+      grvphi(i,js-1,k) = grvphi(i,js,k)
+      grvphi(i,je+1,k) = grvphi(i,je,k)
+     end do
+    end do
+!$omp end do nowait
+!$omp do private(i,j) collapse(2)
+    do j = js, je
+     do i = is, ie
+      grvphi(i,j,ks-1) = grvphi(i,j,ke)
+      grvphi(i,j,ke+1) = grvphi(i,j,ks)
+     end do
+    end do
+!$omp end do
+
   do l = 1, tngrav
-!$omp workshare
-   grvphi(is-1,js:je,ks:ke) = grvphi(is,js:je,ks:ke)
-   grvphi(is:ie,js-1,ks:ke) = grvphi(is:ie,js,ks:ke)
-   grvphi(is:ie,je+1,ks:ke) = grvphi(is:ie,je,ks:ke)   
-   grvphi(is:ie,js:je,ks-1) = grvphi(is:ie,js:je,ke)
-   grvphi(is:ie,js:je,ke+1) = grvphi(is:ie,js:je,ks)
-!$omp end workshare
    do grungen = 1, 3
 ! First set flux and source term
 !$omp do private (i,j,k) collapse(3)
-   do k = ks-1, ke
-    do j = js-1, je
-     do i = is-1, ie
-      grv1(i,j,k) = -cgrav2*(grvphi(i+1,j,k)-grvphi(i,j,k))*idx1(i+1)
-      grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/x1(i)
-      grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/x1(i)/sin(x2(j))
+    do k = ks-1, ke
+     do j = js-1, je
+      do i = is-1, ie
+       grv1(i,j,k) = -cgrav2*(grvphi(i+1,j,k)-grvphi(i,j,k))*idx1(i+1)
+       grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/x1(i)
+       grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/x1(i)/sin(x2(j))
 
-      if(i>is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1)then
-      elseif(i<=is+sphrn-1)then
-       grv2(i,j,k) = 0d0;grv3(i,j,k) = 0d0
-      elseif(i<=is+sphrn+trnsn16-1)then
-       grv2(i,j,k) = grv2(i,j,k)/16d0 ; grv3(i,j,k) = grv3(i,j,k)/16d0
-      elseif(i<=is+sphrn+trnsn16+trnsn8-1)then
-       grv2(i,j,k) = grv2(i,j,k)/8d0 ; grv3(i,j,k) = grv3(i,j,k)/8d0
-      elseif(i<=is+sphrn+trnsn16+trnsn8+trnsn4-1)then
-       grv2(i,j,k) = grv2(i,j,k)/4d0 ; grv3(i,j,k) = grv3(i,j,k)/4d0
-      elseif(i<=is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1)then
-       grv2(i,j,k) = grv2(i,j,k)/2d0 ; grv3(i,j,k) = grv3(i,j,k)/2d0
-      end if
-      if(i==is-1.or.j==js-1.or.k==ks-1)cycle
-      hgsrc(i,j,k) = -cgrav2*4d0*pi*G*d(i,j,k)
+       if(i<=is+sum(fmr_lvl(1:fmr_max))-1)then
+        if(i<=is+fmr_lvl(1)-1)then
+         grv2(i,j,k) = 0d0;grv3(i,j,k) = 0d0
+        else
+         fmr_loop: do n = 2, fmr_max
+          if(i<=is+sum(fmr_lvl(1:n))-1)then
+           grv2(i,j,k) = grv2(i,j,k)/dble(2**(fmr_max-n+1))
+           exit fmr_loop
+          end if
+         end do fmr_loop
+        end if
+       end if
+       if(i==is-1.or.j==js-1.or.k==ks-1)cycle
+       hgsrc(i,j,k) = -cgrav2*4d0*pi*G*d(i,j,k)
+      end do
      end do
     end do
-   end do
 !$omp end do
 
-   grk3_number: select case (grungen)
-   case(1) grk3_number
-    faco = 1d0 ; fact = 1d0 ; facn = 0d0
-   case(2) grk3_number
-    faco = 0.75d0 ; fact = 0.25d0 ; facn = fact
-   case(3) grk3_number
-    faco = 1d0/3d0 ; fact = 2d0/3d0 ; facn = fact
-   end select grk3_number
+!$omp single
+    grk3_number: select case (grungen)
+    case(1) grk3_number
+     faco = 1d0 ; fact = 1d0 ; facn = 0d0
+    case(2) grk3_number
+     faco = 0.75d0 ; fact = 0.25d0 ; facn = fact
+    case(3) grk3_number
+     faco = 1d0/3d0 ; fact = 2d0/3d0 ; facn = fact
+    end select grk3_number
+!$omp end single
 
 !$omp do private (i,j,k) collapse(3)
     do k = ks,ke
@@ -425,87 +447,75 @@ if(gravswitch==3.and.tn/=0)then
        grvphi(i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi(i,j,k) &
                      + fact*dtgrav*grvphidot(i,j,k)
        grvphidot(i,j,k) = faco*grvphiorg(i,j,k,2) + facn*grvphidot(i,j,k) &
-             + fact*dtgrav * &
-             ( idetg1(i) * &
-               (detg1(i-1  )*grv1(i-1,j,k)-detg1(i  )*grv1(i,j,k)) &
-             + idetg2(i,j) * &
-               (detg2(i,j-1)*grv2(i,j-1,k)-detg2(i,j)*grv2(i,j,k)) &
-             + idetg3(i,j,k) * (grv3(i,j,k-1)-grv3(i,j,k)) &
-             + hgsrc(i,j,k) )
+                        + fact*dtgrav * &
+                        ( idetg1(i) * &
+                          (detg1(i-1  )*grv1(i-1,j,k)-detg1(i  )*grv1(i,j,k)) &
+                        + idetg2(i,j) * &
+                          (detg2(i,j-1)*grv2(i,j-1,k)-detg2(i,j)*grv2(i,j,k)) &
+                        + idetg3(i,j,k) * (grv3(i,j,k-1)-grv3(i,j,k)) &
+                        + hgsrc(i,j,k) )
       end do
      end do
     end do
 !$omp end do
 
-!$omp single
-    do i = sphrn, is, -1
-     grvphi(i,js:je,ks:ke) = sum(grvphi(i+1,js:je,ks:ke)*dvol(i+1,js:je,ks:ke))&
-      / sum(dvol(i+1,js:je,ks:ke)) &
-      - G*mc(i)/xi1(i)**2*dx1(i+1)
+    do n = 2, fmr_max
+     if(fmr_lvl(n)==0)cycle
+     jb=min(2**(fmr_max-n+1),je)-1 ; kb=min(2**(fmr_max-n+1),ke)-1
+!$omp do private(i,j,k,vol) collapse(3)
+     do k = ks, ke, kb+1
+      do j = js, je, jb+1
+       do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
+        vol = sum(dvol(i,j:j+jb,k:k+kb))
+        grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/vol
+        grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/vol
+       end do
+      end do
+     end do
+!$omp end do
     end do
-!$omp end single
-    
-!!$!$omp do private(i)
-!!$   do i = is, is+sphrn-1
-!!$    grvphi(i,js:je,ks:ke) = sum(grvphi(i,js:je,ks:ke)*dvol(i,js:je,ks:ke)) &
-!!$                          / sum(dvol(i,js:je,ks:ke))
-!!$    grvphidot(i,js:je,ks:ke) = sum(grvphidot(i,js:je,ks:ke)*dvol(i,js:je,ks:ke))&
-!!$                             / sum(dvol(i,js:je,ks:ke))
-!!$   end do
-!!$!$omp end do
-!!$   jb=15;kb=15
-!!$   if(ke==1)kb=0
-!!$!$omp do private(i,j,k) collapse(3)
-!!$   do i = is+sphrn, is+sphrn+trnsn16-1
-!!$    do k = ks, ke, 16
-!!$     do j = js, je, 16
-!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$     end do
-!!$    end do
-!!$   end do
-!!$!$omp end do
-!!$   jb=7;kb=7
-!!$   if(ke==1)kb=0
-!!$!$omp do private(i,j,k) collapse(3)
-!!$   do i = is+sphrn+trnsn16, is+sphrn+trnsn16+trnsn8-1
-!!$    do k = ks, ke, 8
-!!$     do j = js, je, 8
-!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$     end do
-!!$    end do
-!!$   end do
-!!$!$omp end do
-!!$   jb=3;kb=3
-!!$   if(ke==1)kb=0
-!!$!$omp do private(i,j,k) collapse(3)
-!!$   do i = is+sphrn+trnsn16+trnsn8, is+sphrn+trnsn16+trnsn8+trnsn4-1
-!!$    do k = ks, ke, 4
-!!$     do j = js, je, 4
-!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$     end do
-!!$    end do
-!!$   end do
-!!$!$omp end do
-!!$   jb=1;kb=1
-!!$   if(ke==1)kb=0
-!!$!$omp do private(i,j,k) collapse(3)
-!!$   do i = is+sphrn+trnsn16+trnsn8+trnsn4, is+sphrn+trnsn16+trnsn8+trnsn4+trnsn2-1
-!!$    do k = ks, ke, 2
-!!$     do j = js, je, 2
-!!$      grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$      grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/sum(dvol(i,j:j+jb,k:k+kb))
-!!$     end do
-!!$    end do
-!!$   end do
-!!$!$omp end do
-  end do
+!$omp do private(i,j,k) collapse(2)
+    do k = ks, ke
+     do j = js, je
+      do i = fmr_lvl(1)-1, is, -1
+       grvphi(i,j,k) = grvphi(i+1,j,k) &
+                     - G*(mc(i)-mc(is-1))/xi1(i)**2*dx1(i+1)
+      end do
+     end do
+    end do
+!$omp end do
+   
+! Boundary conditions
+!$omp do private(j,k) collapse(2)
+    do k = ks, ke
+     do j = js, je
+      grvphi(is-1,j,k) = grvphi(is,j,k)
+      grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
+     end do
+    end do
+!$omp end do nowait
+!$omp do private(i,k) collapse(2)
+    do k = ks, ke
+     do i = is, ie
+      grvphi(i,js-1,k) = grvphi(i,js,k)
+      grvphi(i,je+1,k) = grvphi(i,je,k)
+     end do
+    end do
+!$omp end do nowait
+!$omp do private(i,j) collapse(2)
+    do j = js, je
+     do i = is, ie
+      grvphi(i,j,ks-1) = grvphi(i,j,ke)
+      grvphi(i,j,ke+1) = grvphi(i,j,ks)
+     end do
+    end do
+!$omp end do nowait
+   end do
 !$omp single
-  grvtime = grvtime + dtgrav
+   grvtime = grvtime + dtgrav
 !$omp end single
- end do
+
+  end do
 !$omp end parallel
 
 
