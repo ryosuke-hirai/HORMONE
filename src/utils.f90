@@ -29,7 +29,7 @@ contains
   implicit none
   real(8),intent(in):: r,hsoft
   real(8):: phi,h,q
-  h = 0.5d0*hsoft
+  h = 0.5d0*max(hsoft,1d-99)
   q=r/h
   if(q>=2d0)then
    phi = -1d0/r
@@ -46,7 +46,7 @@ contains
   implicit none
   real(8),intent(in):: r,hsoft
   real(8)::acc,h,q
-  h = 0.5d0*hsoft
+  h = 0.5d0*max(hsoft,1d-99)
   q = r/h
   if(q<1d0)then
    acc=(4d0/3d0*q-1.2d0*q**3+0.5d0*q**4)/h**2
