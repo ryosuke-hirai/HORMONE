@@ -59,6 +59,7 @@ module grid
   real(8),allocatable,dimension(:):: detg1, idetg1, sx1, g22, scot, sisin
   real(8),allocatable,dimension(:,:):: detg2, idetg2, g33
   real(8),allocatable,dimension(:,:,:):: sa1, sa2, sa3, Imom
+  real(8),allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real(8),allocatable,dimension(:,:,:,:):: car_x
   real(8),allocatable,dimension(:):: spinc_r,spinc_t
 
@@ -130,7 +131,6 @@ module gravmod
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc
   real(8),allocatable,dimension(:,:):: phiio, phiii, phi1o, phi3i, phi3o
-  real(8),allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real(8):: dt_old, l2norm, grvtime
   real(8),allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32, mc
   real(8),allocatable,dimension(:,:):: lag
