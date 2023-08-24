@@ -14,7 +14,7 @@ subroutine eci
  use constants
  use utils,only:intpol
  use ejectamod
- use gravmod,only:extgrv,grvtime,include_extgrv,rdis,coremass,coscyl,sincyl
+ use gravmod,only:extgrv,grvtime,include_extgrv,coremass
  use pressure_mod
 
  implicit none
