@@ -14,9 +14,9 @@ contains
  subroutine gravbound
 
   use settings,only:bc3is,crdnt,grverr
-  use grid,only:i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,xi1s,x1,tn
+  use grid,only:i,j,k,is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,xi1s,x1,tn,rdis
   use constants,only:G
-  use gravmod,only:llmax,grvphi,phiii,phiio,phi1o,phi3i,phi3o,mc,Pl,Plc,rdis
+  use gravmod,only:llmax,grvphi,phiii,phiio,phi1o,phi3i,phi3o,mc,Pl,Plc
 
   integer:: ll, error1
   real(8):: dphiii, dphiio, dphi1o, dphi3i, dphi3o
@@ -241,9 +241,9 @@ contains
 !------------------------------------------------------------------------------
  subroutine multipole(ll,ml)
 
-   use grid,only:is,ie,js,je,ks,ke,x1,dvol
+   use grid,only:is,ie,js,je,ks,ke,x1,dvol,rdis
    use physval,only:d
-   use gravmod,only:rdis,Pl,Plc
+   use gravmod,only:Pl,Plc
 
    implicit none
 
