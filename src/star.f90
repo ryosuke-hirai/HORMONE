@@ -200,15 +200,87 @@ end subroutine set_star_sph_grid
 
 ! PURPOSE: To place star on a cylindrical coordinate grid
 
-subroutine set_star_cyl_grid
+subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
 
+ use constants,only:G
  use grid
+ use physval
+ use utils,only:intpol
 
- 
+ real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
+ real(8),allocatable,dimension(:,:),intent(in),optional:: comp
+ character(len=10),allocatable,intent(in),optional:: comp_list(:)
+ real(8)::dr,mnow,rnow,mold,shell,shelld,mass,radius
 
 !-----------------------------------------------------------------------------
 
- 
+ mass=m(size(m)-1)
+ radius=r(size(r)-1)
+ dr = dx1(is)*1.d0
+ rnow = dx1(is) ; mold = 0d0
+ d = -1d0
+ do
+  shell = 0d0
+  ! Choose cells in current mass shell
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     if(rdis(i,k)<rnow.and.d(i,j,k)<=1d-99)then
+      shell = shell + dvol(i,j,k)
+     end if
+    end do
+   end do
+  end do
+  ! Evaluate the mass coordinate
+  do n = 0, size(m)-2
+   if(rnow>r(n).and.rnow<=r(n+1))then
+    mnow = intpol(r(n:n+1),m(n:n+1),rnow)
+    shelld = (mnow-mold)/shell
+    exit
+   end if
+  end do
+  ! Set density for chosen cells
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     if(rdis(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
+      d(i,j,k) = shelld
+      do n = 0, size(m)-2
+       if(rdis(i,k)>r(n).and.rdis(i,k)<=r(n+1))then
+        p(i,j,k) = intpol(r(n:n+1),pres(n:n+1),rdis(i,k))
+        exit
+       end if
+      end do
+!!$!     p(i,js,k) = G*mnow*(mnow-mold)/shell/rdis(i,k)
+     end if
+    end do
+   end do
+  end do
+  mold = mnow ; rnow = rnow + dr
+  if(rnow>radius)then
+   shell = 0d0
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      if(rdis(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
+       shell = shell + dvol(i,js,k)
+      end if
+     end do
+    end do
+   end do
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      if(rdis(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
+       d(i,j,k) = (mass-mold)/shell
+       p(i,j,k) = G*mass*(mass-mold)/shell/rdis(i,k)
+      end if
+     end do
+    end do
+   end do
+   exit
+  end if
+ end do
 
 return
 end subroutine set_star_cyl_grid
