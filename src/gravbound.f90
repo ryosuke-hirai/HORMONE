@@ -197,8 +197,8 @@ contains
     end if
    end do
 
-   do i = gie+1, gie+2
-    do j = gjs, gje
+   do j = gjs, gje
+    do i = gie+1, gie+2
      grvphi(i,j,ks) = phiio(i,j)
     end do
    end do
@@ -241,17 +241,18 @@ contains
 !------------------------------------------------------------------------------
  subroutine multipole(ll,ml)
 
-   use grid,only:is,ie,js,je,ks,ke,x1,dvol,rdis
-   use physval,only:d
-   use gravmod,only:Pl,Plc
+  use settings,only:eq_sym
+  use grid,only:is,ie,js,je,ks,ke,x1,dvol,rdis
+  use physval,only:d
+  use gravmod,only:Pl,Plc
 
-   implicit none
+  implicit none
 
-   integer,intent(in):: ll
-   real(8),intent(out):: ml
-   integer:: ii, jj, kk
+  integer,intent(in):: ll
+  real(8),intent(out):: ml
+  integer:: ii, jj, kk
 
-   ml = 0d0
+  ml = 0d0
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   if(crdnt==1.and.je==1)then
    jj = js
@@ -260,6 +261,11 @@ contains
     do ii = is,ie
      ml = ml + d(ii,jj,kk)*(rdis(ii,kk)/rdis(ie,ke))**ll &
              * Plc(ll,ii,kk)*dvol(ii,jj,kk)
+     if(eq_sym)then
+      ml = ml + d(ii,jj,kk)*(-rdis(ii,kk)/rdis(ie,ke))**ll &
+              * Plc(ll,ii,kk)*dvol(ii,jj,kk)
+
+     end if
     end do
    end do
 !$omp end parallel do
@@ -271,7 +277,11 @@ contains
    do jj = js,je
     do ii = is,ie
      ml = ml + d(ii,jj,kk)*(x1(ii)/x1(ie+1))**ll &
-             * Pl(ll,jj) * dvol(ii,jj,kk)
+              *Pl(ll,jj) * dvol(ii,jj,kk)
+     if(eq_sym)then
+      ml = ml + d(ii,jj,kk)*(-x1(ii)/x1(ie+1))**ll &
+              * Pl(ll,jj) * dvol(ii,jj,kk)
+     end if
     end do
    end do
 !$omp end parallel do
