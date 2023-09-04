@@ -7,6 +7,7 @@ module cooling_mod
  real(8),parameter:: Tref = 1d8
 
  public cooling_setup,cooling
+ private coolingcondition
  
  contains
 
@@ -83,12 +84,14 @@ subroutine cooling
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private(i,j,k,n,lambda,tcool,Y,YY)
+!$omp parallel do private(i,j,k,n,lambda,tcool,Y,YY) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
 
     if(T(i,j,k)<Tint(0).or.T(i,j,k)>=Tref)then
+     cycle
+    else if(coolingcondition(i,j,k,time))then
      cycle
     else
      do n = 0, NN-1
@@ -150,5 +153,21 @@ function Yinv(yy,kk)
              *(yy-Yint(kk)) ) **(1d0/(1d0-alph(kk)))
 
 end function Yinv
+
+function coolingcondition(i,j,k,t) result(f)
+ use constants,only:rsun
+ use grid,only:x1
+ integer,intent(in)::i,j,k
+ real(8),intent(in)::t
+ logical:: f
+ real(8)::r_cool
+
+ r_cool = (2000d0-100d0*t/5.5d4/3.6d3)*rsun
+ if(x1(i)>r_cool)then
+  f = .true.
+ else
+  f = .false.
+ end if
+end function coolingcondition
 
 end module cooling_mod
