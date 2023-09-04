@@ -20,14 +20,15 @@ subroutine gravity
  use gravmod
  use gravbound_mod
  use utils,only:masscoordinate
+ use miccg_mod,only:cg_grv,miccg,ijk_from_l,l_from_ijk
  use omp_lib
 
- integer:: l, flgcg, gin, tngrav, grungen, jb, kb
+ integer:: l, flgcg, gin, gjn, gkn, tngrav, grungen, jb, kb
  real(8):: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
- real(8),dimension(1:lmax):: gsrc, pp, absrob
+ real(8),dimension(1:lmax):: pp, absrob
  real(8),allocatable,dimension(:,:,:):: lapphi,newphi
  real(8),allocatable,dimension(:):: intphi
- real(8),allocatable,dimension(:):: x,y,z,r,aw
+ real(8),allocatable,dimension(:):: x,y,z,r,aw,gsrc
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
@@ -37,9 +38,11 @@ subroutine gravity
  wtime(igrv) = wtime(igrv) - omp_get_wtime()
  
  gin = gie - gis + 1
+ gjn = gje - gjs + 1
+ gkn = gke - gks + 1
 
  if(gravswitch==2.or.(gravswitch==3.and.tn==0.and.dim==2))then
-  allocate( x(1:lmax), y(1:lmax), z(1:lmax), r(1:lmax), aw(1:lmax) )
+  allocate( x(1:lmax), gsrc(1:lmax) )
  
   if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -56,141 +59,119 @@ subroutine gravity
          / (pi*xi1e**2*(xi3e-xi3s)) * 1d-2
     hgsrc=mind
    end if
+!$omp parallel do private(i,j,k,l)
    do l = 1, lmax
-    i = modlimax(l) +gis-1
-    k = (l-modlimax(l))/gin + gks
-    x(l) = grvphi(i,js,k)
+    call ijk_from_l(l,gis,gjs,gks,gin,gjn,gkn,i,j,k)
+    x(l) = grvphi(i,j,k)
     gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
     if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
-     gsrc(l) = 4d0*pi*G*d(i,js,k)*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
+     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
     end if;end if;end if;end if
     if(k==gks) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
     if(i==gie) gsrc(l) = gsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
     if(k==gke) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
    end do
+!$omp end parallel do
 
 ! spherical (axial symmetry) #################################################
-  elseif(ke==1.and.crdnt==2.and.dim==2)then
+  elseif(crdnt==2.and.dim==2)then
 
 ! calculating b for Ax=b
    mind = minval(d(is:ie,js:je,ks:ke))
+!$omp parallel do private(i,j,k,l)
    do l=1,lmax
-    i = modlimax(l) +gis-1
-    j = (l-modlimax(l))/gin + gjs
-    k = ks
+    call ijk_from_l(l,gis,gjs,gks,gin,gjn,gkn,i,j,k)
     x(l) = grvphi(i,j,k)
-    gsrc(l) = 4d0*pi*G*mind*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
+    gsrc(l) = 4d0*pi*G*mind*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
     if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
-     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)*x1(i)*sinc(j)*dxi1(i)*dxi2(j)
+     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
     end if;end if;end if;end if
-    if(i==gie) gsrc(l)= gsrc(l) - xi1(i)*xi1(i)*sinc(j)*dxi2(j)*idx1(i+1)&
+    if(i==gie) gsrc(l)= gsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)&
                                   *phiio(i+1,j)
 !   if(i==gis) gsrc(l)= gsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
 !        *phiii(i-1,j)
    end do
+!$omp end parallel do
+
+! spherical (3D) #############################################################
+  elseif(crdnt==2.and.dim==3)then
+
+! calculating b for Ax=b
+   mind = minval(d(is:ie,js:je,ks:ke))
+!$omp parallel do private(i,j,k,l)
+   do l=1,lmax
+    call ijk_from_l(l,gis,gjs,gks,gin,gjn,gkn,i,j,k)
+    x(l) = grvphi(i,j,k)
+    gsrc(l) = 4d0*pi*G*mind*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k)
+    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
+     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k)
+    end if;end if;end if;end if
+    if(i==gie) phiio(i+1,j) = -G*1.989d33/x1(gie+1)
+    if(i==gie) gsrc(l)= gsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)*dxi3(k)&
+                                  *phiio(i+1,j)
+!   if(i==gis) gsrc(l)= gsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
+!        *phiii(i-1,j)
+   end do
+!$omp end parallel do
+  end if
+
+  call miccg(cg_grv,gsrc,x)
+
+!-------------------------------------------------------------------------
+
+! convert x to phi
+!$omp parallel do private(i,j,k,l) collapse(3)
+  do k = gks, gke
+   do j = gjs, gje
+    do i = gis, gie
+     l = l_from_ijk(i,j,k,gis,gjs,gks,gie-gis+1,gje-gjs+1,gke-gks+1)
+     grvphi(i,j,k) = x(l)
+    end do
+   end do
+  end do
+!$omp end parallel do
+
+
+  if(je==1.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
+
+   do k = gks,gke
+    do j = js,je
+     grvphi(is-2,j,k) = grvphi(is+1,j,k)
+     grvphi(is-1,j,k) = grvphi(is  ,j,k)
+    end do
+   end do
+   grvphi(gis:gie,js:je,gks-2) = grvphi(gis:gie,js:je,gks)
+   grvphi(gis:gie,js:je,gks-1) = grvphi(gis:gie,js:je,gks)
+
+  elseif(ke==1.and.crdnt==2.and.dim==2)then ! for spherical coordinates (2D)
+
+   grvphi(is-1:gie+1,js-2,ks) = grvphi(is-1:gie+1,js+1,ks)
+   grvphi(is-1:gie+1,js-1,ks) = grvphi(is-1:gie+1,js,ks)
+   grvphi(is-1:gie+1,je+1,ks) = grvphi(is-1:gie+1,je,ks)
+   grvphi(is-1:gie+1,je+2,ks) = grvphi(is-1:gie+1,je-1,ks)
+
+   grvphi(is-1,:,:) = grvphi(is,:,:)
+   grvphi(is-2,:,:) = grvphi(is+1,:,:)
+   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
+                   ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+
+  elseif(crdnt==2.and.dim==3)then ! for spherical coordinates (3D)
+
+   grvphi(is-1:gie+1,js-2,ks:ke) = grvphi(is-1:gie+1,js,ks:ke)
+   grvphi(is-1:gie+1,js-1,ks:ke) = grvphi(is-1:gie+1,js,ks:ke)
+   grvphi(is-1:gie+1,je+1,ks:ke) = grvphi(is-1:gie+1,je,ks:ke)
+   grvphi(is-1:gie+1,je+2,ks:ke) = grvphi(is-1:gie+1,je,ks:ke)
+
+   grvphi(is-1,:,:) = grvphi(is,:,:)
+   grvphi(is-2,:,:) = grvphi(is+1,:,:)
+   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
+                   ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
 
   end if
 
-
-! set initial r0=p0
-  call Avec(x)
-
-  r = gsrc - aw
-
-  call cctr(r)
-
-  pp = z
-  rrold = dot_product(r,z)
-
-! start iteration --------------------------------------------------------
-
-  do n = 1, lmax
-
-   call Avec(pp)
-
-   pAp = dot_product(pp,aw) ! (pk,Apk)
-
-   alpha = rrold / pAp
-
-!$omp parallel do private(l)
-   do l = 1, lmax
-    x(l) = x(l) + alpha*pp(l) !x_k+1
-    r(l) = r(l) - alpha*aw(l) !r_k+1
-   end do
-!$omp end parallel do
-
-   call cctr(r)
-
-   rr = dot_product(z,r) ! ((CC^T)^{-1}rk+1,rk+1)
-
-   beta = rr / rrold
-
-   rrold = rr !((CC^T)^{-1}rk,rk)
-
-!++++++ criterion for convergence ++++++!
-   flgcg = 0                            !
-   do l = 1,lmax                        !
-    absrob(l) = abs(r(l)/gsrc(l))       !
-    if(absrob(l)>cgerr)then             !
-     flgcg = 1                          !
-     exit                               !
-    end if                              !
-   end do                               !
-   if(flgcg==0)exit                     !
-!+++++++++++++++++++++++++++++++++++++++!
-
-!$omp parallel do private(l)
-   do l = 1, lmax
-    pp(l) = z(l) + beta * pp(l)
-   end do
-!$omp end parallel do
-
-  end do
-
- if(n>=lmax)then
-  print *,'Error from miccg.f',tn
- end if
-!-------------------------------------------------------------------------
- if(je==1.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
-! convert x to phi
-  do k = gks, gke
-   do i = gis, gie
-    grvphi(i,js,k) = x(i-is+1+(k-gks)*gie)
-   end do
-  end do
-
-  do k = gks,gke
-   do j = js,je
-    grvphi(is-2,j,k) = grvphi(is+1,j,k)
-    grvphi(is-1,j,k) = grvphi(is  ,j,k)
-   end do
-  end do
-  grvphi(gis:gie,js:je,gks-2) = grvphi(gis:gie,js:je,gks)
-  grvphi(gis:gie,js:je,gks-1) = grvphi(gis:gie,js:je,gks)
-
   if(gravswitch==3)grvphiold = grvphi
-
- elseif(ke==1.and.crdnt==2.and.dim==2)then ! for spherical coordinates
-  do j = js, je
-   do i = is, gie
-    grvphi(i,j,ks) = x(i-is+1+(j-js)*gie)
-   end do
-  end do
-
-  grvphi(is-1:gie+1,js-2,ks) = grvphi(is-1:gie+1,js,ks)
-  grvphi(is-1:gie+1,js-1,ks) = grvphi(is-1:gie+1,js,ks)
-  grvphi(is-1:gie+1,je+1,ks) = grvphi(is-1:gie+1,je,ks)
-  grvphi(is-1:gie+1,je+2,ks) = grvphi(is-1:gie+1,je,ks)
-
-  grvphi(is-1,:,:) = grvphi(is,:,:)
-  grvphi(is-2,:,:) = grvphi(is+1,:,:)
-  grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
-                   ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
-
-  if(gravswitch==3)grvphiold = grvphi
-
- end if
-endif
+  
+ endif
 
 
 if(gravswitch==3.and.tn/=0)then
@@ -590,92 +571,186 @@ end if
 
 wtime(igrv) = wtime(igrv) + omp_get_wtime()
 
-contains
-
-! \\\\\\\\\\\\\\\\\\\\\\\\\\\\ SUBROUTINE Avec \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  
-   subroutine Avec(w)
-
-     use gravmod
-
-     implicit none
-
-  ! Subroutine to calculate A*vector
-
-     real(8),intent(in),dimension(1:lmax)::w
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-    aw(1) = a1(1)*w(1) + a2(1)*w(2) + a3(1)*w(1+gin)
-
-   do l = 2,gin
-    aw(l) = a2(l-1)*w(l-1) + a1(l)*w(l) + a2(l)*w(l+1) + a3(l)*w(l+gin)
-   end do
-
-   do l = gin+1,lmax-gin
-    aw(l) = a3(l-gin)*w(l-gin) + a2(l-1)*w(l-1) + a1(l)*w(l) &
-                                 + a2(l)*w(l+1) + a3(l)*w(l+gin)
-   end do
-
-   do l = lmax-gin+1,lmax-1
-    aw(l) = a3(l-gin)*w(l-gin) + a2(l-1)*w(l-1) + a1(l)*w(l) + a2(l)*w(l+1)
-   end do
-
-    aw(lmax) = a3(lmax-gin)*w(lmax-gin) + a2(lmax-1)*w(lmax-1) &
-               + a1(lmax)*w(lmax)
-
-  end subroutine Avec
-
-
-
-!\\\\\\\\\\\\\\\\\\\\\\\ SUBROUTINE (CC^T)^{-1}r \\\\\\\\\\\\\\\\\\\\\\\\\
-
-  subroutine cctr(rrr)
-
-    use gravmod
-
-! subroutine to calculate (CC^T)^{-1}r for preconditioned CG method
-
-    real(8),intent(in),dimension(1:lmax):: rrr
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! solving U^{T}DUr~=r by LU decomposition
-! first solve U^{T}Dy=r by forward substitution
-    y(1) = rrr(1)
-
-    do l = 2, gin-1
-     y(l) = rrr(l) - precb(l-1)/preca(l-1)*y(l-1)
-    end do
-
-    y(gin) = rrr(gin) - prece(1)/preca(1)*y(1) &
-                      - precb(gin-1)/preca(gin-1)*y(gin-1)
-
-    do l = gin+1, lmax
-     y(l) = rrr(l) - precc(l-gin)/preca(l-gin)*y(l-gin) &
-                   - prece(l-gin+1)/preca(l-gin+1)*y(l-gin+1) &
-                   - precb(l-1)/preca(l-1)*y(l-1) 
-    end do
-
-! next solve Uz=y by backward substitution
-    z(lmax) = y(lmax)/preca(lmax)
-
-    do l = lmax-1, lmax-gin+2, -1
-     z(l) = (y(l)-precb(l)*z(l+1))/preca(l)
-    end do
-
-    z(lmax-gin+1) = (y(lmax-gin+1) - precb(lmax-gin+1)*z(lmax-gin+2) &
-                                     - prece(lmax-gin+1)*z(lmax))  &
-                      / preca(lmax-gin+1)
-
-    do l = lmax-gin, 1, -1
-     z(l) = (y(l) - precb(l)*z(l+1) - prece(l)*z(l+gin-1) &
-                  - precc(l)*z(l+gin)) / preca(l)
-    end do
-
- end subroutine cctr
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 end subroutine gravity
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE SETUP_GRVCG
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To set up the A matrix elements for Laplacian
+
+subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
+
+ use settings,only:crdnt,eq_sym
+ use grid,only:xi1s,x1,xi1,dx1,idx1,dxi1,dx2,dxi2,idx2,dx3,dxi3,idx3,sini,sinc
+ use miccg_mod,only:cg_set,ijk_from_l,get_preconditioner
+
+ integer,intent(in)::is,ie,js,je,ks,ke
+ type(cg_set),intent(out):: cg
+ integer:: in,jn,kn,lmax,dim,i,j,k,l
+
+!-----------------------------------------------------------------------------
+
+ cg%is=is;cg%ie=ie; cg%js=js;cg%je=je; cg%ks=ks;cg%ke=ke
+ in = ie-is+1; jn = je-js+1; kn = ke-ks+1
+ cg%in=in; cg%jn=jn; cg%kn=kn
+ lmax = in*jn*kn; cg%lmax=lmax
+ if(ie>is.and.je>js.and.ke>ks)then
+  dim=3
+ elseif(ie>is.and.(je>js.or.ke>ks))then
+  dim=2
+ elseif(ie>is.and.je==js.and.ke==ks.and.crdnt==2)then
+  dim=1
+ else
+  print*,'Error in setup_grvcg, dimension is not supported; dim=',dim
+ end if
+
+ select case(dim)
+ case(1) ! 1D
+! 1D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  if(crdnt==1)then
+   cg%Adiags = 2
+   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
+   cg%ia(1) = 0
+   cg%ia(2) = 1
+
+! Equation matrix
+   do l = 1, lmax
+    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+    cg%A(1,l) = -( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) )
+    cg%A(2,l) = xi1(i)**2/dx1(i+1)
+    if(i==is.and.xi1s>0d0)cg%A(1,l)=cg%A(1,l)+xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(i==ie)cg%A(2,l) = 0d0
+
+   end do
+
+! Pre-conditioner matrix with MICCG(1,1) method
+   cg%cdiags = 2
+   allocate(cg%ic(1:cg%cdiags),cg%c(1:cg%cdiags,1:lmax))
+   cg%ic(1) = 0
+   cg%ic(2) = 1
+   cg%alpha = 0.99d0
+
+  end if
+
+ case(2) ! 2D
+! 2D cylindrical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  if(crdnt==1.and.je==js.and.ke>ks)then
+   cg%Adiags = 3
+   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
+   cg%ia(1) = 0
+   cg%ia(2) = 1
+   cg%ia(3) = in
+
+! Equation matrix
+   do l = 1, lmax
+    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+    cg%A(1,l) = - ( xi1(i)/dx1(i+1) + xi1(i-1)/dx1(i) &
+                      + 2d0*x1(i)*dxi1(i) / (dx3(k)*dx3(k+1)) ) &
+                    * 0.5d0*sum(dx3(k:k+1))
+    cg%A(2,l) = 0.5d0*xi1(i)*sum(dx3(k:k+1))*idx1(i+1)
+    cg%A(3,l) = x1(i)*dxi1(i)/dx3(k+1)
+    if(i==ie)cg%A(2,l) = 0d0
+    if(k==ke)cg%A(3,l) = 0d0
+    
+    if(eq_sym.and.k==ks)then! for Neumann boundary at bc3i (equatorial symmetry)
+     cg%A(1,l) = cg%A(1,l) + x1(i)*dxi1(i)/dx3(k+1)
+    end if
+  
+   
+   end do
+
+! 2D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  elseif(crdnt==2.and.ie>is.and.je>js.and.ke==ks)then
+
+   cg%Adiags = 3
+   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
+   cg%ia(1) = 0
+   cg%ia(2) = 1
+   cg%ia(3) = in
+
+   do l = 1, lmax
+    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+! Equation matrix
+    cg%A(1,l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
+                  * sinc(j)*dxi2(j) &
+               + ( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
+    cg%A(2,l) = xi1(i)**2 *sinc(j)*dxi2(j)/dx1(i+1)
+    cg%A(3,l) = sini(j)*dxi1(i)/dx2(j+1)
+    if(i==is.and.xi1s>0d0)cg%A(1,l)=cg%A(1,l)+xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(i==ie)cg%A(2,l) = 0d0
+    if(j==je)then ! Reflection boundary at axis or equatorial plane (if eq_sym)
+     cg%A(1,l) = cg%A(1,l) + sini(j)*dxi1(i)*idx2(j+1)
+     cg%A(3,l) = 0d0
+    end if
+
+   end do
+
+  end if
+
+! Pre-conditioner matrix with MICCG(1,2) method
+  cg%cdiags = 4
+  allocate(cg%ic(1:cg%cdiags),cg%c(1:cg%cdiags,1:lmax))
+  cg%ic(1) = 0
+  cg%ic(2) = 1
+  cg%ic(3) = in-1
+  cg%ic(4) = in
+  cg%alpha = 0.99d0
+  
+
+ case(3) ! 3D 
+! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  if(crdnt==2)then
+
+   cg%Adiags = 5
+   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
+   cg%ia(1) = 0
+   cg%ia(2) = 1
+   cg%ia(3) = in
+   cg%ia(4) = in*jn
+   cg%ia(5) = in*jn*(kn-1)
+
+   do l = 1, lmax
+    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+    cg%A(1,l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
+                  * sinc(j)*dxi2(j)*dxi3(k) &
+                  + ( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i)*dxi3(k) &
+                  + ( idx3(k)+idx3(k-1) )*dxi1(i)*dxi2(j) )
+    cg%A(2,l) = xi1(i)**2 *sinc(j)*dxi2(j)*dxi3(k)/dx1(i+1)
+    cg%A(3,l) = sini(j)*dxi1(i)*dxi3(k)/dx2(j+1)
+    cg%A(4,l) = dxi1(i)*dxi2(j)/dx3(k+1)
+    cg%A(5,l) = dxi1(i)*dxi2(j)/dx3(k  )
+    if(eq_sym.and.j==je)then ! for Neumann boundary at bc2o (equatorial symmetry)
+     cg%A(1,l) = cg%A(1,l) + cg%A(3,l)
+    end if
+    if(i==is.and.xi1s>0d0)cg%A(1,l) = cg%A(1,l) &
+                                     + xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(i==ie)cg%A(2,l) = 0d0
+    if(j==je)cg%A(3,l) = 0d0
+    if(k==ke)cg%A(4,l) = 0d0
+    if(k/=ks)cg%A(5,l) = 0d0
+
+   end do
+
+! Pre-conditioner matrix with ICCG(1,1) method
+   cg%cdiags = 5
+   allocate(cg%ic(1:cg%cdiags),cg%c(1:cg%cdiags,1:lmax))
+   cg%ic(1) = 0
+   cg%ic(2) = 1
+   cg%ic(3) = in
+   cg%ic(4) = in*jn
+   cg%ic(5) = in*jn*(kn-1)
+   cg%alpha = 0.999d0 ! No modification
+  end if
+
+ end select
+
+ call get_preconditioner(cg)
+
+return
+end subroutine setup_grvcg
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -691,124 +766,23 @@ subroutine gravsetup
  use constants,only:huge
  use grid
  use gravmod
-  
+ use miccg_mod,only:cg_grv
+
  integer:: l,gin
  real(8):: h
 
 !-----------------------------------------------------------------------------
- gin = gie-gis+1
-
- if(gravswitch==2.or.gravswitch==3)then
-! Extracting i and j from l
-  do l = 1, lmax
-   modlimax(l) = mod(l,gin)
-   if(modlimax(l)==0) modlimax(l) = gie
-  end do
-
-! Constructing matrix A
-!  2D cylindrical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  if(je==1.and.crdnt==1.and.dim==2)then
-  
-   do l = 1,lmax-gin ! calculating diagonal elements
-    i = modlimax(l) +gis-1
-    k = (l-modlimax(l))/gin + gks
-    a1(l) = - ( xi1(i)/dx1(i+1) + xi1(i-1)/dx1(i) &
-              + 2d0*x1(i)*dxi1(i) / (dx3(k)*dx3(k+1)) ) &
-            * ( (dx3(k)+dx3(k+1)) / 2d0 )
-    a2(l) = xi1(i)*(dx3(k)+dx3(k+1))/2d0/dx1(i+1)
-    a3(l) = x1(i)*dxi1(i)/dx3(k+1)
-    if(mod(l,gin)==0)a2(l)=0d0
-   end do
-
-   do l=lmax-gin+1,lmax-1 ! k+1 line disappears
-    i = modlimax(l) +gis-1
-    k = (l-modlimax(l))/gin + gks
-    a1(l) = -( xi1(i)/dx1(i+1) + xi1(i-1)/dx1(i) &
-             + 2d0*x1(i)*dxi1(i)/(dx3(k)*dx3(k+1)) ) &
-          * ( (dx3(k)+dx3(k+1))/2.d0 )
-    a2(l) = xi1(i)*(dx3(k)+dx3(k+1))/2d0/dx1(i+1)
-    a3(l) = 0d0
-    if(mod(l,gin)==0)a2(l)=0.0d0
-   end do
-
-   i = modlimax(lmax) +gis-1 ! i+1 line disappears
-   k = (lmax-modlimax(lmax))/gin + gks
-   a1(lmax) = -(xi1(i)/dx1(i+1)+xi1(i-1)/dx1(i) &
-               +2d0*x1(i)*dxi1(i)/(dx3(k)*dx3(k+1))) &
-               *((dx3(k)+dx3(k+1))/2d0)
-   a2(lmax) = 0d0
-   a3(lmax) = 0d0
-
-   if(eq_sym)then ! for Neumann boundary at bc3i (equatorial symmetry)
-    do l = 1, lmax
-     i = modlimax(l) +gis-1
-     k = (l-modlimax(l))/gin + gks
-     if(k==ks)then
-      a1(l) = a1(l) + x1(i)*dxi1(i)/dx3(k+1)
-     end if
-    end do
-   end if
-
-   call mic
-
-! 2D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  elseif(ke==1.and.crdnt==2.and.dim==2)then
-  
-   do l = 1,lmax-gin ! calculating diagonal elements
-    i = modlimax(l) +gis-1
-    j = (l-modlimax(l))/gin + gjs
-    a1(l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
-            * sinc(j)*dxi2(j) &
-            +( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
-    a2(l) = xi1(i)**2 *sinc(j)*dxi2(j)/dx1(i+1)
-    a3(l) = sini(j)*dxi1(i)/dx2(j+1)
-    if(i==gis.and.xi1s>0d0)a1(l)=a1(l)+xi1(i-1)**2*sinc(j)*dxi2(j)/dx1(i)
-    if(i==gie)a2(l)=0d0
-   end do
-
-   do l=lmax-gin+1,lmax-1 ! j+1 line disappears
-    i = modlimax(l) +gis-1
-    j = (l-modlimax(l))/gin + gjs
-    a1(l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
-            * sinc(j)*dxi2(j) &
-            +( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
-    a2(l) = xi1(i)**2 *sinc(j)*dxi2(j)/dx1(i+1)
-    a3(l) = 0d0
-    if(i==gis.and.xi1s>0d0)a1(l)=a1(l)+xi1(i-1)**2*sinc(j)*dxi2(j)/dx1(i)
-    if(i==gie)a2(l)=0d0
-   end do
-
-   i = modlimax(lmax) +gis-1 ! i+1 line disappears
-   j = (lmax-modlimax(lmax))/gin + gjs
-   a1(lmax) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
-               * sinc(j)*dxi2(j) &
-               +( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
-   a2(lmax) = 0d0
-   a3(lmax) = 0d0
-
-   if(eq_sym)then ! for Neumann boundary at bc2o (equatorial symmetry)
-    do l = 1, lmax
-     i = modlimax(l) +gis-1
-     j = (l-modlimax(l))/gin + gjs
-     if(j==je)then
-      a1(l) = a1(l) + sini(j)*dxi1(i)/dx2(j+1)
-     end if
-    end do
-   end if
-
-
-   call mic
-
-  end if
 
 ! set initial x0
 
-  if(tn==0.and.maxval(grvphi(gis:gie,gjs:gje,gks:gke))==0d0) grvphi = -1d3
+ if(tn==0.and.maxval(grvphi(gis:gie,gjs:gje,gks:gke))==0d0) grvphi = -1d3
 
-  if(tn==0) dt_old = dt
+ if(tn==0) dt_old = dt
 
+ if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+  call setup_grvcg(gis,gie,gjs,gje,gks,gke,cg_grv)
  end if
-
+ 
 ! For Hyperbolic gravity solver ----------------------------------------------
  if(gravswitch==3)then
 ! for axisymmetric cylindrical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1006,69 +980,6 @@ subroutine gravsetup
  end if
 
  return
-
-contains
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                             SUBROUTINE MIC
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: Modified Incomplete Cholesky Decomposition (1,2)
-
- subroutine mic
-
-  use grid,only:ie
-  use gravmod
-
-  implicit none
-
-  real(8):: micpara
-  integer:: gin
-
-!----------------------------------------------------------------------------
-
-  gin = gie-gis+1
-
-  micpara = 0.95d0 ! Should be set <1
-
-! l=1
-  preca(1) = a1(1)
-  precb(1) = a2(1)
-  precc(1) = a3(1)
-  prece(1) = 0d0
-  precd(1) = 1d0/preca(1)
-
-  do l=2,gie-gis!ie-1
-   preca(l) = a1(l) - precb(l-1)**2 *precd(l-1) &
-            - micpara*precb(l-1)*prece(l-1)*precd(l-1)
-   precb(l) = a2(l)
-   precc(l) = a3(l)
-   prece(l) =-a3(l-1)*precb(l-1)*precd(l-1)
-   precd(l) = 1d0/preca(l) 
-  end do
-
-! l=gin
-   preca(gin) = a1(gin) - precb(gin-1)**2 *precd(gin-1) &
-                        - prece(    1)**2 *precd(    1) &
-              - micpara*precb(gin-1)*prece(gin-1)*precd(gin-1)
-   precb(gin) = a2(gin) - a3(1)*prece(1)*precd(1)
-   precc(gin) = a3(gin)
-   prece(gin) =-a3(gin-1)*precb(gin-1)*precd(gin-1)
-   precd(gin) = 1d0/preca(gin) 
-
-  do l=gin+1,lmax
-   preca(l) = a1(l) - precb(l-1)**2 *precd(l-1) - a3(l-gin)**2 *precd(l-gin) &
-                    - prece(l-gin+1)**2 *precd(l-gin+1)&
-                    - micpara*(precb(l-1)     *prece(l-1)     *precd(l-1)&
-                           + precb(l-gin+1)*prece(l-gin+1)*precd(l-gin+1))
-   precb(l) = a2(l) - a3(l-gin+1)*prece(l-gin+1)*precd(l-gin+1)
-   precc(l) = a3(l)
-   prece(l) =-a3(l-1)*precb(l-1)*precd(l-1)
-   precd(l) = 1d0/preca(l)
-  end do
-
-return
-end subroutine mic
 
 end subroutine gravsetup
 
