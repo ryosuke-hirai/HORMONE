@@ -83,7 +83,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
- real(8),allocatable,dimension(:)::gpot
+ real(8),allocatable,dimension(:)::gpot,Vshell
  integer::lines,nn,sn
  real(8):: mass, radius
  real(8):: mnow,rnow,volfac
@@ -120,16 +120,22 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   end do
  end do
 
+ allocate(Vshell(is:ie))
+ do i = is, ie
+  Vshell(i) = sum(dvol(i,js:je,ks:ke))
+ end do
+ 
  if(eq_sym)then
   volfac=2d0
  else
   volfac=1d0
  end if
- 
+
+!$omp parallel do collapse(3) private(i,j,k,n,nn,sn)
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    d(i,j,k) = (mc(i)-mc(i-1))/(volfac*sum(dvol(i,js:je,ks:ke)))
+    d(i,j,k) = (mc(i)-mc(i-1))/(volfac*Vshell(i))
     if(x1(i)<r(1))then
      p(i,j,k) = pres(1)
      if(compswitch==2)then
@@ -167,7 +173,8 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
    end do
   end do
  end do
- 
+!$omp end parallel do
+
 !!$ p(ie+1,js:je,ks:ke) = 1d-99
 !!$ do i = ie, is, -1
 !!$  p(i,js:je,ks:ke) = p(i+1,js:je,ks:ke) + G*mc(i)*max(d(i,js,ks),rho(lines)*1d-5)/xi1(i)**2*dx1(i+1)
