@@ -20,15 +20,14 @@ subroutine gravity
  use gravmod
  use gravbound_mod
  use utils,only:masscoordinate
- use miccg_mod,only:cg_grv,miccg,ijk_from_l,l_from_ijk
+ use miccg_mod,only:cg=>cg_grv,miccg,ijk_from_l,l_from_ijk
  use omp_lib
 
  integer:: l, flgcg, gin, gjn, gkn, tngrav, grungen, jb, kb
- real(8):: rr, rrold, pAp, alpha, beta, phih, cgrav2, dtgrav, mind, h
- real(8),dimension(1:lmax):: pp, absrob
+ real(8):: phih, cgrav2, dtgrav, mind, h
  real(8),allocatable,dimension(:,:,:):: lapphi,newphi
  real(8),allocatable,dimension(:):: intphi
- real(8),allocatable,dimension(:):: x,y,z,r,aw,gsrc
+ real(8),allocatable,dimension(:):: x,y,z,r,gsrc
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
@@ -42,7 +41,7 @@ subroutine gravity
  gkn = gke - gks + 1
 
  if(gravswitch==2.or.(gravswitch==3.and.tn==0.and.dim==2))then
-  allocate( x(1:lmax), gsrc(1:lmax) )
+  allocate( x(1:cg%lmax), gsrc(1:cg%lmax) )
  
   if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -60,8 +59,8 @@ subroutine gravity
     hgsrc=mind
    end if
 !$omp parallel do private(i,j,k,l)
-   do l = 1, lmax
-    call ijk_from_l(l,gis,gjs,gks,gin,gjn,gkn,i,j,k)
+   do l = 1, cg%lmax
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
     x(l) = grvphi(i,j,k)
     gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
     if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
@@ -75,12 +74,12 @@ subroutine gravity
 
 ! spherical (axial symmetry) #################################################
   elseif(crdnt==2.and.dim==2)then
-
+print*,'kita'
 ! calculating b for Ax=b
    mind = minval(d(is:ie,js:je,ks:ke))
 !$omp parallel do private(i,j,k,l)
-   do l=1,lmax
-    call ijk_from_l(l,gis,gjs,gks,gin,gjn,gkn,i,j,k)
+   do l=1,cg%lmax
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
     x(l) = grvphi(i,j,k)
     gsrc(l) = 4d0*pi*G*mind*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
     if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
@@ -99,8 +98,8 @@ subroutine gravity
 ! calculating b for Ax=b
    mind = minval(d(is:ie,js:je,ks:ke))
 !$omp parallel do private(i,j,k,l)
-   do l=1,lmax
-    call ijk_from_l(l,gis,gjs,gks,gin,gjn,gkn,i,j,k)
+   do l=1,cg%lmax
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
     x(l) = grvphi(i,j,k)
     gsrc(l) = 4d0*pi*G*mind*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k)
     if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
@@ -115,7 +114,7 @@ subroutine gravity
 !$omp end parallel do
   end if
 
-  call miccg(cg_grv,gsrc,x)
+  call miccg(cg,gsrc,x)
 
 !-------------------------------------------------------------------------
 
@@ -638,6 +637,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
  case(2) ! 2D
 ! 2D cylindrical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if(crdnt==1.and.je==js.and.ke>ks)then
+
    cg%Adiags = 3
    allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
    cg%ia(1) = 0
@@ -658,7 +658,6 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
     if(eq_sym.and.k==ks)then! for Neumann boundary at bc3i (equatorial symmetry)
      cg%A(1,l) = cg%A(1,l) + x1(i)*dxi1(i)/dx3(k+1)
     end if
-  
    
    end do
 

@@ -14,8 +14,9 @@ module settings
  integer:: bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov
  logical:: eq_sym, dirichlet_on
 ! numerical setups
- integer:: rktype, crdnt, tnlim, gravswitch, start, tn_out, outstyle, endstyle
- integer:: eostype, spn, compswitch, sigfig, outres, gbtype, maxptc
+ integer:: rktype, crdnt, tnlim, start, tn_out, outstyle, endstyle
+ integer:: gravswitch, compswitch, radswitch
+ integer:: eostype, spn, sigfig, outres, gbtype, maxptc
  real(8):: courant, t_end, dt_out, dt_unit_in_sec
  character(len=5):: dt_unit
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl
@@ -28,9 +29,9 @@ module settings
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
 ! profiler
- real(8):: wtime(0:11)
+ real(8):: wtime(0:12)
  integer,parameter::iini=1,iflx=2,irng=3,ibnd=4,isrc=5,iint=6,&
-                    ieos=7,itim=8,igrv=9,iout=10,isho=11,itot=0
+                    ieos=7,itim=8,igrv=9,iout=10,isho=11,irad=12,itot=0
 
 end module settings
 
@@ -122,12 +123,9 @@ module gravmod
 
   implicit none
 
-  integer:: lmax
   integer,parameter:: llmax = 1000
-  integer,allocatable,dimension(:):: modlimax
   real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold, grvphidot
   real(8),allocatable,dimension(:,:,:,:):: grvphiorg
-  real(8),allocatable,dimension(:):: a1,a2,a3, preca, precb, precc, precd, prece
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc
   real(8),allocatable,dimension(:,:):: phiio, phiii, phi1o, phi3i, phi3o

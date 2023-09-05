@@ -67,8 +67,8 @@ subroutine miccg(cg,b,x)
  main_loop: do n = 1, lmax
 
 !!$!$omp master
-  aaa = maxloc(r/b)
-  print*,n,norm2(r/b)/sqrt(dble(size(r))),aaa(1),maxval(r/b)
+!!$  aaa = maxloc(r/b)
+!!$  print*,n,norm2(r/b)/sqrt(dble(size(r))),aaa(1),maxval(r/b)
 !!$!$omp end master
   call Apk(cg,p,q) ! q=Ap_k
 
@@ -271,9 +271,9 @@ subroutine get_preconditioner(cg)
 !-----------------------------------------------------------------------------
 
 ! Calculate pre-conditioner matrix elements
-!$omp parallel do private(l,ll,ld,m,n,i,found)
- do l = 1, cg%lmax
 
+!$omp parallel do private(l,ll,ld)
+ do l = 1, cg%lmax
   do ll = 1, cg%cdiags
    cg%c(ll,l) = 0d0
    do ld = 1, cg%adiags
@@ -282,6 +282,10 @@ subroutine get_preconditioner(cg)
     end if
    end do
   end do
+ end do
+!$omp end parallel do
+ 
+ do l = 1, cg%lmax
 
   do ll = 2, cg%cdiags
    m = cg%ic(ll)
@@ -291,18 +295,17 @@ subroutine get_preconditioner(cg)
      found = .false.
      find_eq_loop:do i = 1, cg%cdiags
       if(cg%ic(i)==n-m)then
-       cg%c(i,l) = cg%c(i,l) - cg%c(ll,l-m)*cg%c(ld,l-m) &
-                                      /cg%c(1,l-m)
+       cg%c(i,l) = cg%c(i,l) - cg%c(ll,l-m)*cg%c(ld,l-m)/cg%c(1,l-m)
        found = .true.
        exit find_eq_loop
       end if
      end do find_eq_loop
      if(.not.found)then
       cg%c(1,l) = cg%c(1,l) &
-       - cg%alpha*cg%c(ll,l-m)*cg%c(ld,l-m)/cg%c(1,l-m)
+                - cg%alpha*cg%c(ll,l-m)*cg%c(ld,l-m)/cg%c(1,l-m)
       if(l>n)then
        cg%c(1,l) = cg%c(1,l) &
-        - cg%alpha*cg%c(ll,l-n)*cg%c(ld,l-n)/cg%c(1,l-n)
+                 - cg%alpha*cg%c(ll,l-n)*cg%c(ld,l-n)/cg%c(1,l-n)
       end if
      end if
     end do
@@ -311,7 +314,7 @@ subroutine get_preconditioner(cg)
   end do
 
  end do
-!$omp end parallel do
+
 
 return
 end subroutine get_preconditioner
