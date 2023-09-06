@@ -13,7 +13,7 @@ contains
 
  subroutine numflux
 
-  use settings,only:compswitch,spn,eq_sym,eostype,mag_on,wtime,iflx
+  use settings,only:compswitch,spn,eq_sym,eostype,mag_on,wtime,iflx,fluxbound_on
   use grid
   use physval
   use hllflux_mod
@@ -50,7 +50,7 @@ contains
    do k = ks,ke
     do j = js,je
      do i = is-1, ie
-!      if(k==ks-1.or.k==ke+1.or.j==js-1.or.j==je+1.or.i==ie+1)cycle
+
       dx(1) = xi1(i)-x1(i) ; dx(2) = x1(i+1)-xi1(i)
 
       dl = d(i  ,j,k) + dx(1) * dd(i  ,j,k,1)
@@ -501,6 +501,8 @@ contains
   if(je<=2.and.crdnt==2)flux2=0d0
   if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 
+  if(fluxbound_on)call fluxboundary
+  
   wtime(iflx) = wtime(iflx) + omp_get_wtime()
 
   return

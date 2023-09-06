@@ -33,6 +33,7 @@ subroutine boundarycondition
 !  4: Linear Extrapolation
 !  5: Linear Extrapolation but Outgoing (only for vectors)
 !  9: Dirichlet b.c. (boundary values should be given elsewhere!)
+! 10: Flux b.c. (flux values should be given elsewhere!)
 
  wtime(ibnd) = wtime(ibnd) - omp_get_wtime()
  

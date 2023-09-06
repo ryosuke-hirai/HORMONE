@@ -114,9 +114,16 @@ subroutine checksetup
      bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
    dirichlet_on = .true.
   end if
-  
+
+! Set flag if any boundary is set to flux boundary condition
+  fluxbound_on = .false.
+  if(bc1is==10.or.bc1os==10.or.bc2is==10.or.bc2os==10.or.bc3is==10.or.bc3os==10.or.&
+     bc1iv==10.or.bc1ov==10.or.bc2iv==10.or.bc2ov==10.or.bc3iv==10.or.bc3ov==10)then
+   fluxbound_on = .true.
+  end if
+
 ! check CFL condition
-  if(courant>1.d0)then
+  if(courant>1d0)then
    print *,"Error from courant number, courant = ",courant
    print *,"courant number should be <= 1.0"
    stop
