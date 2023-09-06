@@ -21,8 +21,6 @@ subroutine allocations
 
 !-----------------------------------------------------------------------------
 
- lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
-
 ! 1 dimensional arrays
 ! grid-related variables
  allocate(x1(gis-2:gie+2))!; x1=0d0
@@ -130,12 +128,8 @@ subroutine allocations
    end do
   end do
 !$omp end parallel do
-!  grvphi=0d0;grvphiold=0d0!;hgsrc=1d0
   
-!  for MICCG method
-  allocate(modlimax(1:lmax)); modlimax=0d0
-  allocate(a1(0:lmax)); a1=0d0
-  allocate(a2,a3,preca,precb,precc,precd,prece,source=a1)
+
 !  for gravbound
   allocate(phiio(gie+1:gie+2,gjs-2:gje+2), phiii(gis-2:gis-1,gjs-2:gje+2), &
            phi1o(gie+1:gie+2,gks-2:gke+2), phi3i(gis-2:gie+2,gks-2:gks-1), &

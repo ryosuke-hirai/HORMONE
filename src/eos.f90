@@ -50,7 +50,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
     T = 0.95d0*T; Tdot=0d0;cycle
    end if
    corr = (eint-(arad*T**3+d*fac_egas*imu)*T-d*erec) &
-    / ( -4d0*arad*T**3-d*(fac_egas*(imu+dimurecdT*T)+derecdT) )
+        / ( -4d0*arad*T**3-d*(fac_egas*(imu+dimurecdT*T)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr

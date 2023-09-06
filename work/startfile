@@ -26,4 +26,5 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'windtunnel': Wind tunnel simulations
 'modify': Modify and restart from an existing binfile
 
-&startcon start=0 simtype='windtunnel' parafile=''/
+&startcon start=0 simtype='sodshock_x test' parafile=''/
+
