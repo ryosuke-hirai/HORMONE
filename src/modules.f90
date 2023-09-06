@@ -12,7 +12,7 @@ module settings
 ! boundary conditions
  integer:: bc1is, bc1os, bc2is, bc2os, bc3is, bc3os
  integer:: bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov
- logical:: eq_sym, dirichlet_on
+ logical:: eq_sym, dirichlet_on, fluxbound_on
 ! numerical setups
  integer:: rktype, crdnt, tnlim, gravswitch, start, tn_out, outstyle, endstyle
  integer:: eostype, spn, compswitch, sigfig, outres, gbtype, maxptc
