@@ -21,7 +21,7 @@ subroutine meanmolweight
  use gravmod,only:mc
  use utils,only:masscoordinate
 
- implicit none
+ integer:: i,j,k
 
 !-----------------------------------------------------------------------------
 

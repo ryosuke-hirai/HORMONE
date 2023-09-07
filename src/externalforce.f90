@@ -39,7 +39,7 @@ subroutine externalfield
  use physval,only:d,grv1,grv2,grv3
  use gravmod
 
- implicit none
+ integer:: i,j,k
 
 !-----------------------------------------------------------------------------
 

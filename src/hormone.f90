@@ -46,6 +46,7 @@ program hormone
   use dirichlet_mod
   use shockfind_mod
   use tests_mod
+
   use omp_lib
   
   implicit none
@@ -72,9 +73,8 @@ program hormone
   call checksetup
   call allocations
   call gridset
-  call tools
   call metric
-  call gravsetup
+  call tools
 
   call initialcondition
   if(dirichlet_on)call dirichletbound
@@ -90,7 +90,6 @@ program hormone
   call timestep
 
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
-
   if(tn==0)then
    call gravity
    call output

@@ -80,6 +80,7 @@ subroutine cooling
 
  implicit none
 
+ integer:: i,j,k,n
  real(8):: YY
 
 !-----------------------------------------------------------------------------

@@ -13,10 +13,11 @@ contains
 subroutine conserve
 
   use settings,only:mag_on
-  use grid
-  use physval
+  use grid,only:is,ie,js,je,ks,ke
+  use physval,only:u,d,e,v1,v2,v3,b1,b2,b3,phi,&
+                   icnt,imo1,imo2,imo3,iene,img1,img2,img3,idcl
 
-  implicit none
+  integer::i,j,k
 
 !---------------------------------------------------------------------------
 

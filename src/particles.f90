@@ -26,7 +26,7 @@ subroutine particles_setup
  use constants
  use ejectamod
 
- implicit none
+ integer:: i,j,k
 
 !-----------------------------------------------------------------------------
 
@@ -123,6 +123,7 @@ subroutine particles
 
  logical:: extflag
  real(8):: v1tmp1, v1tmp2, v2tmp1, v2tmp2, ptclr, ptclt
+ integer:: i,j,k,n
 
 !-----------------------------------------------------------------------------
 

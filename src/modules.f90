@@ -47,8 +47,8 @@ module grid
 ! number of grids
   integer:: is, ie, js, je, ks, ke
   integer:: gis, gie, gjs, gje, gks, gke
-  integer:: i,j,k,n,tn,dim
-  integer:: rungen, ufn
+  integer:: tn,dim
+  integer:: rungen
   integer:: musize,fmr_max,fmr_lvl(0:20)
 ! grid center = x, grid interface = xi
   real(8),allocatable,dimension(:):: x1, xi1, dx1, dxi1, idx1, idxi1

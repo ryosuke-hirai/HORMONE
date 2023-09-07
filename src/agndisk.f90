@@ -21,7 +21,7 @@ subroutine agndisk
  use composition_mod,only:get_imu
  use input_mod,only:error_extras,error_nml
 
- integer:: ui,istat
+ integer:: i,j,k,ui,istat
  real(8):: d_disk, d_amb, Eexp, Mexp, Rexp, Vexp, e_bcg, v0, t0, vedge, v0t0
  real(8):: M_SMBH, r_disk, rgrav, aspratio, hdisk, qkin, mass
 

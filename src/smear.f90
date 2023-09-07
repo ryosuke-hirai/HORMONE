@@ -13,14 +13,13 @@ contains
 
 subroutine smear
 
- use settings,only:compswitch,spn
- use grid
+ use grid,only:is,js,je,ks,ke,fmr_max,fmr_lvl,dim,crdnt
  use physval
  use composition_mod
 
  implicit none
 
- integer:: jb,kb
+ integer:: i,j,k,n,jb,kb
 
 !-----------------------------------------------------------------------------
 

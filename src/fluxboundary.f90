@@ -42,6 +42,7 @@ subroutine fluxboundary1i
  use grid
  use physval,only:flux1,spcflx
 
+ integer:: i,j,k
  real(8)::fix,signdflx
 
 !-----------------------------------------------------------------------------

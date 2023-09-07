@@ -34,7 +34,7 @@ subroutine miccg(cg,b,x)
  real(8),allocatable,intent(inout):: x(:)
  real(8),allocatable:: r(:),q(:),p(:)
  real(8):: alpha,beta,pAp,rr_old,rr,error
- integer:: n,l,lmax,i,j,k,aaa(1)
+ integer:: n,l,lmax!,aaa(1)
  logical:: converged
 
 !-----------------------------------------------------------------------------
@@ -147,8 +147,6 @@ end subroutine miccg
 ! PURPOSE: To calculate A*p_k
 
 subroutine Apk(cg,p,q)
-
- use settings,only:crdnt
 
  type(cg_set),intent(in):: cg
  real(8),allocatable,intent(in):: p(:)

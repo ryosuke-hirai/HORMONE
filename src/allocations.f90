@@ -19,6 +19,8 @@ subroutine allocations
  use gravmod
  use dirichlet_mod
 
+ integer::i,j,k,n
+
 !-----------------------------------------------------------------------------
 
 ! 1 dimensional arrays

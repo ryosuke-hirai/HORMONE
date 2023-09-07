@@ -114,7 +114,7 @@ subroutine blowup
  use pressure_mod,only:eos_p
  use gravmod,only:grvtime,grvphi,extgrv
 
- integer:: iinj
+ integer:: i,j,k,iinj
  real(8):: Ebind,Eexp,Rinj,rad,Mheat
  character(len=30)::startfile
  

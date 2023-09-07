@@ -25,10 +25,13 @@ subroutine initialcondition
  use sedov_mod
  use orszagtang_mod
  use KHtest_mod
+ use rad_box_mod
  use star_init_mod
  use redsupergiant_mod
  use agndisk_mod
  use modify_mod
+
+ integer:: i,j,k
 
 !----------------------------------------------------------------------------
 
@@ -51,6 +54,9 @@ subroutine initialcondition
 
   case('KHtest')
    call KHtest
+
+  case('rad_box')
+   call rad_box
 
   case('star_sph')
    call star_init

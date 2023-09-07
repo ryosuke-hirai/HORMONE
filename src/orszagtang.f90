@@ -17,7 +17,7 @@ subroutine orszagtang
   use physval
   use constants,only:pi
 
-  integer:: whichaxis
+  integer:: i,j,k,whichaxis
 !--------------------------------------------------------------------
 
   if(ke==ks)whichaxis=1

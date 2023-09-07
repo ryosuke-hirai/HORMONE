@@ -13,14 +13,6 @@ contains
 
  subroutine dirichletbound
 
-  use settings,only:mag_on
-  use grid
-  use ejectamod
-  use physval,only:d0,p0,v10,v20,v30,b10,b20,b30,spc0
-
-  real(8):: v0, mej
-  integer:: nn, mm
-
 !-----------------------------------------------------------------------------
 
   call ejecta_boundary
@@ -34,7 +26,7 @@ end subroutine dirichletbound
 !----------------------------------------------------------------------
 subroutine outgoingboundary(i_,j_)
 
-  use grid
+  use grid,only:ie,ks,ke
   use physval
 
   implicit none
@@ -45,8 +37,8 @@ subroutine outgoingboundary(i_,j_)
   do kk = ks,ke
    d0 (i_,j_,kk) = d(ie,j_,kk)
    p0 (i_,j_,kk) = p(ie,j_,kk)
-   v10(i_,j_,kk) = (sign(0.5d0,v1(i_,j,ke))+0.5d0)*v1(ie,j_,kk)
-   v20(i_,j_,kk) = (sign(0.5d0,v1(i_,j,ke))+0.5d0)*v2(ie,j_,kk)
+   v10(i_,j_,kk) = (sign(0.5d0,v1(i_,j_,ke))+0.5d0)*v1(ie,j_,kk)
+   v20(i_,j_,kk) = (sign(0.5d0,v1(i_,j_,ke))+0.5d0)*v2(ie,j_,kk)
    spc0(1:8,i_,j_,kk) = spc(1:8,ie,j_,kk)
   end do
 
@@ -56,7 +48,7 @@ end subroutine outgoingboundary
 !----------------------------------------------------------------------
 subroutine freeboundary(i_,m_)
 
-  use grid
+  use grid,only:js,je,ke
   use physval
 
   implicit none
@@ -92,7 +84,7 @@ subroutine ejecta_boundary
  implicit none
 
  real(8):: v0, mej
- integer:: nn, mm
+ integer:: i,j,k,nn, mm
 
 !-----------------------------------------------------------------------------
 
