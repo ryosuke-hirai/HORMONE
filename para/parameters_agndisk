@@ -1,7 +1,7 @@
 ----------------------------- parameters --------------------------------
-c i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
-c fmr_max   : Maximum levels of fixed mesh refinement
-c fmr_lvl(i): Number of layers in a given FMR level
+! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
+! fmr_max   : Maximum levels of fixed mesh refinement
+! fmr_lvl(i): Number of layers in a given FMR level
 &gridcon  xi1s=0d0 xi1e=2d16 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
 	  is=1 ie=900 js=1 je=200 ks=1 ke=1
 	  imesh=1 jmesh=2 kmesh=0
@@ -9,53 +9,51 @@ c fmr_lvl(i): Number of layers in a given FMR level
 	  fmr_max=4 fmr_lvl(1)=10 fmr_lvl(2)=20 fmr_lvl(3)=20 fmr_lvl(4)=20
 	  /
 
-c outstyle/endstyle : time=1, timestep=2
-c tnlim : Upper limit for number of timesteps (only when outstyle=2)
-c t_end : Upper limit for physical time (only when outstyle=1)
-c dt_out : Interval for output time (only when outstyle=1)
-c tn_out : Interval for output timesteps (only when outstyle=2)
-c dt_unit : Give name of dt_unit (current options are 'ms,'ns,'s','hr','d','yr')
-c sigfig : How many significant figures in output values
-c outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
-c write_other_vel : Set to .true. if 2.5D
-c write_shock : Output shock switch
-c write_evo : Output evofile
-c write_other_slice : Output an alternative slice for 3D
+! outstyle/endstyle : time=1, timestep=2
+! tnlim : Upper limit for number of timesteps (only when outstyle=2)
+! t_end : Upper limit for physical time (only when outstyle=1)
+! dt_out : Interval for output time (only when outstyle=1)
+! tn_out : Interval for output timesteps (only when outstyle=2)
+! dt_unit : Give name of dt_unit (current options are 'ms,'ns,'s','hr','d','yr')
+! sigfig : How many significant figures in output values
+! outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
+! write_other_vel : Set to .true. if 2.5D
+! write_shock : Output shock switch
+! write_evo : Output evofile
+! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
           tnlim=10000000 t_end=5d3 dt_out=1d0 tn_out=1
           dt_unit='hr' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.false. write_evo=.false./
 
-c eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
-c compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
-c muconst : mean molecular weight (if compswitch=0 or background)
-c spn : number of species (>=3)
+! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
+! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
+! muconst : mean molecular weight (if compswitch=0 or background)
+! spn : number of species (>=3)
 &eos_con eostype = 1 eoserr=1d-15 compswitch=2 muconst=0.62d0 spn=8 /
 
-c crdnt : cartesian:0,cylindrical:1,spherical:2
-c rktype: order of Runge-Kutta (1 is for Euler method)
-c mag_on: Whether or not to include magnetic fields
-c flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-c include_cooling: switch for cooling
-c include_extforce: switch for external force provided in externalforce
-c extrasfile: file containing model parameters
+! crdnt : cartesian:0,cylindrical:1,spherical:2
+! rktype: order of Runge-Kutta (1 is for Euler method)
+! mag_on: Whether or not to include magneti! fields
+! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
+! include_cooling: switch for cooling
+! include_extforce: switch for external force provided in externalforce
+! extrasfile: file containing model parameters
 &simucon  crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
           flux_limiter='modified_mc'
           include_cooling = .false.
   	  include_extforce= .false.
           extrasfile='extras' /
 
-c periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
-c Dirichlet:9(provide in dirichlet.f90)
-c eq_sym : Set to .true. for equatorial symmetry
+! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
+! Dirichlet:9(provide in dirichlet.f90)
+! eq_sym : Set to .true. for equatorial symmetry
 &bouncon  bc1is=1 bc1os=3 bc2is=1 bc2os=1 bc3is=0 bc3os=0
 	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.true. /
 
-c gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
-c grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
-c gbtype: 0=multipole expansion, 1=Robin boundary
+! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
+! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
+! gbtype: 0=multipole expansion, 1=Robin boundary
 &gravcon gravswitch=0 grverr=1d-5 cgerr=1d-5 HGfac=5d0 hgcfl=0.9d0 gbtype=0
 	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
-
-&partcon include_particles=.false. maxptc=0 /
