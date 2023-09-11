@@ -20,6 +20,7 @@ contains
   use pressure_mod
   use composition_mod
   use interpolation_mod
+  use fluxbound_mod
   use omp_lib
   
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
@@ -29,7 +30,7 @@ contains
   real(8),dimension(1:2):: dx
   real(8),dimension(1:spn):: spcl,spcr
   real(8):: signdflx,ul,ur,fl,fr,rinji
-  integer:: ierr
+  integer:: i,j,k,n,ierr
 
 !------------------------------------------------------------------------------
 
@@ -44,7 +45,7 @@ contains
 !$omp parallel
   if(ie/=is)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks,ke
@@ -165,8 +166,8 @@ contains
 !!$     end if
 
 
-      do ufn = 1,ufnmax
-       flux1(i,j,k,ufn) = tmpflux(ufn)
+      do n = 1,ufnmax
+       flux1(i,j,k,n) = tmpflux(n)
       end do
 
       if(compswitch>=2)then
@@ -192,7 +193,7 @@ contains
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(je/=js)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr) collapse(3)
    do k = ks,ke
     do j = js-1,je
@@ -346,7 +347,7 @@ contains
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(ke/=ks)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,ufn,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks-1,ke
@@ -519,9 +520,13 @@ contains
   integer,intent(in):: i,j,k,whichflux,ierr
 !-----------------------------------------------------------------------------
 
-  print'("i=",i5,", j=",i5,", k=",i5)',i,j,k
-  print'("In numflux",i2)',whichflux
-  stop
+  select case(ierr)
+  case(1)
+   print*,'Error in calculating pressure'
+   print'("i=",i5,", j=",i5,", k=",i5)',i,j,k
+   print'("In numflux",i2)',whichflux
+   stop
+  end select
 
   return
  end subroutine error_flux

@@ -558,12 +558,12 @@ end function get_p_from_ds
 
 subroutine pressure
 
- use settings,only:mag_on
- use grid
- use physval
+ use settings,only:mag_on,eostype
+ use grid,only:is,ie,js,je,ks,ke
+ use physval,only:p,ptot,b1,b2,b3,d,eint,T,imu,spc
 
  real(8):: bsq=0d0
- integer:: ierr
+ integer:: i,j,k
 
 !-----------------------------------------------------------------------------
 
@@ -621,13 +621,13 @@ end subroutine pressure
 
 subroutine internalenergy
 
- use grid
- use physval
+ use grid,only:is,ie,js,je,ks,ke
+ use physval,only:d,e,eint,v1,v2,v3,b1,b2,b3
 
  implicit none
 
  logical:: err=.false.
- integer:: ierr,erri,errj,errk
+ integer:: i,j,k,ierr,erri,errj,errk
 
 !-----------------------------------------------------------------------------
 

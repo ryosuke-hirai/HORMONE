@@ -102,6 +102,7 @@ subroutine evo_output
 
  implicit none
 
+ integer:: i,j,k
  character(len=50):: forme
  real(8):: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot, Mbound, Ebound, Jbound
 
@@ -244,7 +245,7 @@ subroutine write_grid
  implicit none
 
  character(len=50):: formhead,formval,formnum
- integer:: ui
+ integer:: i,j,k,ui
 
 !-----------------------------------------------------------------------------
 
@@ -509,7 +510,7 @@ end subroutine write_bin
 subroutine write_plt
 
  use settings
- use grid,only:n,i,j,k,is,ie,js,je,ks,ke,time,tn,dim
+ use grid,only:is,ie,js,je,ks,ke,time,tn,dim
  use utils,only:gravpot1d
  use shockfind_mod,only:shockfind
 
@@ -517,7 +518,7 @@ subroutine write_plt
 
  character(len=50):: pltfile
  character(len=20):: header(50)='aaa',forma,forme,formi
- integer:: ui,columns
+ integer:: i,j,k,n,ui,columns
 
 !-----------------------------------------------------------------------------
 
@@ -848,7 +849,7 @@ end subroutine write_ptc
 
 subroutine write_bpt
 
- use settings,only:outstyle,include_particles
+ use settings,only:include_particles
  use grid,only:tn,time
  use particle_mod
 
@@ -903,6 +904,7 @@ subroutine profiler_output
  write(ui,form1)'|- Timestep    :',wtime(itim),'s',wtime(itim)/wtime(itot)*1d2,'%'
  write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
  write(ui,form1)'Gravity        :',wtime(igrv),'s',wtime(igrv)/wtime(itot)*1d2,'%'
+ write(ui,form1)'Radiation      :',wtime(irad),'s',wtime(irad)/wtime(itot)*1d2,'%'
  write(ui,form1)'Output         :',wtime(iout),'s',wtime(iout)/wtime(itot)*1d2,'%'
  write(ui,form1)'Shockfind      :',wtime(isho),'s',wtime(isho)/wtime(itot)*1d2,'%'
  write(ui,'(a)')'---------------------------------------------'

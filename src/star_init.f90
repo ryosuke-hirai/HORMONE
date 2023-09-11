@@ -25,7 +25,7 @@ subroutine star_init
  real(8),allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
  character(len=10)::spc_list(1:1000)
- integer::nn,sn,istat
+ integer::i,j,k,nn,sn,istat
  real(8)::dbg,mass,radius,spc_bg(1:spn)
  
 !-----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ subroutine star_init
 
  mass = m(size(m)-1)
  radius = r(size(r)-1)
- dbg = rho(size(rho)-1)*1d-5
+ dbg = rho(size(rho)-1)*1d-0
 
 ! Use outermost composition as the ambient gas composition
  do nn = 1, spn-1

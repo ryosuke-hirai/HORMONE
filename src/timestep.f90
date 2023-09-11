@@ -21,7 +21,7 @@ contains
 
   real(8),allocatable:: dti(:,:,:)
   real(8):: cfmax0,cfmax
-  integer:: ierr, jb,kb
+  integer:: i,j,k,n,jb,kb
   
 !-------------------------------------------------------------------------
 

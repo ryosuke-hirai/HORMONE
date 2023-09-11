@@ -1,6 +1,9 @@
 module gravity_mod
  implicit none
 
+ public:: gravity,gravsetup
+ private:: setup_grvcg
+
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -23,11 +26,11 @@ subroutine gravity
  use miccg_mod,only:cg=>cg_grv,miccg,ijk_from_l,l_from_ijk
  use omp_lib
 
- integer:: l, flgcg, gin, gjn, gkn, tngrav, grungen, jb, kb
+ integer:: i,j,k,n,l, flgcg, gin, gjn, gkn, tngrav, grungen, jb, kb
  real(8):: phih, cgrav2, dtgrav, mind, h
  real(8),allocatable,dimension(:,:,:):: lapphi,newphi
  real(8),allocatable,dimension(:):: intphi
- real(8),allocatable,dimension(:):: x,y,z,r,gsrc
+ real(8),allocatable,dimension(:):: x, gsrc
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
@@ -74,7 +77,7 @@ subroutine gravity
 
 ! spherical (axial symmetry) #################################################
   elseif(crdnt==2.and.dim==2)then
-print*,'kita'
+
 ! calculating b for Ax=b
    mind = minval(d(is:ie,js:je,ks:ke))
 !$omp parallel do private(i,j,k,l)
@@ -761,13 +764,13 @@ end subroutine setup_grvcg
 
 subroutine gravsetup
   
- use settings,only:eq_sym,courant
+ use settings,only:courant
  use constants,only:huge
  use grid
  use gravmod
  use miccg_mod,only:cg_grv
 
- integer:: l,gin
+ integer:: i,j,k
  real(8):: h
 
 !-----------------------------------------------------------------------------

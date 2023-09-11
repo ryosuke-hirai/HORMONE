@@ -17,6 +17,7 @@ module settings
  integer:: rktype, crdnt, tnlim, start, tn_out, outstyle, endstyle
  integer:: gravswitch, compswitch, radswitch
  integer:: eostype, spn, sigfig, outres, gbtype, maxptc
+ integer:: opacitytype, lambdatype
  real(8):: courant, t_end, dt_out, dt_unit_in_sec
  character(len=5):: dt_unit
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl
@@ -46,8 +47,8 @@ module grid
 ! number of grids
   integer:: is, ie, js, je, ks, ke
   integer:: gis, gie, gjs, gje, gks, gke
-  integer:: i,j,k,n,tn,dim
-  integer:: rungen, ufn
+  integer:: tn,dim
+  integer:: rungen
   integer:: musize,fmr_max,fmr_lvl(0:20)
 ! grid center = x, grid interface = xi
   real(8),allocatable,dimension(:):: x1, xi1, dx1, dxi1, idx1, idxi1

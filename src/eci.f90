@@ -21,7 +21,7 @@ subroutine eci
 
  real(8):: mass, radius, dbg, corerad, c1, c2, c3, rhoh, rhoph, Mdot, vwind, mej
  real(8):: mnow, mold, rnow, shellv, shelld, dr, rsoft, msoft, shellp
- integer:: nn, ii, lines, rows
+ integer:: i,j,k,n,nn, ii, lines, rows
  character(10000):: dumc
  character(30),allocatable:: header(:),dum(:)
  real(8),allocatable,dimension(:,:):: dat, comp

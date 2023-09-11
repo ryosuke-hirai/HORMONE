@@ -19,7 +19,7 @@ subroutine gridset
   use utils,only:geometrical_series
   use readbin_mod,only:readgrid
   
-  integer::jetmp,ketmp
+  integer::i,j,k,jetmp,ketmp
 
 !-------------------------------------------------------------------------
 

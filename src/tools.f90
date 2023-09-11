@@ -5,7 +5,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                              SUBROUTINE TOOLS
+!                            SUBROUTINE TOOLS
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -13,52 +13,25 @@ contains
 
 subroutine tools
 
- use settings
- use grid
- use physval
- use gravmod
- use constants
- use particle_mod
- use pressure_mod
- use ejectamod
+ use settings,only:crdnt,gravswitch,radswitch,include_cooling,eostype,compswitch
+ use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_lvl
+ use physval,only:gamma,imu,spc,muconst,species
+ use gravmod,only:llmax,Plc,Pl
+ use constants,only:fac_egas,fac_pgas,kbol,amu
  use ionization_mod,only:ionization_setup
  use cooling_mod,only:cooling_setup
- 
- integer:: ll
+ use gravity_mod,only:gravsetup
+ use radiation_mod,only:radiation_setup
+
+ integer:: i,j,k,ll
 
 !-----------------------------------------------------------------------------
 
-! ************************ Trigonometric Function ****************************
-
-! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- if(crdnt==1)then
-!   allocate( rdis(-1:in,-1:kn), sincyl(-1:in,-1:kn),coscyl(-1:in,-1:kn) )
-  allocate( rdis(-1:gie+2,gks-2:gke+2), &
-            sincyl(-1:gie+2,gks-2:gke+2),coscyl(-1:gie+2,gks-2:gke+2) )
-  do i = gis-1, gie+2
-   do k = gks-2, gke+2
-    rdis(i,k) = sqrt( x1(i)**2+x3(k)**2 )
-    sincyl(i,k) = x1(i)/rdis(i,k)
-    coscyl(i,k) = x3(k)/rdis(i,k)
-   end do
-  end do
- end if
-
-! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- if(crdnt==2)then
-  allocate( sinc, sini, cosc, cosi, mold=x2 )
-  do j = js-2, je+2
-   sinc(j)=sin(x2 (j))
-   sini(j)=sin(xi2(j))
-   cosc(j)=cos(x2 (j))
-   cosi(j)=cos(xi2(j))
-  end do
- end if
-
 ! ************************* Legendre polynomials *****************************
 
+ select case(crdnt)
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- if(crdnt==1)then
+ case(1)
   allocate( Plc(0:llmax,gis:gie+2,gks-2:gke+2) )
   do k = gks-2, gke+2
    do i = gis, gie+2
@@ -72,10 +45,9 @@ subroutine tools
     end do
    end do
   end do
- end if
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- if(crdnt==2)then
+ case(2)
   allocate( Pl(0:llmax,js-1:je+1) )
   do j=js-1,je+1
    Pl(0,j) = 1d0
@@ -87,7 +59,8 @@ subroutine tools
                -  dble(ll-1)          *Pl(ll-2,j)) /dble(ll)
    end do
   end do
- end if
+
+ end select
 
 ! reading composition data from datafile ! --------------------------------
 !!$ open(unit=40,file='17lateRSG.data',status='old')
@@ -165,21 +138,25 @@ subroutine tools
  end if
 
 ! EoS parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- gamma = 5.d0/3.d0 ! for EoS
+ gamma = 5d0/3d0 ! for EoS
  fac_egas = kbol/((gamma-1d0)*amu) ! frequently used factor for egas
  fac_pgas = kbol/amu ! frequently used factor for Pgas
  imu(is-2:ie+2,js-2:je+2,ks-2:ke+2) = 1d0/muconst
 
- if(eostype==2)then
-  call ionization_setup
- end if
+ if(eostype==2) call ionization_setup
 
 ! Set cooling parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if(include_cooling) call cooling_setup
 
 ! Set Fixed Mesh Refinement parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  fmr_lvl(0) = 0
- 
+
+! Set gravity parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ if(gravswitch>0) call gravsetup
+
+! Set radiation parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ if(radswitch>0) call radiation_setup
+
 return
 end subroutine tools
 

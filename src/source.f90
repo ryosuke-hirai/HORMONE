@@ -20,7 +20,9 @@ subroutine source
  use gravmod
  use externalforce_mod
  use omp_lib
- 
+
+ integer:: i,j,k,n
+
 !----------------------------------------------------------------------------
 
  wtime(isrc) = wtime(isrc) - omp_get_wtime()
@@ -216,6 +218,7 @@ subroutine phidamp
  use grid
  use physval,only:phi
 
+ integer:: i,j,k
  real(8):: alpha9wave
 
 !-----------------------------------------------------------------------------

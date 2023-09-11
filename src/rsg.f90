@@ -29,7 +29,7 @@ subroutine redsupergiant
  real(8),allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
  character(len=10)::spc_list(1:1000)
- integer:: istat,nn,sn,ih1,ihe4
+ integer:: i,j,k,istat,nn,sn,ih1,ihe4
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const
  real(8),allocatable:: comptmp(:)
  logical::isentropic

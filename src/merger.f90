@@ -32,7 +32,7 @@ contains
   use pressure_mod
   use output_mod
 
-  implicit none
+  integer:: i,j,k
 
 !-----------------------------------------------------------------------------
 
@@ -104,7 +104,7 @@ subroutine merger
  use physval
  use gravmod
 
- implicit none
+ integer:: i,j,k
 
 !-----------------------------------------------------------------------------
 

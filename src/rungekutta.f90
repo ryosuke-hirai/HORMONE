@@ -20,6 +20,7 @@ contains
   use smear_mod
   use omp_lib
 
+  integer:: i,j,k,n,ufn
   real(8):: faco,fact,facn
 
 !-----------------------------------------------------------------------
@@ -127,6 +128,8 @@ contains
   use grid
   use physval
 
+  integer:: i,j,k,ufn
+
 !--------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,ufn) collapse(4)
@@ -165,7 +168,9 @@ contains
   use physval
   use pressure_mod,only:pressure
   use composition_mod,only:meanmolweight
-  
+
+  integer:: i,j,k
+
 !--------------------------------------------------------------------
   
 !$omp parallel do private(i,j,k) collapse(3)

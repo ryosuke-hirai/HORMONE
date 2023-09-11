@@ -235,24 +235,25 @@ end subroutine geometrical_series
 
 subroutine gravpot1d
 
- use grid
+ use grid,only:is,ie,js,je,ks,ke,x1,dxi1,dvol
  use constants,only:pi,G
  use physval,only:d
- use gravmod
+ use gravmod,only:grvphi,mc
 
- implicit none
+ integer:: i,n
 
 !-----------------------------------------------------------------------------
 
- j = js ; k = ks
  do i = is, ie-1
-  grvphi(i,js:je,k) = 0d0
+  grvphi(i,js:je,ks:ke) = 0d0
   do n = i+1, ie
-   grvphi(i,js:je,k) = grvphi(i,js:je,k) - sum(d(n,js:je,k)*dvol(n,js:je,k))/sum(dvol(n,js:je,k))*x1(n)*dxi1(n)
+   grvphi(i,js:je,ks:ke) = grvphi(i,js:je,ks:ke) &
+                         - sum(d(n,js:je,ks:ke)*dvol(n,js:je,ks:ke))&
+                          /sum(dvol(n,js:je,ks:ke))*x1(n)*dxi1(n)
   end do
-  grvphi(i,js:je,k) = G*(-mc(i)/x1(i)+4d0*pi*grvphi(i,js:je,k))
+  grvphi(i,js:je,ks:ke) = G*(-mc(i)/x1(i)+4d0*pi*grvphi(i,js:je,ks:ke))
  end do
- grvphi(ie,js:je,k) = -G*mc(ie)/x1(ie)
+ grvphi(ie,js:je,ks:ke) = -G*mc(ie)/x1(ie)
 
  return
 end subroutine gravpot1d

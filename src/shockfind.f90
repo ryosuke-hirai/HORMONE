@@ -17,7 +17,8 @@ contains
   use grid
   use physval
   use omp_lib
-  
+
+  integer:: i,j,k
   real(8):: divergence, gradT(1:dim), gradd(1:dim), Mjump
 
 !-----------------------------------------------------------------------------

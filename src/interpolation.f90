@@ -21,6 +21,7 @@ subroutine interpolation
  use pressure_mod
  use omp_lib
 
+ integer:: i,j,k,n
  real(8):: dl, dr, ptl, ptr, el, er, m1l, m1r, m2l, m2r, m3l, m3r
  real(8):: b1l, b1r, b2l, b2r, b3l, b3r, phil, phir, eintl, eintr,imul,imur
  real(8):: uu(1:3), du, Xl, Xr, Yl, Yr, Tini

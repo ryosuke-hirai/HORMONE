@@ -21,6 +21,7 @@ subroutine boundarycondition
  use composition_mod
  use omp_lib
 
+ integer:: i,j,k
  real(8):: plug
 
 !-------------------------------------------------------------------------

@@ -84,7 +84,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
  real(8),allocatable,dimension(:)::gpot,Vshell
- integer::lines,nn,sn
+ integer::i,j,k,n,lines,nn,sn
  real(8):: mass, radius
  real(8):: mnow,rnow,volfac
 !-----------------------------------------------------------------------------
@@ -218,6 +218,7 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
  real(8)::dr,mnow,rnow,mold,shell,shelld,mass,radius
+ integer:: i,j,k,n
 
 !-----------------------------------------------------------------------------
 
