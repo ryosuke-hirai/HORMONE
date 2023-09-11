@@ -30,6 +30,7 @@ subroutine initialcondition
  use redsupergiant_mod
  use agndisk_mod
  use modify_mod
+ use windtunnel_mod
 
  integer:: i,j,k
 
@@ -66,6 +67,9 @@ subroutine initialcondition
 
   case('agndisk')
    call agndisk
+
+  case('windtunnel')
+   call windtunnel
 
   case('modify')
    call modify

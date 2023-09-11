@@ -107,6 +107,8 @@ subroutine read_default
   filename='../para/parameters_rsg_sph'
  case('agndisk')
   filename='../para/parameters_agndisk'
+ case('windtunnel')
+  filename='../para/parameters_windtunnel'
  case('modify')
   filename='../para/parameters_rsg_sph'!temporary
  case default
