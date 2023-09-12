@@ -209,6 +209,7 @@ end subroutine set_star_sph_grid
 
 subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
 
+ use settings,only:compswitch,spn
  use constants,only:G
  use grid
  use physval
@@ -218,7 +219,7 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
  real(8)::dr,mnow,rnow,mold,shell,shelld,mass,radius
- integer:: i,j,k,n
+ integer:: i,j,k,n,nn,sn
 
 !-----------------------------------------------------------------------------
 
@@ -256,10 +257,22 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
       do n = 0, size(m)-2
        if(rdis(i,k)>r(n).and.rdis(i,k)<=r(n+1))then
         p(i,j,k) = intpol(r(n:n+1),pres(n:n+1),rdis(i,k))
+
+        if(compswitch==2)then
+         do nn = 1, spn-1
+          do sn = 1, size(comp_list)-1
+           if(trim(comp_list(sn))==trim(species(nn)))then
+            spc(nn,i,j,k) = intpol(r(n:n+1),comp(sn,n:n+1),rdis(i,k))
+            exit
+           end if
+          end do
+         end do
+         spc(spn,i,j,k) = 1d0-sum(spc(1:spn-1,i,j,k)) !dump the rest into others
+        end if
+
         exit
        end if
       end do
-!!$!     p(i,js,k) = G*mnow*(mnow-mold)/shell/rdis(i,k)
      end if
     end do
    end do
@@ -282,6 +295,17 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
       if(rdis(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
        d(i,j,k) = (mass-mold)/shell
        p(i,j,k) = G*mass*(mass-mold)/shell/rdis(i,k)
+       if(compswitch==2)then
+        do nn = 1, spn-1
+         do sn = 1, size(comp_list)-1
+          if(trim(comp_list(sn))==trim(species(nn)))then
+           spc(nn,i,j,k) = comp(sn,size(r)-1)
+           exit
+          end if
+         end do
+        end do
+        spc(spn,i,j,k) = 1d0-sum(spc(1:spn-1,i,j,k)) !dump the rest into others
+       end if
       end if
      end do
     end do
