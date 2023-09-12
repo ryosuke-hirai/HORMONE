@@ -115,6 +115,7 @@ subroutine allocations
   allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2))!;grvphi=0d0
   allocate(grvphiold,grvphidot,mold=grvphi)
   allocate(hgsrc(gis:gie,gjs:gje,gks:gke))
+  allocate(gsrc(gis:gie,gjs:gje,gks:gke))
   allocate(grvphiorg(gis:gie,gjs:gje,gks:gke,1:2))
 ! Parallel first touch for OpenMP optimization on NUMA cores
 !$omp parallel do private(i,j,k) collapse(3) schedule(static)
@@ -158,6 +159,7 @@ subroutine allocations
    allocate( spc0,source=spc )
   end if
  end if
+ species(:) = 'aaa'
 !$omp parallel do private(i,j,k,n) collapse(4) schedule(static)
  do k = ks, ke
   do j = js, je

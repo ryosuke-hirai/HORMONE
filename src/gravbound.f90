@@ -209,7 +209,7 @@ contains
      do j = gjs, gje
       phiii(i,j) = 0d0
       do ll=0,llmax
-       call multipoleinner(ll)
+       call multipoleinner(ll,ml(ll))
        dphiii = -G*Pl(ll,j)*ml(ll)/x1(is-1)
        if(ll/=0.and.abs(dphiii) < grverr*abs(phiii(i,j))) exit
        phiii(i,j) = phiii(i,j) + dphiii
@@ -235,18 +235,15 @@ contains
 
   end if
 
-return
-contains
+  return
+ end subroutine gravbound
 
 !------------------------------------------------------------------------------
  subroutine multipole(ll,ml)
 
   use settings,only:eq_sym
-  use grid,only:is,ie,js,je,ks,ke,x1,dvol,rdis
-  use physval,only:d
-  use gravmod,only:Pl,Plc
-
-  implicit none
+  use grid,only:is,ie,js,je,ks,ke,x1,dvol,rdis,crdnt
+  use gravmod,only:Pl,Plc,gsrc
 
   integer,intent(in):: ll
   real(8),intent(out):: ml
@@ -256,13 +253,13 @@ contains
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   if(crdnt==1.and.je==1)then
    jj = js
-!$omp parallel do private (kk,ii) reduction(+:ml)
+!$omp parallel do private (kk,ii) collapse(2) reduction(+:ml)
    do kk = ks,ke
     do ii = is,ie
-     ml = ml + d(ii,jj,kk)*(rdis(ii,kk)/rdis(ie,ke))**ll &
+     ml = ml + gsrc(ii,jj,kk)*(rdis(ii,kk)/rdis(ie,ke))**ll &
              * Plc(ll,ii,kk)*dvol(ii,jj,kk)
      if(eq_sym)then
-      ml = ml + d(ii,jj,kk)*(-rdis(ii,kk)/rdis(ie,ke))**ll &
+      ml = ml + gsrc(ii,jj,kk)*(-rdis(ii,kk)/rdis(ie,ke))**ll &
               * Plc(ll,ii,kk)*dvol(ii,jj,kk)
 
      end if
@@ -273,13 +270,13 @@ contains
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   elseif(crdnt==2.and.ke==1)then
    kk = ks
-!$omp parallel do private (jj,ii) reduction(+:ml)
+!$omp parallel do private (jj,ii) collapse(2) reduction(+:ml)
    do jj = js,je
     do ii = is,ie
-     ml = ml + d(ii,jj,kk)*(x1(ii)/x1(ie+1))**ll &
+     ml = ml + gsrc(ii,jj,kk)*(x1(ii)/x1(ie+1))**ll &
               *Pl(ll,jj) * dvol(ii,jj,kk)
      if(eq_sym)then
-      ml = ml + d(ii,jj,kk)*(-x1(ii)/x1(ie+1))**ll &
+      ml = ml + gsrc(ii,jj,kk)*(-x1(ii)/x1(ie+1))**ll &
               * Pl(ll,jj) * dvol(ii,jj,kk)
      end if
     end do
@@ -294,15 +291,13 @@ contains
 
 
 !------------------------------------------------------------------------------
- subroutine multipoleinner(ll)
+ subroutine multipoleinner(ll,ml)
 
    use grid,only:crdnt,is,ie,js,je,ks,ke,x1,dvol
-   use physval,only:d
-   use gravmod,only:Pl
-
-   implicit none
+   use gravmod,only:Pl,gsrc
 
    integer,intent(in):: ll
+   real(8),intent(out):: ml
    integer:: ii, jj, kk
 
 !------------------------------------------------------------------------------
@@ -310,19 +305,18 @@ contains
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   if(crdnt==2.and.ke==1)then
    kk = ks
-   ml(ll) = 0.0d0
+   ml = 0d0
+!$omp parallel do private(ii,jj) collapse(2) reduction(+:ml)
    do jj = js,je
     do ii = is,ie
-     ml(ll) = ml(ll) + d(ii,jj,kk)*(x1(is-1)/x1(ii))**(ll+1) &
+     ml = ml + gsrc(ii,jj,kk)*(x1(is-1)/x1(ii))**(ll+1) &
               * Pl(ll,jj) * dvol(ii,jj,kk)
     end do
    end do
-
+!$omp end parallel do
   end if
 
   return
   end subroutine multipoleinner
-
- end subroutine gravbound
 
 end module gravbound_mod

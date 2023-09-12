@@ -26,11 +26,11 @@ subroutine gravity
  use miccg_mod,only:cg=>cg_grv,miccg,ijk_from_l,l_from_ijk
  use omp_lib
 
- integer:: i,j,k,n,l, flgcg, gin, gjn, gkn, tngrav, grungen, jb, kb
- real(8):: phih, cgrav2, dtgrav, mind, h
- real(8),allocatable,dimension(:,:,:):: lapphi,newphi
+ integer:: i,j,k,n,l, gin, gjn, gkn, tngrav, grungen, jb, kb
+ real(8):: phih, cgrav2, dtgrav, h
+ real(8),allocatable,dimension(:,:,:):: newphi
  real(8),allocatable,dimension(:):: intphi
- real(8),allocatable,dimension(:):: x, gsrc
+ real(8),allocatable,dimension(:):: x, cgsrc
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
@@ -43,8 +43,19 @@ subroutine gravity
  gjn = gje - gjs + 1
  gkn = gke - gks + 1
 
+! Set source term for gravity
+!$omp parallel do private(i,j,k) collapse(3)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    gsrc(i,j,k) = d(i,j,k)!*spc(1,i,j,k)
+   end do
+  end do
+ end do
+!$omp end parallel do
+
  if(gravswitch==2.or.(gravswitch==3.and.tn==0.and.dim==2))then
-  allocate( x(1:cg%lmax), gsrc(1:cg%lmax) )
+  allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
  
   if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -55,23 +66,17 @@ subroutine gravity
   if(je==1.and.crdnt==1.and.dim==2)then
 
 ! calculating b for Ax=b
-   mind = minval(d(is:ie,js:je,ks:ke))
-   if(gravswitch==3)then
-    mind = sum(d(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))&
-         / (pi*xi1e**2*(xi3e-xi3s)) * 1d-2
-    hgsrc=mind
-   end if
 !$omp parallel do private(i,j,k,l)
    do l = 1, cg%lmax
     call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
     x(l) = grvphi(i,j,k)
-    gsrc(l) = 4d0*pi*G*mind*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
+    cgsrc(l) = 0d0
     if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
-     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)*dxi1(i)*((dx3(k)+dx3(k+1))*0.5d0)
+     cgsrc(l) = 4d0*pi*G*gsrc(i,j,k)*x1(i)*dxi1(i)*sum(dx3(k:k+1))*0.5d0
     end if;end if;end if;end if
-    if(k==gks) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
-    if(i==gie) gsrc(l) = gsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
-    if(k==gke) gsrc(l) = gsrc(l) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
+    if(k==gks) cgsrc(l) = cgsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
+    if(i==gie) cgsrc(l) = cgsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
+    if(k==gke) cgsrc(l) = cgsrc(l) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
    end do
 !$omp end parallel do
 
@@ -79,18 +84,17 @@ subroutine gravity
   elseif(crdnt==2.and.dim==2)then
 
 ! calculating b for Ax=b
-   mind = minval(d(is:ie,js:je,ks:ke))
 !$omp parallel do private(i,j,k,l)
    do l=1,cg%lmax
     call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
     x(l) = grvphi(i,j,k)
-    gsrc(l) = 4d0*pi*G*mind*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
+    cgsrc(l) = 0d0
     if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
-     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
+     cgsrc(l) = 4d0*pi*G*gsrc(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
     end if;end if;end if;end if
-    if(i==gie) gsrc(l)= gsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)&
+    if(i==gie) cgsrc(l)= cgsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)&
                                   *phiio(i+1,j)
-!   if(i==gis) gsrc(l)= gsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
+!   if(i==gis) cgsrc(l)= cgsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
 !        *phiii(i-1,j)
    end do
 !$omp end parallel do
@@ -99,25 +103,24 @@ subroutine gravity
   elseif(crdnt==2.and.dim==3)then
 
 ! calculating b for Ax=b
-   mind = minval(d(is:ie,js:je,ks:ke))
 !$omp parallel do private(i,j,k,l)
    do l=1,cg%lmax
     call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
     x(l) = grvphi(i,j,k)
-    gsrc(l) = 4d0*pi*G*mind*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k)
+    cgsrc(l) = 0d0
     if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
-     gsrc(l) = 4d0*pi*G*d(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k)
+     cgsrc(l) = 4d0*pi*G*gsrc(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k)
     end if;end if;end if;end if
-    if(i==gie) phiio(i+1,j) = -G*1.989d33/x1(gie+1)
-    if(i==gie) gsrc(l)= gsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)*dxi3(k)&
+
+    if(i==gie) cgsrc(l)= cgsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)*dxi3(k)&
                                   *phiio(i+1,j)
-!   if(i==gis) gsrc(l)= gsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
+!   if(i==gis) cgsrc(l)= cgsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
 !        *phiii(i-1,j)
    end do
 !$omp end parallel do
   end if
 
-  call miccg(cg,gsrc,x)
+  call miccg(cg,cgsrc,x)
 
 !-------------------------------------------------------------------------
 
@@ -189,7 +192,7 @@ if(gravswitch==3.and.tn/=0)then
   dtgrav = hgcfl*hg_dx/cgrav2
   cgrav2 = cgrav2**2
 
-  hgsrc(is:ie,js:je,ks:ke) = d(is:ie,js:je,ks:ke)
+  hgsrc(is:ie,js:je,ks:ke) = gsrc(is:ie,js:je,ks:ke)
 
   if(gbtype==0)call gravbound
 
@@ -275,7 +278,7 @@ if(gravswitch==3.and.tn/=0)then
 
 !$omp parallel private(i,j,l)
 !$omp workshare
-  hgsrc(is:ie,js:je,k) = 4d0*pi*G*d(is:ie,js:je,k)
+  hgsrc(is:ie,js:je,k) = 4d0*pi*G*gsrc(is:ie,js:je,k)
 !$omp end workshare
 
   do l = 1, tngrav
@@ -402,7 +405,7 @@ if(gravswitch==3.and.tn/=0)then
         end if
        end if
        if(i==is-1.or.j==js-1.or.k==ks-1)cycle
-       hgsrc(i,j,k) = -cgrav2*4d0*pi*G*d(i,j,k)
+       hgsrc(i,j,k) = -cgrav2*4d0*pi*G*gsrc(i,j,k)
       end do
      end do
     end do
@@ -653,7 +656,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
     cg%A(1,l) = - ( xi1(i)/dx1(i+1) + xi1(i-1)/dx1(i) &
                       + 2d0*x1(i)*dxi1(i) / (dx3(k)*dx3(k+1)) ) &
                     * 0.5d0*sum(dx3(k:k+1))
-    cg%A(2,l) = 0.5d0*xi1(i)*sum(dx3(k:k+1))*idx1(i+1)
+    cg%A(2,l) = 0.5d0*xi1(i)*sum(dx3(k:k+1))/dx1(i+1)
     cg%A(3,l) = x1(i)*dxi1(i)/dx3(k+1)
     if(i==ie)cg%A(2,l) = 0d0
     if(k==ke)cg%A(3,l) = 0d0
