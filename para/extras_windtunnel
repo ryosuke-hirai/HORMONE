@@ -1,20 +1,20 @@
-c Model parameters for windtunnel
+! Model parameters for windtunnel
 
-c star_type: Type of star. Current options 'polytrope' 'MESA'
-c mass/radius: Mass/Radius of star in solar units (only if polytrope)
-c poly_n: Polytropic index (only if polytrope)
-c mesafile: File name of MESA file (only if MESA)
-c vwind: Wind velocity (cm/s)
-c dwind: Wind density (g/cm^3)
-c pwind: Wind pressure (cgs)
+! star_type: Type of star. Current options 'polytrope' 'MESA'
+! mass/radius: Mass/Radius of star in solar units (only if polytrope)
+! poly_n: Polytropic index (only if polytrope)
+! mesafile: File name of MESA file (only if MESA)
+! vwind: Wind velocity (cm/s)
+! dwind: Wind density (g/cm^3)
+! Twind: Wind temperature (K)
 
 &wtnlcon
   star_type='polytrope'
-  mass=0.1d0
-  radius=0.01d0
+  mass=0.001d0
+  radius=0.1d0
   poly_n=1.5d0
   mesafile=''
-  vwind=1d3
-  dwind=1d-2
-  pwind=1d-2
+  vwind=230d5
+  dwind=0.04d-2
+  Twind=1.2d6
 /

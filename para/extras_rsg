@@ -1,8 +1,9 @@
-c Model parameters for rsg_sph
+! Model parameters for rsg_sph
 
-c mesafile: Name of MESA profile file to be read.
-c spc_list: List of all elements to be tracked in the simulation.
-c rcore: Size of core to be removed from the computation
+! mesafile: Name of MESA profile file to be read.
+! spc_list: List of all elements to be tracked in the simulation.
+! rcore: Size of core to be removed from the computation
+
 &rsg_con
  mesafile='16earlyRSG.data'
  spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'

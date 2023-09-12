@@ -1,6 +1,6 @@
-c Model parameters for other_shocktube
+! Model parameters for other_shocktube
 
-c Variables ending with l/r are for left/right states
+! Variables ending with l/r are for left/right states
 
 &tubecon mag_on=.false. gamma=1.4d0
          dl=1d0 dr=1d0 pl=1d0 pr=1d0

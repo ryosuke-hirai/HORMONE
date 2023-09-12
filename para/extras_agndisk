@@ -1,4 +1,4 @@
-c Model parameters for AGN disk explosion
+! Model parameters for AGN disk explosion
 
 &agn_con
 
