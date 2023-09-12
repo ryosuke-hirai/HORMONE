@@ -26,7 +26,7 @@ module settings
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, is_test
  logical:: write_other_vel, write_shock, grav_init_other, write_evo
- logical:: write_other_slice
+ logical:: write_other_slice, write_temp
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
 ! profiler
@@ -133,7 +133,7 @@ module gravmod
   real(8):: dt_old, l2norm, grvtime
   real(8),allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32, mc
   real(8),allocatable,dimension(:,:):: lag
-  real(8),allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc
+  real(8),allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc, gsrc
   real(8),allocatable,dimension(:,:,:,:):: lag11,lag12,lag21,lag22,lag31,lag32
   real(8):: coremass,hg_dx
 

@@ -189,8 +189,8 @@ subroutine checksetup
    print *,'Provide composition to use recombination module'
   end if
 
-! Provide more than 3 species for composition
-  if(compswitch>=1) spn = max(spn,3)
+! Provide more than 2 species for composition
+  if(compswitch>=1) spn = max(spn,2)
 
 ! Don't allocate spc if compswitch == 0
   if(compswitch==0) spn = 0
@@ -211,6 +211,9 @@ subroutine checksetup
    print*,'eostype=',eostype
    stop
   end if
+
+! Output temperature if eostype>=1
+  if(eostype>=1)write_temp = .true.
   
   return
  end subroutine checksetup

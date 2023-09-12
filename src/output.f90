@@ -1058,10 +1058,8 @@ subroutine get_header(header,columns)
   call add_column('b3',columns,header)
  end if
 
-! Output temperature if EoS is non-ideal gas
- if(eostype>=1)then
-  call add_column('T',columns,header)
- end if
+! Output temperature
+ if(write_temp)call add_column('T',columns,header)  
 
 ! Output gravitational potential if gravswitch>=1
  if(gravswitch>=1)then
