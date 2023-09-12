@@ -134,7 +134,7 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
  end if
 
  dti(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) / &
-                      ( cf1*off(is,ie) * sum(sa1(i-1:i,j:j+jn,k:k+kn)) &
+                      ( cf1*off(is,ie) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
                       + cf2*off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
                       + cf3*off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
 
