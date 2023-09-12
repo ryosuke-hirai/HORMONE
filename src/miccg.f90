@@ -33,17 +33,23 @@ subroutine miccg(cg,b,x)
  real(8),allocatable,intent(in):: b(:)
  real(8),allocatable,intent(inout):: x(:)
  real(8),allocatable:: r(:),q(:),p(:)
- real(8):: alpha,beta,pAp,rr_old,rr,error
- integer:: n,l,lmax!,aaa(1)
- logical:: converged
+ real(8):: alpha,beta,pAp,rr_old,rr,error,normb
+ integer:: n,l,lmax
 
 !-----------------------------------------------------------------------------
 
  lmax = cg%lmax
  allocate(r(1:lmax),q(1:lmax),p(1:lmax))
 
+ normb = 0d0
 !$omp parallel
 
+!$omp do private(l) reduction(+:normb)
+ do l = 1, lmax
+  normb = normb + b(l)**2
+ end do
+!$omp end do
+ 
  call Apk(cg,x,p)
 
 !$omp do private(l)
@@ -67,8 +73,7 @@ subroutine miccg(cg,b,x)
  main_loop: do n = 1, lmax
 
 !!$!$omp master
-!!$  aaa = maxloc(r/b)
-!!$  print*,n,norm2(r/b)/sqrt(dble(size(r))),aaa(1),maxval(r/b)
+!!$  print*,n,norm2(r)/norm2(b)
 !!$!$omp end master
   call Apk(cg,p,q) ! q=Ap_k
 
@@ -83,27 +88,19 @@ subroutine miccg(cg,b,x)
 
 !$omp single
   alpha = rr_old/pAp
+  error = 0d0
 !$omp end single
-!$omp do private(l)
+!$omp do private(l) reduction(+:error)
   do l = 1, lmax
    x(l) = x(l) + alpha*p(l) ! x_k+1 = x_k + alpha*p_k 
    r(l) = r(l) - alpha*q(l) ! r_k+1 = r_k - alpha*Ap_k
+   error = error + r(l)**2
   end do
 !$omp end do
 
-!+++++ check convergence +++++!
-  converged = .true.          !
-!$omp do private(l,error)     !
-  do l = 1, lmax              !
-   if(.not.converged)cycle    !
-   error = abs(r(l)/b(l))     !
-   if(error>cgerr)then        !
-    converged = .false.       !
-   end if                     !
-  end do                      !
-!$omp end do                  !
-  if(converged)exit main_loop !
-!+++++++++++++++++++++++++++++!
+!++++++++++ check convergence ++++++++++!
+  if(error<cgerr**2*normb)exit main_loop
+!+++++++++++++++++++++++++++++++++++++++!
 
 !$omp single
   call cctr(cg,r,q) ! q = (CC^T)^{-1}r_{k+1}
