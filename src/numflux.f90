@@ -13,7 +13,8 @@ contains
 
  subroutine numflux
 
-  use settings,only:compswitch,spn,eq_sym,eostype,mag_on,wtime,iflx,fluxbound_on
+  use settings,only:compswitch,spn,eq_sym,eostype,mag_on,fluxbound_on,&
+                    bc1is,bc1os,bc2is,bc2os,bc3is,bc3os,wtime,iflx
   use grid
   use physval
   use hllflux_mod
@@ -51,6 +52,13 @@ contains
    do k = ks,ke
     do j = js,je
      do i = is-1, ie
+
+      if(i==is-1)then
+       if(bc1is==10)cycle
+      end if
+      if(i==ie)then
+       if(bc1os==10)cycle
+      end if
 
       dx(1) = xi1(i)-x1(i) ; dx(2) = x1(i+1)-xi1(i)
 
@@ -198,7 +206,14 @@ contains
    do k = ks,ke
     do j = js-1,je
      do i = is, ie
-!      if(k==ks-1.or.k==ke+1.or.j==je+1.or.i==is-1.or.i==ie+1)cycle
+
+      if(j==js-1)then
+       if(bc2is==10)cycle
+      end if
+      if(j==je)then
+       if(bc2os==10)cycle
+      end if
+
       dx(1) = xi2(j)-x2(j) ; dx(2) = x2(j+1)-xi2(j)
 
       dl = d(i,j  ,k) + dx(1) * dd(i,j  ,k,2)
@@ -353,6 +368,13 @@ contains
    do k = ks-1,ke
     do j = js,je
      do i = is, ie
+
+      if(k==ks-1)then
+       if(bc3is==10)cycle
+      end if
+      if(k==ke)then
+       if(bc3os==10)cycle
+      end if
 
       dx(1) = xi3(k)-x3(k) ; dx(2) = x3(k+1)-xi3(k)
 

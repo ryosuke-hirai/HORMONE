@@ -103,6 +103,8 @@ subroutine boundarycondition
   end do
 !$omp end do
 
+ case(10) x1_inner_scalar ! Flux -----------------------------------------
+
  case default x1_inner_scalar ! Error ------------------------------------
   print *, "Error from x1 scalar inner boundary condition" ; stop
  end select x1_inner_scalar
@@ -148,12 +150,12 @@ subroutine boundarycondition
     plug = 0.5d0-sign(0.5d0,v1(is,j,k))
     do i = is-2, is-1
      v1(i,j,k) = min(0d0,v1(is,j,k))
-     v2(i,j,k) = v2(is,j,k)*plug
-     v3(i,j,k) = v3(is,j,k)*plug
+     v2(i,j,k) = v2(is,j,k)
+     v3(i,j,k) = v3(is,j,k)
      if(mag_on)then
-      b1(i,j,k) = b1(is,j,k)*plug
-      b2(i,j,k) = b2(is,j,k)*plug
-      b3(i,j,k) = b3(is,j,k)*plug
+      b1(i,j,k) = b1(is,j,k)
+      b2(i,j,k) = b2(is,j,k)
+      b3(i,j,k) = b3(is,j,k)
      end if
     end do
    end do
@@ -195,6 +197,8 @@ subroutine boundarycondition
    end do
   end do
 !$omp end do
+
+ case(10) x1_inner_vector ! Flux -----------------------------------------
 
  case default x1_inner_vector ! Error ------------------------------------
   print *, "Error from x1 velocity inner boundary condition" ; stop
@@ -316,6 +320,8 @@ subroutine boundarycondition
   end do
 !$omp end do
 
+ case(10) x1_outer_scalar ! Flux -----------------------------------------
+
  case default x1_outer_scalar ! Error ------------------------------------
   print *, "Error from x1 scalar outer boundary condition" ; stop
  end select x1_outer_scalar
@@ -361,12 +367,12 @@ subroutine boundarycondition
     plug = 0.5d0+sign(0.5d0,v1(ie,j,k))
     do i = ie+1, ie+2
      v1(i,j,k) = v1(ie,j,k)*plug
-     v2(i,j,k) = v2(ie,j,k)*plug
-     v3(i,j,k) = v3(ie,j,k)*plug
+     v2(i,j,k) = v2(ie,j,k)
+     v3(i,j,k) = v3(ie,j,k)
      if(mag_on)then
-      b1(i,j,k) = b1(ie,j,k)*plug
-      b2(i,j,k) = b2(ie,j,k)*plug
-      b3(i,j,k) = b3(ie,j,k)*plug
+      b1(i,j,k) = b1(ie,j,k)
+      b2(i,j,k) = b2(ie,j,k)
+      b3(i,j,k) = b3(ie,j,k)
      end if
     end do
    end do
@@ -421,20 +427,20 @@ subroutine boundarycondition
     v1(ie+1:ie+2,j,k) = v1(ie+1:ie+2,j,k) * plug
     v2(ie+1,j,k) = v2(ie  ,j,k) + (v2(ie,j,k)-v2(ie-1,j,k))*dx1(ie)/dx1(ie-1)
     v2(ie+2,j,k) = v2(ie+1,j,k) + (v2(ie+1,j,k)-v2(ie,j,k))*dx1(ie+1)/dx1(ie)
-    v2(ie+1:ie+2,j,k) = v2(ie+1:ie+2,j,k) * plug
+    v2(ie+1:ie+2,j,k) = v2(ie+1:ie+2,j,k)
     v3(ie+1,j,k) = v3(ie  ,j,k) + (v3(ie,j,k)-v3(ie-1,j,k))*dx1(ie)/dx1(ie-1)
     v3(ie+2,j,k) = v3(ie+1,j,k) + (v3(ie+1,j,k)-v3(ie,j,k))*dx1(ie+1)/dx1(ie)
-    v3(ie+1:ie+2,j,k) = v3(ie+1:ie+2,j,k) * plug
+    v3(ie+1:ie+2,j,k) = v3(ie+1:ie+2,j,k)
     if(mag_on)then
      b1(ie+1,j,k) = b1(ie  ,j,k) + (b1(ie,j,k)-b1(ie-1,j,k))*dx1(ie)/dx1(ie-1)
      b1(ie+2,j,k) = b1(ie+1,j,k) + (b1(ie+1,j,k)-b1(ie,j,k))*dx1(ie+1)/dx1(ie)
-     b1(ie+1:ie+2,j,k) = b1(ie+1:ie+2,j,k) * plug
+     b1(ie+1:ie+2,j,k) = b1(ie+1:ie+2,j,k)
      b2(ie+1,j,k) = b2(ie  ,j,k) + (b2(ie,j,k)-b2(ie-1,j,k))*dx1(ie)/dx1(ie-1)
      b2(ie+2,j,k) = b2(ie+1,j,k) + (b2(ie+1,j,k)-b2(ie,j,k))*dx1(ie+1)/dx1(ie)
-     b2(ie+1:ie+2,j,k) = b2(ie+1:ie+2,j,k) * plug
+     b2(ie+1:ie+2,j,k) = b2(ie+1:ie+2,j,k)
      b3(ie+1,j,k) = b3(ie  ,j,k) + (b3(ie,j,k)-b3(ie-1,j,k))*dx1(ie)/dx1(ie-1)
      b3(ie+2,j,k) = b3(ie+1,j,k) + (b3(ie+1,j,k)-b3(ie,j,k))*dx1(ie+1)/dx1(ie)
-     b3(ie+1:ie+2,j,k) = b3(ie+1:ie+2,j,k) * plug
+     b3(ie+1:ie+2,j,k) = b3(ie+1:ie+2,j,k)
     end if
    end do
   end do
@@ -457,6 +463,8 @@ subroutine boundarycondition
    end do
   end do
 !$omp end do
+
+ case(10) x1_outer_vector ! Flux -----------------------------------------
 
  case default x1_outer_vector ! Error ------------------------------------
   print *, "Error from x1 velocity outer boundary condition" ; stop
@@ -557,6 +565,8 @@ if(je>js)then
   end do
 !$omp end do
 
+ case(10) x2_inner_scalar ! Flux ----------------------------------------
+
  case default x2_inner_scalar ! Error -----------------------------------
   print *, "Error from x2 scalar inner boundary condition" ; stop
  end select x2_inner_scalar
@@ -599,13 +609,13 @@ if(je>js)then
   do k = ks, ke
    do i = is, ie
     plug = 0.5d0-sign(0.5d0,v2(i,js,k))
-    v1(i,js-2:js-1,k) = v1(i,js,k)*plug
+    v1(i,js-2:js-1,k) = v1(i,js,k)
     v2(i,js-2:js-1,k) = v2(i,js,k)*plug
-    v3(i,js-2:js-1,k) = v3(i,js,k)*plug
+    v3(i,js-2:js-1,k) = v3(i,js,k)
     if(mag_on)then
-     b1(i,js-2:js-1,k) = b1(i,js,k)*plug
-     b2(i,js-2:js-1,k) = b2(i,js,k)*plug
-     b3(i,js-2:js-1,k) = b3(i,js,k)*plug
+     b1(i,js-2:js-1,k) = b1(i,js,k)
+     b2(i,js-2:js-1,k) = b2(i,js,k)
+     b3(i,js-2:js-1,k) = b3(i,js,k)
     end if
    end do
   end do
@@ -645,6 +655,8 @@ if(je>js)then
     end do
    end do
   end do
+
+ case(10) x2_inner_vector ! Flux -----------------------------------------
 
  case default x2_inner_vector ! Error ------------------------------------
   print *, "Error from x2 velocity inner boundary condition" ; stop
@@ -734,6 +746,8 @@ if(je>js)then
   end do
 !$omp end do
 
+ case(10) x2_outer_scalar ! Flux -----------------------------------------
+
  case default x2_outer_scalar ! Error ------------------------------------
   print *, "Error from x2 scalar outer boundary condition" ; stop
  end select x2_outer_scalar
@@ -776,13 +790,13 @@ if(je>js)then
   do k = ks, ke
    do i = is, ie
     plug = 0.5d0+sign(0.5d0,v2(i,je,k))
-    v1(i,je+1:je+2,k) = v1(i,je,k)*plug
+    v1(i,je+1:je+2,k) = v1(i,je,k)
     v2(i,je+1:je+2,k) = v2(i,je,k)*plug
-    v3(i,je+1:je+2,k) = v3(i,je,k)*plug
+    v3(i,je+1:je+2,k) = v3(i,je,k)
     if(mag_on)then
-     b1(i,je+1:je+2,k) = b1(i,je,k)*plug
-     b2(i,je+1:je+2,k) = b2(i,je,k)*plug
-     b3(i,je+1:je+2,k) = b3(i,je,k)*plug
+     b1(i,je+1:je+2,k) = b1(i,je,k)
+     b2(i,je+1:je+2,k) = b2(i,je,k)
+     b3(i,je+1:je+2,k) = b3(i,je,k)
     end if
    end do
   end do
@@ -818,6 +832,8 @@ if(je>js)then
     end do
    end do
   end do
+
+ case(10) x2_outer_vector ! Flux -----------------------------------------
 
  case default x2_outer_vector ! Error ------------------------------------
   print *, "Error from x2 velocity outer boundary condition" ; stop
@@ -940,6 +956,8 @@ if(ke>ks)then
   end do
 !$omp end do
 
+ case(10) x3_inner_scalar ! Flux -----------------------------------------
+
  case default x3_inner_scalar ! Error ------------------------------------
   print *, "Error from x3 scalar inner boundary condition" ; stop
  end select x3_inner_scalar
@@ -983,13 +1001,13 @@ if(ke>ks)then
   do j = js, je
    do i = is, ie
     plug = 0.5d0-sign(0.5d0,v3(i,j,ks))
-    v1(i,j,ks-2:ks-1) = v1(i,j,ks)*plug
-    v2(i,j,ks-2:ks-1) = v2(i,j,ks)*plug
+    v1(i,j,ks-2:ks-1) = v1(i,j,ks)
+    v2(i,j,ks-2:ks-1) = v2(i,j,ks)
     v3(i,j,ks-2:ks-1) = v3(i,j,ks)*plug
     if(mag_on)then
-     b1(i,j,ks-2:ks-1) = b1(i,j,ks)*plug
-     b2(i,j,ks-2:ks-1) = b2(i,j,ks)*plug
-     b3(i,j,ks-2:ks-1) = b3(i,j,ks)*plug
+     b1(i,j,ks-2:ks-1) = b1(i,j,ks)
+     b2(i,j,ks-2:ks-1) = b2(i,j,ks)
+     b3(i,j,ks-2:ks-1) = b3(i,j,ks)
     end if
    end do
   end do
@@ -1044,8 +1062,8 @@ if(ke>ks)then
     v3(i,j,ks-2) = v3(i,j,ks-1) - (v2(i,j,ks)-v2(i,j,ks-1))*dx3(ks-1)/dx3(ks)
     v3(i,j,ks-1) = v3(i,j,ks  ) - (v3(i,j,ks+1)-v3(i,j,ks))*dx3(ks)/dx3(ks+1)
     v3(i,j,ks-2) = v3(i,j,ks-1) - (v3(i,j,ks)-v3(i,j,ks-1))*dx3(ks-1)/dx3(ks)
-    v1(i,j,ks-2:ks-1) = v1(i,j,ks-2:ks-1) * plug
-    v2(i,j,ks-2:ks-1) = v2(i,j,ks-2:ks-1) * plug
+    v1(i,j,ks-2:ks-1) = v1(i,j,ks-2:ks-1)
+    v2(i,j,ks-2:ks-1) = v2(i,j,ks-2:ks-1)
     v3(i,j,ks-2:ks-1) = v3(i,j,ks-2:ks-1) * plug
     if(mag_on)then
      b1(i,j,ks-1) = b1(i,j,ks  ) - (b1(i,j,ks+1)-b1(i,j,ks))*dx3(ks)/dx3(ks+1)
@@ -1075,6 +1093,8 @@ if(ke>ks)then
     end do
    end do
   end do
+
+ case(10) x3_inner_vector ! Flux -----------------------------------------
 
  case default x3_inner_vector ! Error ------------------------------------
   print *, "Error from x3 velocity inner boundary condition" ; stop
@@ -1191,6 +1211,8 @@ if(ke>ks)then
   end do
 !$omp end do
 
+ case(10) x3_outer_scalar ! Flux -----------------------------------------
+
  case default x3_outer_scalar ! Error ------------------------------------
   print *, "Error from x3 scalar outer boundary condition" ; stop
  end select x3_outer_scalar
@@ -1234,13 +1256,13 @@ if(ke>ks)then
   do j = js, je
    do i = is, ie
     plug = 0.5d0+sign(0.5d0,v3(i,j,ke))
-    v1(i,j,ke+1:ke+2) = v1(i,j,ke)*plug
-    v2(i,j,ke+1:ke+2) = v2(i,j,ke)*plug
+    v1(i,j,ke+1:ke+2) = v1(i,j,ke)
+    v2(i,j,ke+1:ke+2) = v2(i,j,ke)
     v3(i,j,ke+1:ke+2) = v3(i,j,ke)*plug
     if(mag_on)then
-     b1(i,j,ke+1:ke+2) = b1(i,j,ke)*plug
-     b2(i,j,ke+1:ke+2) = b2(i,j,ke)*plug
-     b3(i,j,ke+1:ke+2) = b3(i,j,ke)*plug
+     b1(i,j,ke+1:ke+2) = b1(i,j,ke)
+     b2(i,j,ke+1:ke+2) = b2(i,j,ke)
+     b3(i,j,ke+1:ke+2) = b3(i,j,ke)
     end if
    end do
   end do
@@ -1295,8 +1317,8 @@ if(ke>ks)then
     v2(i,j,ke+2) = v2(i,j,ke+1) + (v2(i,j,ke+1)-v2(i,j,ke))*dx3(ke+1)/dx3(ke)
     v3(i,j,ke+1) = v3(i,j,ke  ) + (v3(i,j,ke)-v3(i,j,ke-1))*dx3(ke)/dx3(ke-1)
     v3(i,j,ke+2) = v3(i,j,ke+1) + (v3(i,j,ke+1)-v3(i,j,ke))*dx3(ke+1)/dx3(ke)
-    v1(i,j,ke+1:ke+2) = v1(i,j,ke+1:ke+2) * plug
-    v2(i,j,ke+1:ke+2) = v2(i,j,ke+1:ke+2) * plug
+    v1(i,j,ke+1:ke+2) = v1(i,j,ke+1:ke+2)
+    v2(i,j,ke+1:ke+2) = v2(i,j,ke+1:ke+2)
     v3(i,j,ke+1:ke+2) = v3(i,j,ke+1:ke+2) * plug
     if(mag_on)then
      b1(i,j,ke+1) = b1(i,j,ke  ) + (b1(i,j,ke)-b1(i,j,ke-1))*dx3(ke)/dx3(ke-1)
@@ -1327,6 +1349,8 @@ if(ke>ks)then
    end do
   end do
 !$omp end do
+
+ case(10) x3_outer_vector ! Flux -----------------------------------------
 
  case default x3_outer_vector ! Error ------------------------------------
   print *, "Error from x3 velocity outer boundary condition" ; stop
