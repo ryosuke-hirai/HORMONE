@@ -3,11 +3,11 @@ module rungekutta_mod
 
 contains
 
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                    　  SUBROUTINE RUNGEKUTTA
+!                     　  SUBROUTINE RUNGEKUTTA
 !
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To integrate numflux using Runge-Kutta method
 
@@ -23,7 +23,7 @@ contains
   integer:: i,j,k,n,ufn
   real(8):: faco,fact,facn
 
-!-----------------------------------------------------------------------
+!-----------------------------------------------------------------------------
 
   wtime(irng) = wtime(irng) - omp_get_wtime()
 
@@ -66,13 +66,17 @@ contains
       if(rungen==1)uorg(i,j,k,ufn) = u(i,j,k,ufn)
       u(i,j,k,ufn) = faco*uorg(i,j,k,ufn) &
                    + facn*u(i,j,k,ufn) &
-             + fact*dt * &
-             ( idetg1(i) * &
-               (detg1(i-1  )*flux1(i-1,j,k,ufn)-detg1(i  )*flux1(i,j,k,ufn)) &
-             + idetg2(i,j) * &
-               (detg2(i,j-1)*flux2(i,j-1,k,ufn)-detg2(i,j)*flux2(i,j,k,ufn)) &
-             + idetg3(i,j,k) * (flux3(i,j,k-1,ufn)-flux3(i,j,k,ufn)) &
-             + src(i,j,k,ufn) )
+                   + fact*dt * &
+                     ( idetg1(i) * &
+                       ( detg1(i-1)*flux1(i-1,j,k,ufn)   &
+                       - detg1(i  )*flux1(i  ,j,k,ufn) ) &
+                     + idetg2(i,j) * &
+                       ( detg2(i,j-1)*flux2(i,j-1,k,ufn)   &
+                       - detg2(i,j  )*flux2(i,j  ,k,ufn) ) &
+                     + idetg3(i,j,k) * &
+                       ( flux3(i,j,k-1,ufn)   &
+                       - flux3(i,j,k  ,ufn) ) &
+                   + src(i,j,k,ufn) )
      end do
     end do
    end do
@@ -86,16 +90,19 @@ contains
      do i = is, ie
       do n = 1, spn
        if(rungen==1)spcorg(n,i,j,k) = spc(n,i,j,k)*uorg(i,j,k,icnt)
-       spc(n,i,j,k) = (faco*spcorg(n,i,j,k) + facn*spcorg(n,i,j,k)+fact*dt * &
-              ( idetg1(i) * &
-                ( detg1(i-1)*spcflx(n,i-1,j,k,1)   &
-                - detg1(i  )*spcflx(n,i  ,j,k,1) ) &
-              + idetg2(i,j) * &
-                ( detg2(i,j-1)*spcflx(n,i,j-1,k,2)   &
-                - detg2(i,j  )*spcflx(n,i,j  ,k,2) ) &
-              + idetg3(i,j,k) * &
-                ( spcflx(n,i,j,k-1,3) &
-                - spcflx(n,i,j,k  ,3) ) ) ) / u(i,j,k,icnt)
+       spc(n,i,j,k) = ( faco*spcorg(n,i,j,k) &
+                      + facn*spc(n,i,j,k)*d(i,j,k) &
+                      + fact*dt * &
+                      ( idetg1(i) * &
+                        ( detg1(i-1)*spcflx(n,i-1,j,k,1)   &
+                        - detg1(i  )*spcflx(n,i  ,j,k,1) ) &
+                      + idetg2(i,j) * &
+                        ( detg2(i,j-1)*spcflx(n,i,j-1,k,2)   &
+                        - detg2(i,j  )*spcflx(n,i,j  ,k,2) ) &
+                      + idetg3(i,j,k) * &
+                        ( spcflx(n,i,j,k-1,3) &
+                        - spcflx(n,i,j,k  ,3) ) ) ) &
+                      / u(i,j,k,icnt)
       end do
      end do
     end do
@@ -115,11 +122,11 @@ contains
   return
  end subroutine rungekutta
 
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE EULER
+!                          SUBROUTINE EULER
 !
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To integrate numflux using Euler method
 
@@ -130,7 +137,7 @@ contains
 
   integer:: i,j,k,ufn
 
-!--------------------------------------------------------------------
+!-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,ufn) collapse(4)
   do ufn = 1,ufnmax
@@ -153,11 +160,11 @@ contains
   return
  end subroutine euler
 
- !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE PRIMITIVE
+!                         SUBROUTINE PRIMITIVE
 !
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To convert conserved values to primitive values
 
@@ -171,7 +178,7 @@ contains
 
   integer:: i,j,k
 
-!--------------------------------------------------------------------
+!-----------------------------------------------------------------------------
   
 !$omp parallel do private(i,j,k) collapse(3)
   do k = ks,ke
