@@ -1185,7 +1185,11 @@ subroutine write_anyval(ui,forme,val)
  real(8),intent(in):: val
 !-----------------------------------------------------------------------------
 
- write(ui,forme,advance='no')val
+ if(abs(val)>=1d-99)then
+  write(ui,forme,advance='no')val
+ else
+  write(ui,forme,advance='no')0d0
+ end if
 
 return
 end subroutine write_anyval
