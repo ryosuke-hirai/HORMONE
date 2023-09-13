@@ -127,16 +127,6 @@ subroutine tools
 !!$ allocate(comp_ej(0:8,1:compsize))
 !!$ comp_ej(0:8,1:compsize) = dat(0:8,compsize:1:-1)
 
-! set default values for composition
- if(compswitch>=1)then
-  species(1) = 'h1'
-  species(2) = 'he4'
-  species(3) = 'metal'
-  spc(1,:,:,:) = 0.7d0
-  spc(2,:,:,:) = 0.28d0
-  spc(3,:,:,:) = 1d0-spc(1,:,:,:)-spc(3,:,:,:)
- end if
-
 ! EoS parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  gamma = 5d0/3d0 ! for EoS
  fac_egas = kbol/((gamma-1d0)*amu) ! frequently used factor for egas
