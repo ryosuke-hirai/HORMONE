@@ -1,3 +1,5 @@
+
+
 module gravbound_mod
  implicit none
 
@@ -21,20 +23,21 @@ contains
   integer:: i,j,k,ll, error1
   real(8):: dphiii, dphiio, dphi1o, dphi3i, dphi3o
   real(8),dimension(0:llmax):: ml
+  logical,dimension(0:llmax):: got
 
 !------------------------------------------------------------------------------
 
 ! cylindrical (axial symmetry) ################################################
   if(crdnt==1.and.je==1.and.bc3is/=1)then
 
-   ml = 0d0
+   got = .false.
 
    error1=0
    do i = gie+1,gie+2
     do k=gks,gke
      phi1o(i,k) = 0d0
      do ll=0,llmax
-      if(ml(ll)==0d0)call multipole(ll,ml(ll))
+      if(.not.got(ll))call multipole(ll,ml(ll),got(ll))
       dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi1o) < grverr*abs(phi1o(i,k))) exit
       phi1o(i,k) = phi1o(i,k) + dphi1o
@@ -58,11 +61,12 @@ contains
 
    error1=0
    do k = gks-2, gks-1
-    do i=gis,gie
+    do i = gis, gie
      phi3i(i,k) = 0d0
      do ll=0,llmax
-      if(ml(ll)==0d0)call multipole(ll,ml(ll))
+      if(.not.got(ll))call multipole(ll,ml(ll),got(ll))
       dphi3i = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
+     if(i==gis)print'(4i5,5(1PE15.7e2))',tn,i,k,ll,phi3i(i,k),dphi3i,(rdis(ie,ke)/rdis(i,k))**ll,ml(ll),Plc(ll,i,k)
       if(ll/=0.and.abs(dphi3i) < grverr*abs(phi3i(i,k))) exit
       phi3i(i,k) = phi3i(i,k) + dphi3i
      end do !ll-loop
@@ -82,7 +86,7 @@ contains
     do i=gis,gie
      phi3o(i,k) = 0d0
      do ll=0,llmax
-      if(ml(ll)==0d0)call multipole(ll,ml(ll))
+      if(.not.got(ll))call multipole(ll,ml(ll),got(ll))
       dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi3o) < grverr*abs(phi3o(i,k))) exit
       phi3o(i,k) = phi3o(i,k) + dphi3o
@@ -110,14 +114,14 @@ contains
 ! cylindrical (equatorial+axial symmetry) #####################################
   elseif(crdnt==1.and.je==1.and.bc3is==1)then
 
-   ml = 0d0
+   got = .false.
 
    error1=0
    do i = gie+1, gie+2
     do k=gks,gke
      phi1o(i,k) = 0d0
      do ll=0,llmax,2
-      if(ml(ll)==0d0)call multipole(ll,ml(ll))
+      if(.not.got(ll))call multipole(ll,ml(ll),got(ll))
       dphi1o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi1o) < grverr*abs(phi1o(i,k))) exit
       phi1o(i,k) = phi1o(i,k) + dphi1o
@@ -144,7 +148,7 @@ contains
     do i=gis,gie
      phi3o(i,k) = 0d0
      do ll=0,llmax,2
-      if(ml(ll)==0d0)call multipole(ll,ml(ll))
+      if(.not.got(ll))call multipole(ll,ml(ll),got(ll))
       dphi3o = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
       if(ll/=0.and.abs(dphi3o) < grverr*abs(phi3o(i,k))) exit
       phi3o(i,k) = phi3o(i,k) + dphi3o
@@ -174,14 +178,14 @@ contains
 ! spherical coordinates (axial symmetry) #######################################
   elseif(crdnt==2.and.ke==1)then
 
-   ml = 0d0
+   got = .false.
 
    error1=0
    do i = gie+1, gie+2
     do j = gjs,gje
      phiio(i,j) = 0d0
      do ll=0,llmax
-      if(ml(ll)==0d0)call multipole(ll,ml(ll))
+      if(.not.got(ll))call multipole(ll,ml(ll),got(ll))
       dphiio = -G*Pl(ll,j)*ml(ll)/x1(i)
       if(ll/=0.and.abs(dphiio) < grverr*abs(phiio(i,j))) exit
       phiio(i,j) = phiio(i,j) + dphiio
@@ -239,7 +243,7 @@ contains
  end subroutine gravbound
 
 !------------------------------------------------------------------------------
- subroutine multipole(ll,ml)
+ subroutine multipole(ll,ml,got)
 
   use settings,only:eq_sym
   use grid,only:is,ie,js,je,ks,ke,x1,dvol,rdis,crdnt
@@ -247,37 +251,37 @@ contains
 
   integer,intent(in):: ll
   real(8),intent(out):: ml
-  integer:: ii, jj, kk
+  logical,intent(out):: got
+  integer:: i, j, k
 
   ml = 0d0
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   if(crdnt==1.and.je==1)then
-   jj = js
-!$omp parallel do private (kk,ii) collapse(2) reduction(+:ml)
-   do kk = ks,ke
-    do ii = is,ie
-     ml = ml + gsrc(ii,jj,kk)*(rdis(ii,kk)/rdis(ie,ke))**ll &
-             * Plc(ll,ii,kk)*dvol(ii,jj,kk)
+   j = js
+!$omp parallel do private (i,k) collapse(2) reduction(+:ml)
+   do k = ks,ke
+    do i = is,ie
+     ml = ml + gsrc(i,j,k)*(rdis(i,k)/rdis(ie,ke))**ll &
+             * Plc(ll,i,k)*dvol(i,j,k)
      if(eq_sym)then
-      ml = ml + gsrc(ii,jj,kk)*(-rdis(ii,kk)/rdis(ie,ke))**ll &
-              * Plc(ll,ii,kk)*dvol(ii,jj,kk)
-
+      ml = ml + gsrc(i,j,k)*(-rdis(i,k)/rdis(ie,ke))**ll &
+              * Plc(ll,i,k)*dvol(i,j,k)
      end if
     end do
    end do
 !$omp end parallel do
-   
+
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   elseif(crdnt==2.and.ke==1)then
-   kk = ks
-!$omp parallel do private (jj,ii) collapse(2) reduction(+:ml)
-   do jj = js,je
-    do ii = is,ie
-     ml = ml + gsrc(ii,jj,kk)*(x1(ii)/x1(ie+1))**ll &
-              *Pl(ll,jj) * dvol(ii,jj,kk)
+   k = ks
+!$omp parallel do private (i,j) collapse(2) reduction(+:ml)
+   do j = js,je
+    do i = is,ie
+     ml = ml + gsrc(i,j,k)*(x1(i)/x1(ie+1))**ll &
+             * Pl(ll,j) * dvol(i,j,k)
      if(eq_sym)then
-      ml = ml + gsrc(ii,jj,kk)*(-x1(ii)/x1(ie+1))**ll &
-              * Pl(ll,jj) * dvol(ii,jj,kk)
+      ml = ml + gsrc(i,j,k)*(-x1(i)/x1(ie+1))**ll &
+              * Pl(ll,j) * dvol(i,j,k)
      end if
     end do
    end do
@@ -285,9 +289,10 @@ contains
 
   end if
 
+  got = .true.
+
   return
   end subroutine multipole
-
 
 
 !------------------------------------------------------------------------------
@@ -298,19 +303,19 @@ contains
 
    integer,intent(in):: ll
    real(8),intent(out):: ml
-   integer:: ii, jj, kk
+   integer:: i, j, k
 
 !------------------------------------------------------------------------------
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   if(crdnt==2.and.ke==1)then
-   kk = ks
+   k = ks
    ml = 0d0
-!$omp parallel do private(ii,jj) collapse(2) reduction(+:ml)
-   do jj = js,je
-    do ii = is,ie
-     ml = ml + gsrc(ii,jj,kk)*(x1(is-1)/x1(ii))**(ll+1) &
-              * Pl(ll,jj) * dvol(ii,jj,kk)
+!$omp parallel do private(i,j) collapse(2) reduction(+:ml)
+   do j = js,je
+    do i = is,ie
+     ml = ml + gsrc(i,j,k)*(x1(is-1)/x1(i))**(ll+1) &
+             * Pl(ll,j) * dvol(i,j,k)
     end do
    end do
 !$omp end parallel do

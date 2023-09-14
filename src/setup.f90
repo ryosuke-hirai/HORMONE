@@ -152,8 +152,8 @@ subroutine read_parameters(filename)
                     include_cooling, include_extforce, extrasfile
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
- namelist /gravcon/ gravswitch, grverr, cgerr, HGfac, hgcfl, gbtype, &
-                    grav_init_other, include_extgrv, &
+ namelist /gravcon/ gravswitch, grvsrctype, grverr, cgerr, HGfac, hgcfl, &
+                    gbtype, grav_init_other, include_extgrv, &
                     gis, gie, gjs, gje, gks, gke
  namelist /rad_con/ radswitch, opacitytype, lambdatype
  namelist /partcon/ include_particles, maxptc

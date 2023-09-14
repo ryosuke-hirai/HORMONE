@@ -44,15 +44,7 @@ subroutine gravity
  gkn = gke - gks + 1
 
 ! Set source term for gravity
-!$omp parallel do private(i,j,k) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
-    gsrc(i,j,k) = d(i,j,k)!*spc(1,i,j,k)
-   end do
-  end do
- end do
-!$omp end parallel do
+ call get_gsrc(gsrc)
 
  if(gravswitch==2.or.(gravswitch==3.and.tn==0.and.dim==2))then
   allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
@@ -988,5 +980,50 @@ subroutine gravsetup
 
 end subroutine gravsetup
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE GET_GSRC
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Set gsrc for Poisson's equation
+
+subroutine get_gsrc(gsrc)
+
+ use grid,only:is,ie,js,je,ks,ke
+
+ real(8),allocatable,intent(inout):: gsrc(:,:,:)
+ integer:: i,j,k
+
+!-----------------------------------------------------------------------------
+
+!$omp parallel do private(i,j,k) collapse(3)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    gsrc(i,j,k) = get_gsrc1(i,j,k)
+   end do
+  end do
+ end do
+!$omp end parallel do
+
+return
+end subroutine get_gsrc
+
+function get_gsrc1(i,j,k) result(gsrc)
+ use settings,only:grvsrctype
+ use physval,only:d,spc
+ integer,intent(in)::i,j,k
+ real(8):: gsrc
+ select case(grvsrctype)
+ case(0)
+  gsrc = d(i,j,k) ! default
+ case(1)
+  gsrc = d(i,j,k)*spc(1,i,j,k) ! For others
+ case default
+  print*,'Error in grvsrctype, grvsrctype=',grvsrctype
+  stop
+ end select
+end function get_gsrc1
 
 end module gravity_mod
