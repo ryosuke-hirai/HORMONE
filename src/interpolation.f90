@@ -14,7 +14,8 @@ contains
 
 subroutine interpolation
 
- use settings,only:compswitch,spn,eostype,mag_on,flux_limiter,wtime,iint
+ use settings,only:compswitch,spn,eostype,mag_on,flux_limiter,wtime,iint, &
+                   bc3is,bc3os
  use grid
  use physval
  use fluxlimiter
@@ -52,6 +53,14 @@ if(ie/=is)then
  do k = ks,ke
   do j = js,je
    do i = is-1,ie+1
+
+    if(i==is-1)then
+     if(bc1is==10)cycle
+    end if
+    if(i==ie+1)then
+     if(bc1os==10)cycle
+    end if
+
     dx(1:2) = idx1(i:i+1)
     x(1:3) = x1(i-1:i+1) ; xi(1:2) = xi1(i-1:i)
 
@@ -171,6 +180,14 @@ if(je/=js)then
  do k = ks,ke
   do j = js-1,je+1
    do i = is,ie
+
+    if(j==js-1)then
+     if(bc2is==10)cycle
+    end if
+    if(j==je+1)then
+     if(bc2os==10)cycle
+    end if
+
     dx(1:2) = idx2(j:j+1)
     x(1:3) = x2(j-1:j+1) ; xi(1:2) = xi2(j-1:j)
 
@@ -289,6 +306,14 @@ if(ke/=ks)then
  do k = ks-1,ke+1
   do j = js,je
    do i = is,ie
+
+    if(k==ks-1)then
+     if(bc3is==10)cycle
+    end if
+    if(k==ke+1)then
+     if(bc3os==10)cycle
+    end if
+
     dx(1:2) = idx3(k:k+1)
     x(1:3) = x3(k-1:k+1) ; xi(1:2) = xi3(k-1:k)
 

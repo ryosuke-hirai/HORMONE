@@ -173,7 +173,6 @@ contains
 !!$      end if
 !!$     end if
 
-
       do n = 1,ufnmax
        flux1(i,j,k,n) = tmpflux(n)
       end do
@@ -183,11 +182,11 @@ contains
         spcl(n) = spc(n,i  ,j,k) + dx(1) * dspc(n,i  ,j,k,1)
         spcr(n) = spc(n,i+1,j,k) - dx(2) * dspc(n,i+1,j,k,1)
        end do
-       signdflx = sign(0.5d0,flux1(i,j,k,1))
+       signdflx = sign(0.5d0,flux1(i,j,k,icnt))
        fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) + &
                    sum(spcr(1:spn))*(0.5d0-signdflx) )
        do n = 1, spn
-        spcflx(n,i,j,k,1) = fix * flux1(i,j,k,1) &
+        spcflx(n,i,j,k,1) = fix * flux1(i,j,k,icnt) &
                  * ( spcl(n)*(0.5d0+signdflx) + spcr(n)*(0.5d0-signdflx) )
        end do
       end if
@@ -344,11 +343,11 @@ contains
         spcl(n) = spc(n,i,j  ,k) + dx(1) * dspc(n,i,j  ,k,2)
         spcr(n) = spc(n,i,j+1,k) - dx(2) * dspc(n,i,j+1,k,2)
        end do
-       signdflx = sign(0.5d0,flux2(i,j,k,1))
+       signdflx = sign(0.5d0,flux2(i,j,k,icnt))
        fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) + &
                    sum(spcr(1:spn))*(0.5d0-signdflx) )
        do n = 1, spn
-        spcflx(n,i,j,k,2) = fix * flux2(i,j,k,1) &
+        spcflx(n,i,j,k,2) = fix * flux2(i,j,k,icnt) &
                * ( spcl(n)*(0.5d0+signdflx) + spcr(n)*(0.5d0-signdflx) )
        end do
       end if
@@ -505,11 +504,11 @@ contains
         spcl(n) = spc(n,i,j,k  ) + dx(1) * dspc(n,i,j,k  ,3)
         spcr(n) = spc(n,i,j,k+1) - dx(2) * dspc(n,i,j,k+1,3)
        end do
-       signdflx = sign(0.5d0,flux3(i,j,k,1))
+       signdflx = sign(0.5d0,flux3(i,j,k,icnt))
        fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) + &
                    sum(spcr(1:spn))*(0.5d0-signdflx) )
        do n = 1, spn
-        spcflx(n,i,j,k,3) = fix * flux3(i,j,k,1) &
+        spcflx(n,i,j,k,3) = fix * flux3(i,j,k,icnt) &
                * ( spcl(n)*(0.5d0+signdflx) + spcr(n)*(0.5d0-signdflx) )
        end do
       end if
