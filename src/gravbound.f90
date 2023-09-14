@@ -66,7 +66,6 @@ contains
      do ll=0,llmax
       if(.not.got(ll))call multipole(ll,ml(ll),got(ll))
       dphi3i = -ml(ll)*Plc(ll,i,k)*(rdis(ie,ke)/rdis(i,k))**ll/rdis(i,k)
-     if(i==gis)print'(4i5,5(1PE15.7e2))',tn,i,k,ll,phi3i(i,k),dphi3i,(rdis(ie,ke)/rdis(i,k))**ll,ml(ll),Plc(ll,i,k)
       if(ll/=0.and.abs(dphi3i) < grverr*abs(phi3i(i,k))) exit
       phi3i(i,k) = phi3i(i,k) + dphi3i
      end do !ll-loop
