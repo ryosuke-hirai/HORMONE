@@ -15,7 +15,7 @@ contains
 subroutine interpolation
 
  use settings,only:compswitch,spn,eostype,mag_on,flux_limiter,wtime,iint, &
-                   bc3is,bc3os
+                   bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
  use grid
  use physval
  use fluxlimiter
