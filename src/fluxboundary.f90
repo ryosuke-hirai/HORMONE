@@ -1,7 +1,8 @@
 module fluxbound_mod
  implicit none
 
- real(8):: dwind,vwind,Twind,pwind
+ real(8):: dwind,vwind,Twind,pwind,ewind
+ logical:: read_wind = .false.
 
 contains
 
@@ -40,50 +41,48 @@ end subroutine fluxboundary
 
 subroutine fluxboundary3i
 
- use settings,only:compswitch,spn
+ use settings,only:compswitch,spn,extrasfile
  use constants,only:arad,fac_pgas,fac_egas
  use grid
  use physval,only:flux3,spcflx,muconst,imo3,iene,icnt,spc,dspc
+ use input_mod,only:error_extras,error_nml
 
- integer:: i,j,k,n
- real(8)::fix,signdflx,ewind,dx(1:2)
- real(8),dimension(1:spn):: spcl,spcr
+ integer:: i,j,k,n,istat
+ real(8)::fix,signdflx,poly_n,mass,radius
+ character(len=100):: mesafile,star_type
 
 !-----------------------------------------------------------------------------
+ 
+! Read wind parameters
+ namelist /wtnlcon/ star_type,mass,radius,poly_n,mesafile,vwind,dwind,Twind
 
-! wind parameters
-! dwind = 0.04d-2 ! g/cc
-! vwind = 230d5 ! cm/s
-! Twind = 1.2d6 ! K
- ewind = fac_egas/muconst*dwind*Twind
- pwind = (fac_pgas/muconst*dwind + arad*Twind**3/3d0*0d0)*Twind
+ if(.not.read_wind)then
+! Specify input file, elements you want to track, and a softening length
+  open(newunit=n,file=extrasfile,status='old',iostat=istat)
+  if(istat/=0)call error_extras('windtunnel',extrasfile)
+  read(n,NML=wtnlcon,iostat=istat)
+  if(istat/=0)call error_nml('windtunnel',extrasfile)
+  close(n)
+  ewind = fac_egas/muconst*dwind*Twind + 0.5d0*dwind*vwind**2
+  pwind = fac_pgas/muconst*dwind*Twind
+  read_wind = .true.
+ end if
 
  k = ks-1
- dx(1) = xi3(k)-x3(k) ; dx(2) = x3(k+1)-xi3(k)
- do i = is, ie
-  do j = js, je
+!$omp parallel do private(i,j,n) collapse(2)
+ do j = js, je
+  do i = is, ie
    flux3(i,j,k,:) = 0d0
    flux3(i,j,k,icnt) = dwind*vwind
    flux3(i,j,k,imo3) = dwind*vwind**2 + pwind
-   flux3(i,j,k,iene) = (ewind+0.5d0*dwind*vwind**2+pwind) * vwind
+   flux3(i,j,k,iene) = (ewind+pwind) * vwind
    if(compswitch>=2)then
-!!$    do n = 1, spn
-!!$     spcl(n) = spc(n,i  ,j,k) + dx(1) * dspc(n,i  ,j,k,1)
-!!$     spcr(n) = spc(n,i+1,j,k) - dx(2) * dspc(n,i+1,j,k,1)
-!!$    end do
-!!$    signdflx = sign(0.5d0,flux3(i,j,k,1))
-!!$    fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) &
-!!$              + sum(spcr(1:spn))*(0.5d0-signdflx) )
-!!$    do n = 1, spn
-!!$     spcflx(n,i,j,k,1) = fix * flux3(i,j,k,1) &
-!!$      * ( spcl(n)*(0.5d0+signdflx) + spcr(n)*(0.5d0-signdflx) )
-!!$    end do
-    do n = 1, spn
-     spcflx(n,i,j,k,3) = flux3(i,j,k,1) * spc(n,i,j,ks)
-    end do
+    spcflx(1,i,j,k,3) = 0d0
+    spcflx(2,i,j,k,3) = flux3(i,j,k,1)
    end if
   end do
  end do
+!$omp end parallel do
 
 return
 end subroutine fluxboundary3i

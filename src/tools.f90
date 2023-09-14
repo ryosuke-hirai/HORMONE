@@ -13,9 +13,9 @@ contains
 
 subroutine tools
 
- use settings,only:crdnt,gravswitch,radswitch,include_cooling,eostype,compswitch
+ use settings,only:crdnt,gravswitch,radswitch,include_cooling,eostype
  use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_lvl
- use physval,only:gamma,imu,spc,muconst,species
+ use physval,only:gamma,imu,muconst
  use gravmod,only:llmax,Plc,Pl
  use constants,only:fac_egas,fac_pgas,kbol,amu
  use ionization_mod,only:ionization_setup
