@@ -17,7 +17,7 @@ module settings
  integer:: rktype, crdnt, tnlim, start, tn_out, outstyle, endstyle
  integer:: gravswitch, compswitch, radswitch
  integer:: eostype, spn, sigfig, outres, gbtype, maxptc
- integer:: opacitytype, lambdatype
+ integer:: grvsrctype, opacitytype, lambdatype
  real(8):: courant, t_end, dt_out, dt_unit_in_sec
  character(len=5):: dt_unit
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl

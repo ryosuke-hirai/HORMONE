@@ -220,9 +220,17 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
  real(8)::dr,mnow,rnow,mold,shell,shelld,mass,radius
  integer:: i,j,k,n,nn,sn
+ real(8),allocatable:: rdis0(:,:)
 
 !-----------------------------------------------------------------------------
 
+ allocate(rdis0(is:ie,ks:ke))
+ do i = is, ie
+  do k = ks, ke
+   rdis0(i,k) = sqrt( x1(i)**2+x3(k)**2 )
+  end do
+ end do
+ 
  mass=m(size(m)-1)
  radius=r(size(r)-1)
  dr = dx1(is)*1.d0
@@ -234,7 +242,7 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     if(rdis(i,k)<rnow.and.d(i,j,k)<=1d-99)then
+     if(rdis0(i,k)<rnow.and.d(i,j,k)<=1d-99)then
       shell = shell + dvol(i,j,k)
      end if
     end do
@@ -252,17 +260,17 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     if(rdis(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
+     if(rdis0(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
       d(i,j,k) = shelld
       do n = 0, size(m)-2
-       if(rdis(i,k)>r(n).and.rdis(i,k)<=r(n+1))then
-        p(i,j,k) = intpol(r(n:n+1),pres(n:n+1),rdis(i,k))
+       if(rdis0(i,k)>r(n).and.rdis0(i,k)<=r(n+1))then
+        p(i,j,k) = intpol(r(n:n+1),pres(n:n+1),rdis0(i,k))
 
         if(compswitch==2)then
          do nn = 1, spn-1
           do sn = 1, size(comp_list)-1
            if(trim(comp_list(sn))==trim(species(nn)))then
-            spc(nn,i,j,k) = intpol(r(n:n+1),comp(sn,n:n+1),rdis(i,k))
+            spc(nn,i,j,k) = intpol(r(n:n+1),comp(sn,n:n+1),rdis0(i,k))
             exit
            end if
           end do
@@ -283,7 +291,7 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
    do k = ks, ke
     do j = js, je
      do i = is, ie
-      if(rdis(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
+      if(rdis0(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
        shell = shell + dvol(i,js,k)
       end if
      end do
@@ -292,9 +300,9 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
    do k = ks, ke
     do j = js, je
      do i = is, ie
-      if(rdis(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
+      if(rdis0(i,k)<=rnow.and.d(i,j,k)<=1d-99)then
        d(i,j,k) = (mass-mold)/shell
-       p(i,j,k) = G*mass*(mass-mold)/shell/rdis(i,k)
+       p(i,j,k) = G*mass*(mass-mold)/shell/rdis0(i,k)
        if(compswitch==2)then
         do nn = 1, spn-1
          do sn = 1, size(comp_list)-1
