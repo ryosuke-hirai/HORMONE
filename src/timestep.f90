@@ -14,10 +14,10 @@ contains
 
  subroutine timestep
 
-  use settings,only:courant,outstyle,wtime,itim
+  use settings,only:courant,outstyle
   use grid
   use physval
-  use omp_lib
+  use profiler_mod
 
   real(8),allocatable:: dti(:,:,:)
   real(8):: cfmax0,cfmax
@@ -25,7 +25,7 @@ contains
   
 !-------------------------------------------------------------------------
 
-  wtime(itim) = wtime(itim) - omp_get_wtime()
+  call start_clock(wttim)
 
   allocate( dti(is:ie,js:je,ks:ke) )
 
@@ -72,7 +72,7 @@ contains
 
   ch = cfmax
 
-  wtime(itim) = wtime(itim) + omp_get_wtime()
+  call stop_clock(wttim)
   
  return
  end subroutine timestep

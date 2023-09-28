@@ -43,7 +43,7 @@ subroutine checksetup
    call add_equation(img1,ufnmax) ! Magnetic field equation 1
    call add_equation(img2,ufnmax) ! Magnetic field equation 2
    call add_equation(img3,ufnmax) ! Magnetic field equation 3
-   call add_equation(idcl,ufnmax) ! Divergence cleaning (9-wave method)
+   call add_equation(i9wv,ufnmax) ! Divergence cleaning (9-wave method)
   end if
   
 ! Set uniform mesh if that dimension it not used

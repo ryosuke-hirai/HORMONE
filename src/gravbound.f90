@@ -19,6 +19,7 @@ contains
   use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,xi1s,x1,tn,rdis
   use constants,only:G
   use gravmod,only:llmax,grvphi,phiii,phiio,phi1o,phi3i,phi3o,mc,Pl,Plc
+  use profiler_mod
 
   integer:: i,j,k,ll, error1
   real(8):: dphiii, dphiio, dphi1o, dphi3i, dphi3o
@@ -26,6 +27,8 @@ contains
   logical,dimension(0:llmax):: got
 
 !------------------------------------------------------------------------------
+
+  call start_clock(wtgbn)
 
 ! cylindrical (axial symmetry) ################################################
   if(crdnt==1.and.je==1.and.bc3is/=1)then
@@ -237,6 +240,8 @@ contains
    end if
 
   end if
+
+  call stop_clock(wtgbn)
 
   return
  end subroutine gravbound

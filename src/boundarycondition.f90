@@ -19,7 +19,7 @@ subroutine boundarycondition
  use dirichlet_mod
  use pressure_mod
  use composition_mod
- use omp_lib
+ use profiler_mod
 
  integer:: i,j,k
  real(8):: plug
@@ -36,7 +36,7 @@ subroutine boundarycondition
 !  9: Dirichlet b.c. (boundary values should be given elsewhere!)
 ! 10: Flux b.c. (flux values should be given elsewhere!)
 
- wtime(ibnd) = wtime(ibnd) - omp_get_wtime()
+ call start_clock(wtbnd)
  
 !$omp parallel
  
@@ -1384,7 +1384,7 @@ end if
 
 !$omp end parallel
 
-wtime(ibnd) = wtime(ibnd) + omp_get_wtime()
+call stop_clock(wtbnd)
 
 return
 

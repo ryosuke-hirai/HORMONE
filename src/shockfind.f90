@@ -13,10 +13,9 @@ contains
 
  subroutine shockfind
 
-  use settings,only:wtime,isho
   use grid
   use physval
-  use omp_lib
+  use profiler_mod
 
   integer:: i,j,k
   real(8):: divergence, gradT(1:dim), gradd(1:dim), Mjump
@@ -25,7 +24,7 @@ contains
 
   if(dim==1)return
 
-  wtime(isho) = wtime(isho) - omp_get_wtime()
+  call start_clock(wtsho)
 
   if(crdnt==2.and.ke==1)then
 !$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
@@ -89,7 +88,7 @@ contains
 !$omp end parallel do
   end if
 
-  wtime(isho) = wtime(isho) + omp_get_wtime()
+  call stop_clock(wtsho)
   
   return
  end subroutine shockfind

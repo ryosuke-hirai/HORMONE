@@ -16,7 +16,7 @@ contains
 
 subroutine gravity
 
- use settings,only:eq_sym,wtime,igrv,courant
+ use settings,only:eq_sym,courant
  use grid
  use constants
  use physval
@@ -24,7 +24,7 @@ subroutine gravity
  use gravbound_mod
  use utils,only:masscoordinate
  use miccg_mod,only:cg=>cg_grv,miccg,ijk_from_l,l_from_ijk
- use omp_lib
+ use profiler_mod
 
  integer:: i,j,k,n,l, gin, gjn, gkn, tngrav, grungen, jb, kb
  real(8):: phih, cgrav2, dtgrav, h
@@ -37,7 +37,7 @@ subroutine gravity
 
  if(gravswitch==0.or.gravswitch==1)return
  
- wtime(igrv) = wtime(igrv) - omp_get_wtime()
+ call start_clock(wtgrv)
  
  gin = gie - gis + 1
  gjn = gje - gjs + 1
@@ -566,7 +566,7 @@ if(gravswitch==3.and.tn/=0)then
 
 end if
 
-wtime(igrv) = wtime(igrv) + omp_get_wtime()
+call stop_clock(wtgrv)
 
 end subroutine gravity
 

@@ -41,24 +41,27 @@ program hormone
   use rungekutta_mod
 
   use gravity_mod
+  use radiation_mod
   use particle_mod
   use cooling_mod
   use dirichlet_mod
   use shockfind_mod
   use tests_mod
 
-  use omp_lib
+  use profiler_mod
   
   implicit none
 
 !############################## start program ################################
 
-  wtime = 0d0
-  wtime(iini) = -omp_get_wtime()
+! Start profiling
+  call init_profiler
   
 ! Initial setups -------------------------------------------------------------
 
-  time = 0.d0; tn = 0
+  call start_clock(wtini)
+
+  time = 0d0; tn = 0
 
 ! Read startfile
   call read_startfile
@@ -85,8 +88,6 @@ program hormone
 
 ! Initial output
   if(include_particles.and.tn==0)call particles_setup
-!  if(include_particles.and.time==inifile)call particles_setup
-  call boundarycondition
   call timestep
 
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
@@ -100,12 +101,13 @@ program hormone
    call evo_output
   end if
 
-  wtime(iini) = wtime(iini) + omp_get_wtime()
+  call stop_clock(wtini)
 
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
 
-   wtime(itot) = wtime(itot) - omp_get_wtime()
+   call reset_clock(wtlop)
+   call start_clock(wtlop)
 
    main_loop:do
 
@@ -124,6 +126,7 @@ program hormone
     end do
 
     if(mag_on)           call phidamp
+    if(radswitch>0)      call radiation
     if(include_cooling)  call cooling
     if(include_particles)call particles
 
@@ -159,11 +162,13 @@ program hormone
 ! -------------------------------- !
 
    end do main_loop
+   call stop_clock(wtlop)
+
   end if
 ! End integration ------------------------------------------------------------
 
   call scaling_output
-  
+
   if(tn/=0)call output ! To see final state
 
   if(is_test)call test

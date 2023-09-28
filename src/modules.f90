@@ -29,10 +29,6 @@ module settings
  logical:: write_other_slice, write_temp
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
-! profiler
- real(8):: wtime(0:12)
- integer,parameter::iini=1,iflx=2,irng=3,ibnd=4,isrc=5,iint=6,&
-                    ieos=7,itim=8,igrv=9,iout=10,isho=11,irad=12,itot=0
 
 end module settings
 
@@ -95,7 +91,7 @@ module physval
   
   implicit none
 
-  integer:: icnt,imo1,imo2,imo3,iene,img1,img2,img3,idcl,ufnmax
+  integer:: icnt,imo1,imo2,imo3,iene,img1,img2,img3,i9wv,ufnmax
   real(8),allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3, ptot
   real(8),allocatable,dimension(:,:,:):: T, eint, imu
   real(8),allocatable,dimension(:,:,:,:):: dd, de, dm1, dm2, dm3

@@ -18,15 +18,23 @@ module output_mod
 
 subroutine output
 
- use settings,only:is_test,wtime,iout
+ use settings,only:is_test
  use grid,only:tn
- use omp_lib
+ use profiler_mod
+
+ integer:: wtind
 
 !----------------------------------------------------------------------------
   
  if(is_test) return ! do not bother outputting anything if it is a test
 
- wtime(iout) = wtime(iout) - omp_get_wtime()
+ if(tn==0)then
+  wtind = wtou1 ! Record time of initial output separately
+ else
+  wtind = wtout
+ end if
+
+ call start_clock(wtind)
 
  if(tn==0)call write_grid
 
@@ -38,8 +46,7 @@ subroutine output
  call write_bpt
  call write_ptc
 
-
- wtime(iout) = wtime(iout) + omp_get_wtime()
+ call stop_clock(wtind)
 
  call profiler_output
 
@@ -883,41 +890,37 @@ end subroutine write_bpt
 subroutine profiler_output
 
  use settings
- use omp_lib
+ use profiler_mod
 
- character(30):: form1
- integer:: ui
+ integer:: ui,i,j
+ character(len=30)::form1,forml
 
 !-----------------------------------------------------------------------------
 
- wtime(itot) = wtime(itot) + omp_get_wtime()
- 
+ call stop_clock(wtlop)
+ call stop_clock(wttot)
+
+ write(form1,'("(",i2,"X,3a12)")')maxlbl+1
+ write(forml,'("(",i2,"a)")')maxlbl+1 + 3*12
+
  open(newunit=ui,file='walltime.dat',status='replace')
+ write(ui,form1)'wall_time','frac_loop','frac_tot'
 
- form1 = '(a,2(1X,F10.3,a))'
- write(ui,form1)'Hydro          :',sum(wtime(iflx:itim)),'s',sum(wtime(iflx:itim))/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Numflux     :',wtime(iflx),'s',wtime(iflx)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- RungeKutta  :',wtime(irng),'s',wtime(irng)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Interpolate :',wtime(iint),'s',wtime(iint)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- EoS         :',wtime(ieos),'s',wtime(ieos)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Source      :',wtime(isrc),'s',wtime(isrc)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Timestep    :',wtime(itim),'s',wtime(itim)/wtime(itot)*1d2,'%'
- write(ui,form1)'|- Boundary    :',wtime(ibnd),'s',wtime(ibnd)/wtime(itot)*1d2,'%'
- write(ui,form1)'Gravity        :',wtime(igrv),'s',wtime(igrv)/wtime(itot)*1d2,'%'
- write(ui,form1)'Radiation      :',wtime(irad),'s',wtime(irad)/wtime(itot)*1d2,'%'
- write(ui,form1)'Output         :',wtime(iout),'s',wtime(iout)/wtime(itot)*1d2,'%'
- write(ui,form1)'Shockfind      :',wtime(isho),'s',wtime(isho)/wtime(itot)*1d2,'%'
- write(ui,'(a)')'---------------------------------------------'
- write(ui,'(a,F10.3,a)')'Total time     :',wtime(itot),'s'
+ do i = 1, n_wt
+  if(get_layer(i)==wttot)write(ui,forml)('-',j=1,maxlbl+1+3*12)
+  call profiler_output1(ui,i)
+ end do
+ write(ui,forml)('-',j=1,maxlbl+1+3*12)
+ call profiler_output1(ui,wttot)
 
- wtime(itot) = wtime(itot) - omp_get_wtime()
+ call start_clock(wtlop)
 
  return
 end subroutine profiler_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE SCALING_OUTPUT
+!                        SUBROUTINE SCALING_OUTPUT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -926,10 +929,12 @@ end subroutine profiler_output
 subroutine scaling_output
 
  use settings
+ use profiler_mod
  use omp_lib
 
  integer:: i,un,n
  character(len=4):: is_scaling_test
+ character(len=30)::form1
 
 !-----------------------------------------------------------------------------
 
@@ -941,18 +946,18 @@ subroutine scaling_output
   n=omp_get_num_threads()
 !$omp end parallel
 
-  wtime(itot) = wtime(itot) + omp_get_wtime()
+  call stop_clock(wttot)
 
   open(newunit=un,file='scaling.dat',status='old',position='append',iostat=i)
 
   if(i/=0)then
    open(newunit=un,file='scaling.dat',status='new')
-   write(un,'(a8,12a14)')&
-   'threads','total','setup','numflux','RungeKutta','boundary',&
-   'source','interpolation','eos','timestep','gravity','output','shock'
+   write(form1,'("(a8,",i2,"a14)")')n_wt+1
+   write(un,form1)'threads',routine_name(0:n_wt)
   end if
 
-  write(un,'(i8,12(F14.6))')n,wtime(itot:isho)
+  write(form1,'("(i8,",i2,"F14.6)")')n_wt+1
+  write(un,'(i8,12(F14.6))')n,wtime(0:n_wt)
 
   close(un)
 

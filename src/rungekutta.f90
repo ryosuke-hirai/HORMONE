@@ -13,19 +13,19 @@ contains
 
  subroutine rungekutta
 
-  use settings,only:rktype,compswitch,spn,wtime,irng,ieos
+  use settings,only:rktype,compswitch,spn
   use grid
   use physval
   use composition_mod
   use smear_mod
-  use omp_lib
+  use profiler_mod
 
   integer:: i,j,k,n,ufn
   real(8):: faco,fact,facn
 
 !-----------------------------------------------------------------------------
 
-  wtime(irng) = wtime(irng) - omp_get_wtime()
+  call start_clock(wtrng)
 
   runge_type: select case (rktype)
   case(3) runge_type
@@ -111,13 +111,13 @@ contains
   end if
 !$omp end parallel
 
-  wtime(irng) = wtime(irng) + omp_get_wtime()
+  call stop_clock(wtrng)
 
 
-  wtime(ieos) = wtime(ieos) - omp_get_wtime()
+  call start_clock(wteos)
   call smear
   call primitive
-  wtime(ieos) = wtime(ieos) + omp_get_wtime()
+  call stop_clock(wteos)
 
   return
  end subroutine rungekutta
@@ -194,7 +194,7 @@ contains
      b2(i,j,k) = u(i,j,k,img2)
      b3(i,j,k) = u(i,j,k,img3)
      ! for 9 wave method
-     phi(i,j,k)= u(i,j,k,idcl)
+     phi(i,j,k)= u(i,j,k,i9wv)
     end do
    end do
   end do

@@ -14,13 +14,13 @@ contains
 
 subroutine interpolation
 
- use settings,only:compswitch,spn,eostype,mag_on,flux_limiter,wtime,iint, &
+ use settings,only:compswitch,spn,eostype,mag_on,flux_limiter, &
                    bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
  use grid
  use physval
  use fluxlimiter
  use pressure_mod
- use omp_lib
+ use profiler_mod
 
  integer:: i,j,k,n
  real(8):: dl, dr, ptl, ptr, el, er, m1l, m1r, m2l, m2r, m3l, m3r
@@ -30,7 +30,7 @@ subroutine interpolation
 
 !-----------------------------------------------------------------------------
 
- wtime(iint) = wtime(iint) - omp_get_wtime()
+ call start_clock(wtint)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! Notations !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! slopes : dd, de, dm1, dm2, dm3, db1, db2, db3
@@ -423,7 +423,7 @@ if(ke/=ks)then
 end if
 !$omp end parallel
 
-wtime(iint) = wtime(iint) + omp_get_wtime()
+call stop_clock(wtint)
 
 return
 end subroutine interpolation

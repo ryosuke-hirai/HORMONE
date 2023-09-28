@@ -14,7 +14,7 @@ contains
  subroutine numflux
 
   use settings,only:compswitch,spn,eq_sym,eostype,mag_on,fluxbound_on,&
-                    bc1is,bc1os,bc2is,bc2os,bc3is,bc3os,wtime,iflx
+                    bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
   use grid
   use physval
   use hllflux_mod
@@ -22,7 +22,7 @@ contains
   use composition_mod
   use interpolation_mod
   use fluxbound_mod
-  use omp_lib
+  use profiler_mod
   
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
@@ -40,7 +40,7 @@ contains
 ! use MUSCL interpolation
   call interpolation
   
-  wtime(iflx) = wtime(iflx) - omp_get_wtime()
+  call start_clock(wtflx)
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !$omp parallel
@@ -525,7 +525,7 @@ contains
 
   if(fluxbound_on)call fluxboundary
   
-  wtime(iflx) = wtime(iflx) + omp_get_wtime()
+  call stop_clock(wtflx)
 
   return
  end subroutine numflux

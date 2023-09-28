@@ -3,7 +3,8 @@ module radiation_mod
 
  public:: radiation,radiation_setup
  private::lambda,lambda_LP81,lambda_M78,lambda_K89,kappa_r,kappa_p,get_radflux,get_source_term,get_geo,setup_radcg
- real(8),allocatable,private:: geo(:,:,:,:),radK(:,:,:,:)
+ real(8),allocatable,private:: geo(:,:,:,:)
+ real(8),allocatable,public:: urad(:,:,:),rsrc(:,:,:)
 
 contains
 
@@ -17,19 +18,26 @@ contains
 
 subroutine radiation
 
- use settings,only:wtime,irad
  use grid
  use physval
- use miccg_mod,only:cg_rad,miccg,ijk_from_l,l_from_ijk
- use omp_lib
+ use miccg_mod,only:cg=>cg_rad,miccg,ijk_from_l,l_from_ijk
+ use profiler_mod
+
+ real(8),allocatable::radK(:,:,:,:)
 
 !-----------------------------------------------------------------------------
 
- wtime(irad) = wtime(irad) - omp_get_wtime()
+ call start_clock(wtrad)
 
+ allocate(radK(1:3,cg%is-1:cg%ie,cg%js-1:cg%je,cg%ks-1:cg%ke))
  
+ call get_radflux(urad,d,T,cg,radK)
+ call get_radA(radK,cg)
+ call get_source_term(d,T,urad,dt,cg,rsrc)
+
+! call miccg(cg,rsrc,x)
  
- wtime(irad) = wtime(irad) + omp_get_wtime()
+ call stop_clock(wtrad)
 
 return
 end subroutine radiation
@@ -123,9 +131,9 @@ subroutine get_radflux(urad,d,T,cg,radK)
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,gradE,rho,TT,xi,R) collapse(3)
- do k = cg%ks, cg%ke
-  do j = cg%js, cg%je
-   do i = cg%is, cg%ie
+ do k = cg%ks-1, cg%ke
+  do j = cg%js-1, cg%je
+   do i = cg%is-1, cg%ie
 ! Flux in x1 direction
     gradE = (urad(i+1,j,k) - urad(i,j,k))/dx1(i+1)
     rho = intpol(x1(i:i+1),d   (i:i+1,j,k),xi1(i))
@@ -166,14 +174,15 @@ end subroutine get_radflux
 
 ! PURPOSE: Compute A matrix elements for radiation
 
-subroutine get_radA(cg)
+subroutine get_radA(radK,cg)
 
  use constants,only:c=>clight,fac_egas,arad
  use settings,only:crdnt
  use grid,only:dt,dvol
  use physval,only:d,T,imu
  use miccg_mod,only:cg_set,ijk_from_l,get_preconditioner
- 
+
+ real(8),allocatable,intent(in):: radK(:,:,:,:)
  type(cg_set),intent(inout)::cg
  integer:: i,j,k,in,jn,kn,l,dim
  real(8):: kappap,cv
@@ -205,7 +214,7 @@ subroutine get_radA(cg)
     cg%A(2,l) = -geo(1,i,j,k)*radK(1,i,j,k)
     if(i==cg%ie)cg%A(2,l) = 0d0
    end do
-   
+
   end if
 
  case(2) ! 2D
@@ -393,19 +402,69 @@ end subroutine setup_radcg
 
 subroutine get_source_term(d,T,urad,dt,cg,rsrc)
 
+ use grid,only:dim,crdnt
  use constants,only:arad,fac_egas
- use miccg_mod,only:cg_set
+ use miccg_mod,only:cg_set,ijk_from_l
 
  real(8),allocatable,dimension(:,:,:),intent(in):: d,T,urad
  real(8),intent(in):: dt
- type(cg_set),intent(in):: cg
- real(8),allocatable,intent(inout):: rsrc
+ type(cg_set),intent(inout):: cg
+ real(8),allocatable,intent(inout):: rsrc(:,:,:)
  integer:: i,j,k,l
  real(8):: cv
 
 !-----------------------------------------------------------------------------
 
- 
+ select case(dim)
+ case(1) ! 1D
+
+  if(cg%jn==1.and.cg%kn==1)then
+
+   do l = 1, cg%lmax
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    rsrc(i,j,k) = 0d0
+    if(i==cg%ie)cg%A(2,l) = 0d0
+   end do
+
+  end if
+
+ case(2) ! 2D
+
+  if(cg%kn==1)then
+
+   do l = 1, cg%lmax
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    rsrc(i,j,k) = 0d0
+    if(i==cg%ie)cg%A(2,l) = 0d0
+    if(j==cg%je)cg%A(3,l) = 0d0
+   end do
+
+  elseif(cg%jn==1)then
+
+   do l = 1, cg%lmax
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    rsrc(i,j,k) = 0d0
+    if(i==cg%ie)cg%A(2,l) = 0d0
+    if(k==cg%ke)cg%A(3,l) = 0d0
+   end do
+
+  end if
+
+ case(3) ! 3D
+
+  if(crdnt==2)then
+   do l = 1, cg%lmax
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    rsrc(i,j,k) = 0d0
+    if(i==cg%ie)cg%A(2,l) = 0d0
+    if(j==cg%je)cg%A(3,l) = 0d0
+    if(k==cg%ke)cg%A(4,l) = 0d0
+    if(k/=cg%ks)cg%A(5,l) = 0d0
+   end do
+  end if
+
+ end select
+
 
 return
 end subroutine get_source_term
@@ -466,5 +525,24 @@ subroutine radiation_setup
 
 return
 end subroutine radiation_setup
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE RADIATIVE_FORCE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute radiative acceleration.
+
+subroutine radiative_force
+
+ use grid
+
+!-----------------------------------------------------------------------------
+
+ 
+
+return
+end subroutine radiative_force
 
 end module radiation_mod

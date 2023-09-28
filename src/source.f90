@@ -14,18 +14,19 @@ contains
 subroutine source
 
  use grid
- use settings,only:eq_sym,include_extforce,wtime,isrc,mag_on
+ use settings,only:eq_sym,include_extforce,mag_on,radswitch
  use physval
  use constants
  use gravmod
+ use radiation_mod,only:radiative_force
  use externalforce_mod
- use omp_lib
+ use profiler_mod
 
  integer:: i,j,k,n
 
 !----------------------------------------------------------------------------
 
- wtime(isrc) = wtime(isrc) - omp_get_wtime()
+ call start_clock(wtsrc)
 
 ! To calculate gravitational forces ********************************************
  if(gravswitch==0)then ! gravity off
@@ -196,9 +197,10 @@ subroutine source
   stop
  end select
 
+ if(radswitch>0)     call radiative_force
  if(include_extforce)call externalforce
  
- wtime(isrc) = wtime(isrc) + omp_get_wtime()
+ call stop_clock(wtsrc)
 
  return
 end subroutine source
