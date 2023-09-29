@@ -31,30 +31,6 @@ subroutine shocktube
  close(ui)
 
  strl = len(trim(simtype))
-! Select the type of shock tube problem
- select case(simtype(1:strl-2))
- case('sodshock')
-  mag_on = .false.
-  gamma = 1.4d0
-  dl = 1d0 ; dr = 0.125d0
-  pl = 1d0 ; pr = 0.1d0
-  
- case('briowu')
-  mag_on = .true.
-  gamma = 2d0
-  dl  = 1d0    ; dr  = 0.125d0
-  pl  = 1d0    ; pr  = 0.1d0
-  b1l = 0.75d0 ; b1r = 0.75d0
-  b2l = 1d0    ; b2r =-1d0
-  
- case('other_shocktube')
-  open(newunit=ui,file=extrasfile,status='old',iostat=istat)
-  if(istat/=0)call error_extras('shocktube',extrasfile)
-  read(ui,NML=tubecon,iostat=istat)
-  if(istat/=0)call error_nml('shocktube',extrasfile)
-  close(ui)
-
- end select
 
 ! Find the direction of shock tube
  select case(simtype(strl:strl))
@@ -65,6 +41,44 @@ subroutine shocktube
  case('z')
   dir = 3
  end select
+
+! Select the type of shock tube problem
+ select case(simtype(1:strl-2))
+ case('sodshock')
+  mag_on = .false.
+  gamma = 1.4d0
+  dl = 1d0 ; dr = 0.125d0
+  pl = 1d0 ; pr = 0.1d0
+  
+ case('briowushock')
+  mag_on = .true.
+  gamma = 2d0
+  dl  = 1d0    ; dr  = 0.125d0
+  pl  = 1d0    ; pr  = 0.1d0
+  select case(dir)
+  case(1)
+   b1l = 0.75d0 ; b1r = 0.75d0
+   b2l = 1d0    ; b2r =-1d0
+   b3l = 0d0    ; b3r = 0d0
+  case(2)
+   b1l = 0d0    ; b1r = 0d0
+   b2l = 0.75d0 ; b2r = 0.75d0
+   b3l = 1d0    ; b3r =-1d0
+  case(3)
+   b1l = 1d0    ; b1r =-1d0
+   b2l = 0d0    ; b2r = 0d0
+   b3l = 0.75d0 ; b3r = 0.75d0
+  end select
+  
+ case('other_shocktube')
+  open(newunit=ui,file=extrasfile,status='old',iostat=istat)
+  if(istat/=0)call error_extras('shocktube',extrasfile)
+  read(ui,NML=tubecon,iostat=istat)
+  if(istat/=0)call error_nml('shocktube',extrasfile)
+  close(ui)
+
+ end select
+
 
  call setup_shocktube(dir,dl,pl,v1l,v2l,v3l,b1l,b2l,b3l,&
                           dr,pr,v1r,v2r,v3r,b1r,b2r,b3r)

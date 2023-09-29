@@ -578,7 +578,7 @@ subroutine pressure
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
      ptot(i,j,k) = p(i,j,k)
 
-     if(mag_on)cycle
+     if(.not.mag_on)cycle
      bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
      ptot(i,j,k) = ptot(i,j,k) + 0.5d0*bsq
     end do
@@ -595,7 +595,7 @@ subroutine pressure
                       spc(1,i,j,k),spc(2,i,j,k)) ! gets T too
      ptot(i,j,k) = p(i,j,k)
 
-     if(mag_on)cycle
+     if(.not.mag_on)cycle
      bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
      ptot(i,j,k) = ptot(i,j,k) + 0.5d0*bsq
     end do
@@ -635,7 +635,7 @@ subroutine internalenergy
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    eint(i,j,k) = get_eint(e(i,j,k),d(i,j,k),&
+    eint(i,j,k) = get_eint(e (i,j,k),d (i,j,k),&
                            v1(i,j,k),v2(i,j,k),v3(i,j,k),&
                            b1(i,j,k),b2(i,j,k),b3(i,j,k),ierr )
     if(ierr==1)then
