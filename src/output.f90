@@ -913,6 +913,8 @@ subroutine profiler_output
  write(ui,forml)('-',j=1,maxlbl+1+3*12)
  call profiler_output1(ui,wttot)
 
+ close(ui)
+
  call start_clock(wtlop)
 
  return

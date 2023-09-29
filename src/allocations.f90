@@ -109,7 +109,8 @@ subroutine allocations
   end do
  end do
 !$omp end parallel do
- 
+
+
 ! gravity-related variables
  if(gravswitch>=1)then
   allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2))!;grvphi=0d0
@@ -131,7 +132,6 @@ subroutine allocations
    end do
   end do
 !$omp end parallel do
-  
 
 !  for gravbound
   allocate(phiio(gie+1:gie+2,gjs-2:gje+2), phiii(gis-2:gis-1,gjs-2:gje+2), &
@@ -158,19 +158,20 @@ subroutine allocations
      bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
    allocate( spc0,source=spc )
   end if
- end if
- species(:) = 'aaa'
+
+  species(:) = 'aaa'
 !$omp parallel do private(i,j,k,n) collapse(4) schedule(static)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
-    do n = 1, spn
-     spc(n,i,j,k) = 0d0
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     do n = 1, spn
+      spc(n,i,j,k) = 0d0
+     end do
     end do
    end do
   end do
- end do
 !$omp end parallel do
+ end if
 
 ! allocate external gravitational field if necessary
  if(include_extgrv)allocate(extgrv,mold=grvphi)
