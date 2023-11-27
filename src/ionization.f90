@@ -10,82 +10,40 @@ module ionization_mod
  public::ionization_setup,get_xion,get_erec_imurec,get_erec,get_imurec
  private::rapid_tanh,rapid_dtanh,arec1,brec1
 
- interface rapid_tanh
-    module procedure rapid_tanhs,rapid_tanhv
- end interface rapid_tanh
- interface rapid_dtanh
-    module procedure rapid_dtanhs,rapid_dtanhv
- end interface rapid_dtanh
-
 contains
 ! **************************************************************************
- pure function rapid_tanhs(x)
-! Rapid hyperbolic tangent function for scalars
+
+ pure elemental function rapid_tanh(x)
+! Rapid hyperbolic tangent function
   real(8),intent(in)::x
-  real(8):: a,b,x2,rapid_tanhs
+  real(8):: a,b,x2,rapid_tanh
   
   if(abs(x)>=tanh_edge)then
-   rapid_tanhs = sign(1d0,x)-tanh_c/x
+   rapid_tanh = sign(1d0,x)-tanh_c/x
   else
    x2 = x**2
    a = ((x2+105d0)*x2+945d0)*x
    b = ((x2+28d0)*x2+63d0)*15d0
-   rapid_tanhs = a/b
+   rapid_tanh = a/b
   end if
- end function rapid_tanhs
+ end function rapid_tanh
 
- pure function rapid_tanhv(x)
-! Rapid hyperbolic tangent function for vectors
-  real(8),intent(in)::x(:)
-  real(8),dimension(size(x)):: rapid_tanhv
-  real(8):: a,b,x2
-  integer:: i
-  
-  do i = 1, size(x)
-   if(abs(x(i))>=tanh_edge)then
-    rapid_tanhv(i) = sign(1d0,x(i))-tanh_c/x(i)
-   else
-    x2 = x(i)**2
-    a = ((x2+105d0)*x2+945d0)*x(i)
-    b = ((x2+28d0)*x2+63d0)*15d0
-    rapid_tanhv(i) = a/b
-   end if
-  end do
- end function rapid_tanhv
 ! **************************************************************************
- pure function rapid_dtanhs(x)
-! Rapid hyperbolic tangent derivative (1/cosh^2) for scalars
+ pure elemental function rapid_dtanh(x)
+! Rapid hyperbolic tangent derivative (1/cosh^2)
   real(8),intent(in)::x
-  real(8):: a,b,x2,rapid_dtanhs
+  real(8):: a,b,x2,rapid_dtanh
   
   if(abs(x)>=tanh_edge)then
-   rapid_dtanhs = dtanh_c/x**2
+   rapid_dtanh = dtanh_c/x**2
   else
    x2=x**2
    a = (((x2-21d0)*x2+420d0)*x2-6615d0)*x2+59535d0
    b = (x2+28d0)*x2+63d0
-   rapid_dtanhs = a/(15d0*b**2)
+   rapid_dtanh = a/(15d0*b**2)
   end if
- end function rapid_dtanhs
+ end function rapid_dtanh
 
- pure function rapid_dtanhv(x)
-! Rapid hyperbolic tangent derivative (1/cosh^2) for vectors
-  real(8),intent(in)::x(:)
-  real(8),dimension(size(x)):: rapid_dtanhv
-  real(8):: a,b,x2
-  integer:: i
-  
-  do i = 1, size(x)
-   if(abs(x(i))>=tanh_edge)then
-    rapid_dtanhv(i) = dtanh_c/(x(i)*x(i))
-   else
-    x2=x(i)**2
-    a = (((x2-21d0)*x2+420d0)*x2-6615d0)*x2+59535d0
-    b = (x2+28d0)*x2+63d0
-    rapid_dtanhv(i) = a/(15d0*b**2)
-   end if
-  end do
- end function rapid_dtanhv
 ! **************************************************************************
  subroutine ionization_setup
 ! PURPOSE: Set up all fitting coefficients
