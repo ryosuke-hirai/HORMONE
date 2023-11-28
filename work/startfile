@@ -9,6 +9,10 @@ If start==0, it will set the initial condition based on the choice of simtype.
 	  pre-computed test data. Only certain simtypes have test data available
           Tests should be run with compiler optimization switched off
 
+
+&startcon start=0 simtype='sodshock_x test' parafile=''/
+
+
 ++++++ SIMTYPE OPTIONS ++++++
 ** Test files available **
 'eostest': Forwards and backwards consistency test for EoS.
@@ -25,6 +29,3 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'agndisk': Explosions in AGN disks (Grishin+2021)
 'windtunnel': Wind tunnel simulations
 'modify': Modify and restart from an existing binfile
-
-&startcon start=0 simtype='sodshock_x test' parafile=''/
-
