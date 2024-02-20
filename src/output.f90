@@ -280,7 +280,7 @@ subroutine open_sinkfile
  open(newunit=iskf,file='data/sinks.dat',status='new',position='append',iostat=ierr)
 
  do n = 1, nsink
-  write(iskf,'(a,i0,a)',advance="no")"Msink_",n,"/Msun="
+  write(iskf,'(2x,a,i0,a)',advance="no")"Msink_",n,"/Msun="
   write(iskf,forme,advance="no")sink(n)%mass/msun
  end do
  write(iskf,'()')
@@ -329,16 +329,14 @@ subroutine sink_output
  write(iskf,'(i10)',advance='no')tn
  call write_anyval(iskf,forme,time)
  do n = 1, nsink
-  if(ie/=is)call write_anyval(iskf,forme,sink(n)%x(1))
-  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
-            call write_anyval(iskf,forme,sink(n)%x(2))
-  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
-            call write_anyval(iskf,forme,sink(n)%x(3))
-  if(ie/=is)call write_anyval(iskf,forme,sink(n)%v(1))
-  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
-            call write_anyval(iskf,forme,sink(n)%v(2))
-  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
-            call write_anyval(iskf,forme,sink(n)%v(3))
+  call write_anyval(iskf,forme,sink(n)%x(1))
+  call write_anyval(iskf,forme,sink(n)%x(2))
+  if(.not.eq_sym)&
+   call write_anyval(iskf,forme,sink(n)%x(3))
+  call write_anyval(iskf,forme,sink(n)%v(1))
+  call write_anyval(iskf,forme,sink(n)%v(2))
+  if(.not.eq_sym)&
+   call write_anyval(iskf,forme,sink(n)%v(3))
  end do
  write(iskf,'()')
 

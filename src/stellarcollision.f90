@@ -33,7 +33,7 @@ subroutine stellarcollision
  character(len=10)::spc_list(1:1000)
  integer:: i,j,k,istat,nn,sn,ih1,ihe4
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const
- real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv
+ real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv,ecc
  real(8),allocatable:: comptmp(:)
  logical::isentropic
  
@@ -58,18 +58,20 @@ subroutine stellarcollision
  asep   = asep*rsun
 
 ! Re-count spn based on spc_list and reallocate relevant arrays
- spn=-1
- do nn = 1, 1000
-  spn = spn + 1
-  if(spc_list(nn)=='aaa')exit
- end do
- deallocate(spc,spcorg,dspc,spcflx,species)
- allocate(spc    (1:spn,is-2:ie+2,js-2:je+2,ks-2:ke+2), &
-          spcorg (1:spn,is:ie,js:je,ks:ke), &
-          dspc   (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
-          spcflx (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
-          species(1:spn) )
- species(1:spn) = spc_list(1:spn)
+ if(compswitch==2)then
+  spn=-1
+  do nn = 1, 1000
+   spn = spn + 1
+   if(spc_list(nn)=='aaa')exit
+  end do
+  deallocate(spc,spcorg,dspc,spcflx,species)
+  allocate(spc    (1:spn,is-2:ie+2,js-2:je+2,ks-2:ke+2), &
+           spcorg (1:spn,is:ie,js:je,ks:ke), &
+           dspc   (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
+           spcflx (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
+           species(1:spn) )
+  species(1:spn) = spc_list(1:spn)
+ end if
 
 ! Read MESA file
  call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
@@ -143,11 +145,10 @@ subroutine stellarcollision
 ! Remember core mass
  mc(is-1) = mcore
 
- call write_extgrv
 
 ! place colliding object
  sink(2)%mass = nsmass
- sink(2)%x(1) = -asep*rsun
+ sink(2)%x(1) = -asep
  sink(2)%x(2) = 0d0
  sink(2)%x(3) = 0d0
  orbv = sqrt(G*(mass+mprog)/asep)
@@ -158,6 +159,14 @@ subroutine stellarcollision
  sink(2)%v(3) = 0d0
  sink(2)%lsoft = nssoft
  sink(2)%softfac = 3d0
+
+! For SN2022jli
+ asep = (G*(mass+nsmass)*(12.5d0*3600d0*24d0)**2)**(1d0/3d0)
+ orbv = sqrt(G*(mass+nsmass)/asep)
+ ecc = 1d0-20d0*rsun/asep
+ sink(2)%x(1)=-asep
+ sink(2)%v(2)=orbv*sqrt((1d0-ecc)/(1d0+ecc))
+ sink(2)%v(3)=0d0
 
 return
 end subroutine stellarcollision
