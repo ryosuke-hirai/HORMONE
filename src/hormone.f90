@@ -34,6 +34,7 @@ program hormone
   use initialcondition_mod
   use output_mod
   use gravmod
+  use sink_mod
   use composition_mod
   use boundary_mod
   use numflux_mod
@@ -93,12 +94,9 @@ program hormone
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
   if(tn==0)then
    call gravity
-   call output
-  end if
-
-  if(write_evo)then
    call open_evofile
-   call evo_output
+   call open_sinkfile
+   call output
   end if
 
   call stop_clock(wtini)
@@ -114,8 +112,9 @@ program hormone
     call timestep
     print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
 
-    if(tn>0)call gravity
-    if(dirichlet_on)call dirichletbound
+    if(include_sinks)call sink_motion
+    if(tn>0)         call gravity
+    if(dirichlet_on) call dirichletbound
     call shockfind
 
     do rungen = 1, rktype
@@ -131,6 +130,7 @@ program hormone
     if(include_particles)call particles
 
     time = time + dt ; tn = tn + 1
+
 ! Output sequence ---------------------- !
     select case(outstyle)                !
     case(1) ! output by time             !
@@ -148,8 +148,10 @@ program hormone
      print *,'outstyle out of range'     !
      stop                                !
     end select                           !
-    if(write_evo.and.&                   !
-       mod(tn,10)==0)call evo_output     !
+    if(write_evo.and.mod(tn,10)==0)then  !
+     call evo_output                     !
+     call sink_output                    !
+    end if                               !
 ! -------------------------------------- !
 
 ! End sequence ------------------- !

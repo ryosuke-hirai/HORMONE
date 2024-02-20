@@ -75,9 +75,11 @@ subroutine readbin(filename)
  use pressure_mod
  use composition_mod
  use gravmod
+ use sink_mod,only:nsink,sink
 
  character(len=*),intent(in):: filename
  integer:: un,istat
+
 !-----------------------------------------------------------------------------
 
  open(newunit=un,file=filename,status='old',form='unformatted',iostat=istat)
@@ -101,6 +103,7 @@ subroutine readbin(filename)
            b3(is:ie,js:je,ks:ke), &
            phi(is:ie,js:je,ks:ke)
  end if
+ if(include_sinks)read(un)sink(1:nsink)
  close(un)
 
  call meanmolweight

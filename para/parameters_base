@@ -61,6 +61,11 @@
 	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
+! include_sinks: switch for sink particles
+! nsink: number of sink particles
+!!! other quantities should be given in initial condition file
+&sinkcon include_sinks=.false. nsink=0 /
+
 ! radswitch:0=off,1=flux limited diffusion
 ! opacitytype:0=fixed,1=ionisation
 ! lambdatype:1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989

@@ -81,7 +81,7 @@ contains
                  / max(abs(v1(is:ie,js:je,ks:ke)),tol))
   v3err = maxval(abs(v30(is:ie,js:je,ks:ke)-v3(is:ie,js:je,ks:ke)) &
                  / max(abs(v1(is:ie,js:je,ks:ke)),tol))
-  
+
   print*,'L1 norm error is =',max(derr,perr,v1err,v2err,v3err)
 
   ncells = (ie-is+1)*(je-js+1)*(ke-ks+1)

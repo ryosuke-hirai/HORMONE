@@ -24,7 +24,7 @@ module settings
  integer:: imesh, jmesh, kmesh
 ! switches
  logical:: include_extgrv, include_particles, include_cooling, mag_on
- logical:: include_extforce, is_test
+ logical:: include_extforce, include_sinks, is_test
  logical:: write_other_vel, write_shock, grav_init_other, write_evo
  logical:: write_other_slice, write_temp
  character(len=30):: flux_limiter, simtype
@@ -121,7 +121,7 @@ module gravmod
   implicit none
 
   integer,parameter:: llmax = 1000
-  real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold, grvphidot
+  real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold, grvphidot, totphi
   real(8),allocatable,dimension(:,:,:,:):: grvphiorg
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc

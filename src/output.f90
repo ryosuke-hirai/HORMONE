@@ -1,7 +1,7 @@
 module output_mod
  implicit none
 
- integer:: ievo
+ integer:: ievo,iskf
  public:: output,set_file_name,write_extgrv,evo_output,scaling_output
  private:: write_grid,write_bin,write_plt,get_header,add_column, &
            write_val
@@ -39,12 +39,14 @@ subroutine output
  if(tn==0)call write_grid
 
  call write_bin
-
  call write_plt
 
 ! Tracer particle outputs
  call write_bpt
  call write_ptc
+
+ call evo_output
+ call sink_output
 
  call stop_clock(wtind)
 
@@ -63,7 +65,7 @@ end subroutine output
 
 subroutine open_evofile
 
- use settings,only:sigfig,gravswitch,mag_on,crdnt
+ use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,include_sinks,write_evo
  use grid,only:dim
 
  integer::ierr
@@ -71,28 +73,33 @@ subroutine open_evofile
 
 !-----------------------------------------------------------------------------
 
+ if(.not.write_evo)return
+
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  open(newunit=ievo,file='data/evo.dat',status='old',position='append',iostat=ierr)
-   
- if(ierr/=0)then
-  open(newunit=ievo,file='data/evo.dat',status='replace')
-  write(ievo,'(a10)',advance='no')'tn'
-  write(ievo,forma,advance="no")'time'
-  write(ievo,forma,advance="no")'tot_mass'
-  write(ievo,forma,advance="no")'tot_e'
-  write(ievo,forma,advance="no")'tot_eint'
-  write(ievo,forma,advance="no")'tot_ekin'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'tot_egrv'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_mass'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_e'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_angmom'
-  if(mag_on)write(ievo,forma,advance="no")'tot_emag'
-  if(dim>=2.and.crdnt>=1)write(ievo,forma,advance="no")'tot_angmom'
-  write(ievo,'()')
- end if
+
+ if(ierr==0)return ! Return if evofile already exists.
+ !                   Write headers if it needs to be freshly made.
+
+ open(newunit=ievo,file='data/evo.dat',status='new')
+ write(ievo,'(a10)',advance='no')'tn'
+ write(ievo,forma,advance="no")'time'
+ write(ievo,forma,advance="no")'tot_mass'
+ write(ievo,forma,advance="no")'tot_e'
+ write(ievo,forma,advance="no")'tot_eint'
+ write(ievo,forma,advance="no")'tot_ekin'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'tot_egrv'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'bound_mass'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'bound_e'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'bound_angmom'
+ if(mag_on)write(ievo,forma,advance="no")'tot_emag'
+ if(dim>=2.and.crdnt>=1)write(ievo,forma,advance="no")'tot_angmom'
+ write(ievo,'()')
 
  return
 end subroutine open_evofile
+
+
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE EVO_OUTPUT
@@ -114,6 +121,8 @@ subroutine evo_output
  real(8):: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot, Mbound, Ebound, Jbound
 
 !-----------------------------------------------------------------------------
+
+ if(.not.write_evo)return
  
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
 
@@ -237,6 +246,104 @@ subroutine evo_output
  
 return
 end subroutine evo_output
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE OPEN_SINKFILE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Start or open sinkfile
+
+subroutine open_sinkfile
+
+ use settings,only:include_sinks,crdnt,sigfig,eq_sym
+ use constants,only:msun
+ use grid,only:is,ie,js,je,ks,ke
+ use sink_mod,only:nsink,sink
+
+ integer:: ierr,n
+ character(len=50):: forma, forme, header
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_sinks)return
+
+ write(forma,'("(a",i2,")")')sigfig+8 ! for strings
+ write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
+
+ open(newunit=iskf,file='data/sinks.dat',status='old',position='append',iostat=ierr)
+
+ if(ierr==0)return ! Return if sinkfile already exists.
+!                    Write headers if it needs to be freshly made.
+
+ open(newunit=iskf,file='data/sinks.dat',status='new',position='append',iostat=ierr)
+
+ do n = 1, nsink
+  write(iskf,'(a,i0,a)',advance="no")"Msink_",n,"/Msun="
+  write(iskf,forme,advance="no")sink(n)%mass/msun
+ end do
+ write(iskf,'()')
+
+ write(iskf,'(a10)',advance='no')'tn'
+ write(iskf,forma,advance="no")'time'
+ do n = 1, nsink
+  write(header,'("sink_",i0)')n
+  if(ie/=is)write(iskf,forma,advance="no")trim(header)//'_x1'
+  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
+            write(iskf,forma,advance="no")trim(header)//'_x2'
+  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
+            write(iskf,forma,advance="no")trim(header)//'_x3'
+  if(ie/=is)write(iskf,forma,advance="no")trim(header)//'_v1'
+  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
+            write(iskf,forma,advance="no")trim(header)//'_v2'
+  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
+            write(iskf,forma,advance="no")trim(header)//'_v3'
+ end do
+ write(iskf,'()')
+
+ return
+end subroutine open_sinkfile
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                        SUBROUTINE SINK_OUTPUT
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output sink properties as a function of time
+
+subroutine sink_output
+
+ use settings,only:sigfig,include_sinks,crdnt,eq_sym
+ use grid,only:tn,time,is,ie,js,je,ks,ke
+ use sink_mod,only:nsink,sink
+
+ integer:: n
+ character(len=50):: forme
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_sinks)return
+
+ write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
+
+ write(iskf,'(i10)',advance='no')tn
+ call write_anyval(iskf,forme,time)
+ do n = 1, nsink
+  if(ie/=is)call write_anyval(iskf,forme,sink(n)%x(1))
+  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
+            call write_anyval(iskf,forme,sink(n)%x(2))
+  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
+            call write_anyval(iskf,forme,sink(n)%x(3))
+  if(ie/=is)call write_anyval(iskf,forme,sink(n)%v(1))
+  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
+            call write_anyval(iskf,forme,sink(n)%v(2))
+  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
+            call write_anyval(iskf,forme,sink(n)%v(3))
+ end do
+ write(iskf,'()')
+
+return
+end subroutine sink_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE WRITE_GRID
@@ -472,6 +579,7 @@ subroutine write_bin
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
  use gravmod,only:grvphi,grvphiold,dt_old
+ use sink_mod,only:nsink,sink
 
  implicit none
 
@@ -498,6 +606,7 @@ subroutine write_bin
             b3(is:ie,js:je,ks:ke), &
             phi(is:ie,js:je,ks:ke)
  end if
+ if(include_sinks)write(un)sink(1:nsink)
 
  close(un)
 
@@ -878,6 +987,7 @@ subroutine write_bpt
 
  return
 end subroutine write_bpt
+
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
