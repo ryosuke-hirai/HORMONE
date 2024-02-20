@@ -331,12 +331,10 @@ subroutine sink_output
  do n = 1, nsink
   call write_anyval(iskf,forme,sink(n)%x(1))
   call write_anyval(iskf,forme,sink(n)%x(2))
-  if(.not.eq_sym)&
-   call write_anyval(iskf,forme,sink(n)%x(3))
+  call write_anyval(iskf,forme,sink(n)%x(3))
   call write_anyval(iskf,forme,sink(n)%v(1))
   call write_anyval(iskf,forme,sink(n)%v(2))
-  if(.not.eq_sym)&
-   call write_anyval(iskf,forme,sink(n)%v(3))
+  call write_anyval(iskf,forme,sink(n)%v(3))
  end do
  write(iskf,'()')
 
