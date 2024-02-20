@@ -1001,14 +1001,17 @@ subroutine profiler_output
 
  use settings
  use profiler_mod
+ use omp_lib
 
  integer:: ui,i,j
  character(len=30)::form1,forml
 
 !-----------------------------------------------------------------------------
 
- call stop_clock(wtlop)
- call stop_clock(wttot)
+! Stop all active clocks
+ do i = 0, n_wt
+  if(clock_on(i))wtime(i) = wtime(i) + omp_get_wtime()
+ end do
 
  write(form1,'("(",i2,"X,3a12)")')maxlbl+1
  write(forml,'("(",i2,"a)")')maxlbl+1 + 3*12
@@ -1025,7 +1028,10 @@ subroutine profiler_output
 
  close(ui)
 
- call start_clock(wtlop)
+! Reactivate clocks
+ do i = 0, n_wt
+  if(clock_on(i))wtime(i) = wtime(i) - omp_get_wtime()
+ end do
 
  return
 end subroutine profiler_output

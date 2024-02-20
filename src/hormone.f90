@@ -110,11 +110,11 @@ program hormone
 
    main_loop:do
 
+    call start_clock(wthyd)
+
     call timestep
     print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
 
-    if(include_sinks)call sink_motion
-    if(tn>0)         call gravity
     if(dirichlet_on) call dirichletbound
     call shockfind
 
@@ -125,6 +125,10 @@ program hormone
      call rungekutta
     end do
 
+    call stop_clock(wthyd)
+
+    call gravity
+    if(include_sinks)    call sink_motion
     if(mag_on)           call phidamp
     if(radswitch>0)      call radiation
     if(include_cooling)  call cooling

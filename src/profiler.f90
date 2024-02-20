@@ -216,7 +216,7 @@ subroutine reset_clock(i)
    find_child:do
     if(j==i)then
      exit find_child
-    elseif(j==0)then
+    elseif(j==wttot)then
      cycle all_loop
     end if
     j = parent(j)
