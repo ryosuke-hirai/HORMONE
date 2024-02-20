@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=18 ! number of profiling categories
+ integer,parameter:: n_wt=19 ! number of profiling categories
  real(8):: wtime(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -22,7 +22,8 @@ module profiler_mod
   wtrad=15,& ! radiation
   wtopc=16,& ! opacity
   wtrfl=17,& ! radiative flux
-  wtout=18,& ! output
+  wtsnk=18,& ! sink particles
+  wtout=19,& ! output
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -64,6 +65,7 @@ subroutine init_profiler
  parent(wtrad) = wtlop ! radiation
  parent(wtopc) = wtrad ! opacity
  parent(wtrfl) = wtrad ! radiative flux
+ parent(wtsnk) = wtlop ! sink particles
  parent(wttot) =-1     ! Total
  
 ! Make sure to keep routine name short
@@ -85,6 +87,7 @@ subroutine init_profiler
  routine_name(wtrad) = 'Radiation'   ! radiation
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad flux'    ! radiative flux
+ routine_name(wtsnk) = 'Sinks'       ! sink particles
  routine_name(wttot) = 'Total'       ! total
 
  do i = 0, n_wt

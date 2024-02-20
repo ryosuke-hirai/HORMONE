@@ -26,11 +26,14 @@ subroutine sink_motion
 
  use constants,only:huge
  use grid,only:dt
+ use profiler_mod
 
  integer:: n
  real(8):: dtsink
 
 !-----------------------------------------------------------------------------
+
+ call start_clock(wtsnk)
 
  dtsink = huge
  do n = 1, nsink
@@ -48,8 +51,9 @@ subroutine sink_motion
   sink(n)%x = sink(n)%x + sink(n)%v*dt
  end do
 
- return
+ call stop_clock(wtsnk)
 
+ return
 end subroutine sink_motion
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

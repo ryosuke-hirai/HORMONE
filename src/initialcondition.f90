@@ -31,6 +31,7 @@ subroutine initialcondition
  use agndisk_mod
  use modify_mod
  use windtunnel_mod
+ use stellarcollision_mod
 
  integer:: i,j,k
 
@@ -70,6 +71,9 @@ subroutine initialcondition
 
   case('windtunnel')
    call windtunnel
+
+  case('stellarcollision')
+   call stellarcollision
 
   case('modify')
    call modify
