@@ -79,15 +79,17 @@ subroutine stellarcollision
  mass = m(size(m)-1)
  dbg = rho(size(rho)-1)*1d-5
 ! Use outermost composition as the ambient gas composition
- do nn = 1, spn-1
-  do sn = 1, size(comp_list)
-   if(trim(comp_list(sn))==trim(species(nn)))then
-    spc_bg(nn) = comp(sn,size(rho)-1)
-    exit
-   end if
+ if(compswitch==2)then
+  do nn = 1, spn-1
+   do sn = 1, size(comp_list)
+    if(trim(comp_list(sn))==trim(species(nn)))then
+     spc_bg(nn) = comp(sn,size(rho)-1)
+     exit
+    end if
+   end do
   end do
- end do
- spc_bg(spn) = 1d0-sum(spc_bg(1:spn-1))
+  spc_bg(spn) = 1d0-sum(spc_bg(1:spn-1))
+ end if
 
 ! Replace the core with a point particle + softened gas
  call replace_core(rcore,r,m,rho,pres,comp,comp_list)

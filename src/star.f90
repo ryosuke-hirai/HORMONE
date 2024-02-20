@@ -13,8 +13,10 @@ contains
 
 subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
 
+ use settings,only:compswitch
  use constants,only:pi
  use composition_mod,only:get_imu
+ use physval,only:muconst
 
  real(8),intent(inout)::rcore
  real(8),allocatable,dimension(:),intent(inout):: r, m, rho, pres
@@ -27,10 +29,12 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
 !-----------------------------------------------------------------------------
 
 ! get indices for hydrogen and helium
- do i = 1, size(comp_list)
-  if(trim(comp_list(i))=='h1')ih1=i
-  if(trim(comp_list(i))=='he4')ihe4=i
- end do
+ if(compswitch==2)then
+  do i = 1, size(comp_list)
+   if(trim(comp_list(i))=='h1')ih1=i
+   if(trim(comp_list(i))=='he4')ihe4=i
+  end do
+ end if
 
 ! find index for rcore
  do i = 1, size(pres)-1
@@ -39,7 +43,11 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  
  rcore = r(i)
  mcore = m(i)
- imuh = get_imu([comp(ih1,i),comp(ihe4,i)])
+ if(compswitch==2)then
+  imuh = get_imu([comp(ih1,i),comp(ihe4,i)])
+ else
+  imuh = 1d0/muconst
+ end if
  allocate(softr(0:i+1),softrho(0:i),softp(0:i+1))
  softr(0:i+1) = r(0:i+1)
  softrho(0:i) = rho(0:i)
@@ -49,16 +57,18 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
 
  rho(0:i) = softrho(0:i)
  pres(0:i) = softp(0:i)
- 
+
 ! recalculate mass coordinate
  m(0) = mpt
  do j = 1, i
   m(j) = m(j-1) + 4d0*pi/3d0*(r(j)**3-r(j-1)**3)*rho(j)
  end do
 ! Set everything inside rcore to uniform composition
- do j = 1, size(comp_list)
-  comp(j,0:i-1) = comp(j,i)
- end do
+ if(compswitch==2)then
+  do j = 1, size(comp_list)
+   comp(j,0:i-1) = comp(j,i)
+  end do
+ end if
 
 return
 end subroutine replace_core

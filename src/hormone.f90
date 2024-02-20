@@ -140,13 +140,11 @@ program hormone
     select case(outstyle)                !
     case(1) ! output by time             !
      if(time>=t_out)then                 !
-!      call boundarycondition             !
       call output                        !
       t_out = t_out + dt_out             !
      end if                              !
     case(2) ! output by timestep         !
      if(tn/=0.and.mod(tn,tn_out)==0)then !
-!      call boundarycondition             !
       call output                        !
      end if                              !
     case default                         !

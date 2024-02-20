@@ -23,7 +23,7 @@ subroutine source
  use externalforce_mod
  use profiler_mod
 
- integer:: i,j,k,n
+ integer:: i,j,k
 
 !----------------------------------------------------------------------------
 
