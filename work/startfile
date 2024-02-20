@@ -28,4 +28,5 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 'agndisk': Explosions in AGN disks (Grishin+2021)
 'windtunnel': Wind tunnel simulations
+'stellarcollision': Stellar collision simulation (Hirai & Podsiadlowski 2022)
 'modify': Modify and restart from an existing binfile
