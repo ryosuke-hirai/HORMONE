@@ -104,6 +104,7 @@ program hormone
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
 
+   wtime(wtgri) = wtime(wtgrv)
    call reset_clock(wtlop)
    call start_clock(wtlop)
 

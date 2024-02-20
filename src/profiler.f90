@@ -2,28 +2,31 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=19 ! number of profiling categories
+ integer,parameter:: n_wt=22 ! number of profiling categories
  real(8):: wtime(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
-  wtou1=2 ,& ! initial output
-  wtlop=3 ,& ! main loop
-  wthyd=4 ,& ! hydrodynamics
-  wtflx=5 ,& ! numerical flux
-  wtrng=6 ,& ! Runge-Kutta
-  wtbnd=7 ,& ! boundary conditions
-  wtsrc=8 ,& ! source terms
-  wtint=9 ,& ! MUSCL interpolation
-  wteos=10,& ! equation of state
-  wttim=11,& ! time stepping
-  wtgrv=12,& ! gravity
-  wtgbn=13,& ! gravbound
-  wtsho=14,& ! shockfind
-  wtrad=15,& ! radiation
-  wtopc=16,& ! opacity
-  wtrfl=17,& ! radiative flux
-  wtsnk=18,& ! sink particles
-  wtout=19,& ! output
+  wtgri=2 ,& ! initial gravity
+  wtou1=3 ,& ! initial output
+  wtlop=4 ,& ! main loop
+  wthyd=5 ,& ! hydrodynamics
+  wtflx=6 ,& ! numerical flux
+  wtrng=7 ,& ! Runge-Kutta
+  wtbnd=8 ,& ! boundary conditions
+  wtsrc=9 ,& ! source terms
+  wtint=10,& ! MUSCL interpolation
+  wteos=11,& ! equation of state
+  wttim=12,& ! time stepping
+  wtgrv=13,& ! gravity
+  wtgbn=14,& ! gravbound
+  wtpoi=15,& ! Poisson solver
+  wthyp=16,& ! hyperbolic self-gravity
+  wtsho=17,& ! shockfind
+  wtrad=18,& ! radiation
+  wtopc=19,& ! opacity
+  wtrfl=20,& ! radiative flux
+  wtsnk=21,& ! sink particles
+  wtout=22,& ! output
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -48,6 +51,7 @@ subroutine init_profiler
 ! Default parent=0
 
  parent(wtini) = wttot ! initial conditions
+ parent(wtgri) = wtini ! initial gravity
  parent(wtou1) = wtini ! initial output
  parent(wtlop) = wttot ! main loop
  parent(wthyd) = wtlop ! hydrodynamics
@@ -60,6 +64,8 @@ subroutine init_profiler
  parent(wttim) = wthyd ! time stepping
  parent(wtgrv) = wtlop ! gravity
  parent(wtgbn) = wtgrv ! gravbound
+ parent(wtpoi) = wtgrv ! Poisson solver
+ parent(wthyp) = wtgrv ! hyperbolic self-gravity
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
@@ -70,6 +76,7 @@ subroutine init_profiler
  
 ! Make sure to keep routine name short
  routine_name(wtini) = 'Setup'       ! initial conditions
+ routine_name(wtgri) = '1st Gravity' ! initial gravity
  routine_name(wtou1) = '1st Output'  ! initial output
  routine_name(wtlop) = 'Main loop'   ! main loop
  routine_name(wthyd) = 'Hydro'       ! hydrodynamics
@@ -82,6 +89,8 @@ subroutine init_profiler
  routine_name(wttim) = 'Timestep'    ! time stepping
  routine_name(wtgrv) = 'Gravity'     ! gravity
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
+ routine_name(wtpoi) = 'MICCG'       ! Poisson solver
+ routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
@@ -157,7 +166,7 @@ return
 end subroutine start_clock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE STOP_CLOCK
+!                          SUBROUTINE STOP_CLOCK
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To stop recording wall time for a given category
@@ -183,7 +192,7 @@ return
 end subroutine stop_clock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE RESET_CLOCK
+!                          SUBROUTINE RESET_CLOCK
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To reset the clock for a given category
@@ -193,11 +202,29 @@ subroutine reset_clock(i)
  use omp_lib
 
  integer,intent(in)::i
+ integer:: n,j
 
 !-----------------------------------------------------------------------------
 
  wtime(i) = 0d0
  clock_on(i) = .false.
+
+! Reset clock for all child categories too
+ all_loop:do n = 1, n_wt
+  j = parent(n)
+  if(j/=i)then
+   find_child:do
+    if(j==i)then
+     exit find_child
+    elseif(j==0)then
+     cycle all_loop
+    end if
+    j = parent(j)
+   end do find_child
+  end if
+  wtime(n) = 0d0
+  clock_on(n) = .false.
+ end do all_loop
 
 return
 end subroutine reset_clock

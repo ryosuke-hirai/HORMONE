@@ -8,7 +8,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                            SUBROUTINE GRAVITY
+!                           SUBROUTINE GRAVITY
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -53,6 +53,8 @@ subroutine gravity
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
   call gravbound
+
+  call start_clock(wtpoi)
 
 ! cylindrical (equatorial+axial symmetry) ####################################
   if(je==1.and.crdnt==1.and.dim==2)then
@@ -167,12 +169,16 @@ subroutine gravity
   end if
 
   if(gravswitch==3)grvphiold = grvphi
-  
+
+  call stop_clock(wtpoi)
+
  endif
 
 
 if(gravswitch==3.and.tn/=0)then
 ! Hyperbolic Self-Gravity $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+ call start_clock(wthyp)
 
  if(crdnt==1.and.je==js)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates %%%%%%%%%%
@@ -563,6 +569,7 @@ if(gravswitch==3.and.tn/=0)then
   
  end if
 
+ call stop_clock(wthyp)
 
 end if
 
