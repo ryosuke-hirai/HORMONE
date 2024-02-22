@@ -166,7 +166,7 @@ subroutine stellarcollision
 ! For SN2022jli
  asep = (G*(mass+nsmass)*(12.5d0*3600d0*24d0/2d0/pi)**2)**(1d0/3d0)
  orbv = sqrt(G*(mass+nsmass)/asep)
-! ecc = 1d0-20d0*rsun/asep
+ ecc = 1d0-20d0*rsun/asep
  sink(2)%x(1)=-asep*(1d0+ecc)
  sink(2)%x(2:3)=0d0
  sink(2)%v(1)=0d0
