@@ -65,7 +65,8 @@ end subroutine output
 
 subroutine open_evofile
 
- use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,include_sinks,write_evo
+ use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,include_sinks,&
+                   write_evo,start
  use grid,only:dim
 
  integer::ierr
@@ -76,12 +77,16 @@ subroutine open_evofile
  if(.not.write_evo)return
 
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
- open(newunit=ievo,file='data/evo.dat',status='old',position='append',iostat=ierr)
 
- if(ierr==0)return ! Return if evofile already exists.
- !                   Write headers if it needs to be freshly made.
+ if(start/=0)then
+  open(newunit=ievo,file='data/evo.dat',status='old',&
+       position='append',iostat=ierr)
+  if(ierr==0)return ! Return if evofile already exists.
+ end if
 
- open(newunit=ievo,file='data/evo.dat',status='new')
+! Write headers if it needs to be freshly made.
+ open(newunit=ievo,file='data/evo.dat',status='replace')
+
  write(ievo,'(a10)',advance='no')'tn'
  write(ievo,forma,advance="no")'time'
  write(ievo,forma,advance="no")'tot_mass'
@@ -257,7 +262,7 @@ end subroutine evo_output
 
 subroutine open_sinkfile
 
- use settings,only:include_sinks,crdnt,sigfig,eq_sym
+ use settings,only:include_sinks,crdnt,sigfig,eq_sym,start
  use constants,only:msun
  use grid,only:is,ie,js,je,ks,ke
  use sink_mod,only:nsink,sink
@@ -272,12 +277,14 @@ subroutine open_sinkfile
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
 
- open(newunit=iskf,file='data/sinks.dat',status='old',position='append',iostat=ierr)
+ if(start/=0)then
+  open(newunit=iskf,file='data/sinks.dat',status='old',&
+       position='append',iostat=ierr)
+  if(ierr==0)return ! Return if evofile already exists.
+ end if
 
- if(ierr==0)return ! Return if sinkfile already exists.
-!                    Write headers if it needs to be freshly made.
-
- open(newunit=iskf,file='data/sinks.dat',status='new',position='append',iostat=ierr)
+! Write headers if it needs to be freshly made.
+ open(newunit=iskf,file='data/sinks.dat',status='replace')
 
  do n = 1, nsink
   write(iskf,'(2x,a,i0,a)',advance="no")"Msink_",n,"/Msun="
@@ -289,16 +296,12 @@ subroutine open_sinkfile
  write(iskf,forma,advance="no")'time'
  do n = 1, nsink
   write(header,'("sink_",i0)')n
-  if(ie/=is)write(iskf,forma,advance="no")trim(header)//'_x1'
-  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
-            write(iskf,forma,advance="no")trim(header)//'_x2'
-  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
-            write(iskf,forma,advance="no")trim(header)//'_x3'
-  if(ie/=is)write(iskf,forma,advance="no")trim(header)//'_v1'
-  if(je/=js.and.(.not.(crdnt==2.and.eq_sym)))&
-            write(iskf,forma,advance="no")trim(header)//'_v2'
-  if(ke/=ks.and.(.not.(crdnt==1.and.eq_sym)))&
-            write(iskf,forma,advance="no")trim(header)//'_v3'
+  write(iskf,forma,advance="no")trim(header)//'_x1'
+  write(iskf,forma,advance="no")trim(header)//'_x2'
+  write(iskf,forma,advance="no")trim(header)//'_x3'
+  write(iskf,forma,advance="no")trim(header)//'_v1'
+  write(iskf,forma,advance="no")trim(header)//'_v2'
+  write(iskf,forma,advance="no")trim(header)//'_v3'
  end do
  write(iskf,'()')
 
