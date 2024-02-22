@@ -28,6 +28,8 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  
 !-----------------------------------------------------------------------------
 
+ if(rcore<=0d0)return
+
 ! get indices for hydrogen and helium
  if(compswitch==2)then
   do i = 1, size(comp_list)
@@ -115,7 +117,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   gpot(n) = -G*m(n)/(r(n)+1d-99)-4d0*pi*G*mnow
  end do
 
- k = ks
  do i = is, ie
   if(xi1(i)>=radius)then
    mc(i:ie) = mass
@@ -185,24 +186,23 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  end do
 !$omp end parallel do
 
-!!$ p(ie+1,js:je,ks:ke) = 1d-99
-!!$ do i = ie, is, -1
-!!$  p(i,js:je,ks:ke) = p(i+1,js:je,ks:ke) + G*mc(i)*max(d(i,js,ks),rho(lines)*1d-5)/xi1(i)**2*dx1(i+1)
-!!$ end do
-
- do j = gjs-1, gje+1
-  do i = gis-1, gie+1
-   if(x1(i)<r(lines-1))then
-    do n = 0, lines-1
-     if(r(n+1)>x1(i).and.r(n)<=x1(i))then
-      grvphi(i,j,k) = intpol(r(n:n+1),gpot(n:n+1),x1(i))
-     end if
-    end do
-   else
-    grvphi(i,j,k) = -G*mass/x1(i)
-   end if
+!$omp parallel do private(i,j,k,n) collapse(3)
+ do k = gks-1, gke+1
+  do j = gjs-1, gje+1
+   do i = gis-1, gie+1
+    if(x1(i)<r(lines-1))then
+     do n = 0, lines-1
+      if(r(n+1)>x1(i).and.r(n)<=x1(i))then
+       grvphi(i,j,k) = intpol(r(n:n+1),gpot(n:n+1),x1(i))
+      end if
+     end do
+    else
+     grvphi(i,j,k) = -G*mass/x1(i)
+    end if
+   end do
   end do
  end do
+!$omp end parallel do
 
  if(gravswitch==3)grvphiold = grvphi
 

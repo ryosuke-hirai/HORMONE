@@ -14,17 +14,18 @@ contains
 
 subroutine stellarcollision
 
- use settings,only:compswitch,spn,extrasfile,include_sinks
- use constants,only:G,msun,rsun
+ use settings,only:compswitch,spn,extrasfile,include_sinks,eostype
+ use constants,only:G,msun,rsun,pi
  use grid
  use physval
  use input_mod
  use star_mod,only:isentropic_star,replace_core,set_star_sph_grid
  use gravmod,only:extgrv,mc
  use sink_mod,only:sink,sinkfield
- use utils,only:softened_pot
+ use utils,only:softened_pot,polcar
  use output_mod,only:write_extgrv
  use composition_mod,only:get_imu
+ use pressure_mod,only:eos_e,eos_p
 
  character(len=100):: mesafile
  real(8),allocatable,dimension(:):: r,m,rho,pres
@@ -33,7 +34,7 @@ subroutine stellarcollision
  character(len=10)::spc_list(1:1000)
  integer:: i,j,k,istat,nn,sn,ih1,ihe4
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const
- real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv,ecc
+ real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv,ecc,xcar(1:3)
  real(8),allocatable:: comptmp(:)
  logical::isentropic
  
@@ -163,12 +164,43 @@ subroutine stellarcollision
  sink(2)%softfac = 3d0
 
 ! For SN2022jli
- asep = (G*(mass+nsmass)*(12.5d0*3600d0*24d0)**2)**(1d0/3d0)
+ asep = (G*(mass+nsmass)*(12.5d0*3600d0*24d0/2d0/pi)**2)**(1d0/3d0)
  orbv = sqrt(G*(mass+nsmass)/asep)
- ecc = 1d0-20d0*rsun/asep
- sink(2)%x(1)=-asep
- sink(2)%v(2)=orbv*sqrt((1d0-ecc)/(1d0+ecc))
+! ecc = 1d0-20d0*rsun/asep
+ sink(2)%x(1)=-asep*(1d0+ecc)
+ sink(2)%x(2:3)=0d0
+ sink(2)%v(1)=0d0
+ sink(2)%v(2)=orbv*sqrt((1d0-ecc)/(1d0+ecc))!*mass/(mass+nsmass)
  sink(2)%v(3)=0d0
+
+! sink(1)%v(2)=-orbv*sqrt((1d0-ecc)/(1d0+ecc))*nsmass/(mass+nsmass)
+
+!$omp parallel do private(i,j,k,xcar) collapse(3)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    xcar = polcar([x1(i),x2(j),x3(k)])
+    select case(eostype)
+    case(0,1)
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
+    case(2)
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
+                         spc(1,i,j,k),spc(2,i,j,k))
+    end select
+    eint(i,j,k) = eint(i,j,k) &
+                - G*nsmass*d(i,j,k)&
+                  *softened_pot(norm2(xcar-sink(2)%x),sink(2)%lsoft)
+    select case(eostype)
+    case(0,1)
+     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))
+    case(2)
+     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
+                      spc(1,i,j,k),spc(2,i,j,k))
+    end select
+   end do
+  end do
+ end do
+!$omp end parallel do
 
 return
 end subroutine stellarcollision
