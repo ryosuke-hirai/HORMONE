@@ -43,7 +43,7 @@ subroutine sink_motion
  end do
 
  call get_sinksink_acc(sink)
- 
+
  dt = min(dtsink,dt) ! update dt
 
  do n = 1, nsink
@@ -137,8 +137,8 @@ subroutine get_sinkgas_acc(sink)
              -(gphi(i+1,j,k+1)-gphi(i+1,j,k))*idx3(k)/x1(i+1)*(xpol(1)-x1(i)))&
           *idx1(i+1)
     
-   sink%a(1) = acc(1)*cos(xpol(3)) - acc(2)*sin(xpol(3))
-   sink%a(2) = acc(1)*sin(xpol(3)) + acc(2)*cos(xpol(3))
+   sink%a(1) = acc(1)*cos(xpol(3)) - acc(3)*sin(xpol(3))
+   sink%a(2) = acc(1)*sin(xpol(3)) + acc(3)*cos(xpol(3))
    sink%a(3) = 0d0
 
   else
@@ -154,7 +154,6 @@ subroutine get_sinkgas_acc(sink)
 
  sink%dt = min(dxi1(i),g22(i)*dxi2(j),g22(i)*dxi3(k)) &
          / max(norm2(sink%v),tiny)*courant
-
 
 return
 end subroutine get_sinkgas_acc
