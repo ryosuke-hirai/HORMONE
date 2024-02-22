@@ -61,7 +61,7 @@ subroutine init_profiler
  parent(wtsrc) = wthyd ! source terms
  parent(wtint) = wthyd ! MUSCL interpolation
  parent(wteos) = wthyd ! equation of state
- parent(wttim) = wthyd ! time stepping
+ parent(wttim) = wtlop ! time stepping
  parent(wtgrv) = wtlop ! gravity
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtpoi) = wtgrv ! Poisson solver

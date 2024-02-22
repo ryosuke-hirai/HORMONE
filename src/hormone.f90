@@ -88,15 +88,17 @@ program hormone
   call pressure
 
 ! Initial output
+  call open_evofile
+  call open_sinkfile
+
   if(include_particles.and.tn==0)call particles_setup
   call timestep
 
   if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
+
   if(tn==0)then
    call gravity
-   call open_evofile
-   call open_sinkfile
-   call output
+!   call output
   end if
 
   call stop_clock(wtini)
@@ -110,10 +112,14 @@ program hormone
 
    main_loop:do
 
-    call start_clock(wthyd)
-
     call timestep
+
+    call gravity
+    if(include_sinks)call sink_motion
+
     print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
+
+    call start_clock(wthyd)
 
     if(dirichlet_on) call dirichletbound
     call shockfind
@@ -127,8 +133,6 @@ program hormone
 
     call stop_clock(wthyd)
 
-    call gravity
-    if(include_sinks)    call sink_motion
     if(mag_on)           call phidamp
     if(radswitch>0)      call radiation
     if(include_cooling)  call cooling
