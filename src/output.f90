@@ -1059,10 +1059,6 @@ subroutine scaling_output
 
  if(is_scaling_test/='true')return
 
-!$omp parallel
-  n=omp_get_num_threads()
-!$omp end parallel
-
   call stop_clock(wttot)
 
   open(newunit=un,file='scaling.dat',status='old',position='append',iostat=i)
@@ -1070,11 +1066,15 @@ subroutine scaling_output
   if(i/=0)then
    open(newunit=un,file='scaling.dat',status='new')
    write(form1,'("(a8,",i2,"a14)")')n_wt+1
-   write(un,form1)'threads',routine_name(0:n_wt)
+   write(un,form1)'threads',(trim(routine_name(n)),n=0,n_wt)
   end if
 
+!$omp parallel
+  n=omp_get_num_threads()
+!$omp end parallel
+
   write(form1,'("(i8,",i2,"F14.6)")')n_wt+1
-  write(un,'(i8,12(F14.6))')n,wtime(0:n_wt)
+  write(un,form1)n,wtime(0:n_wt)
 
   close(un)
 
@@ -1189,6 +1189,9 @@ subroutine get_header(header,columns)
   if(include_extgrv)then
    call add_column('extphi',columns,header)
   end if
+  if(include_sinks)then
+   call add_column('totphi',columns,header)
+  end if
  end if
 
 ! Output mean molecular weight if compswitch>=1
@@ -1239,7 +1242,7 @@ subroutine write_val(ui,i,j,k,forme,header)
 
  use settings,only:spn
  use physval
- use gravmod,only:grvphi,extgrv
+ use gravmod,only:grvphi,extgrv,totphi
  
  implicit none
 
@@ -1275,6 +1278,8 @@ subroutine write_val(ui,i,j,k,forme,header)
    call write_anyval(ui,forme,grvphi(i,j,k))
   case('extphi')!external gravitational potential
    call write_anyval(ui,forme,extgrv(i,j,k))
+  case('totphi')!total gravitational potential
+   call write_anyval(ui,forme,totphi(i,j,k))
   case('mu')!mean molecular weight
    call write_anyval(ui,forme,1d0/imu(i,j,k))
   case('shock')!shock position
