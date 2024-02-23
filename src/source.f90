@@ -236,7 +236,7 @@ subroutine get_fieldforce(phi,coeff,frc1,frc2,frc3)
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private (i,j,k) collapse(3)
+!$omp parallel do private (i,j,k,n) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
