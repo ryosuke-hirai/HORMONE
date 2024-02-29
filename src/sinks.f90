@@ -269,7 +269,7 @@ subroutine get_sink_loc(sink)
   stop 'Error in get_sink_loc: wrong crdnt'
  end select
 
- sink%locres = min(dxi1(sink%i),&
+ sink%locres = max(dxi1(sink%i),&
                    g22(sink%i)*dxi2(sink%j),&
                    g22(sink%i)*dxi3(sink%k) )&
              * sink%softfac
