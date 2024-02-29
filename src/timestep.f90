@@ -1,3 +1,6 @@
+
+
+
 module timestep_mod
  implicit none
  private:: off
@@ -14,9 +17,10 @@ contains
 
  subroutine timestep
 
-  use settings,only:courant,outstyle
+  use settings,only:courant,outstyle,HGfac,hgcfl
   use grid
   use physval
+  use gravmod,only:gravswitch,dtgrav,cgrav2
   use profiler_mod
 
   real(8),allocatable:: dti(:,:,:)
@@ -65,6 +69,11 @@ contains
   end if
 
   dt = minval( dti(is:ie,js:je,ks:ke) )
+
+  if(gravswitch==3)then
+   dtgrav = hgcfl * dt / HGfac
+   cgrav2 = (HGfac*cfmax)**2
+  end if
 
   dt = courant * dt
 

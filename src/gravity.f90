@@ -27,7 +27,7 @@ subroutine gravity
  use profiler_mod
 
  integer:: i,j,k,n,l, gin, gjn, gkn, tngrav, grungen, jb, kb
- real(8):: phih, cgrav2, dtgrav, h
+ real(8):: phih, h
  real(8),allocatable,dimension(:,:,:):: newphi
  real(8),allocatable,dimension(:):: intphi
  real(8),allocatable,dimension(:):: x, cgsrc
@@ -185,11 +185,6 @@ if(gravswitch==3.and.tn/=0)then
   allocate(newphi,mold=hgsrc)
   allocate( intphi(1:4) )
 
-  cgrav2 = HGfac*max(maxval(cs(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
-                     maxval(cs(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
-  dtgrav = hgcfl*hg_dx/cgrav2
-  cgrav2 = cgrav2**2
-
   hgsrc(is:ie,js:je,ks:ke) = gsrc(is:ie,js:je,ks:ke)
 
   if(gbtype==0)call gravbound
@@ -264,13 +259,8 @@ if(gravswitch==3.and.tn/=0)then
   
   k = gks
 
-  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,k)+abs(v1(is:ie,js:je,k)) &
-                                             +abs(v3(is:ie,js:je,k))) , &
-                     maxval(cs(is:ie,js:je,k)+abs(v2(is:ie,js:je,k))) )
-  dtgrav = hgcfl*hg_dx/cgrav2
   tngrav = ceiling((time+dt-grvtime)/dtgrav)
   dtgrav = (time+dt-grvtime)/dble(tngrav)
-  cgrav2 = cgrav2**2
 
   if(gbtype==0)call gravbound
 
@@ -339,15 +329,8 @@ if(gravswitch==3.and.tn/=0)then
 
   allocate(newphi,mold=hgsrc)
 
-!!$  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks:ke)+abs(v1(is:ie,js:je,ks:ke))), &
-!!$                     maxval(cs(is:ie,js:je,ks:ke)+abs(v2(is:ie,js:je,ks:ke))), &
-!!$                     maxval(cs(is:ie,js:je,ks:ke)+abs(v3(is:ie,js:je,ks:ke))) )
-  cgrav2 = HGfac*ch
-!  dtgrav = hgcfl*hg_dx/cgrav2
-  dtgrav = hgcfl/courant/HGfac*dt
   tngrav = ceiling((time+dt-grvtime)/dtgrav)
   dtgrav = (time+dt-grvtime)/dble(tngrav)
-  cgrav2 = cgrav2**2
  
   if(gbtype==0)call gravbound
   call masscoordinate
@@ -428,8 +411,8 @@ if(gravswitch==3.and.tn/=0)then
         grvphiorg(i,j,k,1) = grvphi(i,j,k)
         grvphiorg(i,j,k,2) = grvphidot(i,j,k)
        end if
-       grvphi(i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi(i,j,k) &
-                     + fact*dtgrav*grvphidot(i,j,k)
+       grvphi   (i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi(i,j,k) &
+                        + fact*dtgrav*grvphidot(i,j,k)
        grvphidot(i,j,k) = faco*grvphiorg(i,j,k,2) + facn*grvphidot(i,j,k) &
                         + fact*dtgrav * &
                         ( idetg1(i) * &
@@ -451,13 +434,17 @@ if(gravswitch==3.and.tn/=0)then
       do j = js, je, jb+1
        do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
         vol = sum(dvol(i,j:j+jb,k:k+kb))
-        grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/vol
-        grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/vol
+        grvphi   (i,j:j+jb,k:k+kb) = sum(grvphi   (i,j:j+jb,k:k+kb) &
+                                        *dvol(i,j:j+jb,k:k+kb)) / vol
+        grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb) &
+                                        *dvol(i,j:j+jb,k:k+kb)) / vol
        end do
       end do
      end do
 !$omp end do
     end do
+
+! Central few cells are spherical
 !$omp do private(i,j,k) collapse(2)
     do k = ks, ke
      do j = js, je
