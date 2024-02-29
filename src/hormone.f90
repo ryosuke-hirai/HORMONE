@@ -98,7 +98,8 @@ program hormone
 
   if(tn==0)then
    call gravity
-!   call output
+   if(include_sinks)call sinkfield
+   call output
   end if
 
   call stop_clock(wtini)
