@@ -208,7 +208,7 @@ subroutine get_sink_loc(sink)
 
  use constants,only:huge
  use settings,only:crdnt
- use grid,only:is,ie,js,je,ks,ke,x1,x2,x3,dxi1,dxi2,dxi3,g22
+ use grid,only:is,ie,js,je,ks,ke,xi1,xi2,xi3,dxi1,dxi2,dxi3,g22
  use utils,only:carpol
 
  type(sink_prop),intent(inout):: sink
@@ -221,20 +221,20 @@ subroutine get_sink_loc(sink)
 
   sink%xpol = sink%x
   if(ie/=is)then
-   do i = is, ie-1
-    if(sink%x(1)>=x1(i).and.sink%x(1)<x1(i+1))exit
+   do i = is, ie
+    if(sink%x(1)>=xi1(i-1).and.sink%x(1)<xi1(i))exit
    end do
    sink%i = i
   end if
   if(je/=js)then
-   do j = js, je-1
-    if(sink%x(2)>=x2(j).and.sink%x(2)<x2(j+1))exit
+   do j = js, je
+    if(sink%x(2)>=xi2(j-1).and.sink%x(2)<xi2(j))exit
    end do
    sink%j = j
   end if
   if(ke/=ks)then
-   do k = ks, ke-1
-    if(sink%x(3)>=x3(k).and.sink%x(3)<x3(k+1))exit
+   do k = ks, ke
+    if(sink%x(3)>=xi3(k-1).and.sink%x(3)<xi3(k))exit
    end do
    sink%k = k
   end if
@@ -242,14 +242,14 @@ subroutine get_sink_loc(sink)
  case(2) ! Spherical coordinates
 
   sink%xpol = carpol(sink%x)
-  do i = is, ie-1
-   if(sink%xpol(1)>=x1(i).and.sink%xpol(1)<x1(i+1))exit
+  do i = is, ie
+   if(sink%xpol(1)>=xi1(i-1).and.sink%xpol(1)<xi1(i))exit
   end do
   sink%i = i
 
   if(je/=js)then
-   do j = js, je-1
-    if(sink%xpol(2)>=x2(j).and.sink%xpol(2)<x2(j+1))exit
+   do j = js, je
+    if(sink%xpol(2)>=xi2(j-1).and.sink%xpol(2)<xi2(j))exit
    end do
    sink%j = j
   else
@@ -257,8 +257,8 @@ subroutine get_sink_loc(sink)
   end if
 
   if(ke/=ks)then
-   do k = ks-1, ke
-    if(sink%xpol(3)>=x3(k).and.sink%xpol(3)<x3(k+1))exit
+   do k = ks, ke
+    if(sink%xpol(3)>=xi3(k-1).and.sink%xpol(3)<xi3(k))exit
    end do
    sink%k = k
   else
