@@ -193,7 +193,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
     if(x1(i)<r(lines-1))then
      do n = 0, lines-1
       if(r(n+1)>abs(x1(i)).and.r(n)<=abs(x1(i)))then
-       grvphi(i,j,k) = intpol(r(n:n+1),gpot(n:n+1),x1(i))
+       grvphi(i,j,k) = intpol(r(n:n+1),gpot(n:n+1),abs(x1(i)))
       end if
      end do
     else
