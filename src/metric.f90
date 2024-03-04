@@ -107,7 +107,7 @@ subroutine metric
              / ( dxi1(i)*(xi1(i)**2+xi1(i)*xi1(i-1)+xi1(i-1)**2) )
    sx1(i) = 1.5d0 * ( xi1(i)+xi1(i-1) ) &
           / ( xi1(i)**2 + xi1(i)*xi1(i-1) + xi1(i-1)**2 )
-   g22(i) = x1(i)
+   g22(i) = abs(x1(i))
   end do
 
   do j = js-1, je+1

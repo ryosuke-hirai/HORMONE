@@ -78,9 +78,9 @@ subroutine sinkfield
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,n,dis,xcar) collapse(3)
- do k = ks-1, ke+1
-  do j = js-1, je+1
-   do i = is-1, ie+1
+ do k = gks-1, gke+1
+  do j = gjs-1, gje+1
+   do i = gis-1, gie+1
     xcar = polcar([x1(i),x2(j),x3(k)])
     snkphi(i,j,k) = 0d0
     do n = 1, nsink
@@ -129,6 +129,7 @@ subroutine get_sinkgas_acc(sink)
  case(2) ! for spherical coordinates
 
   if(eq_sym)then ! for equatorial symmetry
+
    acc(1) = (-(gphi(i+1,j,k  )-gphi(i,j,k  ))*idx1(i+1)*(x3(k+1)-xpol(3))&
              -(gphi(i+1,j,k+1)-gphi(i,j,k+1))*idx1(i+1)*(xpol(3)-x3(k)))&
           *idx3(k+1)
@@ -136,7 +137,7 @@ subroutine get_sinkgas_acc(sink)
    acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))*idx3(k)/x1(i)*(x1(i+1)-xpol(1))&
              -(gphi(i+1,j,k+1)-gphi(i+1,j,k))*idx3(k)/x1(i+1)*(xpol(1)-x1(i)))&
           *idx1(i+1)
-    
+
    sink%a(1) = acc(1)*cos(xpol(3)) - acc(3)*sin(xpol(3))
    sink%a(2) = acc(1)*sin(xpol(3)) + acc(3)*cos(xpol(3))
    sink%a(3) = 0d0
@@ -208,7 +209,7 @@ subroutine get_sink_loc(sink)
 
  use constants,only:huge
  use settings,only:crdnt
- use grid,only:is,ie,js,je,ks,ke,xi1,xi2,xi3,dxi1,dxi2,dxi3,g22
+ use grid,only:is,ie,js,je,ks,ke,x1,x2,x3,dxi1,dxi2,dxi3,g22
  use utils,only:carpol
 
  type(sink_prop),intent(inout):: sink
@@ -221,20 +222,20 @@ subroutine get_sink_loc(sink)
 
   sink%xpol = sink%x
   if(ie/=is)then
-   do i = is, ie
-    if(sink%x(1)>=xi1(i-1).and.sink%x(1)<xi1(i))exit
+   do i = is-1, ie
+    if(sink%x(1)>=x1(i).and.sink%x(1)<x1(i+1))exit
    end do
    sink%i = i
   end if
   if(je/=js)then
-   do j = js, je
-    if(sink%x(2)>=xi2(j-1).and.sink%x(2)<xi2(j))exit
+   do j = js-1, je
+    if(sink%x(2)>=x2(j).and.sink%x(2)<x2(j+1))exit
    end do
    sink%j = j
   end if
   if(ke/=ks)then
-   do k = ks, ke
-    if(sink%x(3)>=xi3(k-1).and.sink%x(3)<xi3(k))exit
+   do k = ks-1, ke
+    if(sink%x(3)>=x3(k).and.sink%x(3)<x3(k+1))exit
    end do
    sink%k = k
   end if
@@ -242,14 +243,14 @@ subroutine get_sink_loc(sink)
  case(2) ! Spherical coordinates
 
   sink%xpol = carpol(sink%x)
-  do i = is, ie
-   if(sink%xpol(1)>=xi1(i-1).and.sink%xpol(1)<xi1(i))exit
+  do i = is-1, ie
+   if(sink%xpol(1)>=x1(i).and.sink%xpol(1)<x1(i+1))exit
   end do
   sink%i = i
 
   if(je/=js)then
-   do j = js, je
-    if(sink%xpol(2)>=xi2(j-1).and.sink%xpol(2)<xi2(j))exit
+   do j = js-1, je
+    if(sink%xpol(2)>=x2(j).and.sink%xpol(2)<x2(j+1))exit
    end do
    sink%j = j
   else
@@ -257,8 +258,8 @@ subroutine get_sink_loc(sink)
   end if
 
   if(ke/=ks)then
-   do k = ks, ke
-    if(sink%xpol(3)>=xi3(k-1).and.sink%xpol(3)<xi3(k))exit
+   do k = ks-1, ke
+    if(sink%xpol(3)>=x3(k).and.sink%xpol(3)<x3(k+1))exit
    end do
    sink%k = k
   else

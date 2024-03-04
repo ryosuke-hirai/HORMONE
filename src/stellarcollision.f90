@@ -20,7 +20,7 @@ subroutine stellarcollision
  use physval
  use input_mod
  use star_mod,only:isentropic_star,replace_core,set_star_sph_grid
- use gravmod,only:extgrv,mc
+ use gravmod,only:extgrv,mc ,grvphi,totphi
  use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot,polcar
  use output_mod,only:write_extgrv
@@ -33,7 +33,7 @@ subroutine stellarcollision
  character(len=10),allocatable:: comp_list(:)
  character(len=10)::spc_list(1:1000)
  integer:: i,j,k,istat,nn,sn,ih1,ihe4
- real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const
+ real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const,gradphi
  real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv,ecc,xcar(1:3)
  real(8),allocatable:: comptmp(:)
  logical::isentropic
@@ -101,7 +101,6 @@ subroutine stellarcollision
  sink(1)%softfac = 3d0
  sink(1)%x(1:3) = 0d0
  sink(1)%v(1:3) = 0d0
- call sinkfield
 
  mcore = m(0)
  mass  = m(size(m)-1)
@@ -145,9 +144,18 @@ subroutine stellarcollision
   end do
  end do
 
+! Re-solve hydrostatic equilibrium
+ totphi = grvphi
+ call sinkfield
+ p(ie+1:ie+2,js:je,ks:ke) = G*mass/x1(ie+1)*d(ie,js,ks)
+ do i = ie, is, -1
+  gradphi = dx1(i+1)**2*totphi(i+2,js,ks)-dx1(i+2)**2*totphi(i,js,ks)+(dx1(i+2)**2-dx1(i+1)**2)*totphi(i+1,js,ks)
+  p(i,js,ks) = (d(i+1,js,ks)*gradphi+dx1(i+1)**2*p(i+2,js,ks)+(dx1(i+2)**2-dx1(i+1)**2)*p(i+1,js,ks))/dx1(i+2)**2
+  p(i,js:je,ks:ke) = p(i,js,ks)
+ end do
+
 ! Remember core mass
  mc(is-1) = mcore
-
 
 ! place colliding object
  sink(2)%mass = nsmass

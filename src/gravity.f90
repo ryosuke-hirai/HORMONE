@@ -464,18 +464,18 @@ if(gravswitch==3.and.tn/=0)then
       grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
      end do
     end do
-!$omp end do nowait
+!$omp end do
 !$omp do private(i,k) collapse(2)
     do k = ks, ke
-     do i = is, ie
+     do i = is-1, ie+1
       grvphi(i,js-1,k) = grvphi(i,js,k)
       grvphi(i,je+1,k) = grvphi(i,je,k)
      end do
     end do
-!$omp end do nowait
+!$omp end do
 !$omp do private(i,j) collapse(2)
-    do j = js, je
-     do i = is, ie
+    do j = js-1, je+1
+     do i = is-1, ie+1
       grvphi(i,j,ks-1) = grvphi(i,j,ke)
       grvphi(i,j,ke+1) = grvphi(i,j,ks)
      end do
