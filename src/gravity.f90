@@ -426,9 +426,10 @@ if(gravswitch==3.and.tn/=0)then
     end do
 !$omp end do
 
-    do n = 2, fmr_max
+    do n = 1, fmr_max
      if(fmr_lvl(n)==0)cycle
      jb=min(2**(fmr_max-n+1),je)-1 ; kb=min(2**(fmr_max-n+1),ke)-1
+     if(n==1) jb=je-js; kb=ke-ks
 !$omp do private(i,j,k,vol) collapse(3)
      do k = ks, ke, kb+1
       do j = js, je, jb+1
@@ -445,16 +446,16 @@ if(gravswitch==3.and.tn/=0)then
     end do
 
 ! Central few cells are spherical
-!$omp do private(i,j,k) collapse(2)
-    do k = ks, ke
-     do j = js, je
-      do i = fmr_lvl(1)-1, is, -1
-       grvphi(i,j,k) = grvphi(i+1,j,k) &
-                     - G*(mc(i)-mc(is-1))/xi1(i)**2*dx1(i+1)
-      end do
-     end do
-    end do
-!$omp end do
+!!$!$omp do private(i,j,k) collapse(2)
+!!$    do k = ks, ke
+!!$     do j = js, je
+!!$      do i = fmr_lvl(1)-1, is, -1
+!!$       grvphi(i,j,k) = grvphi(i+1,j,k) &
+!!$                     - G*(mc(i)-mc(is-1))/xi1(i)**2*dx1(i+1)
+!!$      end do
+!!$     end do
+!!$    end do
+!!$!$omp end do
    
 ! Boundary conditions
 !$omp do private(j,k) collapse(2)
