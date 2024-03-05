@@ -2,7 +2,8 @@ module output_mod
  implicit none
 
  integer:: ievo,iskf
- public:: output,set_file_name,write_extgrv,evo_output,scaling_output
+ public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
+          scaling_output
  private:: write_grid,write_bin,write_plt,get_header,add_column, &
            write_val
 
@@ -54,6 +55,29 @@ subroutine output
 
  return
 end subroutine output
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE TERMINAL_OUTPUT
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Output things on the terminal
+
+subroutine terminal_output
+
+ use settings,only:dt_unit_in_sec,dt_unit
+ use grid,only:tn,time,dt
+
+!-----------------------------------------------------------------------------
+
+ print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
+  'tn =',tn,&
+  'time =',time/dt_unit_in_sec,dt_unit,&
+  'dt =',dt/dt_unit_in_sec,dt_unit
+
+return
+end subroutine terminal_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !

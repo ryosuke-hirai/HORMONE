@@ -116,7 +116,7 @@ program hormone
     call gravity
     if(include_sinks)call sink_motion
 
-    print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
+    call terminal_output
 
     call start_clock(wthyd)
 
@@ -163,7 +163,7 @@ program hormone
 ! End sequence ------------------- !
     select case (endstyle)         !
     case(1) ! time up              !
-     if(time>=t_end)exit main_loop ! 
+     if(time>=t_end)exit main_loop !
     case(2) ! timestep up          !
      if(tn>=tnlim)exit main_loop   !
     end select                     !
