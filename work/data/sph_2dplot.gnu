@@ -5,7 +5,7 @@ msun = 1.989e33
 
 set size ratio 1
 
-box = 30000 #3e13/rsun
+box = 10 #3e13/rsun
 
 set xr [-box:box]
 set yr [-box:box]
@@ -17,11 +17,12 @@ set pm3d map
 
 rad = 'x1'
 tht = 'x2'
-val = 'phi'
+val = 'd'
 #set cbr [2.3e13:2.35e13]
-do for [i=560000:560009:1]{
+do for [i=0000:1000:1000]{
 
-pltfile=sprintf('<paste gridfile.dat plt%11.11dhr.dat',i)
+    pltfile=sprintf('<paste gridfile.dat plt%11.11dhr.dat',i)
+    pltfile=sprintf('<paste gridfile.dat plt%8.8d.dat',i)
 timelabel=sprintf('%d sec',i)
 set label 1 timelabel at graph 0.5,graph 1.1 center
 set style fill empty border rgb 'black'

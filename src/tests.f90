@@ -44,64 +44,77 @@ contains
 
  subroutine test
 
-  use settings,only:simtype
+  use settings,only:simtype,mag_on
   use grid,only:is,ie,js,je,ks,ke
   use physval
+  use gravmod
   use readbin_mod,only:readbin
 
-  integer:: ncells
+  integer,parameter:: nn = 9
+  integer:: n
   character(30):: testfile
   real(8),parameter:: tol=1d-10
-  real(8):: derr,perr,v1err,v2err,v3err
+  real(8):: error(nn)
+  real(8),allocatable,dimension(:,:,:,:):: val,valorg
+  character(len=10):: label(nn)
   
 !-----------------------------------------------------------------------------
 
+  allocate(val(nn,is:ie,js:je,ks:ke))
+  allocate(valorg,mold=val)
+
+  label(1:9) = ['density','energy','v1','v2','v3','b1','b2','b3','grvphi']
+
+  if(.not.mag_on) label(6:8) = 'aaa'
+
 ! First record variables
-  d0 (is:ie,js:je,ks:ke) = d (is:ie,js:je,ks:ke) 
-  p0 (is:ie,js:je,ks:ke) = p (is:ie,js:je,ks:ke) 
-  v10(is:ie,js:je,ks:ke) = v1(is:ie,js:je,ks:ke) 
-  v20(is:ie,js:je,ks:ke) = v2(is:ie,js:je,ks:ke) 
-  v30(is:ie,js:je,ks:ke) = v3(is:ie,js:je,ks:ke) 
-  b10(is:ie,js:je,ks:ke) = b1(is:ie,js:je,ks:ke) 
-  b20(is:ie,js:je,ks:ke) = b2(is:ie,js:je,ks:ke) 
-  b30(is:ie,js:je,ks:ke) = b3(is:ie,js:je,ks:ke) 
+  val(1,:,:,:) = d (is:ie,js:je,ks:ke) 
+  val(2,:,:,:) = e (is:ie,js:je,ks:ke) 
+  val(3,:,:,:) = v1(is:ie,js:je,ks:ke) 
+  val(4,:,:,:) = v2(is:ie,js:je,ks:ke) 
+  val(5,:,:,:) = v3(is:ie,js:je,ks:ke) 
+  val(6,:,:,:) = b1(is:ie,js:je,ks:ke) 
+  val(7,:,:,:) = b2(is:ie,js:je,ks:ke) 
+  val(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  if(gravswitch>0)then
+   val(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+  else
+   label(9) = 'aaa'
+  end if
 
 ! Open test data file
   testfile = testfilename(simtype)
   
   call readbin(testfile)
 
-  derr = maxval(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
-                / d(is:ie,js:je,ks:ke))
-  perr = maxval(abs(p0(is:ie,js:je,ks:ke)-p(is:ie,js:je,ks:ke)) &
-                / p(is:ie,js:je,ks:ke))
-  v1err = maxval(abs(v10(is:ie,js:je,ks:ke)-v1(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
-  v2err = maxval(abs(v20(is:ie,js:je,ks:ke)-v2(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
-  v3err = maxval(abs(v30(is:ie,js:je,ks:ke)-v3(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
+  valorg(1,:,:,:) = d (is:ie,js:je,ks:ke) 
+  valorg(2,:,:,:) = e (is:ie,js:je,ks:ke) 
+  valorg(3,:,:,:) = v1(is:ie,js:je,ks:ke) 
+  valorg(4,:,:,:) = v2(is:ie,js:je,ks:ke) 
+  valorg(5,:,:,:) = v3(is:ie,js:je,ks:ke) 
+  valorg(6,:,:,:) = b1(is:ie,js:je,ks:ke) 
+  valorg(7,:,:,:) = b2(is:ie,js:je,ks:ke) 
+  valorg(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  if(gravswitch>0)then
+   valorg(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+  end if
 
-  print*,'L1 norm error is =',max(derr,perr,v1err,v2err,v3err)
+! Calculate L1 norm errors
+  print*,'L1 norm errors:'
+  do n = 1, nn
+   error(n) = L1_norm_error(val(n,:,:,:),valorg(n,:,:,:),tol)
+   if(trim(label(n))/='aaa')print*,label(n),' =',error(n)
+  end do
 
-  ncells = (ie-is+1)*(je-js+1)*(ke-ks+1)
-  derr = norm2(d0(is:ie,js:je,ks:ke)/d(is:ie,js:je,ks:ke)-1d0)&
-       / sqrt(dble(ncells))
-  perr = norm2(p0(is:ie,js:je,ks:ke)/p(is:ie,js:je,ks:ke)-1d0)&
-       / sqrt(dble(ncells))
-  v1err = norm2(max(abs(v10(is:ie,js:je,ks:ke)),tol) &
-               /max(abs(v1 (is:ie,js:je,ks:ke)),tol)-1d0)&
-        / sqrt(dble(ncells))
-  v2err = norm2(max(abs(v20(is:ie,js:je,ks:ke)),tol) &
-               /max(abs(v2 (is:ie,js:je,ks:ke)),tol)-1d0)&
-        / sqrt(dble(ncells))
-  v3err = norm2(max(abs(v30(is:ie,js:je,ks:ke)),tol) &
-               /max(abs(v3 (is:ie,js:je,ks:ke)),tol)-1d0)&
-        / sqrt(dble(ncells))
+! Calculate L2 norm errors
+  print*,'L2 norm errors:'
+  do n = 1, nn
+   error(n) = L2_norm_error(val(n,:,:,:),valorg(n,:,:,:),tol)
+   if(trim(label(n))/='aaa')print*,label(n),' =',error(n)
+  end do
 
-  print*,'L2 norm error is =',max(derr,perr,v1err,v2err,v3err)
-  
-  if(max(derr,perr,v1err,v2err,v3err)<tol)then
+!  if(max(derr,eerr,v1err,v2err,v3err,gerr)<tol)then
+  if(maxval(error)<tol)then
    print*,trim(simtype),' test: passed'
   else
    print*,trim(simtype),' test: failed'
@@ -115,5 +128,35 @@ contains
   character(30)::file
   file = '../tests/'//trim(simtype)//'.bin'
  end function testfilename
+
+ function L1_norm_error(var,var0,tol) result(norm)
+  real(8),dimension(:,:,:),intent(in):: var,var0
+  real(8),intent(in):: tol
+  real(8):: norm, pos
+
+  pos = maxval(var)*minval(var)
+
+  if(pos>0d0)then ! for strictly positive quantities
+   norm = maxval(abs(var/var0-1d0))
+  else ! for quantities that can contain zeroes
+   norm = maxval(abs(var-var0)/max(abs(var0),tol))
+  end if
+
+ end function L1_norm_error
+
+ function L2_norm_error(var,var0,tol) result(norm)
+  real(8),dimension(:,:,:),intent(in):: var,var0
+  real(8),intent(in):: tol
+  real(8):: norm, pos
+
+  pos = maxval(var)*minval(var)
+
+  if(pos>0d0)then ! for strictly non-zero quantities
+   norm = norm2(abs(var/var0-1d0))/sqrt(dble(size(var)))
+  else ! for quantities that can contain zeroes
+   norm = norm2(max(abs(var),tol)/max(abs(var0),tol)-1d0)/sqrt(dble(size(var)))
+  end if
+
+ end function L2_norm_error
 
 end module tests_mod

@@ -20,7 +20,7 @@
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=2 endstyle=2
-          tnlim=100000 t_end=0.5d0 dt_out=1.d2 tn_out=100
+          tnlim=500 t_end=0.5d0 dt_out=1.d2 tn_out=10000
           dt_unit='s' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.true. /
 
