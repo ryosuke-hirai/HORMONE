@@ -37,7 +37,7 @@ subroutine smear
    if(n==1)then
     jb=je;kb=ke
    else
-    jb=min(2**(fmr_max-n+1),ke) ; kb=min(2**(fmr_max-n+1),ke)
+    jb=min(2**(fmr_max-n+1),je) ; kb=min(2**(fmr_max-n+1),ke)
    end if
 !$omp do private(i,j,k) collapse(3)
    do k = ks, ke, kb
