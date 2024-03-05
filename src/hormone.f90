@@ -94,8 +94,6 @@ program hormone
   if(include_particles.and.tn==0)call particles_setup
   call timestep
 
-  if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
-
   if(tn==0)then
    call gravity
    if(include_sinks)call sinkfield

@@ -168,7 +168,10 @@ subroutine gravity
 
   end if
 
-  if(gravswitch==3)grvphiold = grvphi
+  if(gravswitch==3)then
+   grvphiold = grvphi
+   dt_old = dtgrav
+  end if
 
   call stop_clock(wtpoi)
 
