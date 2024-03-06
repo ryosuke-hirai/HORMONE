@@ -27,7 +27,7 @@ contains
 
   call is_it_test(simtype,is_test)
   if(is_test) parafile = ''
-  
+
   return
  end subroutine read_startfile
 

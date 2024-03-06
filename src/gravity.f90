@@ -373,8 +373,8 @@ if(gravswitch==3.and.tn/=0)then
      do j = js-1, je
       do i = is-1, ie
        grv1(i,j,k) = -cgrav2*(grvphi(i+1,j,k)-grvphi(i,j,k))*idx1(i+1)
-       grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/x1(i)
-       grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/x1(i)/sin(x2(j))
+       grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/g22(i)
+       grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/g33(i,j)
 
        if(i<=is+sum(fmr_lvl(1:fmr_max))-1)then
         if(i<=is+fmr_lvl(1)-1)then
@@ -383,6 +383,7 @@ if(gravswitch==3.and.tn/=0)then
          fmr_loop: do n = 2, fmr_max
           if(i<=is+sum(fmr_lvl(1:n))-1)then
            grv2(i,j,k) = grv2(i,j,k)/dble(2**(fmr_max-n+1))
+           grv3(i,j,k) = grv3(i,j,k)/dble(2**(fmr_max-n+1))
            exit fmr_loop
           end if
          end do fmr_loop
