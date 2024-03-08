@@ -63,7 +63,15 @@ contains
   allocate(val(nn,is:ie,js:je,ks:ke))
   allocate(valorg,mold=val)
 
-  label(1:9) = ['density','energy','v1','v2','v3','b1','b2','b3','grvphi']
+  label(1) = 'density'
+  label(2) = 'energy'
+  label(3) = 'v1'
+  label(4) = 'v2'
+  label(5) = 'v3'
+  label(6) = 'b1'
+  label(7) = 'b2'
+  label(8) = 'b3'
+  label(9) = 'gravity'
 
   if(.not.mag_on) label(6:8) = 'aaa'
 
