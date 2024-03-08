@@ -368,7 +368,7 @@ if(gravswitch==3.and.tn/=0)then
   do l = 1, tngrav
    do grungen = 1, 3
 ! First set flux and source term
-!$omp do private (i,j,k) collapse(3)
+!$omp do private (i,j,k,n) collapse(3)
     do k = ks-1, ke
      do j = js-1, je
       do i = is-1, ie
@@ -415,7 +415,7 @@ if(gravswitch==3.and.tn/=0)then
         grvphiorg(i,j,k,1) = grvphi(i,j,k)
         grvphiorg(i,j,k,2) = grvphidot(i,j,k)
        end if
-       grvphi   (i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi(i,j,k) &
+       grvphi   (i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi   (i,j,k) &
                         + fact*dtgrav*grvphidot(i,j,k)
        grvphidot(i,j,k) = faco*grvphiorg(i,j,k,2) + facn*grvphidot(i,j,k) &
                         + fact*dtgrav * &
@@ -433,7 +433,9 @@ if(gravswitch==3.and.tn/=0)then
     do n = 1, fmr_max
      if(fmr_lvl(n)==0)cycle
      jb=min(2**(fmr_max-n+1),je)-1 ; kb=min(2**(fmr_max-n+1),ke)-1
-     if(n==1) jb=je-js; kb=ke-ks
+     if(n==1)then
+      jb=je-js; kb=ke-ks
+     end if
 !$omp do private(i,j,k,vol) collapse(3)
      do k = ks, ke, kb+1
       do j = js, je, jb+1

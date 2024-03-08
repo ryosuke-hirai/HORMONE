@@ -76,13 +76,13 @@ contains
   if(.not.mag_on) label(6:8) = 'aaa'
 
 ! First record variables
-  val(1,:,:,:) = d (is:ie,js:je,ks:ke) 
-  val(2,:,:,:) = e (is:ie,js:je,ks:ke) 
-  val(3,:,:,:) = v1(is:ie,js:je,ks:ke) 
-  val(4,:,:,:) = v2(is:ie,js:je,ks:ke) 
-  val(5,:,:,:) = v3(is:ie,js:je,ks:ke) 
-  val(6,:,:,:) = b1(is:ie,js:je,ks:ke) 
-  val(7,:,:,:) = b2(is:ie,js:je,ks:ke) 
+  val(1,:,:,:) = d (is:ie,js:je,ks:ke)
+  val(2,:,:,:) = e (is:ie,js:je,ks:ke)
+  val(3,:,:,:) = v1(is:ie,js:je,ks:ke)
+  val(4,:,:,:) = v2(is:ie,js:je,ks:ke)
+  val(5,:,:,:) = v3(is:ie,js:je,ks:ke)
+  val(6,:,:,:) = b1(is:ie,js:je,ks:ke)
+  val(7,:,:,:) = b2(is:ie,js:je,ks:ke)
   val(8,:,:,:) = b3(is:ie,js:je,ks:ke)
   if(gravswitch>0)then
    val(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)

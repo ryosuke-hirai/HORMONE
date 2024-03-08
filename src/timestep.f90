@@ -1,6 +1,3 @@
-
-
-
 module timestep_mod
  implicit none
  private:: off
@@ -92,7 +89,7 @@ contains
 
   if(gravswitch==3)then
    dtgrav = hgcfl * minval(dtg)
-   if(outstyle==1) dtgrav = min(dtgrav,t_out-time)
+   if(outstyle==1) dtgrav = min(dtgrav,dt)
    cgrav2 = cgrav2**2
   end if
 
@@ -191,10 +188,11 @@ subroutine dtgrav_cell(i,j,k,dtg,cgrav,jb,kb)
  if(present(jb)) jn = min(jb-1,je-js)
  if(present(kb)) kn = min(kb-1,ke-ks)
 
- dtg(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) / cgrav / &
-                      ( off(is,ie) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
-                      + off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
-                      + off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
+ dtg(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) &
+                      / ( cgrav * &
+                         ( off(is,ie) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
+                         + off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
+                         + off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) ) )
 
 return
 end subroutine dtgrav_cell

@@ -143,12 +143,12 @@ subroutine get_sinkgas_acc(sink)
    sink%a(3) = 0d0
 
   else
-   print*,'Error in sinks.f90: get_gassink_acc'
+   print*,'Error in sinks.f90: get_sinkgas_acc'
    stop 'Sink particles currently only implemented for eq_sym=.true.'
   end if
 
  case default
-  print*,'Error in sinks.f90: get_gassink_acc'
+  print*,'Error in sinks.f90: get_sinkgas_acc'
   stop 'Sink particles currently only implemented for spherical coordinates'
 
  end select
