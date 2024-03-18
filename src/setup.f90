@@ -27,7 +27,7 @@ contains
 
   call is_it_test(simtype,is_test)
   if(is_test) parafile = ''
-  
+
   return
  end subroutine read_startfile
 
@@ -109,6 +109,8 @@ subroutine read_default
   filename='../para/parameters_agndisk'
  case('windtunnel')
   filename='../para/parameters_windtunnel'
+ case('stellarcollision')
+  filename='../para/parameters_stellarcollision'
  case('modify')
   filename='../para/parameters_rsg_sph'!temporary
  case default
@@ -134,6 +136,7 @@ subroutine read_parameters(filename)
  use settings
  use grid
  use physval
+ use sink_mod,only:nsink
 
  integer:: ui,istat
  character(len=*),intent(in)::filename
@@ -155,6 +158,7 @@ subroutine read_parameters(filename)
  namelist /gravcon/ gravswitch, grvsrctype, grverr, cgerr, HGfac, hgcfl, &
                     gbtype, grav_init_other, include_extgrv, &
                     gis, gie, gjs, gje, gks, gke
+ namelist /sinkcon/ include_sinks, nsink
  namelist /rad_con/ radswitch, opacitytype, lambdatype
  namelist /partcon/ include_particles, maxptc
 
@@ -172,6 +176,7 @@ subroutine read_parameters(filename)
  read(ui,NML=simucon,iostat=istat);rewind(ui)
  read(ui,NML=bouncon,iostat=istat);rewind(ui)
  read(ui,NML=gravcon,iostat=istat);rewind(ui)
+ read(ui,NML=sinkcon,iostat=istat);rewind(ui)
  read(ui,NML=rad_con,iostat=istat);rewind(ui)
  read(ui,NML=partcon,iostat=istat)
  close(ui)

@@ -17,6 +17,7 @@ subroutine allocations
  use grid
  use physval
  use gravmod
+ use sink_mod
  use dirichlet_mod
 
  integer::i,j,k,n
@@ -114,7 +115,7 @@ subroutine allocations
 ! gravity-related variables
  if(gravswitch>=1)then
   allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2))!;grvphi=0d0
-  allocate(grvphiold,grvphidot,mold=grvphi)
+  allocate(grvphiold,grvphidot,totphi,mold=grvphi)
   allocate(hgsrc(gis:gie,gjs:gje,gks:gke))
   allocate(gsrc(gis:gie,gjs:gje,gks:gke))
   allocate(grvphiorg(gis:gie,gjs:gje,gks:gke,1:2))
@@ -175,6 +176,12 @@ subroutine allocations
 
 ! allocate external gravitational field if necessary
  if(include_extgrv)allocate(extgrv,mold=grvphi)
+
+! allocate sink particle-related variables if necessary
+ if(include_sinks)then
+  allocate(snkphi,mold=d)
+  allocate(sink(1:nsink))
+ end if
  
  T = 1d3  ! initial guess for temperature
  

@@ -8,7 +8,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                            SUBROUTINE GRAVITY
+!                           SUBROUTINE GRAVITY
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -27,7 +27,7 @@ subroutine gravity
  use profiler_mod
 
  integer:: i,j,k,n,l, gin, gjn, gkn, tngrav, grungen, jb, kb
- real(8):: phih, cgrav2, dtgrav, h
+ real(8):: phih, h
  real(8),allocatable,dimension(:,:,:):: newphi
  real(8),allocatable,dimension(:):: intphi
  real(8),allocatable,dimension(:):: x, cgsrc
@@ -53,6 +53,8 @@ subroutine gravity
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
   call gravbound
+
+  call start_clock(wtpoi)
 
 ! cylindrical (equatorial+axial symmetry) ####################################
   if(je==1.and.crdnt==1.and.dim==2)then
@@ -166,23 +168,25 @@ subroutine gravity
 
   end if
 
-  if(gravswitch==3)grvphiold = grvphi
-  
+  if(gravswitch==3)then
+   grvphiold = grvphi
+   dt_old = dtgrav
+  end if
+
+  call stop_clock(wtpoi)
+
  endif
 
 
 if(gravswitch==3.and.tn/=0)then
 ! Hyperbolic Self-Gravity $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+ call start_clock(wthyp)
+
  if(crdnt==1.and.je==js)then
 ! Cartoon mesh method for axially symmetric cylindrical coordinates %%%%%%%%%%
   allocate(newphi,mold=hgsrc)
   allocate( intphi(1:4) )
-
-  cgrav2 = HGfac*max(maxval(cs(is:ie,js,ks:ke)+abs(v1(is:ie,js,ks:ke))), &
-                     maxval(cs(is:ie,js,ks:ke)+abs(v3(is:ie,js,ks:ke))) )
-  dtgrav = hgcfl*hg_dx/cgrav2
-  cgrav2 = cgrav2**2
 
   hgsrc(is:ie,js:je,ks:ke) = gsrc(is:ie,js:je,ks:ke)
 
@@ -258,13 +262,8 @@ if(gravswitch==3.and.tn/=0)then
   
   k = gks
 
-  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,k)+abs(v1(is:ie,js:je,k)) &
-                                             +abs(v3(is:ie,js:je,k))) , &
-                     maxval(cs(is:ie,js:je,k)+abs(v2(is:ie,js:je,k))) )
-  dtgrav = hgcfl*hg_dx/cgrav2
   tngrav = ceiling((time+dt-grvtime)/dtgrav)
   dtgrav = (time+dt-grvtime)/dble(tngrav)
-  cgrav2 = cgrav2**2
 
   if(gbtype==0)call gravbound
 
@@ -333,15 +332,8 @@ if(gravswitch==3.and.tn/=0)then
 
   allocate(newphi,mold=hgsrc)
 
-!!$  cgrav2 = HGfac*max(maxval(cs(is:ie,js:je,ks:ke)+abs(v1(is:ie,js:je,ks:ke))), &
-!!$                     maxval(cs(is:ie,js:je,ks:ke)+abs(v2(is:ie,js:je,ks:ke))), &
-!!$                     maxval(cs(is:ie,js:je,ks:ke)+abs(v3(is:ie,js:je,ks:ke))) )
-  cgrav2 = HGfac*ch
-!  dtgrav = hgcfl*hg_dx/cgrav2
-  dtgrav = hgcfl/courant/HGfac*dt
   tngrav = ceiling((time+dt-grvtime)/dtgrav)
   dtgrav = (time+dt-grvtime)/dble(tngrav)
-  cgrav2 = cgrav2**2
  
   if(gbtype==0)call gravbound
   call masscoordinate
@@ -376,13 +368,13 @@ if(gravswitch==3.and.tn/=0)then
   do l = 1, tngrav
    do grungen = 1, 3
 ! First set flux and source term
-!$omp do private (i,j,k) collapse(3)
+!$omp do private (i,j,k,n) collapse(3)
     do k = ks-1, ke
      do j = js-1, je
       do i = is-1, ie
        grv1(i,j,k) = -cgrav2*(grvphi(i+1,j,k)-grvphi(i,j,k))*idx1(i+1)
-       grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/x1(i)
-       grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/x1(i)/sin(x2(j))
+       grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/g22(i)
+       grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/g33(i,j)
 
        if(i<=is+sum(fmr_lvl(1:fmr_max))-1)then
         if(i<=is+fmr_lvl(1)-1)then
@@ -391,6 +383,7 @@ if(gravswitch==3.and.tn/=0)then
          fmr_loop: do n = 2, fmr_max
           if(i<=is+sum(fmr_lvl(1:n))-1)then
            grv2(i,j,k) = grv2(i,j,k)/dble(2**(fmr_max-n+1))
+           grv3(i,j,k) = grv3(i,j,k)/dble(2**(fmr_max-n+1))
            exit fmr_loop
           end if
          end do fmr_loop
@@ -422,8 +415,8 @@ if(gravswitch==3.and.tn/=0)then
         grvphiorg(i,j,k,1) = grvphi(i,j,k)
         grvphiorg(i,j,k,2) = grvphidot(i,j,k)
        end if
-       grvphi(i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi(i,j,k) &
-                     + fact*dtgrav*grvphidot(i,j,k)
+       grvphi   (i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi   (i,j,k) &
+                        + fact*dtgrav*grvphidot(i,j,k)
        grvphidot(i,j,k) = faco*grvphiorg(i,j,k,2) + facn*grvphidot(i,j,k) &
                         + fact*dtgrav * &
                         ( idetg1(i) * &
@@ -437,31 +430,38 @@ if(gravswitch==3.and.tn/=0)then
     end do
 !$omp end do
 
-    do n = 2, fmr_max
+    do n = 1, fmr_max
      if(fmr_lvl(n)==0)cycle
      jb=min(2**(fmr_max-n+1),je)-1 ; kb=min(2**(fmr_max-n+1),ke)-1
+     if(n==1)then
+      jb=je-js; kb=ke-ks
+     end if
 !$omp do private(i,j,k,vol) collapse(3)
      do k = ks, ke, kb+1
       do j = js, je, jb+1
        do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
         vol = sum(dvol(i,j:j+jb,k:k+kb))
-        grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/vol
-        grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb)*dvol(i,j:j+jb,k:k+kb))/vol
+        grvphi   (i,j:j+jb,k:k+kb) = sum(grvphi   (i,j:j+jb,k:k+kb) &
+                                        *dvol(i,j:j+jb,k:k+kb)) / vol
+        grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb) &
+                                        *dvol(i,j:j+jb,k:k+kb)) / vol
        end do
       end do
      end do
 !$omp end do
     end do
-!$omp do private(i,j,k) collapse(2)
-    do k = ks, ke
-     do j = js, je
-      do i = fmr_lvl(1)-1, is, -1
-       grvphi(i,j,k) = grvphi(i+1,j,k) &
-                     - G*(mc(i)-mc(is-1))/xi1(i)**2*dx1(i+1)
-      end do
-     end do
-    end do
-!$omp end do
+
+! Central few cells are spherical
+!!$!$omp do private(i,j,k) collapse(2)
+!!$    do k = ks, ke
+!!$     do j = js, je
+!!$      do i = fmr_lvl(1)-1, is, -1
+!!$       grvphi(i,j,k) = grvphi(i+1,j,k) &
+!!$                     - G*(mc(i)-mc(is-1))/xi1(i)**2*dx1(i+1)
+!!$      end do
+!!$     end do
+!!$    end do
+!!$!$omp end do
    
 ! Boundary conditions
 !$omp do private(j,k) collapse(2)
@@ -471,18 +471,18 @@ if(gravswitch==3.and.tn/=0)then
       grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
      end do
     end do
-!$omp end do nowait
+!$omp end do
 !$omp do private(i,k) collapse(2)
     do k = ks, ke
-     do i = is, ie
+     do i = is-1, ie+1
       grvphi(i,js-1,k) = grvphi(i,js,k)
       grvphi(i,je+1,k) = grvphi(i,je,k)
      end do
     end do
-!$omp end do nowait
+!$omp end do
 !$omp do private(i,j) collapse(2)
-    do j = js, je
-     do i = is, ie
+    do j = js-1, je+1
+     do i = is-1, ie+1
       grvphi(i,j,ks-1) = grvphi(i,j,ke)
       grvphi(i,j,ke+1) = grvphi(i,j,ks)
      end do
@@ -563,6 +563,7 @@ if(gravswitch==3.and.tn/=0)then
   
  end if
 
+ call stop_clock(wthyp)
 
 end if
 
