@@ -1,0 +1,43 @@
+name: 'Setup Intel OneAPI'
+description: 'Sets up the Intel OneAPI environment (Linux only [Ubuntu GitHub runner])'
+branding:
+  icon: 'activity'
+  color: 'blue'
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Setup Intel repo
+      shell: bash
+      id: intel-repo
+      run: |
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        INTELVERSION=$(apt-cache show intel-oneapi-compiler-fortran | grep Version | head -1)
+        echo "intelversion=$INTELVERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Cache intel installation
+      shell: bash
+      id: cache-intel
+      uses: actions/cache@v4
+      with:
+        path: /opt/intel
+        key: ${{ steps.intel-repo.outputs.intelversion }}
+
+    - name: Install Intel compilers
+      shell: bash
+      if: ${{ steps.cache-intel.outputs.cache-hit != 'true' }}
+      run: |
+        sudo apt-get install -y intel-oneapi-common-vars
+        sudo apt-get install -y intel-oneapi-compiler-fortran
+        sudo apt-get install -y intel-oneapi-mpi
+        sudo apt-get install -y intel-oneapi-mpi-devel
+
+    - name: Setup Intel oneAPI environment
+      shell: bash
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        printenv >> $GITHUB_ENV
