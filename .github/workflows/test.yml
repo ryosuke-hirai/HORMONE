@@ -119,6 +119,12 @@ jobs:
           /opt/intel
         key: ${{ steps.intel-repo.outputs.intelversion }}
 
+    - name: Setup Intel oneAPI environment
+      if: matrix.fc == 'ifort'
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        printenv >> $GITHUB_ENV
+
     - name: Download binary
       uses: actions/download-artifact@v2
       with:
