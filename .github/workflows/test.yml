@@ -103,6 +103,9 @@ jobs:
         name: ${{ matrix.fc }}-${{ matrix.debug }}
         path: ./work
 
+    - name: Set executable permissions for binary
+      run: chmod +x ./work/hormone
+
     - name: Update startfile
       working-directory: ./work
       run: |
