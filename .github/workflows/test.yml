@@ -44,7 +44,7 @@ jobs:
     - name: Cache intel installation
       if: matrix.fc == 'ifort'
       id: cache-intel
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           /opt/intel
@@ -64,7 +64,7 @@ jobs:
         source /opt/intel/oneapi/setvars.sh
         printenv >> $GITHUB_ENV
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Compile
       working-directory: ./work
@@ -73,7 +73,7 @@ jobs:
         FC: ${{ matrix.fc }}
 
     - name: Save binary as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.fc }}-${{ matrix.debug }}
         path: ./work/hormone
@@ -96,7 +96,7 @@ jobs:
           - sedov_default
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Intel repo
       if: matrix.fc == 'ifort'
@@ -113,7 +113,7 @@ jobs:
     - name: Cache intel installation
       if: matrix.fc == 'ifort'
       id: cache-intel
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           /opt/intel
@@ -126,7 +126,7 @@ jobs:
         printenv >> $GITHUB_ENV
 
     - name: Download binary
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: ${{ matrix.fc }}-${{ matrix.debug }}
         path: ./work
