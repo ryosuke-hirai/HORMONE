@@ -2,7 +2,6 @@ name: test
 
 on:
   push:
-    branches: [ master ]
     paths-ignore:
       - 'README.md'
   pull_request:
@@ -11,7 +10,7 @@ on:
       - 'README.md'
 
 jobs:
-  test:
+  compile:
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +20,7 @@ jobs:
         debug:
           - no
           - yes
+      # This matrix is copied in the test job - keep them in sync
 
     name: test (fc=${{ matrix.fc }}, debug=${{ matrix.debug }})
 
@@ -28,6 +28,7 @@ jobs:
 
     steps:
 
+    # The intel set up is copied in the test job - keep them in sync
     - name: Setup Intel repo
       if: matrix.fc == 'ifort'
       id: intel-repo
@@ -64,12 +65,79 @@ jobs:
         printenv >> $GITHUB_ENV
 
     - uses: actions/checkout@v3
-    
+
     - name: Compile
       working-directory: ./work
       run: make ${{ matrix.debug == 'yes' && 'debug' || '' }}
       env:
         FC: ${{ matrix.fc }}
+
+    - name: Save binary as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        path: ./work/hormone
+
+  test:
+    needs: compile
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        fc:
+          - gfortran
+          - ifort
+        debug:
+          - no
+          - yes
+        test:
+          - sodshock_x
+          - sedov_default
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Intel repo
+      if: matrix.fc == 'ifort'
+      id: intel-repo
+      run: |
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        INTELVERSION=$(apt-cache show intel-oneapi-compiler-fortran | grep Version | head -1)
+        echo "::set-output name=intelversion::$INTELVERSION"
+
+    - name: Cache intel installation
+      if: matrix.fc == 'ifort'
+      id: cache-intel
+      uses: actions/cache@v3
+      with:
+        path: |
+          /opt/intel
+        key: ${{ steps.intel-repo.outputs.intelversion }}
+
+    - name: Setup Intel oneAPI environment
+      if: matrix.fc == 'ifort'
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        printenv >> $GITHUB_ENV
+
+    - name: Download binary
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        path: ./work
+
+    - name: Set executable permissions for binary
+      run: chmod +x ./work/hormone
+
+    - name: Update startfile
+      working-directory: ./work
+      run: |
+        sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
 
     - name: Run test
       working-directory: ./work
