@@ -86,7 +86,16 @@ jobs:
       matrix:
         test:
           - sodshock_x
+          - sodshock_y
+          - sodshock_z
+          - briowushock_x
+          - briowushock_y
+          - briowushock_z
+          - orszagtang_xy
+          - orszagtang_yz
+          - orszagtang_xz
           - sedov_default
+          - star_sph
 
     steps:
     - uses: actions/checkout@v4
