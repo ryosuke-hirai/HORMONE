@@ -11,7 +11,7 @@ on:
       - 'README.md'
 
 jobs:
-  test:
+  compile:
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +21,7 @@ jobs:
         debug:
           - no
           - yes
+      # This matrix is copied in the test job - keep them in sync
 
     name: test (fc=${{ matrix.fc }}, debug=${{ matrix.debug }})
 
@@ -64,12 +65,48 @@ jobs:
         printenv >> $GITHUB_ENV
 
     - uses: actions/checkout@v3
-    
+
     - name: Compile
       working-directory: ./work
       run: make ${{ matrix.debug == 'yes' && 'debug' || '' }}
       env:
         FC: ${{ matrix.fc }}
+
+    - name: Save binary as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        path: ./work/hormone
+
+  test:
+    needs: compile
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        fc:
+          - gfortran
+          - ifort
+        debug:
+          - no
+          - yes
+        test:
+          - sodshock_x
+          - sedov_default
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download binary
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        path: ./work
+
+    - name: Update startfile
+      run: |
+        sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
 
     - name: Run test
       working-directory: ./work
