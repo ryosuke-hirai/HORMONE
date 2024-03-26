@@ -104,6 +104,7 @@ jobs:
         path: ./work
 
     - name: Update startfile
+      working-directory: ./work
       run: |
         sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
 
