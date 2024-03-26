@@ -185,7 +185,7 @@ program hormone
 
   if(is_test) then
     call test(passed)
-    if (.not. passed) stop 1
+    if (.not. passed) error stop 1
   endif
 
 !------------------------------- end program ---------------------------------
