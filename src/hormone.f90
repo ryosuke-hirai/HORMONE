@@ -50,14 +50,16 @@ program hormone
   use tests_mod
 
   use profiler_mod
-  
+
   implicit none
+
+  logical :: passed
 
 !############################## start program ################################
 
 ! Start profiling
   call init_profiler
-  
+
 ! Initial setups -------------------------------------------------------------
 
   call start_clock(wtini)
@@ -179,10 +181,13 @@ program hormone
 
   if(tn/=0)call output ! To see final state
 
-  if(is_test)call test
+  print *, 'Calculation complete! tn = ',tn
+
+  if(is_test) then
+    call test(passed)
+    if (.not. passed) stop 1
+  endif
 
 !------------------------------- end program ---------------------------------
-
-  print *, 'Calculation complete! tn = ',tn
 
 end program hormone

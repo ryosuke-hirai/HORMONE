@@ -30,7 +30,7 @@ contains
    print'(3a)',' simtype = "',trim(simtype),'"'
    stop
   end if
-  
+
   return
  end subroutine check_testlist
 
@@ -42,7 +42,7 @@ contains
 
 ! PURPOSE: To compare results against pre-computed data
 
- subroutine test
+ subroutine test(passed)
 
   use settings,only:simtype,mag_on
   use grid,only:is,ie,js,je,ks,ke
@@ -50,6 +50,7 @@ contains
   use gravmod
   use readbin_mod,only:readbin
 
+  logical, intent(out) :: passed
   integer,parameter:: nn = 9
   integer:: n
   character(30):: testfile
@@ -57,7 +58,7 @@ contains
   real(8):: error(nn)
   real(8),allocatable,dimension(:,:,:,:):: val,valorg
   character(len=10):: label(nn)
-  
+
 !-----------------------------------------------------------------------------
 
   allocate(val(nn,is:ie,js:je,ks:ke))
@@ -92,16 +93,16 @@ contains
 
 ! Open test data file
   testfile = testfilename(simtype)
-  
+
   call readbin(testfile)
 
-  valorg(1,:,:,:) = d (is:ie,js:je,ks:ke) 
-  valorg(2,:,:,:) = e (is:ie,js:je,ks:ke) 
-  valorg(3,:,:,:) = v1(is:ie,js:je,ks:ke) 
-  valorg(4,:,:,:) = v2(is:ie,js:je,ks:ke) 
-  valorg(5,:,:,:) = v3(is:ie,js:je,ks:ke) 
-  valorg(6,:,:,:) = b1(is:ie,js:je,ks:ke) 
-  valorg(7,:,:,:) = b2(is:ie,js:je,ks:ke) 
+  valorg(1,:,:,:) = d (is:ie,js:je,ks:ke)
+  valorg(2,:,:,:) = e (is:ie,js:je,ks:ke)
+  valorg(3,:,:,:) = v1(is:ie,js:je,ks:ke)
+  valorg(4,:,:,:) = v2(is:ie,js:je,ks:ke)
+  valorg(5,:,:,:) = v3(is:ie,js:je,ks:ke)
+  valorg(6,:,:,:) = b1(is:ie,js:je,ks:ke)
+  valorg(7,:,:,:) = b2(is:ie,js:je,ks:ke)
   valorg(8,:,:,:) = b3(is:ie,js:je,ks:ke)
   if(gravswitch>0)then
    valorg(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
@@ -124,10 +125,12 @@ contains
 !  if(max(derr,eerr,v1err,v2err,v3err,gerr)<tol)then
   if(maxval(error)<tol)then
    print*,trim(simtype),' test: passed'
+   passed = .true.
   else
    print*,trim(simtype),' test: failed'
+   passed = .false.
   end if
-  
+
   return
  end subroutine test
 
