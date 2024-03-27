@@ -11,13 +11,10 @@ runs:
       shell: bash
       id: intel-repo
       run: |
-        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+        echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        INTELVERSION=$(apt-cache show intel-oneapi-compiler-fortran | grep Version | head -1)
-        echo "intelversion=$INTELVERSION" >> "$GITHUB_OUTPUT"
+        echo "intelversion=$(apt-cache show intel-oneapi-compiler-fortran | grep Version | head -1)" >> "$GITHUB_OUTPUT"
 
     - name: Cache intel installation
       id: cache-intel
@@ -29,11 +26,7 @@ runs:
     - name: Install Intel compilers
       shell: bash
       if: ${{ steps.cache-intel.outputs.cache-hit != 'true' }}
-      run: |
-        sudo apt-get install -y intel-oneapi-common-vars
-        sudo apt-get install -y intel-oneapi-compiler-fortran
-        sudo apt-get install -y intel-oneapi-mpi
-        sudo apt-get install -y intel-oneapi-mpi-devel
+      run: sudo apt install -y intel-hpckit
 
     - name: Setup Intel oneAPI environment
       shell: bash
