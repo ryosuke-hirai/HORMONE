@@ -123,6 +123,7 @@ contains
   if(maxval(error)<tol)then
    print*,trim(simtype),' test: passed'
    if(maxval(error)<=0d0)print*,trim(simtype),'     : Identical!'
+   passed = .true.
   else
    print*,trim(simtype),' test: failed'
    passed = .false.
