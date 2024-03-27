@@ -110,28 +110,13 @@ contains
   end if
 
 ! Calculate max norm errors
-  print*,'max norm errors:'
-  do n = 1, nn
-   if(trim(label(n))=='aaa')cycle
-   error(n) = max_norm_error(val(n,:,:,:),valorg(n,:,:,:),tol)
-   print*,'  ',label(n),' =',error(n)
-  end do
+  call print_errors('max',max_norm_error,label,val,valorg,tol,error)
 
 ! Calculate L1 norm errors
-  print*,'L1 norm errors:'
-  do n = 1, nn
-   if(trim(label(n))=='aaa')cycle
-   error(n) = L1_norm_error(val(n,:,:,:),valorg(n,:,:,:),tol)
-   print*,'  ',label(n),' =',error(n)
-  end do
+  call print_errors('L1',L1_norm_error,label,val,valorg,tol,error)
 
 ! Calculate L2 norm errors
-  print*,'L2 norm errors:'
-  do n = 1, nn
-   if(trim(label(n))=='aaa')cycle
-   error(n) = L2_norm_error(val(n,:,:,:),valorg(n,:,:,:),tol)
-   print*,'  ',label(n),' =',error(n)
-  end do
+  call print_errors('L2',L2_norm_error,label,val,valorg,tol,error)
 
 ! Check if maximum L2 norm error is within acceptable bounds
   if(maxval(error)<tol)then
@@ -188,7 +173,7 @@ contains
 
  function L2_norm_error(var,var0,tol) result(norm)
   use grid,only:is,ie,js,je,ks,ke,dvol
-  real(8),dimension(:,:,:),intent(inout):: var,var0
+  real(8),dimension(:,:,:),intent(in):: var,var0
   real(8),intent(in):: tol
   real(8):: norm, pos, jump, base, denom, floor
   real(8),allocatable:: relerr(:,:,:),w(:,:,:)
@@ -231,5 +216,41 @@ contains
   real(8):: ratio
   ratio = max(abs(x)/max(abs(y),floor),abs(y)/max(abs(x),floor),1d0)
  end function ratio
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE PRINT_ERRORS
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To print errors defined by a given norm
+
+ subroutine print_errors(name,f,label,val,valorg,tol,error)
+
+  interface
+   real(8) function f(var,var0,tol)
+    real(8),dimension(:,:,:),intent(in):: var,var0
+    real(8),intent(in):: tol
+    real(8):: norm
+   end function f
+  end interface
+  character(len=*),intent(in):: name
+  character(len=10),intent(in):: label(:)
+  real(8),allocatable,intent(inout),dimension(:,:,:,:):: val,valorg
+  real(8),intent(in):: tol
+  real(8),intent(inout)::error(:)
+  integer:: n
+
+!-----------------------------------------------------------------------------
+
+  print*,trim(name),' norm errors:'
+  do n = 1, size(error)
+   if(trim(label(n))=='aaa')cycle
+   error(n) = f(val(n,:,:,:),valorg(n,:,:,:),tol)
+   print*,'  ',label(n),' =',error(n)
+  end do
+
+  return
+ end subroutine print_errors
 
 end module tests_mod
