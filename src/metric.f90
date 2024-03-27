@@ -121,7 +121,7 @@ subroutine metric
   do k = ks-1, ke+1
    do j = js-1, je+1
     do i = is-1, ie+1
-     idetg3(i,j,k) = 1d0 / sin(x2(j)) * sx1(i) * idxi3(k)
+     idetg3(i,j,k) = idetg2(i,j) * dxi2(j) * idxi3(k)
      dvol(i,j,k)   = (xi1(i)**3-xi1(i-1)**3) / 3d0 &
                    * (cosi(j-1)-cosi(j)) * dxi3(k)
      sa1(i,j,k)    = 0.5d0*xi1(i)**2 &
