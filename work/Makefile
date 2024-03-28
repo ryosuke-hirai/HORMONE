@@ -15,8 +15,8 @@ endif
 
 # for ifort
 ifeq (${FC},ifort)
-MODFLAG= -module 
-FCFLAG:= $(CFLAG) -qopenmp #-heap-arrays
+MODFLAG= -module # trailing space is important
+FCFLAG:= $(CFLAG) -qopenmp -fp-model precise #-heap-arrays
 DBFLAG= -traceback -fpe0 -CB -warn all -O0 -std #-pg #-check all
 PRFLAG= -pg
 endif
