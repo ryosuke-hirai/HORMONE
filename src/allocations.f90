@@ -24,49 +24,137 @@ subroutine allocations
 
 !-----------------------------------------------------------------------------
 
-! 1 dimensional arrays
+! 1 dimensional arrays =======================================================
 ! grid-related variables
- allocate(x1(gis-2:gie+2))!; x1=0d0
+ allocate(x1(gis-2:gie+2))
  allocate(xi1,dx1,dxi1,idx1,idxi1,mold=x1)
 
- allocate(x2(gjs-2:gje+2))!; x2=0d0
+ allocate(x2(gjs-2:gje+2))
  allocate(xi2,dx2,dxi2,idx2,idxi2,mold=x2)
 
- allocate(x3(gks-2:gke+2))!; x3=0d0
+ allocate(x3(gks-2:gke+2))
  allocate(xi3,dx3,dxi3,idx3,idxi3,mold=x3)
 
 !  metric-related variables
- allocate(detg1(is-2:ie+2))!; detg1=0d0
+ allocate(detg1(is-2:ie+2))
  allocate(idetg1,sx1,g22,mold=detg1)
 
- allocate(scot(js-2:je+2))!; scot=0d0
+ allocate(scot(js-2:je+2))
  allocate(sisin,mold=scot)
 
- allocate(detg2(is-2:ie+2,js-2:je+2))!; detg2=0d0
+ allocate(detg2(is-2:ie+2,js-2:je+2))
  allocate(idetg2,g33,mold=detg2)
 
- allocate(dvol(is-2:ie+2,js-2:je+2,ks-2:ke+2))!; dvol=0d0
+ allocate(dvol(is-2:ie+2,js-2:je+2,ks-2:ke+2))
  allocate(idetg3,sa1,sa2,sa3,Imom,mold=dvol)
  allocate(car_x(1:3,is:ie,js:je,ks:ke))
 
-! 3 dimensional arrays
+! 3 dimensional arrays =======================================================
 ! physical variables
 !  Strictly non-zero quantities
- allocate(d(is-2:ie+2,js-2:je+2,ks-2:ke+2))!; d = 1d0
- allocate(p,e,T,ptot,cs,eint,imu,mold=d);cs=1d0
+ allocate(d(is-2:ie+2,js-2:je+2,ks-2:ke+2))
+ allocate(p,e,T,ptot,cs,eint,imu,mold=d)
+! Parallel first touch for OpenMP optimization on NUMA cores
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+   end do
+  end do
+ end do
+!$omp end parallel do
 
 !  Initially zero quantities
- allocate(phi(is-2:ie+2,js-2:je+2,ks-2:ke+2))!; phi = 0d0
+ allocate(phi(is-2:ie+2,js-2:je+2,ks-2:ke+2))
  allocate(v1,v2,v3,b1,b2,b3,grv1,grv2,grv3,mold=phi)
- allocate(shock(is-2:ie+2,js-2:je+2,ks-2:ke+2)); shock = 0
+ allocate(shock(is-2:ie+2,js-2:je+2,ks-2:ke+2))
+! Parallel first touch for OpenMP optimization on NUMA cores
+!$omp parallel
+!$omp do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
+    b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
+    grv1(i,j,k) = 0d0; grv2(i,j,k) = 0d0; grv3(i,j,k) = 0d0
+    phi(i,j,k) = 0d0
+    shock(i,j,k) = 0
+   end do
+  end do
+ end do
+!$omp end do
+!$omp do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js, je
+   do i = is-2, is-1
+    v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
+    b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
+   end do
+  end do
+ end do
+!$omp end do
+!$omp do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js, je
+   do i = ie+1, ie+2
+    v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
+    b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
+   end do
+  end do
+ end do
+!$omp end do
+!$omp do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js-2, js-1
+   do i = is, ie
+    v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
+    b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
+   end do
+  end do
+ end do
+!$omp end do
+!$omp do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = je+1, je+2
+   do i = is, ie
+    v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
+    b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
+   end do
+  end do
+ end do
+!$omp end do
+!$omp do private(i,j,k) collapse(3) schedule(static)
+ do k = ks-2, ks-1
+  do j = js, je
+   do i = is, ie
+    v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
+    b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
+   end do
+  end do
+ end do
+!$omp end do
+!$omp do private(i,j,k) collapse(3) schedule(static)
+ do k = ke+1, ke+2
+  do j = js, je
+   do i = is, ie
+    v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
+    b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
+   end do
+  end do
+ end do
+!$omp end do
+!$omp end parallel
 
-! 4 dimensional  arrays
+! 4 dimensional arrays =======================================================
 ! gradients
- allocate(dd(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:3))!; dd = 0d0
+ allocate(dd(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:3))
  allocate(de,dphi,dm1,dm2,dm3,db1,db2,db3,dmu,mold=dd)
 
 ! conserved quantities and flux
- allocate(u(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:ufnmax))!; u = 0d0
+ allocate(u(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:ufnmax))
  allocate(flux1,flux2,flux3,mold=u)
 !$omp parallel do private(i,j,k) collapse(3) schedule(static)
  do k = ks, ke
@@ -95,7 +183,7 @@ subroutine allocations
   end do
  end do
 !$omp end parallel do
- allocate(src(is:ie,js:je,ks:ke,1:ufnmax))!; src = 0d0
+ allocate(src(is:ie,js:je,ks:ke,1:ufnmax))
  allocate(uorg,mold=src)
 !$omp parallel do private(i,j,k,n) collapse(4) schedule(static)
  do n = 1, ufnmax
@@ -111,10 +199,11 @@ subroutine allocations
  end do
 !$omp end parallel do
 
+! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ! gravity-related variables
  if(gravswitch>=1)then
-  allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2))!;grvphi=0d0
+  allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2))
   allocate(grvphiold,grvphidot,totphi,mold=grvphi)
   allocate(hgsrc(gis:gie,gjs:gje,gks:gke))
   allocate(gsrc(gis:gie,gjs:gje,gks:gke))
@@ -182,8 +271,6 @@ subroutine allocations
   allocate(snkphi,mold=d)
   allocate(sink(1:nsink))
  end if
- 
- T = 1d3  ! initial guess for temperature
  
  return
 end subroutine allocations
