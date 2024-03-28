@@ -1,0 +1,114 @@
+name: Test suite
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+  pull_request:
+    branches: [ master ]
+    paths-ignore:
+      - 'README.md'
+
+jobs:
+  compile:
+    strategy:
+      fail-fast: false
+      matrix:
+        fc:
+          - gfortran
+          - ifort
+        debug:
+          - no
+          - yes
+
+    name: compile (fc=${{ matrix.fc }}, debug=${{ matrix.debug }})
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: ./.github/actions/setup-intel-oneapi
+      if: matrix.fc == 'ifort'
+
+    - name: Compile
+      working-directory: ./work
+      run: make ${{ matrix.debug == 'yes' && 'debug' || '' }}
+      env:
+        FC: ${{ matrix.fc }}
+
+    - name: Save binary as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        path: ./work/hormone
+
+  test:
+    needs: compile
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        fc:
+          - gfortran
+          - ifort
+        debug:
+          - no
+          - yes
+        test:
+          - sodshock_x
+          - sodshock_y
+          - sodshock_z
+          - briowushock_x
+          - briowushock_y
+          - briowushock_z
+          - orszagtang_xy
+          - orszagtang_yz
+          - orszagtang_xz
+          - sedov_default
+          - star_sph
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: ./.github/actions/setup-intel-oneapi
+      if: matrix.fc == 'ifort'
+
+    - name: Download binary
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        path: ./work
+
+    - name: Set executable permissions for binary
+      run: chmod +x ./work/hormone
+
+    - name: Update startfile
+      working-directory: ./work
+      run: sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
+
+    - name: Run test
+      working-directory: ./work
+      run: ./hormone
+
+  # Gather results into a dummy job that will fail if the previous job fails
+  gather_results:
+    if: always()
+    needs:
+    - test
+
+    # This name matches the branch protection requirement
+    name: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check all tests
+      run: |
+        if [[ "${{ needs.test.result }}" == "success" ]]; then
+          echo "All tests succeeded"
+        else
+          echo "At least one test failed"
+          exit 1
+        fi

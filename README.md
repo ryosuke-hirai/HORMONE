@@ -1,4 +1,6 @@
 # HORMONE
+![Test suite](https://github.com/ryosuke-hirai/HORMONE/actions/workflows/test.yml/badge.svg)
+
 Repository for hydrodynamics code HORMONE
 
 ## About
