@@ -18,6 +18,7 @@
 
 program hormone
 
+  use mpi_utils
   use settings
   use grid
   use physval
@@ -56,6 +57,8 @@ program hormone
   logical :: passed
 
 !############################## start program ################################
+
+  call init_mpi
 
 ! Start profiling
   call init_profiler
@@ -187,6 +190,8 @@ program hormone
     call test(passed)
     if (.not. passed) error stop 1
   endif
+
+  call finalize_mpi
 
 !------------------------------- end program ---------------------------------
 
