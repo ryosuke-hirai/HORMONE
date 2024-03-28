@@ -141,26 +141,26 @@ program hormone
 
     time = time + dt ; tn = tn + 1
 
-! Output sequence ---------------------- !
-    select case(outstyle)                !
-    case(1) ! output by time             !
-     if(time>=t_out)then                 !
-      call output                        !
-      t_out = t_out + dt_out             !
-     end if                              !
-    case(2) ! output by timestep         !
-     if(tn/=0.and.mod(tn,tn_out)==0)then !
-      call output                        !
-     end if                              !
-    case default                         !
-     print *,'outstyle out of range'     !
-     stop                                !
-    end select                           !
-    if(write_evo.and.mod(tn,10)==0)then  !
-     call evo_output                     !
-     call sink_output                    !
-    end if                               !
-! -------------------------------------- !
+! Output sequence ------------------------- !
+    select case(outstyle)                   !
+    case(1) ! output by time                !
+     if(time>=t_out)then                    !
+      call output                           !
+      t_out = t_out + dt_out                !
+     end if                                 !
+    case(2) ! output by timestep            !
+     if(tn/=0.and.mod(tn,tn_out)==0)then    !
+      call output                           !
+     end if                                 !
+    case default                            !
+     print *,'outstyle out of range'        !
+     stop                                   !
+    end select                              !
+    if(write_evo.and.mod(tn,tn_evo)==0)then !
+     call evo_output                        !
+     call sink_output                       !
+    end if                                  !
+! ----------------------------------------- !
 
 ! End sequence ------------------- !
     select case (endstyle)         !

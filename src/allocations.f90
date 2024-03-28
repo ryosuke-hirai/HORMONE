@@ -54,29 +54,23 @@ subroutine allocations
 !  Strictly non-zero quantities
  allocate(d(is-2:ie+2,js-2:je+2,ks-2:ke+2))
  allocate(p,e,T,ptot,cs,eint,imu,mold=d)
-! Parallel first touch for OpenMP optimization on NUMA cores
-!$omp parallel do private(i,j,k) collapse(3) schedule(static)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
-    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
-    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
-   end do
-  end do
- end do
-!$omp end parallel do
 
 !  Initially zero quantities
  allocate(phi(is-2:ie+2,js-2:je+2,ks-2:ke+2))
  allocate(v1,v2,v3,b1,b2,b3,grv1,grv2,grv3,mold=phi)
  allocate(shock(is-2:ie+2,js-2:je+2,ks-2:ke+2))
+
 ! Parallel first touch for OpenMP optimization on NUMA cores
 !$omp parallel
 !$omp do private(i,j,k) collapse(3) schedule(static)
  do k = ks, ke
   do j = js, je
    do i = is, ie
+! Strictly non-zero quantities
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+! Initially zero quantities
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
     grv1(i,j,k) = 0d0; grv2(i,j,k) = 0d0; grv3(i,j,k) = 0d0
@@ -86,10 +80,15 @@ subroutine allocations
   end do
  end do
 !$omp end do
+
+! Boundary values
 !$omp do private(i,j,k) collapse(3) schedule(static)
  do k = ks, ke
   do j = js, je
    do i = is-2, is-1
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -100,6 +99,9 @@ subroutine allocations
  do k = ks, ke
   do j = js, je
    do i = ie+1, ie+2
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -110,6 +112,9 @@ subroutine allocations
  do k = ks, ke
   do j = js-2, js-1
    do i = is, ie
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -120,6 +125,9 @@ subroutine allocations
  do k = ks, ke
   do j = je+1, je+2
    do i = is, ie
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -130,6 +138,9 @@ subroutine allocations
  do k = ks-2, ks-1
   do j = js, je
    do i = is, ie
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -140,6 +151,9 @@ subroutine allocations
  do k = ke+1, ke+2
   do j = js, je
    do i = is, ie
+    d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
+    ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do

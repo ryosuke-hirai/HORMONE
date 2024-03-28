@@ -147,7 +147,7 @@ subroutine read_parameters(filename)
                     is, ie, js, je, ks, ke, imesh, jmesh, kmesh, &
                     x1min, x2min, x3min, &
                     fmr_max, fmr_lvl
- namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, &
+ namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, tn_evo,&
                     dt_unit, sigfig, outres, write_other_vel, write_shock, &
                     write_evo, write_other_slice, write_temp
  namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
@@ -156,7 +156,7 @@ subroutine read_parameters(filename)
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
  namelist /gravcon/ gravswitch, grvsrctype, grverr, cgerr, HGfac, hgcfl, &
-                    gbtype, grav_init_other, include_extgrv, &
+                    gbtype, grktype, grav_init_other, include_extgrv, &
                     gis, gie, gjs, gje, gks, gke
  namelist /sinkcon/ include_sinks, nsink
  namelist /rad_con/ radswitch, opacitytype, lambdatype
