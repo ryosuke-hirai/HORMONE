@@ -73,6 +73,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - uses: ./.github/actions/setup-intel-oneapi
+      if: matrix.fc == 'ifort'
 
     - name: Download binary
       uses: actions/download-artifact@v4
@@ -85,8 +86,7 @@ jobs:
 
     - name: Update startfile
       working-directory: ./work
-      run: |
-        sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
+      run: sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
 
     - name: Run test
       working-directory: ./work
