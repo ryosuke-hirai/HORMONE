@@ -115,7 +115,9 @@ contains
 
 
   call start_clock(wteos)
+
   call smear
+
   call primitive
   call stop_clock(wteos)
 

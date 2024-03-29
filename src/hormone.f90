@@ -114,7 +114,7 @@ program hormone
     call timestep
 
     call gravity
-    if(include_sinks)call sink_motion
+    if(include_sinks)call get_sink_acc(sink)
 
     call terminal_output
 
@@ -136,6 +136,7 @@ program hormone
     if(radswitch>0)      call radiation
     if(include_cooling)  call cooling
     if(include_particles)call particles
+    if(include_sinks)    call sink_motion
 
     time = time + dt ; tn = tn + 1
 

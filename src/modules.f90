@@ -121,12 +121,12 @@ module gravmod
   implicit none
 
   integer,parameter:: llmax = 1000
-  real(8),allocatable,dimension(:,:,:):: grvphi, grvphiold, grvphidot, totphi
+  real(8),allocatable,dimension(:,:,:),target:: grvphi, grvphiold, grvphidot, totphi
   real(8),allocatable,dimension(:,:,:,:):: grvphiorg
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc
   real(8),allocatable,dimension(:,:):: phiio, phiii, phi1o, phi3i, phi3o
-  real(8):: dt_old, l2norm, grvtime, dtgrav, cgrav2
+  real(8):: dt_old, l2norm, grvtime, dtgrav, cgrav2, cgrav, cgrav_old
   real(8),allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32, mc
   real(8),allocatable,dimension(:,:):: lag
   real(8),allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc, gsrc
