@@ -18,7 +18,7 @@ subroutine metric
  use grid
 
  integer:: i,j,k
- real(8):: x3_mid
+ real(8):: x3_mid,fac_j,fac_k
 
 !----------------------------------------------------------------------------
 
@@ -117,33 +117,24 @@ subroutine metric
     g33(i,j) = x1(i) * sinc(j)
    end do
   end do
+
+  fac_k=1d0; if(ke==ks)fac_k=4d0
+  fac_j=1d0; if(je==js)fac_j=2d0
   
   do k = ks-1, ke+1
    do j = js-1, je+1
     do i = is-1, ie+1
-     idetg3(i,j,k) = 1d0 / sin(x2(j)) * sx1(i) * idxi3(k)
+     idetg3(i,j,k) = idetg2(i,j) * dxi2(j) * idxi3(k) / fac_k
      dvol(i,j,k)   = (xi1(i)**3-xi1(i-1)**3) / 3d0 &
-                   * (cosi(j-1)-cosi(j)) * dxi3(k)
+                   * (cosi(j-1)-cosi(j)) * dxi3(k) * fac_j * fac_k
      sa1(i,j,k)    = 0.5d0*xi1(i)**2 &
-                   * (cosi(j-1)-cosi(j)) * dxi3(k)
+                   * (cosi(j-1)-cosi(j)) * dxi3(k) * fac_j * fac_k
      sa2(i,j,k)    = 0.5d0*sini(j) &
-                   * (xi1(i)**2-xi1(i-1)**2) * dxi3(k)
-     sa3(i,j,k)    = 0.5d0 * (xi1(i)**2-xi1(i-1)**2) * dxi2(j)
+                   * (xi1(i)**2-xi1(i-1)**2) * dxi3(k) * fac_k
+     sa3(i,j,k)    = 0.5d0 * (xi1(i)**2-xi1(i-1)**2) * dxi2(j) * fac_j
     end do
    end do
   end do
-
-  if(ke==ks)then
-   dvol = dvol * 4d0
-   idetg3 = idetg3 * 0.25d0
-   sa1 = sa1 * 4d0 
-   sa2 = sa2 * 4d0 
-  end if
-  if(je==js)then
-   dvol = dvol * 2d0
-   sa1  = sa1  * 2d0
-   sa3  = sa3  * 2d0
-  end if
 
   do j = js-1, je+1
    scot(j)  = ( sini(j) - sini(j-1) ) / ( cosi(j-1) - cosi(j) )

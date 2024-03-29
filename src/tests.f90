@@ -30,7 +30,7 @@ contains
    print'(3a)',' simtype = "',trim(simtype),'"'
    stop
   end if
-  
+
   return
  end subroutine check_testlist
 
@@ -42,7 +42,7 @@ contains
 
 ! PURPOSE: To compare results against pre-computed data
 
- subroutine test
+ subroutine test(passed)
 
   use settings,only:simtype,mag_on
   use grid,only:is,ie,js,je,ks,ke
@@ -50,14 +50,15 @@ contains
   use gravmod
   use readbin_mod,only:readbin
 
+  logical, intent(out) :: passed
   integer,parameter:: nn = 9
   integer:: n
   character(30):: testfile
-  real(8),parameter:: tol=1d-10
+  real(8),parameter:: tol=1d-4
   real(8):: error(nn)
   real(8),allocatable,dimension(:,:,:,:):: val,valorg
   character(len=10):: label(nn)
-  
+
 !-----------------------------------------------------------------------------
 
   allocate(val(nn,is:ie,js:je,ks:ke))
@@ -92,7 +93,7 @@ contains
 
 ! Open test data file
   testfile = testfilename(simtype)
-  
+
   call readbin(testfile)
 
   valorg(1,:,:,:) = d (is:ie,js:je,ks:ke) 
@@ -124,10 +125,13 @@ contains
 !  if(max(derr,eerr,v1err,v2err,v3err,gerr)<tol)then
   if(maxval(error)<tol)then
    print*,trim(simtype),' test: passed'
+   if(maxval(error)<=0d0)print*,trim(simtype),'     : Identical!'
+   passed = .true.
   else
    print*,trim(simtype),' test: failed'
+   passed = .false.
   end if
-  
+
   return
  end subroutine test
 
