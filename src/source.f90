@@ -17,6 +17,7 @@ subroutine source
  use settings,only:eq_sym,include_extforce,mag_on,radswitch,include_sinks
  use physval
  use constants
+ use utils,only:masscoordinate
  use gravmod
  use sink_mod,only:sinkfield
  use radiation_mod,only:radiative_force
@@ -33,18 +34,8 @@ subroutine source
  if(gravswitch==0)then ! gravity off
   grv1 = 0d0 ; grv2 = 0d0 ; grv3 = 0d0
 
- elseif(gravswitch==1.and.crdnt==2.and.dim<=2)then ! point-source
-  k = ks
-  if(eq_sym)then
-   do i = is, ie
-    mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )*2d0
-   end do
-  else
-   do i = is, ie
-    mc(i) = mc(i-1) + sum( d(i,js:je,k) * dvol(i,js:je,k) )
-   end do
-  end if
-
+ elseif(gravswitch==1.and.crdnt==2)then ! point-source
+  call masscoordinate
 
 !$omp parallel do private(i)
   do i = is, ie
@@ -54,44 +45,6 @@ subroutine source
   grv2 = 0d0 ; grv3 = 0d0
 
  elseif(gravswitch==2.or.gravswitch==3)then
-!!$!$omp parallel do private (i,j,k) collapse(3)
-!!$  do k = ks, ke
-!!$   do j = js, je
-!!$    do i = is, ie
-!!$     grv1(i,j,k) = -( (dx1(i  )*idx1(i+1)*grvphi(i+1,j,k)    &
-!!$                     - dx1(i+1)*idx1(i  )*grvphi(i-1,j,k) )  &
-!!$                      /sum(dx1(i:i+1)) &
-!!$                    + (dx1(i+1)-dx1(i))*idx1(i)*idx1(i+1)*grvphi(i,j,k) ) &
-!!$                  * d(i,j,k)
-!!$
-!!$     grv2(i,j,k) = -( (dx2(j  )*idx2(j+1)*grvphi(i,j+1,k)   &
-!!$                     - dx2(j+1)*idx2(j  )*grvphi(i,j-1,k) ) &
-!!$                      /sum(dx2(j:j+1)) &
-!!$                    + (dx2(j+1)-dx2(j))*idx2(j)*idx2(j+1)*grvphi(i,j,k) ) &
-!!$                  * d(i,j,k)
-!!$     grv3(i,j,k) = -( (dx3(k  )*idx3(k+1)*grvphi(i,j,k+1) &
-!!$                     - dx3(k+1)*idx3(k  )*grvphi(i,j,k-1) ) &
-!!$                      /sum(dx3(k:k+1)) &
-!!$                    + (dx3(k+1)-dx3(k))*idx3(k)*idx3(k+1)*grvphi(i,j,k) ) &
-!!$                  * d(i,j,k)
-!!$     if(i<=is+sum(fmr_lvl(1:fmr_max))-1)then
-!!$      if(i<=is+fmr_lvl(1)-1)then
-!!$       grv2(i,j,k) = 0d0;grv3(i,j,k) = 0d0
-!!$      else
-!!$       fmr_loop: do n = 2, fmr_max
-!!$        if(i<=is+sum(fmr_lvl(1:n))-1)then
-!!$         grv2(i,j,k) = grv2(i,j,k)/dble(2**(fmr_max-n+1))
-!!$         exit fmr_loop
-!!$        end if
-!!$       end do fmr_loop
-!!$      end if
-!!$     end if
-!!$
-!!$    end do
-!!$   end do
-!!$  end do
-!!$!$omp end parallel do
-
 
 !$omp parallel do private(i,j,k) collapse(3)
   do k = ks-1, ke+1
@@ -220,7 +173,7 @@ end subroutine source
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE GET_FIELDFORCE
+!                        SUBROUTINE GET_FIELDFORCE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -251,6 +204,7 @@ subroutine get_fieldforce(phi,coeff,frc1,frc2,frc3)
                       /sum(dx2(j:j+1)) &
                     + (dx2(j+1)-dx2(j))*idx2(j)*idx2(j+1)*phi(i,j,k) ) &
                   * coeff(i,j,k)
+
      frc3(i,j,k) = -( (dx3(k  )*idx3(k+1)*phi(i,j,k+1) &
                      - dx3(k+1)*idx3(k  )*phi(i,j,k-1) ) &
                       /sum(dx3(k:k+1)) &
