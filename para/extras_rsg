@@ -3,10 +3,12 @@
 ! mesafile: Name of MESA profile file to be read.
 ! spc_list: List of all elements to be tracked in the simulation.
 ! rcore: Size of core to be removed from the computation
+! core_is_sink: .true. to make the core a sink particle. .false. to make the core an external field
 
 &rsg_con
  mesafile='16earlyRSG.data'
  spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
  rcore=3d12
  isentropic=.true.
+ core_is_sink=.false.
 /

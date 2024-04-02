@@ -18,8 +18,9 @@ contains
   implicit none
   real(8),intent(in):: x(1:3)
   real(8):: xp(1:3)
+  real(8),parameter:: tiny=1d-99
   xp(1) = norm2(x)
-  xp(2) = acos(x(3)/xp(1))
+  xp(2) = acos(x(3)/max(xp(1),tiny))
   xp(3) = atan2(x(2),x(1))
  end function carpol
 
@@ -34,7 +35,7 @@ contains
   if(q>=2d0)then
    phi = -1d0/r
   elseif(q>=1d0)then
-   phi = (4d0/3d0*q**2-q**3+0.3d0*q**4-q**5/30d0-1.6d0+1/(15d0*q))/h
+   phi = (4d0/3d0*q**2-q**3+0.3d0*q**4-q**5/30d0-1.6d0+1d0/(15d0*q))/h
   elseif(q>=0d0)then
    phi = (2d0/3d0*q**2-0.3d0*q**4+0.1d0*q**5-1.4d0)/h
   end if

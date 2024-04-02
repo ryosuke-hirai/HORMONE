@@ -34,6 +34,7 @@ program hormone
   use initialcondition_mod
   use output_mod
   use gravmod
+  use sink_mod
   use composition_mod
   use boundary_mod
   use numflux_mod
@@ -49,14 +50,16 @@ program hormone
   use tests_mod
 
   use profiler_mod
-  
+
   implicit none
+
+  logical :: passed
 
 !############################## start program ################################
 
 ! Start profiling
   call init_profiler
-  
+
 ! Initial setups -------------------------------------------------------------
 
   call start_clock(wtini)
@@ -87,18 +90,16 @@ program hormone
   call pressure
 
 ! Initial output
+  call open_evofile
+  call open_sinkfile
+
   if(include_particles.and.tn==0)call particles_setup
   call timestep
 
-  if(gravswitch==3.and.tn==0)dt_old=dt / (courant*HGfac) * hgcfl
   if(tn==0)then
    call gravity
+   if(include_sinks)call sinkfield
    call output
-  end if
-
-  if(write_evo)then
-   call open_evofile
-   call evo_output
   end if
 
   call stop_clock(wtini)
@@ -106,16 +107,22 @@ program hormone
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
 
+   wtime(wtgri) = wtime(wtgrv)
    call reset_clock(wtlop)
    call start_clock(wtlop)
 
    main_loop:do
 
     call timestep
-    print'(a,i8,2(3X,a,1PE13.5e2))','tn =',tn,'time =',time,'dt =',dt
 
-    if(tn>0)call gravity
-    if(dirichlet_on)call dirichletbound
+    call gravity
+    if(include_sinks)call get_sink_acc(sink)
+
+    call terminal_output
+
+    call start_clock(wthyd)
+
+    if(dirichlet_on) call dirichletbound
     call shockfind
 
     do rungen = 1, rktype
@@ -125,37 +132,41 @@ program hormone
      call rungekutta
     end do
 
+    call stop_clock(wthyd)
+
     if(mag_on)           call phidamp
     if(radswitch>0)      call radiation
     if(include_cooling)  call cooling
     if(include_particles)call particles
+    if(include_sinks)    call sink_motion
 
     time = time + dt ; tn = tn + 1
-! Output sequence ---------------------- !
-    select case(outstyle)                !
-    case(1) ! output by time             !
-     if(time>=t_out)then                 !
-      call boundarycondition             !
-      call output                        !
-      t_out = t_out + dt_out             !
-     end if                              !
-    case(2) ! output by timestep         !
-     if(tn/=0.and.mod(tn,tn_out)==0)then !
-      call boundarycondition             !
-      call output                        !
-     end if                              !
-    case default                         !
-     print *,'outstyle out of range'     !
-     stop                                !
-    end select                           !
-    if(write_evo.and.&                   !
-       mod(tn,10)==0)call evo_output     !
-! -------------------------------------- !
+
+! Output sequence ------------------------- !
+    select case(outstyle)                   !
+    case(1) ! output by time                !
+     if(time>=t_out)then                    !
+      call output                           !
+      t_out = t_out + dt_out                !
+     end if                                 !
+    case(2) ! output by timestep            !
+     if(tn/=0.and.mod(tn,tn_out)==0)then    !
+      call output                           !
+     end if                                 !
+    case default                            !
+     print *,'outstyle out of range'        !
+     stop                                   !
+    end select                              !
+    if(write_evo.and.mod(tn,tn_evo)==0)then !
+     call evo_output                        !
+     call sink_output                       !
+    end if                                  !
+! ----------------------------------------- !
 
 ! End sequence ------------------- !
     select case (endstyle)         !
     case(1) ! time up              !
-     if(time>=t_end)exit main_loop ! 
+     if(time>=t_end)exit main_loop !
     case(2) ! timestep up          !
      if(tn>=tnlim)exit main_loop   !
     end select                     !
@@ -171,10 +182,13 @@ program hormone
 
   if(tn/=0)call output ! To see final state
 
-  if(is_test)call test
+  print *, 'Calculation complete! tn = ',tn
+
+  if(is_test) then
+    call test(passed)
+    if (.not. passed) error stop 1
+  endif
 
 !------------------------------- end program ---------------------------------
-
-  print *, 'Calculation complete! tn = ',tn
 
 end program hormone

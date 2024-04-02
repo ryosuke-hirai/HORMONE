@@ -1,8 +1,9 @@
 module output_mod
  implicit none
 
- integer:: ievo
- public:: output,set_file_name,write_extgrv,evo_output,scaling_output
+ integer:: ievo,iskf
+ public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
+          scaling_output
  private:: write_grid,write_bin,write_plt,get_header,add_column, &
            write_val
 
@@ -39,12 +40,14 @@ subroutine output
  if(tn==0)call write_grid
 
  call write_bin
-
  call write_plt
 
 ! Tracer particle outputs
  call write_bpt
  call write_ptc
+
+ call evo_output
+ call sink_output
 
  call stop_clock(wtind)
 
@@ -52,6 +55,29 @@ subroutine output
 
  return
 end subroutine output
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE TERMINAL_OUTPUT
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Output things on the terminal
+
+subroutine terminal_output
+
+ use settings,only:dt_unit_in_sec,dt_unit
+ use grid,only:tn,time,dt
+
+!-----------------------------------------------------------------------------
+
+ print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
+  'tn =',tn,&
+  'time =',time/dt_unit_in_sec,dt_unit,&
+  'dt =',dt/dt_unit_in_sec,dt_unit
+
+return
+end subroutine terminal_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -63,7 +89,8 @@ end subroutine output
 
 subroutine open_evofile
 
- use settings,only:sigfig,gravswitch,mag_on,crdnt
+ use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,include_sinks,&
+                   write_evo,start
  use grid,only:dim
 
  integer::ierr
@@ -71,28 +98,37 @@ subroutine open_evofile
 
 !-----------------------------------------------------------------------------
 
+ if(.not.write_evo)return
+
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
- open(newunit=ievo,file='data/evo.dat',status='old',position='append',iostat=ierr)
-   
- if(ierr/=0)then
-  open(newunit=ievo,file='data/evo.dat',status='replace')
-  write(ievo,'(a10)',advance='no')'tn'
-  write(ievo,forma,advance="no")'time'
-  write(ievo,forma,advance="no")'tot_mass'
-  write(ievo,forma,advance="no")'tot_e'
-  write(ievo,forma,advance="no")'tot_eint'
-  write(ievo,forma,advance="no")'tot_ekin'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'tot_egrv'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_mass'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_e'
-  if(gravswitch>=1)write(ievo,forma,advance="no")'bound_angmom'
-  if(mag_on)write(ievo,forma,advance="no")'tot_emag'
-  if(dim>=2.and.crdnt>=1)write(ievo,forma,advance="no")'tot_angmom'
-  write(ievo,'()')
+
+ if(start/=0)then
+  open(newunit=ievo,file='data/evo.dat',status='old',&
+       position='append',iostat=ierr)
+  if(ierr==0)return ! Return if evofile already exists.
  end if
+
+! Write headers if it needs to be freshly made.
+ open(newunit=ievo,file='data/evo.dat',status='replace')
+
+ write(ievo,'(a10)',advance='no')'tn'
+ write(ievo,forma,advance="no")'time'
+ write(ievo,forma,advance="no")'tot_mass'
+ write(ievo,forma,advance="no")'tot_e'
+ write(ievo,forma,advance="no")'tot_eint'
+ write(ievo,forma,advance="no")'tot_ekin'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'tot_egrv'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'bound_mass'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'bound_e'
+ if(gravswitch>=1)write(ievo,forma,advance="no")'bound_angmom'
+ if(mag_on)write(ievo,forma,advance="no")'tot_emag'
+ if(dim>=2.and.crdnt>=1)write(ievo,forma,advance="no")'tot_angmom'
+ write(ievo,'()')
 
  return
 end subroutine open_evofile
+
+
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE EVO_OUTPUT
@@ -114,6 +150,8 @@ subroutine evo_output
  real(8):: Mtot, Etot, Eitot, Ektot, Egtot, Ebtot, Jtot, Mbound, Ebound, Jbound
 
 !-----------------------------------------------------------------------------
+
+ if(.not.write_evo)return
  
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
 
@@ -237,6 +275,98 @@ subroutine evo_output
  
 return
 end subroutine evo_output
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE OPEN_SINKFILE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Start or open sinkfile
+
+subroutine open_sinkfile
+
+ use settings,only:include_sinks,crdnt,sigfig,eq_sym,start
+ use constants,only:msun
+ use grid,only:is,ie,js,je,ks,ke
+ use sink_mod,only:nsink,sink
+
+ integer:: ierr,n
+ character(len=50):: forma, forme, header
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_sinks)return
+
+ write(forma,'("(a",i2,")")')sigfig+8 ! for strings
+ write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
+
+ if(start/=0)then
+  open(newunit=iskf,file='data/sinks.dat',status='old',&
+       position='append',iostat=ierr)
+  if(ierr==0)return ! Return if evofile already exists.
+ end if
+
+! Write headers if it needs to be freshly made.
+ open(newunit=iskf,file='data/sinks.dat',status='replace')
+
+ do n = 1, nsink
+  write(iskf,'(2x,a,i0,a)',advance="no")"Msink_",n,"/Msun="
+  write(iskf,forme,advance="no")sink(n)%mass/msun
+ end do
+ write(iskf,'()')
+
+ write(iskf,'(a10)',advance='no')'tn'
+ write(iskf,forma,advance="no")'time'
+ do n = 1, nsink
+  write(header,'("sink_",i0)')n
+  write(iskf,forma,advance="no")trim(header)//'_x1'
+  write(iskf,forma,advance="no")trim(header)//'_x2'
+  write(iskf,forma,advance="no")trim(header)//'_x3'
+  write(iskf,forma,advance="no")trim(header)//'_v1'
+  write(iskf,forma,advance="no")trim(header)//'_v2'
+  write(iskf,forma,advance="no")trim(header)//'_v3'
+ end do
+ write(iskf,'()')
+
+ return
+end subroutine open_sinkfile
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                        SUBROUTINE SINK_OUTPUT
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output sink properties as a function of time
+
+subroutine sink_output
+
+ use settings,only:sigfig,include_sinks,crdnt,eq_sym
+ use grid,only:tn,time,is,ie,js,je,ks,ke
+ use sink_mod,only:nsink,sink
+
+ integer:: n
+ character(len=50):: forme
+
+!-----------------------------------------------------------------------------
+
+ if(.not.include_sinks)return
+
+ write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
+
+ write(iskf,'(i10)',advance='no')tn
+ call write_anyval(iskf,forme,time)
+ do n = 1, nsink
+  call write_anyval(iskf,forme,sink(n)%x(1))
+  call write_anyval(iskf,forme,sink(n)%x(2))
+  call write_anyval(iskf,forme,sink(n)%x(3))
+  call write_anyval(iskf,forme,sink(n)%v(1))
+  call write_anyval(iskf,forme,sink(n)%v(2))
+  call write_anyval(iskf,forme,sink(n)%v(3))
+ end do
+ write(iskf,'()')
+
+return
+end subroutine sink_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE WRITE_GRID
@@ -472,6 +602,7 @@ subroutine write_bin
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
  use gravmod,only:grvphi,grvphiold,dt_old
+ use sink_mod,only:nsink,sink
 
  implicit none
 
@@ -498,6 +629,7 @@ subroutine write_bin
             b3(is:ie,js:je,ks:ke), &
             phi(is:ie,js:je,ks:ke)
  end if
+ if(include_sinks)write(un)sink(1:nsink)
 
  close(un)
 
@@ -879,6 +1011,7 @@ subroutine write_bpt
  return
 end subroutine write_bpt
 
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                        SUBROUTINE PROFILER_OUTPUT
@@ -891,14 +1024,17 @@ subroutine profiler_output
 
  use settings
  use profiler_mod
+ use omp_lib
 
  integer:: ui,i,j
  character(len=30)::form1,forml
 
 !-----------------------------------------------------------------------------
 
- call stop_clock(wtlop)
- call stop_clock(wttot)
+! Stop all active clocks
+ do i = 0, n_wt
+  if(clock_on(i))wtime(i) = wtime(i) + omp_get_wtime()
+ end do
 
  write(form1,'("(",i2,"X,3a12)")')maxlbl+1
  write(forml,'("(",i2,"a)")')maxlbl+1 + 3*12
@@ -915,7 +1051,10 @@ subroutine profiler_output
 
  close(ui)
 
- call start_clock(wtlop)
+! Reactivate clocks
+ do i = 0, n_wt
+  if(clock_on(i))wtime(i) = wtime(i) - omp_get_wtime()
+ end do
 
  return
 end subroutine profiler_output
@@ -944,10 +1083,6 @@ subroutine scaling_output
 
  if(is_scaling_test/='true')return
 
-!$omp parallel
-  n=omp_get_num_threads()
-!$omp end parallel
-
   call stop_clock(wttot)
 
   open(newunit=un,file='scaling.dat',status='old',position='append',iostat=i)
@@ -955,11 +1090,15 @@ subroutine scaling_output
   if(i/=0)then
    open(newunit=un,file='scaling.dat',status='new')
    write(form1,'("(a8,",i2,"a14)")')n_wt+1
-   write(un,form1)'threads',routine_name(0:n_wt)
+   write(un,form1)'threads',(trim(routine_name(n)),n=0,n_wt)
   end if
 
+!$omp parallel
+  n=omp_get_num_threads()
+!$omp end parallel
+
   write(form1,'("(i8,",i2,"F14.6)")')n_wt+1
-  write(un,'(i8,12(F14.6))')n,wtime(0:n_wt)
+  write(un,form1)n,wtime(0:n_wt)
 
   close(un)
 
@@ -1074,6 +1213,9 @@ subroutine get_header(header,columns)
   if(include_extgrv)then
    call add_column('extphi',columns,header)
   end if
+  if(include_sinks)then
+   call add_column('totphi',columns,header)
+  end if
  end if
 
 ! Output mean molecular weight if compswitch>=1
@@ -1124,7 +1266,7 @@ subroutine write_val(ui,i,j,k,forme,header)
 
  use settings,only:spn
  use physval
- use gravmod,only:grvphi,extgrv
+ use gravmod,only:grvphi,extgrv,totphi
  
  implicit none
 
@@ -1160,6 +1302,8 @@ subroutine write_val(ui,i,j,k,forme,header)
    call write_anyval(ui,forme,grvphi(i,j,k))
   case('extphi')!external gravitational potential
    call write_anyval(ui,forme,extgrv(i,j,k))
+  case('totphi')!total gravitational potential
+   call write_anyval(ui,forme,totphi(i,j,k))
   case('mu')!mean molecular weight
    call write_anyval(ui,forme,1d0/imu(i,j,k))
   case('shock')!shock position

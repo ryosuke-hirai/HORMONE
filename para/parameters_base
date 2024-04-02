@@ -13,6 +13,7 @@
 ! t_end : Upper limit for physical time (only when outstyle=1)
 ! dt_out : Interval for output time (only when outstyle=1)
 ! tn_out : Interval for output timesteps (only when outstyle=2)
+! tn_evo : Interval for evo file output (only when write_evo=.true.)
 ! dt_unit : Give name of dt_unit (current options are 'ms,'ns,'s','hr','d','yr')
 ! sigfig : How many significant figures in output values
 ! outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
@@ -22,7 +23,7 @@
 ! write_other_slice : Output an alternative slice for 3D
 ! write_temp : Output temperature (only relevant for eostype=0)
 &out_con  outstyle=1 endstyle=1
-          tnlim=0 t_end=0d0 dt_out=1d0 tn_out=1
+          tnlim=0 t_end=0d0 dt_out=1d0 tn_out=1 tn_evo=10
           dt_unit='s' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.false. write_evo=.false.
 	  write_other_slice=.false. write_temp = .false. /
@@ -57,9 +58,17 @@
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
+! grktype: order of Runge-Kutta for Hyperbolic self-gravity
+! grvsrctype: What to use for source term in Poisson equation; 0=density, 1="hydrogen"
 &gravcon gravswitch=0 grverr=1d-5 cgerr=1d-5 HGfac=5d0 hgcfl=0.9d0 gbtype=0
-	 grav_init_other=.false. include_extgrv=.false.
-	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
+	 grktype=2 grav_init_other=.false. include_extgrv=.false.
+	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1
+	 grvsrctype=0 /
+
+! include_sinks: switch for sink particles
+! nsink: number of sink particles
+!!! other quantities should be given in initial condition file
+&sinkcon include_sinks=.false. nsink=0 /
 
 ! radswitch:0=off,1=flux limited diffusion
 ! opacitytype:0=fixed,1=ionisation

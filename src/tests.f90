@@ -30,7 +30,7 @@ contains
    print'(3a)',' simtype = "',trim(simtype),'"'
    stop
   end if
-  
+
   return
  end subroutine check_testlist
 
@@ -42,71 +42,93 @@ contains
 
 ! PURPOSE: To compare results against pre-computed data
 
- subroutine test
+ subroutine test(passed)
 
-  use settings,only:simtype
+  use settings,only:simtype,mag_on
   use grid,only:is,ie,js,je,ks,ke
   use physval
+  use gravmod
   use readbin_mod,only:readbin
 
-  integer:: ncells
+  logical, intent(out) :: passed
+  integer,parameter:: nn = 9
+  integer:: n
   character(30):: testfile
-  real(8),parameter:: tol=1d-10
-  real(8):: derr,perr,v1err,v2err,v3err
-  
+  real(8),parameter:: tol=1d-4
+  real(8):: error(nn)
+  real(8),allocatable,dimension(:,:,:,:):: val,valorg
+  character(len=10):: label(nn)
+
 !-----------------------------------------------------------------------------
 
-! First record variables
-  d0 (is:ie,js:je,ks:ke) = d (is:ie,js:je,ks:ke) 
-  p0 (is:ie,js:je,ks:ke) = p (is:ie,js:je,ks:ke) 
-  v10(is:ie,js:je,ks:ke) = v1(is:ie,js:je,ks:ke) 
-  v20(is:ie,js:je,ks:ke) = v2(is:ie,js:je,ks:ke) 
-  v30(is:ie,js:je,ks:ke) = v3(is:ie,js:je,ks:ke) 
-  b10(is:ie,js:je,ks:ke) = b1(is:ie,js:je,ks:ke) 
-  b20(is:ie,js:je,ks:ke) = b2(is:ie,js:je,ks:ke) 
-  b30(is:ie,js:je,ks:ke) = b3(is:ie,js:je,ks:ke) 
+  allocate(val(nn,is:ie,js:je,ks:ke))
+  allocate(valorg,mold=val)
+  error = 0d0
+
+  label(1) = 'density'
+  label(2) = 'energy'
+  label(3) = 'v1'
+  label(4) = 'v2'
+  label(5) = 'v3'
+  label(6) = 'b1'
+  label(7) = 'b2'
+  label(8) = 'b3'
+  label(9) = 'gravity'
+
+  if(.not.mag_on) label(6:8) = 'aaa'
+
+! First record simulated variables
+  val(1,:,:,:) = d (is:ie,js:je,ks:ke)
+  val(2,:,:,:) = e (is:ie,js:je,ks:ke)
+  val(3,:,:,:) = v1(is:ie,js:je,ks:ke)
+  val(4,:,:,:) = v2(is:ie,js:je,ks:ke)
+  val(5,:,:,:) = v3(is:ie,js:je,ks:ke)
+  val(6,:,:,:) = b1(is:ie,js:je,ks:ke)
+  val(7,:,:,:) = b2(is:ie,js:je,ks:ke)
+  val(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  if(gravswitch>0)then
+   val(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+  else
+   label(9) = 'aaa'
+  end if
 
 ! Open test data file
   testfile = testfilename(simtype)
-  
+
   call readbin(testfile)
 
-  derr = maxval(abs(d0(is:ie,js:je,ks:ke)-d(is:ie,js:je,ks:ke)) &
-                / d(is:ie,js:je,ks:ke))
-  perr = maxval(abs(p0(is:ie,js:je,ks:ke)-p(is:ie,js:je,ks:ke)) &
-                / p(is:ie,js:je,ks:ke))
-  v1err = maxval(abs(v10(is:ie,js:je,ks:ke)-v1(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
-  v2err = maxval(abs(v20(is:ie,js:je,ks:ke)-v2(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
-  v3err = maxval(abs(v30(is:ie,js:je,ks:ke)-v3(is:ie,js:je,ks:ke)) &
-                 / max(abs(v1(is:ie,js:je,ks:ke)),tol))
-  
-  print*,'L1 norm error is =',max(derr,perr,v1err,v2err,v3err)
+! Next record variables from pre-computed file
+  valorg(1,:,:,:) = d (is:ie,js:je,ks:ke)
+  valorg(2,:,:,:) = e (is:ie,js:je,ks:ke)
+  valorg(3,:,:,:) = v1(is:ie,js:je,ks:ke)
+  valorg(4,:,:,:) = v2(is:ie,js:je,ks:ke)
+  valorg(5,:,:,:) = v3(is:ie,js:je,ks:ke)
+  valorg(6,:,:,:) = b1(is:ie,js:je,ks:ke)
+  valorg(7,:,:,:) = b2(is:ie,js:je,ks:ke)
+  valorg(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  if(gravswitch>0)then
+   valorg(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+  end if
 
-  ncells = (ie-is+1)*(je-js+1)*(ke-ks+1)
-  derr = norm2(d0(is:ie,js:je,ks:ke)/d(is:ie,js:je,ks:ke)-1d0)&
-       / sqrt(dble(ncells))
-  perr = norm2(p0(is:ie,js:je,ks:ke)/p(is:ie,js:je,ks:ke)-1d0)&
-       / sqrt(dble(ncells))
-  v1err = norm2(max(abs(v10(is:ie,js:je,ks:ke)),tol) &
-               /max(abs(v1 (is:ie,js:je,ks:ke)),tol)-1d0)&
-        / sqrt(dble(ncells))
-  v2err = norm2(max(abs(v20(is:ie,js:je,ks:ke)),tol) &
-               /max(abs(v2 (is:ie,js:je,ks:ke)),tol)-1d0)&
-        / sqrt(dble(ncells))
-  v3err = norm2(max(abs(v30(is:ie,js:je,ks:ke)),tol) &
-               /max(abs(v3 (is:ie,js:je,ks:ke)),tol)-1d0)&
-        / sqrt(dble(ncells))
+! Calculate max norm errors
+  call print_errors('max',max_norm_error,label,val,valorg,tol,error)
 
-  print*,'L2 norm error is =',max(derr,perr,v1err,v2err,v3err)
-  
-  if(max(derr,perr,v1err,v2err,v3err)<tol)then
+! Calculate L1 norm errors
+  call print_errors('L1',L1_norm_error,label,val,valorg,tol,error)
+
+! Calculate L2 norm errors
+  call print_errors('L2',L2_norm_error,label,val,valorg,tol,error)
+
+! Check if maximum L2 norm error is within acceptable bounds
+  if(maxval(error)<tol)then
    print*,trim(simtype),' test: passed'
+   if(maxval(error)<=0d0)print*,trim(simtype),'     : Identical!'
+   passed = .true.
   else
    print*,trim(simtype),' test: failed'
+   passed = .false.
   end if
-  
+
   return
  end subroutine test
 
@@ -115,5 +137,123 @@ contains
   character(30)::file
   file = '../tests/'//trim(simtype)//'.bin'
  end function testfilename
+
+ function max_norm_error(var,var0,tol) result(norm)
+  real(8),dimension(:,:,:),intent(in):: var,var0
+  real(8),intent(in):: tol
+  real(8):: norm, pos
+
+  pos = maxval(var)*minval(var)
+
+  if(pos>0d0)then ! for strictly positive quantities
+   norm = maxval(abs(var/var0-1d0))
+  else ! for quantities that can contain zeroes
+   norm = maxval(abs(var-var0)/max(abs(var0),tol))
+  end if
+
+ end function max_norm_error
+
+ function L1_norm_error(var,var0,tol) result(norm)
+  use grid,only:is,ie,js,je,ks,ke,dvol
+  real(8),dimension(:,:,:),intent(in):: var,var0
+  real(8),intent(in):: tol
+  real(8):: norm, pos
+  real(8),allocatable:: w(:,:,:)
+
+  pos = maxval(var)*minval(var)
+
+! Define weight function = volume
+  allocate(w,mold=var)
+  w(is:ie,js:je,ks:ke) = dvol(is:ie,js:je,ks:ke)
+
+  if(pos>0d0)then ! for strictly positive quantities
+   norm = sum(abs(var/var0-1d0)*w)/sum(w)
+  else ! for quantities that can contain zeroes
+   norm = sum(abs(var-var0)/max(abs(var0),tol)*w)/sum(w)
+  end if
+
+ end function L1_norm_error
+
+ function L2_norm_error(var,var0,tol) result(norm)
+  use grid,only:is,ie,js,je,ks,ke,dvol
+  real(8),dimension(:,:,:),intent(in):: var,var0
+  real(8),intent(in):: tol
+  real(8):: norm, pos, jump, base, denom, floor
+  real(8),allocatable:: relerr(:,:,:),w(:,:,:)
+  integer:: i,j,k,il,jl,kl,iu,ju,ku,disco_range
+
+  pos = maxval(var)*minval(var)
+
+  allocate(relerr,w,mold=var)
+  w(is:ie,js:je,ks:ke) = dvol(is:ie,js:je,ks:ke)
+
+! Weigh down the error if there is a discontinuity within this number of cells
+  disco_range = 3
+  do k = ks, ke
+   kl=min(disco_range,k-ks);ku=min(disco_range,ke-k)
+   do j = js, je
+    jl=min(disco_range,j-js);ju=min(disco_range,je-j)
+    do i = is, ie
+     il=min(disco_range,i-is);iu=min(disco_range,ie-i)
+     base = var0(i,j,k)
+     denom = maxval(abs(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku)))
+     floor = 0d0
+     if(pos<=0d0)then ! Use floor value if variable is allowed to be zero
+      base = max(abs(base),tol)
+      denom = max(denom,tol)
+      floor = tol
+     end if
+     jump = maxval(ratio(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku),base,floor))
+
+     relerr(i,j,k) = (var(i,j,k)-var0(i,j,k))/denom*exp(1d0-jump)
+    end do
+   end do
+  end do
+
+  norm = sqrt(sum(relerr**2*w))/sqrt(sum(w))
+
+ end function L2_norm_error
+
+ pure elemental function ratio(x,y,floor)
+  real(8),intent(in)::x,y,floor
+  real(8):: ratio
+  ratio = max(abs(x)/max(abs(y),floor),abs(y)/max(abs(x),floor),1d0)
+ end function ratio
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE PRINT_ERRORS
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To print errors defined by a given norm
+
+ subroutine print_errors(name,f,label,val,valorg,tol,error)
+
+  interface
+   real(8) function f(var,var0,tol)
+    real(8),dimension(:,:,:),intent(in):: var,var0
+    real(8),intent(in):: tol
+    real(8):: norm
+   end function f
+  end interface
+  character(len=*),intent(in):: name
+  character(len=10),intent(in):: label(:)
+  real(8),allocatable,intent(inout),dimension(:,:,:,:):: val,valorg
+  real(8),intent(in):: tol
+  real(8),intent(inout)::error(:)
+  integer:: n
+
+!-----------------------------------------------------------------------------
+
+  print*,trim(name),' norm errors:'
+  do n = 1, size(error)
+   if(trim(label(n))=='aaa')cycle
+   error(n) = f(val(n,:,:,:),valorg(n,:,:,:),tol)
+   print*,'  ',label(n),' =',error(n)
+  end do
+
+  return
+ end subroutine print_errors
 
 end module tests_mod

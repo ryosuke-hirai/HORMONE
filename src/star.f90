@@ -13,8 +13,10 @@ contains
 
 subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
 
+ use settings,only:compswitch
  use constants,only:pi
  use composition_mod,only:get_imu
+ use physval,only:muconst
 
  real(8),intent(inout)::rcore
  real(8),allocatable,dimension(:),intent(inout):: r, m, rho, pres
@@ -26,11 +28,15 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  
 !-----------------------------------------------------------------------------
 
+ if(rcore<=0d0)return
+
 ! get indices for hydrogen and helium
- do i = 1, size(comp_list)
-  if(trim(comp_list(i))=='h1')ih1=i
-  if(trim(comp_list(i))=='he4')ihe4=i
- end do
+ if(compswitch==2)then
+  do i = 1, size(comp_list)
+   if(trim(comp_list(i))=='h1')ih1=i
+   if(trim(comp_list(i))=='he4')ihe4=i
+  end do
+ end if
 
 ! find index for rcore
  do i = 1, size(pres)-1
@@ -39,7 +45,11 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  
  rcore = r(i)
  mcore = m(i)
- imuh = get_imu([comp(ih1,i),comp(ihe4,i)])
+ if(compswitch==2)then
+  imuh = get_imu([comp(ih1,i),comp(ihe4,i)])
+ else
+  imuh = 1d0/muconst
+ end if
  allocate(softr(0:i+1),softrho(0:i),softp(0:i+1))
  softr(0:i+1) = r(0:i+1)
  softrho(0:i) = rho(0:i)
@@ -49,16 +59,18 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
 
  rho(0:i) = softrho(0:i)
  pres(0:i) = softp(0:i)
- 
+
 ! recalculate mass coordinate
  m(0) = mpt
  do j = 1, i
   m(j) = m(j-1) + 4d0*pi/3d0*(r(j)**3-r(j-1)**3)*rho(j)
  end do
 ! Set everything inside rcore to uniform composition
- do j = 1, size(comp_list)
-  comp(j,0:i-1) = comp(j,i)
- end do
+ if(compswitch==2)then
+  do j = 1, size(comp_list)
+   comp(j,0:i-1) = comp(j,i)
+  end do
+ end if
 
 return
 end subroutine replace_core
@@ -105,7 +117,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   gpot(n) = -G*m(n)/(r(n)+1d-99)-4d0*pi*G*mnow
  end do
 
- k = ks
  do i = is, ie
   if(xi1(i)>=radius)then
    mc(i:ie) = mass
@@ -175,24 +186,23 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  end do
 !$omp end parallel do
 
-!!$ p(ie+1,js:je,ks:ke) = 1d-99
-!!$ do i = ie, is, -1
-!!$  p(i,js:je,ks:ke) = p(i+1,js:je,ks:ke) + G*mc(i)*max(d(i,js,ks),rho(lines)*1d-5)/xi1(i)**2*dx1(i+1)
-!!$ end do
-
- do j = gjs-1, gje+1
-  do i = gis-1, gie+1
-   if(x1(i)<r(lines-1))then
-    do n = 0, lines-1
-     if(r(n+1)>x1(i).and.r(n)<=x1(i))then
-      grvphi(i,j,k) = intpol(r(n:n+1),gpot(n:n+1),x1(i))
-     end if
-    end do
-   else
-    grvphi(i,j,k) = -G*mass/x1(i)
-   end if
+!$omp parallel do private(i,j,k,n) collapse(3)
+ do k = gks-1, gke+1
+  do j = gjs-1, gje+1
+   do i = gis-1, gie+1
+    if(x1(i)<r(lines-1))then
+     do n = 0, lines-1
+      if(r(n+1)>abs(x1(i)).and.r(n)<=abs(x1(i)))then
+       grvphi(i,j,k) = intpol(r(n:n+1),gpot(n:n+1),abs(x1(i)))
+      end if
+     end do
+    else
+     grvphi(i,j,k) = -G*mass/x1(i)
+    end if
+   end do
   end do
  end do
+!$omp end parallel do
 
  if(gravswitch==3)grvphiold = grvphi
 

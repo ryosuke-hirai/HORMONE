@@ -13,13 +13,14 @@ contains
 
 subroutine redsupergiant
 
- use settings,only:compswitch,spn,extrasfile
+ use settings,only:compswitch,spn,extrasfile,include_sinks
  use constants,only:G
  use grid
  use physval
  use input_mod
  use star_mod,only:isentropic_star,replace_core,set_star_sph_grid
  use gravmod,only:extgrv,mc
+ use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot
  use output_mod,only:write_extgrv
  use composition_mod,only:get_imu
@@ -32,11 +33,11 @@ subroutine redsupergiant
  integer:: i,j,k,istat,nn,sn,ih1,ihe4
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const
  real(8),allocatable:: comptmp(:)
- logical::isentropic
+ logical::isentropic,core_is_sink
  
 !-----------------------------------------------------------------------------
 
- namelist /rsg_con/ mesafile,spc_list,rcore,isentropic
+ namelist /rsg_con/ mesafile,spc_list,rcore,isentropic,core_is_sink
 
  spc_list='aaa'
 ! Specify input file, elements you want to track, and a softening length
@@ -80,11 +81,22 @@ subroutine redsupergiant
  call replace_core(rcore,r,m,rho,pres,comp,comp_list)
 
 ! Set external gravity
- do i = is, ie+2
-  extgrv(i,js-2:je+2,ks-2:ke+2) = G*m(0)*softened_pot(x1(i),rcore)
- end do
- extgrv(is-1,js-2:je+2,ks-2:ke+2) =  extgrv(is,js-2:je+2,ks-2:ke+2)
- 
+ if(core_is_sink)then
+  if(.not.include_sinks)stop 'Set include_sinks=.true. if core_is_sink=.true.'
+  sink(1)%mass = m(0)
+  sink(1)%lsoft = rcore
+  sink(1)%softfac = 3d0
+  sink(1)%x(1:3) = 0d0
+  sink(1)%v(1:3) = 0d0
+  call sinkfield
+ else
+  do i = is, ie+2
+   extgrv(i,js-2:je+2,ks-2:ke+2) = G*m(0)*softened_pot(x1(i),rcore)
+  end do
+  extgrv(is-1,js-2:je+2,ks-2:ke+2) =  extgrv(is,js-2:je+2,ks-2:ke+2)
+ end if
+
+
  mcore = m(0)
  mass  = m(size(m)-1)
  radius= r(size(r)-1)

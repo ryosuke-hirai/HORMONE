@@ -13,7 +13,7 @@ contains
 
 subroutine star_init
  
- use settings,only:compswitch,spn,extrasfile
+ use settings,only:compswitch,spn,extrasfile,is_test
  use constants,only:G
  use grid
  use physval
@@ -33,6 +33,8 @@ subroutine star_init
  namelist /starcon/ mesafile,spc_list
 
  spc_list='aaa'
+ if(is_test) extrasfile='../para/extras_star'
+
 ! Specify input file, elements you want to track, and a softening length
  open(newunit=nn,file=extrasfile,status='old',iostat=istat)
  if(istat/=0)call error_extras('star',extrasfile)
