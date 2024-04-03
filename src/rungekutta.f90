@@ -1,6 +1,8 @@
 module rungekutta_mod
  implicit none
 
+ public:: rungekutta,euler,get_runge_coeff,primitive
+
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -27,35 +29,8 @@ contains
 
   call start_clock(wtrng)
 
-  runge_type: select case (rktype)
-  case(3) runge_type
-   
-   rk3_number: select case (rungen)
-   case(1) rk3_number
-    faco = 1d0 ; fact = 1d0 ; facn = 0d0
-   case(2) rk3_number
-    faco = 0.75d0 ; fact = 0.25d0 ; facn = fact
-   case(3) rk3_number
-    faco = 1d0/3d0 ; fact = 2d0/3d0 ; facn = fact
-   end select rk3_number
+  call get_runge_coeff(rungen,rktype,faco,fact,facn)
 
-  case(2) runge_type
-   rk2_number: select case (rungen)
-   case(1) rk2_number
-    faco = 1d0 ; fact = 1d0 ; facn = 0d0
-   case(2) rk2_number
-    faco = 0.5d0 ; fact = 0.5d0 ; facn = fact
-   end select rk2_number
-   
-  case(1) runge_type
-   faco = 1d0 ; fact = 1d0 ; facn = 0d0
-
-  case default
-   print*,"Error from rktype: rktype =",rktype
-   stop
-   
-  end select runge_type
-    
 !$omp parallel
 !$omp do private (ufn,i,j,k) collapse(4)
   do ufn = 1,ufnmax
@@ -115,7 +90,9 @@ contains
 
 
   call start_clock(wteos)
+
   call smear
+
   call primitive
   call stop_clock(wteos)
 
@@ -159,6 +136,53 @@ contains
 
   return
  end subroutine euler
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                      SUBROUTINE GET_RUNGE_COEFF
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Return Runge-Kutta coefficients
+
+subroutine get_runge_coeff(iter,type,faco,fact,facn)
+
+ integer,intent(in):: type,iter
+ real(8),intent(out):: faco,fact,facn
+
+!-----------------------------------------------------------------------------
+
+ runge_type: select case (type)
+ case(3) runge_type
+
+  rk3_number: select case (iter)
+  case(1) rk3_number
+   faco = 1d0 ; fact = 1d0 ; facn = 0d0
+  case(2) rk3_number
+   faco = 0.75d0 ; fact = 0.25d0 ; facn = fact
+  case(3) rk3_number
+   faco = 1d0/3d0 ; fact = 2d0/3d0 ; facn = fact
+  end select rk3_number
+
+ case(2) runge_type
+  rk2_number: select case (iter)
+  case(1) rk2_number
+   faco = 1d0 ; fact = 1d0 ; facn = 0d0
+  case(2) rk2_number
+   faco = 0.5d0 ; fact = 0.5d0 ; facn = fact
+  end select rk2_number
+
+ case(1) runge_type
+  faco = 1d0 ; fact = 1d0 ; facn = 0d0
+
+ case default
+  print*,"Error from rktype: rktype =",type
+  stop
+
+ end select runge_type
+
+ return
+end subroutine get_runge_coeff
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !

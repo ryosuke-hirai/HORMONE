@@ -54,7 +54,7 @@ contains
   integer,parameter:: nn = 9
   integer:: n
   character(30):: testfile
-  real(8),parameter:: tol=1d-2
+  real(8),parameter:: tol=1d-4
   real(8):: error(nn)
   real(8),allocatable,dimension(:,:,:,:):: val,valorg
   character(len=10):: label(nn)
