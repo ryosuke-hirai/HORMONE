@@ -10,7 +10,7 @@ module sink_mod
  type(sink_prop),allocatable,public:: sink(:)
  real(8),allocatable,public:: snkphi(:,:,:)
 
- public:: sink_motion,sinkfield
+ public:: sink_motion,sinkfield,get_sink_acc
  private:: get_sink_loc,get_sinkgas_acc,get_sinksink_acc
 
 contains
@@ -29,22 +29,12 @@ subroutine sink_motion
  use profiler_mod
 
  integer:: n
- real(8):: dtsink
 
 !-----------------------------------------------------------------------------
 
  call start_clock(wtsnk)
 
- dtsink = huge
- do n = 1, nsink
-  call get_sink_loc(sink(n))
-  call get_sinkgas_acc(sink(n))
-  dtsink = min(dtsink,sink(n)%dt)
- end do
-
- call get_sinksink_acc(sink)
-
- dt = min(dtsink,dt) ! update dt
+ call get_sink_acc(sink)
 
  do n = 1, nsink
   sink(n)%v = sink(n)%v + sink(n)%a*dt
@@ -58,7 +48,7 @@ end subroutine sink_motion
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE SINKFIELD
+!                          SUBROUTINE SINKFIELD
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -97,6 +87,39 @@ subroutine sinkfield
 
 return
 end subroutine sinkfield
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE GET_SINK_ACC
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To calculate teh total acceleration on sinks
+
+subroutine get_sink_acc(sink)
+
+ use constants,only:huge
+ use grid,only:dt
+
+ type(sink_prop),allocatable,intent(inout):: sink(:)
+ integer:: n
+ real(8):: dtsink
+
+!-----------------------------------------------------------------------------
+
+ dtsink = huge
+ do n = 1, nsink
+  call get_sink_loc(sink(n))
+  call get_sinkgas_acc(sink(n))
+  dtsink = min(dtsink,sink(n)%dt)
+ end do
+
+ call get_sinksink_acc(sink)
+
+ dt = min(dtsink,dt) ! update dt
+
+ return
+end subroutine get_sink_acc
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !

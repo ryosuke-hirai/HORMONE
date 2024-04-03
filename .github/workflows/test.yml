@@ -91,7 +91,17 @@ jobs:
 
     - name: Run test
       working-directory: ./work
-      run: ./hormone
+      run: ./hormone | tee output.txt
+
+    - name: Check results are identical (all tests except star_sph)
+      if: matrix.test != 'star_sph'
+      run: |
+        if grep -q "Identical!" ./work/output.txt; then
+          echo "Test results identical"
+        else
+          echo "Test results differ"
+          exit 1
+        fi
 
   # Gather results into a dummy job that will fail if the previous job fails
   gather_results:
