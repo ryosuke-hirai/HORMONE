@@ -37,12 +37,16 @@ end module settings
 module grid
 
  use settings,only:crdnt
- 
+
   implicit none
 
 ! number of grids
   integer:: is, ie, js, je, ks, ke
   integer:: gis, gie, gjs, gje, gks, gke
+
+  integer:: is_global, ie_global, js_global, je_global, ks_global, ke_global
+  integer:: gis_global, gie_global, gjs_global, gje_global, gks_global, gke_global
+
   integer:: tn,dim
   integer:: rungen
   integer:: musize,fmr_max,fmr_lvl(0:20)
@@ -88,7 +92,7 @@ end module constants
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module physval
-  
+
   implicit none
 
   integer:: icnt,imo1,imo2,imo3,iene,img1,img2,img3,i9wv,ufnmax
@@ -150,4 +154,3 @@ module ejectamod
 end module ejectamod
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-

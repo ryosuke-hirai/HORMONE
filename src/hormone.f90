@@ -78,6 +78,9 @@ program hormone
 ! Reading parameters
   call read_parameters(parafile)
 
+! Decompose domain onto MPI tasks
+  call domain_decomp
+
 ! Start initial setup
   call checksetup
   call allocations
