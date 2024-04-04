@@ -26,13 +26,13 @@ subroutine allocations
 
 ! 1 dimensional arrays =======================================================
 ! grid-related variables
- allocate(x1(gis-2:gie+2))
+ allocate(x1(gis_global-2:gie_global+2))
  allocate(xi1,dx1,dxi1,idx1,idxi1,mold=x1)
 
- allocate(x2(gjs-2:gje+2))
+ allocate(x2(gjs_global-2:gje_global+2))
  allocate(xi2,dx2,dxi2,idx2,idxi2,mold=x2)
 
- allocate(x3(gks-2:gke+2))
+ allocate(x3(gks_global-2:gke_global+2))
  allocate(xi3,dx3,dxi3,idx3,idxi3,mold=x3)
 
 !  metric-related variables
@@ -285,7 +285,7 @@ subroutine allocations
   allocate(snkphi,mold=d)
   allocate(sink(1:nsink))
  end if
- 
+
  return
 end subroutine allocations
 

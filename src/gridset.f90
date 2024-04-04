@@ -18,7 +18,7 @@ subroutine gridset
   use constants,only:pi
   use utils,only:geometrical_series
   use readbin_mod,only:readgrid
-  
+
   integer::i,j,k,jetmp,ketmp
 
 !-------------------------------------------------------------------------
@@ -45,24 +45,24 @@ subroutine gridset
 ! set x direction
    mesh_car1: select case (imesh)
    case(0) mesh_car1 ! uniform mesh
-    dxi1 = (xi1e-xi1s) / dble(ie-is+1)
+    dxi1 = (xi1e-xi1s) / dble(ie_global-is_global+1)
    case(1) mesh_car1 ! geometrical series
-    call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
+    call geometrical_series(dxi1,x1min,is_global,ie_global,xi1s,xi1e)
    case(2) mesh_car1 ! user specified mesh
-    call other_imesh(dxi1,is,ie,xi1s,xi1e)
+    call other_imesh(dxi1,is_global,ie_global,xi1s,xi1e)
    end select mesh_car1
 
-   do i = is-1,ie+2
+   do i = is_global-1,ie_global+2
     dx1(i)  = 0.5d0 * ( dxi1(i-1) + dxi1(i) )
     idxi1(i)= 1.d0 / dxi1(i)
     idx1(i) = 1.d0 / dx1(i)
    end do
 
-   x1(is-1)  = xi1s - dxi1(is-1)*0.5d0
-   x1(is-2)  = x1(is-1) - dx1(is-1)
-   xi1(is-1) = xi1s
-   xi1(is-2) = xi1s - dxi1(is-1)
-   do i = is,ie+2
+   x1(is_global-1)  = xi1s - dxi1(is_global-1)*0.5d0
+   x1(is_global-2)  = x1(is_global-1) - dx1(is_global-1)
+   xi1(is_global-1) = xi1s
+   xi1(is_global-2) = xi1s - dxi1(is_global-1)
+   do i = is_global,ie_global+2
     x1(i)  = x1(i-1)  + dx1(i)
     xi1(i) = xi1(i-1) + dxi1(i)
    end do
@@ -70,11 +70,11 @@ subroutine gridset
 ! extend grid for gravitational potential
    if(gravswitch/=0)then
     dx1 = dxi1 ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
-    do i = is-1, gis-2, -1
+    do i = is_global-1, gis_global-2, -1
      xi1(i) = xi1(i+1) - dxi1(i)
      x1 (i) = x1 (i+1) - dx1 (i)
     end do
-    do i = ie+1, gie+2
+    do i = ie_global+1, gie_global+2
      xi1(i) = xi1(i-1) + dxi1(i)
      x1 (i) = x1 (i-1) + dx1 (i)
     end do
@@ -83,24 +83,24 @@ subroutine gridset
 ! set y direction
    mesh_car2: select case (jmesh)
    case(0) mesh_car2 ! uniform mesh
-    dxi2 = (xi2e-xi2s) / dble(je-js+1)
+    dxi2 = (xi2e-xi2s) / dble(je_global-js_global+1)
    case(1) mesh_car2 ! geometrical series
-    call geometrical_series(dxi2,x2min,js,je,xi2s,xi2e)
+    call geometrical_series(dxi2,x2min,js_global,je_global,xi2s,xi2e)
    case(2) mesh_car2 ! user specified mesh
-    call other_jmesh(dxi2,js,je,xi2s,xi2e)
+    call other_jmesh(dxi2,js_global,je_global,xi2s,xi2e)
    end select mesh_car2
 
-   do j = js-1,je+2
+   do j = js_global-1,je_global+2
     dx2(j)  = 0.5d0 * ( dxi2(j-1) + dxi2(j) )
     idxi2(j)= 1.d0 / dxi2(j)
     idx2(j) = 1.d0 / dx2(j)
    end do
 
-   x2(js-1)  = xi2s - dxi2(js-1)*0.5d0
-   x2(js-2)  = x2(js-1) - dx2(js-1)
-   xi2(js-1) = xi2s
-   xi2(js-2) = xi2s - dxi2(js-1)
-   do j = js,je+2
+   x2(js_global-1)  = xi2s - dxi2(js_global-1)*0.5d0
+   x2(js_global-2)  = x2(js_global-1) - dx2(js_global-1)
+   xi2(js_global-1) = xi2s
+   xi2(js_global-2) = xi2s - dxi2(js_global-1)
+   do j = js_global,je_global+2
     x2(j)  = x2(j-1)  + dx2(j)
     xi2(j) = xi2(j-1) + dxi2(j)
    end do
@@ -108,11 +108,11 @@ subroutine gridset
 ! extend grid for gravitational potential
    if(gravswitch/=0)then
     dx2 = dxi2 ; idx2 = 1d0 / dx2 ; idxi2 = 1d0 / dxi2
-    do j = js-1, gjs-2, -1
+    do j = js_global-1, gjs_global-2, -1
      xi2(j) = xi2(j+1) - dxi2(j)
      x2 (j) = x2 (j+1) - dx2 (j)
     end do
-    do j = je+1, gje+2
+    do j = je_global+1, gje_global+2
      xi2(j) = xi2(j-1) + dxi2(j)
      x2 (j) = x2 (j-1) + dx2 (j)
     end do
@@ -121,24 +121,24 @@ subroutine gridset
 ! set z direction
    mesh_car3: select case (kmesh)
    case(0) mesh_car3 ! uniform mesh
-    dxi3 = (xi3e-xi3s) / dble(ke-ks+1)
+    dxi3 = (xi3e-xi3s) / dble(ke_global-ks_global+1)
    case(1) mesh_car3 ! geometrical series
-    call geometrical_series(dxi3,x3min,ks,ke,xi3s,xi3e)
+    call geometrical_series(dxi3,x3min,ks_global,ke_global,xi3s,xi3e)
    case(2) mesh_car3 ! user specified mesh
-    call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
+    call other_kmesh(dxi3,ks_global,ke_global,xi3s,xi3e)
    end select mesh_car3
 
-   do k = ks-1,ke+2
+   do k = ks_global-1,ke_global+2
     dx3(k)  = 0.5d0 * ( dxi3(k-1) + dxi3(k) )
     idxi3(k)= 1.d0 / dxi3(k)
     idx3(k) = 1.d0 / dx3(k)
    end do
 
-   x3(ks-1)  = xi3s - dxi3(ks-1)*0.5d0
-   x3(ks-2)  = x3(ks-1) - dx3(ks-1)
-   xi3(ks-1) = xi3s
-   xi3(ks-2) = xi3s - dxi3(ks-1)
-   do k = ks,ke+2
+   x3(ks_global-1)  = xi3s - dxi3(ks_global-1)*0.5d0
+   x3(ks_global-2)  = x3(ks_global-1) - dx3(ks_global-1)
+   xi3(ks_global-1) = xi3s
+   xi3(ks_global-2) = xi3s - dxi3(ks_global-1)
+   do k = ks_global,ke_global+2
     x3(k)  = x3(k-1)  + dx3(k)
     xi3(k) = xi3(k-1) + dxi3(k)
    end do
@@ -146,11 +146,11 @@ subroutine gridset
 ! extend grid for gravitational potential
    if(gravswitch/=0)then
     dx3 = dxi3 ; idx3 = 1d0 / dx3 ; idxi3 = 1d0 / dxi3
-    do k = ks-1, gks-2, -1
+    do k = ks_global-1, gks_global-2, -1
      xi3(k) = xi3(k+1) - dxi3(k)
      x3 (k) = x3 (k+1) - dx3 (k)
     end do
-    do k = ke+1, gke+2
+    do k = ke_global+1, gke_global+2
      xi3(k) = xi3(k-1) + dxi3(k)
      x3 (k) = x3 (k-1) + dx3 (k)
     end do
@@ -442,7 +442,7 @@ subroutine gridset
   xi1s = xi1(is-1)
 
  end if
- 
+
  return
 end subroutine gridset
 
@@ -471,11 +471,11 @@ subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
  xrmax = 1.015d0
  maxerr = 1d-10
  radstar = 5.6d13
- 
+
  xr = 1.01d0
  xrng = radstar - xi1s ; irng = dble(400 - is + 1)
  xmin = 9d10
- 
+
  if(xrng/irng<xmin)then
   print *,"Error from geometrical_series ;"
   print *,"xmin should be smaller or uniform mesh should be chosen",xmin
