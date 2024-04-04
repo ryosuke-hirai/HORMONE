@@ -78,12 +78,12 @@ program hormone
 
 ! Reading parameters
   call read_parameters(parafile)
+  call checksetup
 
 ! Decompose domain onto MPI tasks
   call domain_decomp
 
 ! Start initial setup
-  call checksetup
   call allocations
   call gridset
   call metric
