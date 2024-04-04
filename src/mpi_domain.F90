@@ -1,7 +1,7 @@
 
 module mpi_domain
 #ifdef MPI
-   use mpi, only: MPI_COMM_WORLD, MPI_CART_CREATE, MPI_CART_COORDS
+   use mpi
 #endif
    use mpi_utils, only: myrank, nprocs
 

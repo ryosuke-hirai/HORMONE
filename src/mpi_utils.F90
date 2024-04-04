@@ -1,6 +1,6 @@
 module mpi_utils
 #ifdef MPI
-  use mpi, only: MPI_COMM_WORLD, MPI_INIT, MPI_FINALIZE, MPI_COMM_RANK, MPI_COMM_SIZE
+  use mpi
 #endif
   implicit none
 
