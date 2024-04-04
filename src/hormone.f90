@@ -19,6 +19,7 @@
 program hormone
 
   use mpi_utils
+  use mpi_domain
   use settings
   use grid
   use physval
