@@ -91,6 +91,7 @@ program hormone
 
   call initialcondition
   if(dirichlet_on)call dirichletbound
+  call exchange_mpi
   call boundarycondition
   call meanmolweight
   call conserve
@@ -133,6 +134,7 @@ program hormone
     call shockfind
 
     do rungen = 1, rktype
+     call exchange_mpi
      call boundarycondition
      call numflux
      call source
