@@ -26,7 +26,7 @@ subroutine output
  integer:: wtind
 
 !----------------------------------------------------------------------------
-  
+
  if(is_test) return ! do not bother outputting anything if it is a test
 
  if(tn==0)then
@@ -66,15 +66,18 @@ end subroutine output
 
 subroutine terminal_output
 
+ use mpi_utils,only:myrank
  use settings,only:dt_unit_in_sec,dt_unit
  use grid,only:tn,time,dt
 
 !-----------------------------------------------------------------------------
 
- print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
-  'tn =',tn,&
-  'time =',time/dt_unit_in_sec,dt_unit,&
-  'dt =',dt/dt_unit_in_sec,dt_unit
+ if (myrank==0) then
+  print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
+    'tn =',tn,&
+    'time =',time/dt_unit_in_sec,dt_unit,&
+    'dt =',dt/dt_unit_in_sec,dt_unit
+ end if
 
 return
 end subroutine terminal_output
@@ -152,7 +155,7 @@ subroutine evo_output
 !-----------------------------------------------------------------------------
 
  if(.not.write_evo)return
- 
+
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
 
  Mtot  = sum(d   (is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke))
@@ -272,7 +275,7 @@ subroutine evo_output
  if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
  write(ievo,'()')
  flush(ievo)
- 
+
 return
 end subroutine evo_output
 
@@ -409,24 +412,24 @@ subroutine write_grid
  case(1)
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3
-  
+
   if(ie>1)then
    write(ui,formhead)'  i','x1','dvol'
    j=js;k=ks
    do i = is, ie
-    write(ui,formval)i,x1(i),dvol(i,j,k)    
+    write(ui,formval)i,x1(i),dvol(i,j,k)
    end do
   elseif(je>1)then
    write(ui,formhead)'  j','x2','dvol'
    i=is;k=ks
    do j = js, je
-    write(ui,formval)j,x2(j),dvol(i,j,k)    
+    write(ui,formval)j,x2(j),dvol(i,j,k)
    end do
   elseif(ke>1)then
    write(ui,formhead)'  k','x3','dvol'
    i=is;j=js
    do k = ks, ke
-    write(ui,formval)k,x3(k),dvol(i,j,k)    
+    write(ui,formval)k,x3(k),dvol(i,j,k)
    end do
   end if
 
@@ -434,7 +437,7 @@ subroutine write_grid
  case(2)
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3,4,5
-  
+
   if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
    write(ui,formhead)'  i','j','x1','x2','dvol'
    k=ks
@@ -462,7 +465,7 @@ subroutine write_grid
     end do
     write(ui,'()')
    end if
-   
+
   elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    write(ui,formhead)'  i','k','x1','x3','dvol'
    j=js
@@ -474,8 +477,8 @@ subroutine write_grid
      write(ui,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
-   end do   
-   
+   end do
+
   elseif(ie==1)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    write(ui,formhead)'  j','k','x2','x3','dvol'
@@ -491,7 +494,7 @@ subroutine write_grid
  case(3)
   write(formnum,'("(",a4,"i4,2i5,4i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3,4,5,6,7
-  
+
   write(ui,formhead)'  i','j','k','x1','x2','x3','dvol'
   if(crdnt==2)then
    k=ks-1
@@ -502,7 +505,7 @@ subroutine write_grid
     write(ui,'()')
    end do
   end if
-  
+
   do k = ks, ke
    do j = je, je
     do i = is, ie
@@ -521,7 +524,7 @@ subroutine write_grid
     write(ui,'()')
    end do
   end if
-  
+
  case default
   stop 'Something wrong with dimension'
  end select
@@ -583,7 +586,7 @@ subroutine write_grid
   print*,"Outputted: ",'othergrid.dat'
 
  end if
- 
+
  return
 end subroutine write_grid
 
@@ -608,7 +611,7 @@ subroutine write_bin
 
  character(len=50):: binfile
  integer:: un
- 
+
 !-----------------------------------------------------------------------------
 
  call set_file_name('bin',tn,time,binfile)
@@ -634,7 +637,7 @@ subroutine write_bin
  close(un)
 
  print*,"Outputted: ",trim(binfile)
- 
+
 return
 end subroutine write_bin
 
@@ -670,7 +673,7 @@ subroutine write_plt
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
  write(formi,'("(i",i2,")")')sigfig+8 ! for integers
- 
+
 ! Open file
  call set_file_name('plt',tn,time,pltfile)
  open(newunit=ui,file = pltfile, status='replace')
@@ -694,7 +697,7 @@ subroutine write_plt
  select case (dim)
 ! 1D outputs
  case(1)
- 
+
   if(ie>1)then
    j=js;k=ks
    do i = is, ie
@@ -714,7 +717,7 @@ subroutine write_plt
 
 ! 2D outputs
  case(2)
-  
+
   if(ke==ks)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
@@ -741,7 +744,7 @@ subroutine write_plt
     end do
     write(ui,'()')
    end if
-   
+
   elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    j=js
    do k = ks, ke, outres
@@ -751,8 +754,8 @@ subroutine write_plt
      call write_val(ui,i,j,k,forme,header)
     end do
     write(ui,'()')
-   end do   
-   
+   end do
+
   elseif(ie==1)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    i=is
@@ -774,7 +777,7 @@ subroutine write_plt
     write(ui,'()')
    end do
   end if
-  
+
   do k = ks, ke
    do j = je, je
     do i = is, ie
@@ -792,7 +795,7 @@ subroutine write_plt
     write(ui,'()')
    end do
   end if
-  
+
  case default
   stop 'Something wrong with dimension'
  end select
@@ -890,7 +893,7 @@ subroutine write_extgrv
  close(ui)
 
  print*,"Outputted: ",'extgrv.bin'
- 
+
 return
 end subroutine write_extgrv
 
@@ -1122,7 +1125,7 @@ subroutine set_file_name(prefix,tn,time,filename)
  character(len=*),intent(out)::filename
  integer,intent(in):: tn
  real(8),intent(in):: time
- 
+
 !-----------------------------------------------------------------------------
  select case(outstyle)
  case(1)
@@ -1133,9 +1136,9 @@ subroutine set_file_name(prefix,tn,time,filename)
     'data/',trim(prefix),nint(time/dt_unit_in_sec*0.01d0),trim(dt_unit),'.dat'
   end if
  case(2)
-  write(filename,'(a5,a,i8.8,a4)')'data/',trim(prefix),tn,'.dat'   
+  write(filename,'(a5,a,i8.8,a4)')'data/',trim(prefix),tn,'.dat'
  end select
- 
+
 return
 end subroutine set_file_name
 
@@ -1163,8 +1166,8 @@ subroutine get_header(header,columns)
  columns = 0
  call add_column('d',columns,header)
  call add_column('e',columns,header)
- call add_column('p',columns,header)  
- 
+ call add_column('p',columns,header)
+
 ! Decide which velocity components to output
  select case(dim)
  case(1)
@@ -1205,7 +1208,7 @@ subroutine get_header(header,columns)
  end if
 
 ! Output temperature
- if(write_temp)call add_column('T',columns,header)  
+ if(write_temp)call add_column('T',columns,header)
 
 ! Output gravitational potential if gravswitch>=1
  if(gravswitch>=1)then
@@ -1267,7 +1270,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  use settings,only:spn
  use physval
  use gravmod,only:grvphi,extgrv,totphi
- 
+
  implicit none
 
  integer,intent(in):: ui,i,j,k
