@@ -130,13 +130,13 @@ module mpi_domain
             ! if the required value is two MPI neighbours away
 
             ! Send to the left, receive from the right
-            call MPI_SENDRECV(val(is + (ghost-1)*i, js + (ghost-1)*j, ks + (ghost-1)*k), 1, MPI_REAL, left_rank,  0, &
-                              val(ie + (ghost  )*i, js + (ghost  )*j, ks + (ghost  )*k), 1, MPI_REAL, right_rank, 0, &
+            call MPI_SENDRECV(val(is + (ghost-1)*i, js + (ghost-1)*j, ks + (ghost-1)*k), 1, MPI_DOUBLE_PRECISION, left_rank,  0, &
+                              val(ie + (ghost  )*i, js + (ghost  )*j, ks + (ghost  )*k), 1, MPI_DOUBLE_PRECISION, right_rank, 0, &
                               cart_comm, MPI_STATUS_IGNORE, ierr)
 
             ! Send to the right, receive from the left
-            call MPI_SENDRECV(val(ie - (ghost-1)*i, js - (ghost-1)*j, ks - (ghost-1)*k), 1, MPI_REAL, right_rank, 0, &
-                              val(is - (ghost  )*i, js - (ghost  )*j, ks - (ghost  )*k), 1, MPI_REAL, left_rank,  0, &
+            call MPI_SENDRECV(val(ie - (ghost-1)*i, js - (ghost-1)*j, ks - (ghost-1)*k), 1, MPI_DOUBLE_PRECISION, right_rank, 0, &
+                              val(is - (ghost  )*i, js - (ghost  )*j, ks - (ghost  )*k), 1, MPI_DOUBLE_PRECISION, left_rank,  0, &
                               cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
