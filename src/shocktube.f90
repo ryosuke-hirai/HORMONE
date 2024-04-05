@@ -113,7 +113,7 @@ subroutine setup_shocktube(whichaxis, &
   select case(whichaxis)
   case(1)! for shock tube x direction
    do i = is, ie
-      if (i < (is_global+ie_global)/2) then
+      if (i <= (is_global+ie_global)/2) then
          ! left state
          d(i,js:je,ks:ke) = dl
          p(i,js:je,ks:ke) = pl
@@ -138,7 +138,7 @@ subroutine setup_shocktube(whichaxis, &
 
   case(2)! for shock tube y direction
    do j = js, je
-      if (j < (js_global+je_global)/2) then
+      if (j <= (js_global+je_global)/2) then
          ! left state
          d(is:ie,j,ks:ke) = dl
          p(is:ie,j,ks:ke) = pl
@@ -163,7 +163,7 @@ subroutine setup_shocktube(whichaxis, &
 
   case(3)! for shock tube z direction
    do k = ks, ke
-      if (k < (ks_global+ke_global)/2) then
+      if (k <= (ks_global+ke_global)/2) then
          ! left state
          d(is:ie,js:je,k) = dl
          p(is:ie,js:je,k) = pl
