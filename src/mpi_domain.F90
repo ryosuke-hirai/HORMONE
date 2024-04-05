@@ -100,6 +100,7 @@ module mpi_domain
       use grid
       real(8), intent(in) :: val(is-2:ie+2,js-2:je+2,ks-2:ke+2)
 
+#ifdef MPI
       integer :: i, j, k, d, ghost
       integer :: left_rank, right_rank, ierr
 
@@ -139,7 +140,7 @@ module mpi_domain
                               cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
-
+#endif
    end subroutine exchange_scalar
 
 end module mpi_domain
