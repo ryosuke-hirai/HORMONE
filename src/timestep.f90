@@ -14,6 +14,7 @@ contains
 
  subroutine timestep
 
+  use mpi_utils,only:allreduce_mpi
   use settings,only:courant,outstyle,HGfac,hgcfl
   use grid
   use physval
@@ -23,7 +24,7 @@ contains
   real(8),allocatable,dimension(:,:,:):: dti,dtg
   real(8):: cfmax0,cfmax
   integer:: i,j,k,n,jb,kb
-  
+
 !-------------------------------------------------------------------------
 
   call start_clock(wttim)
@@ -83,6 +84,10 @@ contains
 
   dt = courant * minval(dti)
 
+  ! Reduce quantities across all MPI tasks
+  call allreduce_mpi('min',dt)
+  call allreduce_mpi('max',cfmax)
+
   if(outstyle==1) dt = min(dt,t_out-time)
 
   ch = cfmax
@@ -94,7 +99,7 @@ contains
   end if
 
   call stop_clock(wttim)
-  
+
  return
  end subroutine timestep
 
@@ -143,11 +148,11 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
   call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
                 p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
  end select
-  
+
  if(mag_on)then
-  cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))+abs(v1(i,j,k)) 
-  cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))+abs(v2(i,j,k)) 
-  cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b1(i,j,k),b2(i,j,k))+abs(v3(i,j,k)) 
+  cf1 = get_cf(d(i,j,k),cs(i,j,k),b1(i,j,k),b2(i,j,k),b3(i,j,k))+abs(v1(i,j,k))
+  cf2 = get_cf(d(i,j,k),cs(i,j,k),b2(i,j,k),b1(i,j,k),b3(i,j,k))+abs(v2(i,j,k))
+  cf3 = get_cf(d(i,j,k),cs(i,j,k),b3(i,j,k),b1(i,j,k),b2(i,j,k))+abs(v3(i,j,k))
  else
   cf1 = cs(i,j,k)+abs(v1(i,j,k))
   cf2 = cs(i,j,k)+abs(v2(i,j,k))
@@ -196,5 +201,5 @@ subroutine dtgrav_cell(i,j,k,dtg,cgrav,jb,kb)
 
 return
 end subroutine dtgrav_cell
- 
+
 end module timestep_mod
