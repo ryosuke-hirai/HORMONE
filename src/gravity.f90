@@ -782,7 +782,7 @@ subroutine gravsetup
 
  if(tn==0) dt_old = dt
 
- if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+ if(gravswitch==2.or.gravswitch==3)then
   call setup_grvcg(gis,gie,gjs,gje,gks,gke,cg_grv)
  end if
  
