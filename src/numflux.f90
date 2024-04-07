@@ -39,19 +39,19 @@ contains
 
 ! use MUSCL interpolation
   call interpolation
-  
+
   call start_clock(wtflx)
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !$omp parallel
-  if(ie/=is)then
+  if(ie>is)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks,ke
     do j = js,je
-     do i = is-1, ie
+     do i = is-1,ie
 
       if(i==is-1)then
        if(bc1is==10)cycle
@@ -196,15 +196,15 @@ contains
    end do
 !$omp end do
   end if
- 
+
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  if(je/=js)then
+  if(je>js)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr) collapse(3)
    do k = ks,ke
     do j = js-1,je
-     do i = is, ie
+     do i = is,ie
 
       if(j==js-1)then
        if(bc2is==10)cycle
@@ -359,14 +359,14 @@ contains
   end if
 
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  if(ke/=ks)then
+  if(ke>ks)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks-1,ke
     do j = js,je
-     do i = is, ie
+     do i = is,ie
 
       if(k==ks-1)then
        if(bc3is==10)cycle
@@ -519,9 +519,6 @@ contains
 !$omp end do 
   end if
 !$omp end parallel
-
-  if(je<=2.and.crdnt==2)flux2=0d0
-  if(eq_sym.and.crdnt==1)flux3(is:ie,js:je,ks-1,1:9)=0d0
 
   if(fluxbound_on)call fluxboundary
   

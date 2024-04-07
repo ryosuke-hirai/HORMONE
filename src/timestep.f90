@@ -14,10 +14,11 @@ contains
 
  subroutine timestep
 
+  use constants,only:tiny
   use settings,only:courant,outstyle,HGfac,hgcfl
   use grid
   use physval
-  use gravmod,only:gravswitch,dtgrav,cgrav2
+  use gravmod,only:gravswitch,dtgrav,cgrav,cgrav2
   use profiler_mod
 
   real(8),allocatable,dimension(:,:,:):: dti,dtg
@@ -32,12 +33,14 @@ contains
   if(gravswitch==3)allocate(dtg,mold=dti)
 
   cfmax = 0d0
-!$omp parallel do private(i,j,k,cfmax0) reduction(max:cfmax) collapse(3)
+  cgrav = tiny
+!$omp parallel do private(i,j,k,cfmax0) reduction(max:cfmax,cgrav) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
      call dti_cell(i,j,k,dti,cfmax=cfmax0)
      cfmax = max(cfmax,cfmax0)
+     cgrav = max(cgrav,cfmax0)
     end do
    end do
   end do
@@ -45,12 +48,12 @@ contains
 
 ! Compute dtgrav if using hyperbolic self-gravity
   if(gravswitch==3)then
-   cgrav2 = HGfac*cfmax
+   cgrav = HGfac*cgrav
 !$omp parallel do private(i,j,k) collapse(3)
    do k = ks, ke
     do j = js, je
      do i = is, ie
-      call dtgrav_cell(i,j,k,dtg,cgrav2)
+      call dtgrav_cell(i,j,k,dtg,cgrav)
      end do
     end do
    end do
@@ -72,7 +75,7 @@ contains
      do j = js, je, jb
       do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
        call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-       if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav2,jb=jb,kb=kb)
+       if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
       end do
      end do
     end do
@@ -88,9 +91,8 @@ contains
   ch = cfmax
 
   if(gravswitch==3)then
-   dtgrav = hgcfl * minval(dtg)
-   if(outstyle==1) dtgrav = min(dtgrav,dt)
-   cgrav2 = cgrav2**2
+   dtgrav = min(dt,hgcfl*minval(dtg))
+   cgrav2 = cgrav**2
   end if
 
   call stop_clock(wttim)
