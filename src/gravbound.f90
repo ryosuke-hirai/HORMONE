@@ -31,7 +31,7 @@ contains
   call start_clock(wtgbn)
 
 ! cylindrical (axial symmetry) ################################################
-  if(crdnt==1.and.je==1.and.bc3is/=1)then
+  if(crdnt==1.and.je==js.and.bc3is/=1)then
 
    got = .false.
 
@@ -114,7 +114,7 @@ contains
    end do
 
 ! cylindrical (equatorial+axial symmetry) #####################################
-  elseif(crdnt==1.and.je==1.and.bc3is==1)then
+  elseif(crdnt==1.and.je==js.and.bc3is==1)then
 
    got = .false.
 
@@ -178,7 +178,7 @@ contains
    grvphi(is-2,js,ks:ke) = grvphi(is+1,js,ks:ke)
 
 ! spherical coordinates (axial symmetry) #######################################
-  elseif(crdnt==2.and.ke==1)then
+  elseif(crdnt==2.and.ke==ks)then
 
    got = .false.
 
@@ -239,6 +239,10 @@ contains
     stop
    end if
 
+  else
+   print*,"Gravbound not available for current combination of parameters"
+   print*,'crdnt=',crdnt,'je-js=',je-js,'ke-ks=',ke-ks
+   stop
   end if
 
   call stop_clock(wtgbn)
@@ -260,7 +264,7 @@ contains
 
   ml = 0d0
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  if(crdnt==1.and.je==1)then
+  if(crdnt==1.and.je==js)then
    j = js
 !$omp parallel do private (i,k) collapse(2) reduction(+:ml)
    do k = ks,ke
@@ -276,7 +280,7 @@ contains
 !$omp end parallel do
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  elseif(crdnt==2.and.ke==1)then
+  elseif(crdnt==2.and.ke==ks)then
    k = ks
 !$omp parallel do private (i,j) collapse(2) reduction(+:ml)
    do j = js,je

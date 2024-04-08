@@ -52,7 +52,8 @@ subroutine metric
 
   allocate( rdis(-1:gie+2,gks-2:gke+2) )
   allocate( sincyl,coscyl,mold=rdis )
-  x3_mid = 0.5d0*(xi3e+xi3s)
+
+  x3_mid = 0d0 !0.5d0*(xi3e+xi3s)
   do i = gis-1, gie+2
    do k = gks-2, gke+2
     rdis(i,k) = sqrt( x1(i)**2+(x3(k)-x3_mid)**2 )

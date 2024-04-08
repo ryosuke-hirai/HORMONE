@@ -48,7 +48,7 @@ subroutine fluxboundary3i
  use input_mod,only:error_extras,error_nml
 
  integer:: i,j,k,n,istat
- real(8)::fix,signdflx,poly_n,mass,radius
+ real(8):: poly_n,mass,radius
  character(len=100):: mesafile,star_type
 
 !-----------------------------------------------------------------------------

@@ -42,7 +42,7 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  do i = 1, size(pres)-1
   if(r(i)>rcore)exit
  end do
- 
+
  rcore = r(i)
  mcore = m(i)
  if(compswitch==2)then
@@ -187,9 +187,9 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
 !$omp end parallel do
 
 !$omp parallel do private(i,j,k,n) collapse(3)
- do k = gks-1, gke+1
-  do j = gjs-1, gje+1
-   do i = gis-1, gie+1
+ do k = gks-2, gke+2
+  do j = gjs-2, gje+2
+   do i = gis-2, gie+2
     if(x1(i)<r(lines-1))then
      do n = 0, lines-1
       if(r(n+1)>abs(x1(i)).and.r(n)<=abs(x1(i)))then

@@ -16,7 +16,7 @@ contains
 
 subroutine gravity
 
- use settings,only:eq_sym,courant
+ use settings,only:eq_sym,grktype
  use grid
  use constants
  use physval
@@ -24,14 +24,17 @@ subroutine gravity
  use gravbound_mod
  use utils,only:masscoordinate
  use miccg_mod,only:cg=>cg_grv,miccg,ijk_from_l,l_from_ijk
+ use timestep_mod,only:timestep
+ use rungekutta_mod,only:get_runge_coeff
  use profiler_mod
 
  integer:: i,j,k,n,l, gin, gjn, gkn, tngrav, grungen, jb, kb
  real(8):: phih, h
- real(8),allocatable,dimension(:,:,:):: newphi
+ real(8),allocatable,dimension(:,:,:):: newphi,lapphi
+ real(8),pointer:: grvpsi(:,:,:),cgrav_old
  real(8),allocatable,dimension(:):: intphi
  real(8),allocatable,dimension(:):: x, cgsrc
- real(8):: faco, facn, fact, vol
+ real(8):: faco, facn, fact, vol, lap
 
 !-----------------------------------------------------------------------------
 
@@ -46,18 +49,18 @@ subroutine gravity
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
- if(gravswitch==2.or.(gravswitch==3.and.tn==0.and.dim==2))then
+ if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
   allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
  
   if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-  call gravbound
+  if(gbtype==0)call gravbound
 
   call start_clock(wtpoi)
 
 ! cylindrical (equatorial+axial symmetry) ####################################
-  if(je==1.and.crdnt==1.and.dim==2)then
+  if(je==js.and.crdnt==1.and.dim==2)then
 
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
@@ -68,9 +71,11 @@ subroutine gravity
     if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
      cgsrc(l) = 4d0*pi*G*gsrc(i,j,k)*x1(i)*dxi1(i)*sum(dx3(k:k+1))*0.5d0
     end if;end if;end if;end if
-    if(k==gks) cgsrc(l) = cgsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
-    if(i==gie) cgsrc(l) = cgsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
-    if(k==gke) cgsrc(l) = cgsrc(l) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
+    if(gbtype==0)then
+     if(k==gks) cgsrc(l) = cgsrc(l) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
+     if(i==gie) cgsrc(l) = cgsrc(l) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
+     if(k==gke) cgsrc(l) = cgsrc(l) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
+    end if
    end do
 !$omp end parallel do
 
@@ -86,10 +91,12 @@ subroutine gravity
     if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
      cgsrc(l) = 4d0*pi*G*gsrc(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
     end if;end if;end if;end if
-    if(i==gie) cgsrc(l)= cgsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)&
-                                  *phiio(i+1,j)
-!   if(i==gis) cgsrc(l)= cgsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
-!        *phiii(i-1,j)
+    if(gbtype==0)then
+     if(i==gie) cgsrc(l) = cgsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)&
+                                     *phiio(i+1,j)
+     if(i==gis) cgsrc(l) = cgsrc(l) - xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)&
+                                     *phiii(i-1,j)
+    end if
    end do
 !$omp end parallel do
 
@@ -102,18 +109,23 @@ subroutine gravity
     call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
     x(l) = grvphi(i,j,k)
     cgsrc(l) = 0d0
-    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
+    if(i>=is)then;if(i<=ie)then
      cgsrc(l) = 4d0*pi*G*gsrc(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k)
-    end if;end if;end if;end if
+    end if;end if
 
-    if(i==gie) cgsrc(l)= cgsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)*dxi3(k)&
-                                  *phiio(i+1,j)
-!   if(i==gis) cgsrc(l)= cgsrc(l) - xi1(i-1)*xi1(i-1)*sinc(j)*dxi2(j)*idx1(i)&
-!        *phiii(i-1,j)
+    if(gbtype==0)then
+     if(i==gie)cgsrc(l)= cgsrc(l) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)*dxi3(k)&
+                                   *phiio(i+1,j)
+     if(i==gis)cgsrc(l)= cgsrc(l) - xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)*dxi3(k)&
+                                   *phiii(i-1,j)
+    end if
    end do
 !$omp end parallel do
   end if
 
+! ############################################################################
+
+! Solve Poisson equation with the conjugate gradient method
   call miccg(cg,cgsrc,x)
 
 !-------------------------------------------------------------------------
@@ -171,6 +183,12 @@ subroutine gravity
   if(gravswitch==3)then
    grvphiold = grvphi
    dt_old = dtgrav
+! Temporarily using dt_old as an alias for cgrav_old. Will unify them eventually
+   if(crdnt==2.and.dim==3)then
+    call timestep
+    cgrav_old => dt_old
+    cgrav_old = cgrav
+   end if
   end if
 
   call stop_clock(wtpoi)
@@ -330,82 +348,57 @@ if(gravswitch==3.and.tn/=0)then
  elseif(crdnt==2.and.dim==3)then
 ! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+! WARNING: Currently the 3D Hyperbolic Self-gravity is written in a different
+!          method to the 2D cases. I am trying out the generalized Lagrange
+!          multiplier method with a damping term. Will consider unifying the
+!          methods if one works out better. Or try to make it an option.
+
   allocate(newphi,mold=hgsrc)
 
   tngrav = ceiling((time+dt-grvtime)/dtgrav)
   dtgrav = (time+dt-grvtime)/dble(tngrav)
- 
+
   if(gbtype==0)call gravbound
   call masscoordinate
 
+  cgrav_old => dt_old
+  grvpsi => grvphidot
+  allocate(lapphi,mold=hgsrc)
+
 !$omp parallel
-! Boundary conditions
-!$omp do private(j,k) collapse(2)
+  do l = 1, tngrav
+   do grungen = 1, grktype
+!$omp single
+    call get_runge_coeff(grungen,grktype,faco,fact,facn)
+!$omp end single
+
+! First set flux and source term
+!$omp do private (i,j,k,n,lap) collapse(3)
     do k = ks, ke
      do j = js, je
-      grvphi(is-1,j,k) = grvphi(is,j,k)
-      grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
-     end do
-    end do
-!$omp end do nowait
-!$omp do private(i,k) collapse(2)
-    do k = ks, ke
-     do i = is, ie
-      grvphi(i,js-1,k) = grvphi(i,js,k)
-      grvphi(i,je+1,k) = grvphi(i,je,k)
-     end do
-    end do
-!$omp end do nowait
-!$omp do private(i,j) collapse(2)
-    do j = js, je
-     do i = is, ie
-      grvphi(i,j,ks-1) = grvphi(i,j,ke)
-      grvphi(i,j,ke+1) = grvphi(i,j,ks)
-     end do
-    end do
-!$omp end do
+      do i = is, ie
+       n = l_from_ijk(i,j,k,is,js,ks,ie-is+1,je-js+1,ke-ks+1)
+       lap = cg%A(1,n)*grvphi(i,j,k)
+       if(n>cg%ia(2)         )lap = lap + cg%A(2,n-cg%ia(2))*grvphi(i-1,j,k)
+       if(n<=cg%lmax-cg%ia(2))lap = lap + cg%A(2,n         )*grvphi(i+1,j,k)
+       if(n>cg%ia(3)         )lap = lap + cg%A(3,n-cg%ia(3))*grvphi(i,j-1,k)
+       if(n<=cg%lmax-cg%ia(3))lap = lap + cg%A(3,n         )*grvphi(i,j+1,k)
+       if(n>cg%ia(4)         )lap = lap + cg%A(4,n-cg%ia(4))*grvphi(i,j,k-1)
+       if(n<=cg%lmax-cg%ia(4))lap = lap + cg%A(4,n         )*grvphi(i,j,k+1)
+       if(n>cg%ia(5)         )lap = lap + cg%A(5,n-cg%ia(5))*grvphi(i,j,ks )
+       if(n<=cg%lmax-cg%ia(5))lap = lap + cg%A(5,n         )*grvphi(i,j,ke )
+       if(i==ie.and.gbtype==0)&
+        lap = lap + xi1(i)**2 *sinc(j)*dxi2(j)*dxi3(k)*idx1(i+1)&
+                           *grvphi(i+1,j,k)
 
-  do l = 1, tngrav
-   do grungen = 1, 3
-! First set flux and source term
-!$omp do private (i,j,k,n) collapse(3)
-    do k = ks-1, ke
-     do j = js-1, je
-      do i = is-1, ie
-       grv1(i,j,k) = -cgrav2*(grvphi(i+1,j,k)-grvphi(i,j,k))*idx1(i+1)
-       grv2(i,j,k) = -cgrav2*(grvphi(i,j+1,k)-grvphi(i,j,k))*idx2(j+1)/g22(i)
-       grv3(i,j,k) = -cgrav2*(grvphi(i,j,k+1)-grvphi(i,j,k))*idx3(k+1)/g33(i,j)
+       lap = lap/(x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)*dxi3(k))
 
-       if(i<=is+sum(fmr_lvl(1:fmr_max))-1)then
-        if(i<=is+fmr_lvl(1)-1)then
-         grv2(i,j,k) = 0d0;grv3(i,j,k) = 0d0
-        else
-         fmr_loop: do n = 2, fmr_max
-          if(i<=is+sum(fmr_lvl(1:n))-1)then
-           grv2(i,j,k) = grv2(i,j,k)/dble(2**(fmr_max-n+1))
-           grv3(i,j,k) = grv3(i,j,k)/dble(2**(fmr_max-n+1))
-           exit fmr_loop
-          end if
-         end do fmr_loop
-        end if
-       end if
-       if(i==is-1.or.j==js-1.or.k==ks-1)cycle
-       hgsrc(i,j,k) = -cgrav2*4d0*pi*G*gsrc(i,j,k)
+       lapphi(i,j,k) = lap ! Laplacian phi
+       hgsrc(i,j,k) = 4d0*pi*G*gsrc(i,j,k) ! Source term
       end do
      end do
     end do
 !$omp end do
-
-!$omp single
-    grk3_number: select case (grungen)
-    case(1) grk3_number
-     faco = 1d0 ; fact = 1d0 ; facn = 0d0
-    case(2) grk3_number
-     faco = 0.75d0 ; fact = 0.25d0 ; facn = fact
-    case(3) grk3_number
-     faco = 1d0/3d0 ; fact = 2d0/3d0 ; facn = fact
-    end select grk3_number
-!$omp end single
 
 !$omp do private (i,j,k) collapse(3)
     do k = ks,ke
@@ -413,23 +406,18 @@ if(gravswitch==3.and.tn/=0)then
       do i = is,ie
        if(grungen==1)then
         grvphiorg(i,j,k,1) = grvphi(i,j,k)
-        grvphiorg(i,j,k,2) = grvphidot(i,j,k)
+        grvphiorg(i,j,k,2) = grvpsi(i,j,k)
        end if
-       grvphi   (i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi   (i,j,k) &
-                        + fact*dtgrav*grvphidot(i,j,k)
-       grvphidot(i,j,k) = faco*grvphiorg(i,j,k,2) + facn*grvphidot(i,j,k) &
-                        + fact*dtgrav * &
-                        ( idetg1(i) * &
-                          (detg1(i-1  )*grv1(i-1,j,k)-detg1(i  )*grv1(i,j,k)) &
-                        + idetg2(i,j) * &
-                          (detg2(i,j-1)*grv2(i,j-1,k)-detg2(i,j)*grv2(i,j,k)) &
-                        + idetg3(i,j,k) * (grv3(i,j,k-1)-grv3(i,j,k)) &
-                        + hgsrc(i,j,k) )
+       grvphi(i,j,k) = faco*grvphiorg(i,j,k,1) + facn*grvphi(i,j,k) &
+                     + fact*dtgrav*cgrav*grvpsi(i,j,k)
+       grvpsi(i,j,k) = faco*grvphiorg(i,j,k,2) + facn*grvpsi(i,j,k) &
+                     + fact*dtgrav * cgrav * (lapphi(i,j,k) - hgsrc(i,j,k))
       end do
      end do
     end do
 !$omp end do
 
+! Smear gravity in central regions
     do n = 1, fmr_max
      if(fmr_lvl(n)==0)cycle
      jb=min(2**(fmr_max-n+1),je)-1 ; kb=min(2**(fmr_max-n+1),ke)-1
@@ -441,9 +429,9 @@ if(gravswitch==3.and.tn/=0)then
       do j = js, je, jb+1
        do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
         vol = sum(dvol(i,j:j+jb,k:k+kb))
-        grvphi   (i,j:j+jb,k:k+kb) = sum(grvphi   (i,j:j+jb,k:k+kb) &
+        grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb) &
                                         *dvol(i,j:j+jb,k:k+kb)) / vol
-        grvphidot(i,j:j+jb,k:k+kb) = sum(grvphidot(i,j:j+jb,k:k+kb) &
+        grvpsi(i,j:j+jb,k:k+kb) = sum(grvpsi(i,j:j+jb,k:k+kb) &
                                         *dvol(i,j:j+jb,k:k+kb)) / vol
        end do
       end do
@@ -451,49 +439,53 @@ if(gravswitch==3.and.tn/=0)then
 !$omp end do
     end do
 
-! Central few cells are spherical
-!!$!$omp do private(i,j,k) collapse(2)
-!!$    do k = ks, ke
-!!$     do j = js, je
-!!$      do i = fmr_lvl(1)-1, is, -1
-!!$       grvphi(i,j,k) = grvphi(i+1,j,k) &
-!!$                     - G*(mc(i)-mc(is-1))/xi1(i)**2*dx1(i+1)
-!!$      end do
-!!$     end do
-!!$    end do
-!!$!$omp end do
-   
-! Boundary conditions
-!$omp do private(j,k) collapse(2)
-    do k = ks, ke
-     do j = js, je
-      grvphi(is-1,j,k) = grvphi(is,j,k)
-      grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
+
+! Damping of grvpsi by separation of variables
+!$omp do private(i,j,k) collapse(3)
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      grvpsi(i,j,k) = grvpsi(i,j,k)*exp(-(1d0-cgrav_old/cgrav+0.1d0*hgcfl))
      end do
     end do
-!$omp end do
-!$omp do private(i,k) collapse(2)
-    do k = ks, ke
-     do i = is-1, ie+1
-      grvphi(i,js-1,k) = grvphi(i,js,k)
-      grvphi(i,je+1,k) = grvphi(i,je,k)
-     end do
-    end do
-!$omp end do
-!$omp do private(i,j) collapse(2)
-    do j = js-1, je+1
-     do i = is-1, ie+1
-      grvphi(i,j,ks-1) = grvphi(i,j,ke)
-      grvphi(i,j,ke+1) = grvphi(i,j,ks)
-     end do
-    end do
-!$omp end do nowait
    end do
+!$omp end do
+
 !$omp single
    grvtime = grvtime + dtgrav
+   cgrav_old = cgrav
 !$omp end single
-
   end do
+
+ end do
+
+
+! Boundary conditions
+!$omp do private(j,k) collapse(2)
+ do k = ks, ke
+  do j = js, je
+   grvphi(is-1,j,k) = grvphi(is,j,k)
+   if(gbtype==1)grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
+  end do
+ end do
+!$omp end do
+!$omp do private(i,k) collapse(2)
+ do k = ks, ke
+  do i = is-1, ie+1
+   grvphi(i,js-1,k) = grvphi(i,js,k)
+   grvphi(i,je+1,k) = grvphi(i,je,k)
+  end do
+ end do
+!$omp end do
+!$omp do private(i,j) collapse(2)
+ do j = js-1, je+1
+  do i = is-1, ie+1
+   grvphi(i,j,ks-1) = grvphi(i,j,ke)
+   grvphi(i,j,ke+1) = grvphi(i,j,ks)
+  end do
+ end do
+!$omp end do
+
 !$omp end parallel
 
 
@@ -581,8 +573,9 @@ end subroutine gravity
 
 subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
- use settings,only:crdnt,eq_sym
- use grid,only:xi1s,x1,xi1,dx1,idx1,dxi1,dx2,dxi2,idx2,dx3,dxi3,idx3,sini,sinc
+ use settings,only:crdnt,eq_sym,gbtype
+ use grid,only:xi1s,x1,xi1,dx1,idx1,dxi1,dx2,dxi2,idx2,dx3,dxi3,idx3,&
+               sini,sinc,rdis
  use miccg_mod,only:cg_set,ijk_from_l,get_preconditioner
 
  integer,intent(in)::is,ie,js,je,ks,ke
@@ -608,7 +601,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
  select case(dim)
  case(1) ! 1D
 ! 1D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  if(crdnt==1)then
+  if(crdnt==2)then
    cg%Adiags = 2
    allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
    cg%ia(1) = 0
@@ -619,7 +612,10 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
     call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
     cg%A(1,l) = -( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) )
     cg%A(2,l) = xi1(i)**2/dx1(i+1)
-    if(i==is.and.xi1s>0d0)cg%A(1,l)=cg%A(1,l)+xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(i==is.and.xi1s>0d0)& ! for inner boundary
+     cg%A(1,l)=cg%A(1,l)+xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(gbtype==1.and.i==ie)& ! for Robin boundary at bc1o
+     cg%A(1,l) = cg%A(1,l) + cg%A(2,l)*x1(i)/x1(i+1)
     if(i==ie)cg%A(2,l) = 0d0
 
    end do
@@ -651,12 +647,15 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
                     * 0.5d0*sum(dx3(k:k+1))
     cg%A(2,l) = 0.5d0*xi1(i)*sum(dx3(k:k+1))/dx1(i+1)
     cg%A(3,l) = x1(i)*dxi1(i)/dx3(k+1)
+    if(gbtype==1)then
+     if(i==ie)cg%A(1,l) = cg%A(1,l) + cg%A(2,l)*rdis(i,k)/rdis(i+1,k)
+     if(k==ke)cg%A(1,l) = cg%A(1,l) + cg%A(2,l)*rdis(i,k)/rdis(i,k+1)
+    end if
     if(i==ie)cg%A(2,l) = 0d0
     if(k==ke)cg%A(3,l) = 0d0
     
-    if(eq_sym.and.k==ks)then! for Neumann boundary at bc3i (equatorial symmetry)
+    if(eq_sym.and.k==ks)& ! for Neumann boundary at bc3i (equatorial symmetry)
      cg%A(1,l) = cg%A(1,l) + x1(i)*dxi1(i)/dx3(k+1)
-    end if
    
    end do
 
@@ -669,15 +668,19 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
    cg%ia(2) = 1
    cg%ia(3) = in
 
+! Equation matrix
    do l = 1, lmax
     call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
-! Equation matrix
+
     cg%A(1,l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
                   * sinc(j)*dxi2(j) &
                + ( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i) )
     cg%A(2,l) = xi1(i)**2 *sinc(j)*dxi2(j)/dx1(i+1)
     cg%A(3,l) = sini(j)*dxi1(i)/dx2(j+1)
-    if(i==is.and.xi1s>0d0)cg%A(1,l)=cg%A(1,l)+xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(i==is.and.xi1s>0d0)& ! inner boundary
+     cg%A(1,l)=cg%A(1,l)+xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(gbtype==1.and.i==ie)& ! for Robin boundary at bc1o
+     cg%A(1,l) = cg%A(1,l) + cg%A(2,l)*x1(i)/x1(i+1)
     if(i==ie)cg%A(2,l) = 0d0
     if(j==je)then ! Reflection boundary at axis or equatorial plane (if eq_sym)
      cg%A(1,l) = cg%A(1,l) + sini(j)*dxi1(i)*idx2(j+1)
@@ -710,6 +713,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
    cg%ia(4) = in*jn
    cg%ia(5) = in*jn*(kn-1)
 
+! Equation matrix
    do l = 1, lmax
     call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
     cg%A(1,l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
@@ -720,11 +724,12 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
     cg%A(3,l) = sini(j)*dxi1(i)*dxi3(k)/dx2(j+1)
     cg%A(4,l) = dxi1(i)*dxi2(j)/dx3(k+1)
     cg%A(5,l) = dxi1(i)*dxi2(j)/dx3(k  )
-    if(eq_sym.and.j==je)then ! for Neumann boundary at bc2o (equatorial symmetry)
+    if(eq_sym.and.j==je)& ! for Neumann boundary at bc2o (equatorial symmetry)
      cg%A(1,l) = cg%A(1,l) + cg%A(3,l)
-    end if
-    if(i==is.and.xi1s>0d0)cg%A(1,l) = cg%A(1,l) &
-                                     + xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(i==is.and.xi1s>0d0)& ! for inner boundary
+     cg%A(1,l) = cg%A(1,l) + xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)
+    if(gbtype==1.and.i==ie)& ! for Robin boundary at bc1o
+     cg%A(1,l) = cg%A(1,l) + cg%A(2,l)*x1(i)/x1(i+1)
     if(i==ie)cg%A(2,l) = 0d0
     if(j==je)cg%A(3,l) = 0d0
     if(k==ke)cg%A(4,l) = 0d0
@@ -777,7 +782,7 @@ subroutine gravsetup
 
  if(tn==0) dt_old = dt
 
- if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+ if(gravswitch==2.or.gravswitch==3)then
   call setup_grvcg(gis,gie,gjs,gje,gks,gke,cg_grv)
  end if
  
@@ -939,6 +944,7 @@ subroutine gravsetup
                        *idx2(j)*idx2(j+1)/x1(i)  &
                      - 2d0*idx3(k)*idx3(k+1)/x1(i)/sinc(j)**2 ) &
                    / x1(i)
+
      if(i==gis) hg123(i,j,k) = hg123(i,j,k) + hg12(i)
      if(j==gjs) hg123(i,j,k) = hg123(i,j,k) + hg22(j)/x1(i)**2
      if(j==gje) hg123(i,j,k) = hg123(i,j,k) + hg21(j)/x1(i)**2
@@ -971,7 +977,6 @@ subroutine gravsetup
    stop
   end if
 
-! call gravbound
   if(tn==0)dt_old = dt / (courant*HGfac) * hgcfl
   hgsrc = 0d0
 
