@@ -71,8 +71,7 @@ end subroutine smear
   use grid,only:x1,x2,x3,dvol,sinc
   use physval,only:u,spc,v1,v2,v3,eint,icnt,iene,imo1,imo2,imo3,ufnmax
   use utils
-  use gravmod,only:grvphi,extgrv,gravswitch,include_extgrv
-  
+  use gravmod,only:totphi,extgrv,gravswitch,include_extgrv
 
   implicit none
 
@@ -94,10 +93,10 @@ end subroutine smear
    end do
   end if
   
-  do n = 1, ufnmax
-   u(i,js:je,ks:ke,n) = sum(u(i,js:je,ks:ke,n)*dvol(i,js:je,ks:ke))/vol
-  end do
-  return
+!!$  do n = 1, ufnmax
+!!$   u(i,js:je,ks:ke,n) = sum(u(i,js:je,ks:ke,n)*dvol(i,js:je,ks:ke))/vol
+!!$  end do
+!!$  return
   
   momtot=0d0;etot=0d0
   do j = js, je
@@ -107,16 +106,12 @@ end subroutine smear
     momtot = momtot + vcar*dvol(i,j,k)! add up momenta
     etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
     if(gravswitch>0)then
-     etot = etot + u(i,j,k,icnt)*grvphi(i,j,k)*dvol(i,j,k)! and gravitational ene
-    end if
-    if(include_extgrv)then
-     etot = etot + u(i,j,k,icnt)*extgrv(i,j,k)*dvol(i,j,k)! and external gravity
+     etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)! and gravitational ene
     end if
    end do
   end do
-  mtot = sum( u(i,js:je,ks:ke,icnt)*dvol(i,js:je,ks:ke) )
   vave = momtot/mtot ! get average cartesian velocity
-  u(i,js:je,ks:ke,icnt) = mtot/sum( dvol(i,js:je,ks:ke) ) ! density
+  u(i,js:je,ks:ke,icnt) = mtot/vol ! density
 
   do j = js, je
    do k = ks, ke
@@ -126,10 +121,7 @@ end subroutine smear
     u(i,j,k,3) = v2(i,j,k)*u(i,j,k,icnt)
     u(i,j,k,4) = v3(i,j,k)*u(i,j,k,icnt)
     if(gravswitch>0)then
-     etot = etot - u(i,j,k,icnt)*grvphi(i,j,k)*dvol(i,j,k)
-    end if
-    if(include_extgrv)then
-     etot = etot - u(i,j,k,icnt)*extgrv(i,j,k)*dvol(i,j,k)
+     etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end if
    end do
   end do

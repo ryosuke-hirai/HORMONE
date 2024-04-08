@@ -184,7 +184,7 @@ subroutine geometrical_series(dxi,xmin,is,ie,xis,xie)
 
 !-----------------------------------------------------------------------------
 
- xrmax = 1.15d0
+ xrmax = 1.05d0
  maxerr = 1d-10
 
  xr = 1.01d0

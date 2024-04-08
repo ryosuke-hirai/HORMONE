@@ -95,7 +95,7 @@ subroutine readbin(filename)
           v3(is:ie,js:je,ks:ke), &
           e (is:ie,js:je,ks:ke)
  if(gravswitch>=2)read(un)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)read(un)grvphiold(gis:gie,gjs:gje,gks:gke),dt_old
+ if(gravswitch==3)read(un)grvphidot(gis:gie,gjs:gje,gks:gke),dt_old
  if(compswitch>=2)read(un)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
  if(mag_on)then
   read(un) b1(is:ie,js:je,ks:ke), &

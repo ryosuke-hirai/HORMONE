@@ -331,6 +331,7 @@ subroutine open_sinkfile
   write(iskf,forma,advance="no")trim(header)//'_v3'
  end do
  write(iskf,'()')
+ flush(iskf)
 
  return
 end subroutine open_sinkfile
@@ -604,7 +605,7 @@ subroutine write_bin
  use settings
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
- use gravmod,only:grvphi,grvphiold,dt_old
+ use gravmod,only:grvphi,grvphidot,dt_old
  use sink_mod,only:nsink,sink
 
  implicit none
@@ -624,7 +625,7 @@ subroutine write_bin
            v3(is:ie,js:je,ks:ke), &
            e (is:ie,js:je,ks:ke)
  if(gravswitch>=2)write(un)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)write(un)grvphiold(gis:gie,gjs:gje,gks:gke),dt_old
+ if(gravswitch==3)write(un)grvphidot(gis:gie,gjs:gje,gks:gke),dt_old
  if(compswitch>=2)write(un)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
  if(mag_on)then
   write(un) b1(is:ie,js:je,ks:ke), &
