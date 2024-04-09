@@ -34,8 +34,8 @@ contains
 !!$
 !!$! read coordinate data
 !!$  call readgrid('gridfile.bin')
-!!$  
-!!$! calculate volume element  
+!!$
+!!$! calculate volume element
 !!$ do k = ks, ke
 !!$  do j = js-1, je+1
 !!$   do i = is-1, ie+1
@@ -79,31 +79,67 @@ subroutine readbin(filename)
 
  character(len=*),intent(in):: filename
  integer:: un,istat
+ ! NOTE: record marker may not always be integer. Could depend on compiler etc
+ integer(kind=4) :: record_marker
+ logical :: legacy = .true.
 
 !-----------------------------------------------------------------------------
 
- open(newunit=un,file=filename,status='old',form='unformatted',iostat=istat)
+ open(newunit=un,file=filename,status='old',form='unformatted',iostat=istat, access='stream')
  if(istat/=0)then
   print*,'Binary dump file not found'
   print'(3a)','File name = "',trim(filename),'"'
   stop
  end if
- read(un) tn,time
- read(un) d (is:ie,js:je,ks:ke), &
-          v1(is:ie,js:je,ks:ke), &
-          v2(is:ie,js:je,ks:ke), &
-          v3(is:ie,js:je,ks:ke), &
-          e (is:ie,js:je,ks:ke)
- if(gravswitch>=2)read(un)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)read(un)grvphidot(gis:gie,gjs:gje,gks:gke),dt_old
- if(compswitch>=2)read(un)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
+
+ if (legacy) read(un) record_marker
+ read(un) tn
+ read(un) time
+ if (legacy) read(un) record_marker
+
+ if (legacy) read(un) record_marker
+ read(un) d (is:ie,js:je,ks:ke)
+ read(un) v1(is:ie,js:je,ks:ke)
+ read(un) v2(is:ie,js:je,ks:ke)
+ read(un) v3(is:ie,js:je,ks:ke)
+ read(un) e (is:ie,js:je,ks:ke)
+ if (legacy) read(un) record_marker
+
+ if(gravswitch>=2) then
+   if (legacy) read(un) record_marker
+   read(un) grvphi(gis:gie,gjs:gje,gks:gke)
+   if (legacy) read(un) record_marker
+ endif
+
+ if(gravswitch==3) then
+   if (legacy) read(un) record_marker
+   read(un) grvphidot(gis:gie,gjs:gje,gks:gke)
+   read(un) dt_old
+   if (legacy) read(un) record_marker
+ endif
+
+ if(compswitch>=2) then
+   if (legacy) read(un) record_marker
+   read(un) spc(1:spn,is:ie,js:je,ks:ke)
+   read(un) species(1:spn)
+   if (legacy) read(un) record_marker
+ endif
+
  if(mag_on)then
-  read(un) b1(is:ie,js:je,ks:ke), &
-           b2(is:ie,js:je,ks:ke), &
-           b3(is:ie,js:je,ks:ke), &
-           phi(is:ie,js:je,ks:ke)
+  if (legacy) read(un) record_marker
+  read(un) b1(is:ie,js:je,ks:ke)
+  read(un) b2(is:ie,js:je,ks:ke)
+  read(un) b3(is:ie,js:je,ks:ke)
+  read(un) phi(is:ie,js:je,ks:ke)
+  if (legacy) read(un) record_marker
  end if
- if(include_sinks)read(un)sink(1:nsink)
+
+ if(include_sinks) then
+   if (legacy) read(un) record_marker
+   read(un) sink(1:nsink)
+   if (legacy) read(un) record_marker
+ endif
+
  close(un)
 
  call meanmolweight
@@ -161,7 +197,7 @@ subroutine read_extgrv(filename)
  close(ui)
 
  mc(is-1) = coremass
- 
+
  return
 end subroutine read_extgrv
 
