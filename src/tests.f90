@@ -61,7 +61,7 @@ contains
 
 !-----------------------------------------------------------------------------
 
-  allocate(val(nn,is:ie,js:je,ks:ke))
+  allocate(val(is:ie,js:je,ks:ke,nn))
   allocate(valorg,mold=val)
   error = 0d0
 
@@ -78,16 +78,16 @@ contains
   if(.not.mag_on) label(6:8) = 'aaa'
 
 ! First record simulated variables
-  val(1,:,:,:) = d (is:ie,js:je,ks:ke)
-  val(2,:,:,:) = e (is:ie,js:je,ks:ke)
-  val(3,:,:,:) = v1(is:ie,js:je,ks:ke)
-  val(4,:,:,:) = v2(is:ie,js:je,ks:ke)
-  val(5,:,:,:) = v3(is:ie,js:je,ks:ke)
-  val(6,:,:,:) = b1(is:ie,js:je,ks:ke)
-  val(7,:,:,:) = b2(is:ie,js:je,ks:ke)
-  val(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  val(:,:,:,1) = d (is:ie,js:je,ks:ke)
+  val(:,:,:,2) = e (is:ie,js:je,ks:ke)
+  val(:,:,:,3) = v1(is:ie,js:je,ks:ke)
+  val(:,:,:,4) = v2(is:ie,js:je,ks:ke)
+  val(:,:,:,5) = v3(is:ie,js:je,ks:ke)
+  val(:,:,:,6) = b1(is:ie,js:je,ks:ke)
+  val(:,:,:,7) = b2(is:ie,js:je,ks:ke)
+  val(:,:,:,8) = b3(is:ie,js:je,ks:ke)
   if(gravswitch>0)then
-   val(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+   val(:,:,:,9) = grvphi(is:ie,js:je,ks:ke)
   else
    label(9) = 'aaa'
   end if
@@ -98,16 +98,16 @@ contains
   call readbin(testfile)
 
 ! Next record variables from pre-computed file
-  valorg(1,:,:,:) = d (is:ie,js:je,ks:ke)
-  valorg(2,:,:,:) = e (is:ie,js:je,ks:ke)
-  valorg(3,:,:,:) = v1(is:ie,js:je,ks:ke)
-  valorg(4,:,:,:) = v2(is:ie,js:je,ks:ke)
-  valorg(5,:,:,:) = v3(is:ie,js:je,ks:ke)
-  valorg(6,:,:,:) = b1(is:ie,js:je,ks:ke)
-  valorg(7,:,:,:) = b2(is:ie,js:je,ks:ke)
-  valorg(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  valorg(:,:,:,1) = d (is:ie,js:je,ks:ke)
+  valorg(:,:,:,2) = e (is:ie,js:je,ks:ke)
+  valorg(:,:,:,3) = v1(is:ie,js:je,ks:ke)
+  valorg(:,:,:,4) = v2(is:ie,js:je,ks:ke)
+  valorg(:,:,:,5) = v3(is:ie,js:je,ks:ke)
+  valorg(:,:,:,6) = b1(is:ie,js:je,ks:ke)
+  valorg(:,:,:,7) = b2(is:ie,js:je,ks:ke)
+  valorg(:,:,:,8) = b3(is:ie,js:je,ks:ke)
   if(gravswitch>0)then
-   valorg(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+   valorg(:,:,:,9) = grvphi(is:ie,js:je,ks:ke)
   end if
 
 ! Calculate max norm errors
@@ -249,7 +249,7 @@ contains
   print*,trim(name),' norm errors:'
   do n = 1, size(error)
    if(trim(label(n))=='aaa')cycle
-   error(n) = f(val(n,:,:,:),valorg(n,:,:,:),tol)
+   error(n) = f(val(:,:,:,n),valorg(:,:,:,n),tol)
    print*,'  ',label(n),' =',error(n)
   end do
 
