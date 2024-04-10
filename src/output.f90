@@ -1151,7 +1151,7 @@ subroutine get_header(header,columns)
 
  use settings
  use physval,only:species
- use grid,only:dim,ie,je,ke
+ use grid,only:dim,is,ie,js,je,ks,ke
 
  implicit none
 
