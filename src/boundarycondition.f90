@@ -260,7 +260,7 @@ subroutine boundarycondition
     end do
     end do
   !$omp end do
-endif
+  endif
 
   case(1) x1_outer_scalar ! reflective ------------------------------------
   !$omp do private(j,k) collapse(2)
