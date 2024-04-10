@@ -142,13 +142,14 @@ module mpi_domain
             ! i.e. there is no need to communicate directly with the second-nearest MPI neighbour, even
             ! if the required value is two MPI neighbours away
 
+            ! TODO: generalise this to 2D and 3D
             ! Send to the left, receive from the right
             call MPI_SENDRECV(val(is + (ghost-1)*i, js + (ghost-1)*j, ks + (ghost-1)*k), 1, MPI_REAL8, left_rank,  0, &
-                              val(ie + (ghost  )*i, js + (ghost  )*j, ks + (ghost  )*k), 1, MPI_REAL8, right_rank, 0, &
+                              val(ie + (ghost  )*i, je + (ghost  )*j, ke + (ghost  )*k), 1, MPI_REAL8, right_rank, 0, &
                               cart_comm, MPI_STATUS_IGNORE, ierr)
 
             ! Send to the right, receive from the left
-            call MPI_SENDRECV(val(ie - (ghost-1)*i, js - (ghost-1)*j, ks - (ghost-1)*k), 1, MPI_REAL8, right_rank, 0, &
+            call MPI_SENDRECV(val(ie - (ghost-1)*i, je - (ghost-1)*j, ke - (ghost-1)*k), 1, MPI_REAL8, right_rank, 0, &
                               val(is - (ghost  )*i, js - (ghost  )*j, ks - (ghost  )*k), 1, MPI_REAL8, left_rank,  0, &
                               cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
