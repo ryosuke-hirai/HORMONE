@@ -43,7 +43,7 @@ module mpi_utils
       error stop "Invalid operation specified"
     end select
 
-    call MPI_ALLREDUCE(value, value_reduced, 1, MPI_DOUBLE_PRECISION, op, MPI_COMM_WORLD, ierr)
+    call MPI_ALLREDUCE(value, value_reduced, 1, MPI_REAL8, op, MPI_COMM_WORLD, ierr)
     value = value_reduced
 #endif
 
