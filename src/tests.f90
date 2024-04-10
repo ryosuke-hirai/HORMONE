@@ -44,6 +44,7 @@ contains
 
  subroutine test(passed)
 
+  use mpi_utils,only:myrank
   use settings,only:simtype,mag_on
   use grid,only:is,ie,js,je,ks,ke
   use physval
@@ -121,11 +122,13 @@ contains
 
 ! Check if maximum L2 norm error is within acceptable bounds
   if(maxval(error)<tol)then
-   print*,trim(simtype),' test: passed'
-   if(maxval(error)<=0d0)print*,trim(simtype),'     : Identical!'
+   if (myrank==0) then
+      print*,trim(simtype),' test: passed'
+      if(maxval(error)<=0d0) print*,trim(simtype),'     : Identical!'
+   endif
    passed = .true.
   else
-   print*,trim(simtype),' test: failed'
+   if (myrank==0) print*,trim(simtype),' test: failed'
    passed = .false.
   end if
 
@@ -175,12 +178,15 @@ contains
  end function L1_norm_error
 
  function L2_norm_error(var,var0,tol) result(norm)
+  use mpi_utils,only:allreduce_mpi,myrank
   use grid,only:is,ie,js,je,ks,ke,dvol
   real(8),dimension(:,:,:),intent(in):: var,var0
   real(8),intent(in):: tol
   real(8):: norm, pos, jump, base, denom, floor
   real(8),allocatable:: relerr(:,:,:),w(:,:,:)
   integer:: i,j,k,il,jl,kl,iu,ju,ku,disco_range
+
+  real(8) :: errsum, wsum
 
   pos = maxval(var)*minval(var)
 
@@ -210,12 +216,17 @@ contains
      end if
      jump = maxval(ratio(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku),base,floor))
 
-     relerr(i,j,k) = (var(i,j,k)-var0(i,j,k))/denom*exp(1d0-jump)
+     relerr(i,j,k) = (var(i,j,k)-var0(i,j,k))!/denom*exp(1d0-jump)
     end do
    end do
   end do
 
-  norm = sqrt(sum(relerr**2*w))/sqrt(sum(w))
+  ! Reduce error across MPI tasks
+  errsum = sum(relerr**2*w)
+  wsum = sum(w)
+  call allreduce_mpi('sum', errsum)
+  call allreduce_mpi('sum', wsum)
+  norm = sqrt(errsum)/sqrt(wsum)
 
  end function L2_norm_error
 
@@ -234,6 +245,7 @@ contains
 ! PURPOSE: To print errors defined by a given norm
 
  subroutine print_errors(name,f,label,val,valorg,tol,error)
+  use mpi_utils,only:myrank
 
   interface
    real(8) function f(var,var0,tol)
@@ -251,11 +263,11 @@ contains
 
 !-----------------------------------------------------------------------------
 
-  print*,trim(name),' norm errors:'
+  if (myrank == 0) print*,trim(name),' norm errors:'
   do n = 1, size(error)
    if(trim(label(n))=='aaa')cycle
    error(n) = f(val(:,:,:,n),valorg(:,:,:,n),tol)
-   print*,'  ',label(n),' =',error(n)
+   if (myrank == 0) print*,'  ',label(n),' =',error(n)
   end do
 
   return
