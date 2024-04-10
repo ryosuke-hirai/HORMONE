@@ -94,6 +94,9 @@ module mpi_domain
       call exchange_scalar(b2)
       call exchange_scalar(b3)
 
+      call exchange_scalar(e)
+      call exchange_scalar(eint)
+
    end subroutine exchange_mpi
 
    subroutine exchange_scalar(val)

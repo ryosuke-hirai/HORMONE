@@ -214,7 +214,6 @@ subroutine boundarycondition
     print *, "Error from x1 velocity inner boundary condition" ; stop
 
   end select x1_inner_vector
-end if
 
   ! Set e and ptot =========================================================
   !$omp do private(i,j,k) collapse(3)
@@ -240,6 +239,7 @@ end if
   end do
   !$omp end do
   ! ========================================================================
+ end if
 
 ! >>> outer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -488,7 +488,6 @@ endif
     print *, "Error from x1 velocity outer boundary condition" ; stop
 
   end select x1_outer_vector
-end if
 
   ! set e and ptot =========================================================
   !$omp do private(i,j,k) collapse(3)
@@ -514,6 +513,7 @@ end if
   end do
   !$omp end do
   ! =======================================================================
+ end if
 
 ! x2-direction ***********************************************************
 ! If physical boundary condition (not MPI)
@@ -686,7 +686,6 @@ if(je>js)then ! TODO: In MPI, this can be false even when x2 is active
   case default x2_inner_vector ! Error ------------------------------------
     print *, "Error from x2 velocity inner boundary condition" ; stop
   end select x2_inner_vector
-end if
 
   ! set e and ptot =========================================================
   !$omp do private(i,j,k) collapse(3)
@@ -712,6 +711,7 @@ end if
   end do
   !$omp end do
   ! ========================================================================
+ end if
 
 ! >>> outer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ! If physical boundary condition (not MPI)
@@ -871,7 +871,7 @@ end if
   case default x2_outer_vector ! Error ------------------------------------
     print *, "Error from x2 velocity outer boundary condition" ; stop
   end select x2_outer_vector
-end if
+
   ! set e and ptot =========================================================
   !$omp do private(i,j,k) collapse(3)
   do k = ks, ke
@@ -896,6 +896,7 @@ end if
   end do
   !$omp end do
   ! ========================================================================
+ end if
 end if
 
 ! x3-direction ***********************************************************
@@ -1137,7 +1138,6 @@ if(ke>ks)then ! TODO: In MPI, this can be false even when x3 is active
   case default x3_inner_vector ! Error ------------------------------------
     print *, "Error from x3 velocity inner boundary condition" ; stop
   end select x3_inner_vector
-end if
 
   ! set e and ptot =========================================================
   !$omp do private(i,j,k) collapse(3)
@@ -1163,6 +1163,7 @@ end if
   end do
   !$omp end do
   ! ========================================================================
+ end if
 
 ! >>> outer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ! If physical boundary condition (not MPI)
@@ -1400,8 +1401,6 @@ end if
     print *, "Error from x3 velocity outer boundary condition" ; stop
   end select x3_outer_vector
 
-end if
-
   ! set e and ptot =========================================================
   !$omp do private(i,j,k) collapse(3)
   do k = ke+1, ke+2
@@ -1426,6 +1425,7 @@ end if
   end do
   !$omp end do
   ! ========================================================================
+ end if
 end if
 
 !$omp end parallel
