@@ -40,7 +40,17 @@ module mpi_domain
       ny = je - js + 1
       nz = ke - ks + 1
 
-      dims = [nprocs, 1, 1] ! Trivial decomposition, for now... TODO
+      ! Trivial decomposition for now
+      ! Slice along the dimension with most cells to ensure that all 1D problems work
+      ! TODO: decompose along all 3 dimensions
+      if (nx >= ny .and. nx >= nz) then
+         dims = [nprocs, 1, 1]
+      else if (ny >= nx .and. ny >= nz) then
+         dims = [1, nprocs, 1]
+      else
+         dims = [1, 1, nprocs]
+      endif
+
       periods = [.true., .true., .true.] ! Always set to periodic and allow boundary conditions to override
 
       call MPI_CART_CREATE(MPI_COMM_WORLD, 3, dims, periods, .false., cart_comm, ierr)
