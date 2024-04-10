@@ -40,7 +40,7 @@ subroutine particles_setup
  np = 0
 
 ! for axisymmetrical cylindrical coordinates
- if(crdnt==1.and.dim==2.and.je==1)then
+ if(crdnt==1.and.dim==2.and.je==js)then
   j = js
 !  rhoc = maxval(d(is:ie,js:je,ks:ke),mask=v1(is:ie,js:je,ks:ke)==0d0)
   allocate( ptcx(0:dim,1:maxptc), ptci(0:2,1:maxptc) )
@@ -70,7 +70,7 @@ subroutine particles_setup
   npl = np
 
 ! for axisymmetrical spherical coordinates
- elseif(crdnt==2.and.dim==2.and.ke==1)then
+ elseif(crdnt==2.and.dim==2.and.ke==ks)then
   k = ks
   allocate( ptcx(0:dim,1:maxptc), ptci(0:2,1:maxptc) )
 
@@ -128,7 +128,7 @@ subroutine particles
 !-----------------------------------------------------------------------------
 
 ! for axisymmetrical cylindrical coordinates
- if(crdnt==1.and.dim==2.and.je==1)then
+ if(crdnt==1.and.dim==2.and.je==js)then
   
   n = 1 ; j = js
 
@@ -177,7 +177,7 @@ subroutine particles
   end do
 
 ! for axisymmetrical spherical coordinates
- elseif(crdnt==2.and.dim==2.and.ke==1)then
+ elseif(crdnt==2.and.dim==2.and.ke==ks)then
 ! 1: equatorial direction
 ! 2: axial direction
 

@@ -2,7 +2,8 @@ module tests_mod
  implicit none
 
  public:: check_testlist,test
- private:: testfilename
+ private:: testfilename,print_errors,ratio,&
+           max_norm_error,L1_norm_error,L2_norm_error
 
 contains
 
@@ -222,7 +223,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE PRINT_ERRORS
+!                        SUBROUTINE PRINT_ERRORS
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

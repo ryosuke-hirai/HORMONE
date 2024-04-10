@@ -411,19 +411,19 @@ subroutine write_grid
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3
   
-  if(ie>1)then
+  if(ie>is)then
    write(ui,formhead)'  i','x1','dvol'
    j=js;k=ks
    do i = is, ie
     write(ui,formval)i,x1(i),dvol(i,j,k)    
    end do
-  elseif(je>1)then
+  elseif(je>js)then
    write(ui,formhead)'  j','x2','dvol'
    i=is;k=ks
    do j = js, je
     write(ui,formval)j,x2(j),dvol(i,j,k)    
    end do
-  elseif(ke>1)then
+  elseif(ke>ks)then
    write(ui,formhead)'  k','x3','dvol'
    i=is;j=js
    do k = ks, ke
@@ -436,7 +436,7 @@ subroutine write_grid
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3,4,5
   
-  if(ke==1)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
+  if(ke==ks)then! For 2D Cartesian, polar or axisymmetrical spherical
    write(ui,formhead)'  i','j','x1','x2','dvol'
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
@@ -464,7 +464,7 @@ subroutine write_grid
     write(ui,'()')
    end if
    
-  elseif(je==1)then! mainly for 2D Cartesian or axisymmetrical cylindrical
+  elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    write(ui,formhead)'  i','k','x1','x3','dvol'
    j=js
    do k = ks, ke, outres
@@ -477,7 +477,7 @@ subroutine write_grid
     write(ui,'()')
    end do   
    
-  elseif(ie==1)then! For 2D Cartesian
+  elseif(ie==is)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    write(ui,formhead)'  j','k','x2','x3','dvol'
    i=is
@@ -696,17 +696,17 @@ subroutine write_plt
 ! 1D outputs
  case(1)
  
-  if(ie>1)then
+  if(ie>is)then
    j=js;k=ks
    do i = is, ie
     call write_val(ui,i,j,k,forme,header)
    end do
-  elseif(je>1)then
+  elseif(je>js)then
    i=is;k=ks
    do j = js, je
     call write_val(ui,i,j,k,forme,header)
    end do
-  elseif(ke>1)then
+  elseif(ke>ks)then
    i=is;j=js
    do k = ks, ke
     call write_val(ui,i,j,k,forme,header)
@@ -716,7 +716,7 @@ subroutine write_plt
 ! 2D outputs
  case(2)
   
-  if(ke==ks)then! For 2D Cartesian, polar coordinates or axisymmetrical spherical
+  if(ke==ks)then! For 2D Cartesian, polar or axisymmetrical spherical
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
@@ -754,7 +754,7 @@ subroutine write_plt
     write(ui,'()')
    end do   
    
-  elseif(ie==1)then! For 2D Cartesian
+  elseif(ie==is)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    i=is
    do k = ks, ke
@@ -1169,23 +1169,23 @@ subroutine get_header(header,columns)
 ! Decide which velocity components to output
  select case(dim)
  case(1)
-  if(ie>1)then
+  if(ie>is)then
    call add_column('v1',columns,header)
-  elseif(je>1)then
+  elseif(je>js)then
    call add_column('v2',columns,header)
-  elseif(ke>1)then
+  elseif(ke>ks)then
    call add_column('v3',columns,header)
   end if
  case(2)
-  if(ke==1)then
+  if(ke==ks)then
    call add_column('v1',columns,header)
    call add_column('v2',columns,header)
    if(write_other_vel)call add_column('v3',columns,header)
-  elseif(je==1)then
+  elseif(je==js)then
    call add_column('v1',columns,header)
    if(write_other_vel)call add_column('v2',columns,header)
    call add_column('v3',columns,header)
-  elseif(ie==1)then
+  elseif(ie==is)then
    if(write_other_vel)call add_column('v1',columns,header)
    call add_column('v2',columns,header)
    call add_column('v3',columns,header)
