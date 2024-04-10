@@ -164,7 +164,7 @@ contains
 
 ! Define weight function = volume
   allocate(w,mold=var)
-  w(is:ie,js:je,ks:ke) = dvol(is:ie,js:je,ks:ke)
+  w(:,:,:) = dvol(is:ie,js:je,ks:ke)
 
   if(pos>0d0)then ! for strictly positive quantities
    norm = sum(abs(var/var0-1d0)*w)/sum(w)
@@ -184,17 +184,22 @@ contains
 
   pos = maxval(var)*minval(var)
 
+  ! var and var0, when passed through as regular array arguments,
+  ! have the same shape as the original arrays, but indices starting from 1,
+  ! not is, js, ks. When relerr and w are allocated with mold=var, they will
+  ! also have indices starting from 1.
+
   allocate(relerr,w,mold=var)
-  w(is:ie,js:je,ks:ke) = dvol(is:ie,js:je,ks:ke)
+  w(:,:,:) = dvol(is:ie,js:je,ks:ke)
 
 ! Weigh down the error if there is a discontinuity within this number of cells
   disco_range = 3
-  do k = ks, ke
-   kl=min(disco_range,k-ks);ku=min(disco_range,ke-k)
-   do j = js, je
-    jl=min(disco_range,j-js);ju=min(disco_range,je-j)
-    do i = is, ie
-     il=min(disco_range,i-is);iu=min(disco_range,ie-i)
+  do k = lbound(var,3), ubound(var,3)
+   kl=min(disco_range,k-lbound(var,3));ku=min(disco_range,ubound(var,3)-k)
+   do j = lbound(var,2), ubound(var,2)
+    jl=min(disco_range,j-lbound(var,2));ju=min(disco_range,ubound(var,2)-j)
+    do i = lbound(var,1), ubound(var,1)
+     il=min(disco_range,i-lbound(var,1));iu=min(disco_range,ubound(var,1)-i)
      base = var0(i,j,k)
      denom = maxval(abs(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku)))
      floor = 0d0
