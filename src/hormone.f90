@@ -191,7 +191,7 @@ program hormone
 
   if(tn/=0)call output ! To see final state
 
-  print *, 'Calculation complete! tn = ',tn
+  if(myrank==0) print *, 'Calculation complete! tn = ',tn
 
   if(is_test) then
     call test(passed)
