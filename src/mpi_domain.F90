@@ -31,6 +31,7 @@ module mpi_domain
       integer :: dims(3), coords(3)
       logical :: periods(3)
       integer :: mycoords(3)
+      integer :: i
 #endif
 
       is_global = is
@@ -81,13 +82,25 @@ module mpi_domain
       if (mycoords(2) == dims(2) - 1) je = ny - (js_global - 1)
       if (mycoords(3) == dims(3) - 1) ke = nz - (ks_global - 1)
 
-      if (myrank == 0) then
-         print*, 'Global domain: ', is_global, ie_global, js_global, je_global, ks_global, ke_global
-      endif
-
-      print*, 'Rank ', myrank, ' has domain ', is, ie, js, je, ks, ke
-
       call setup_mpi_exchange
+
+      ! Print out the domain decomposition
+      if (myrank == 0) then
+         write(*,'(A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A)') 'Global domain (', is_global, ':', ie_global, ',', js_global, ':', je_global, ',', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
+      endif
+      call MPI_Barrier(cart_comm, ierr)
+
+      do i = 1, nprocs
+         if (myrank == i-1) then
+            write(*,'(A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, ')'
+         endif
+         call MPI_Barrier(cart_comm, ierr)
+      enddo
+
+      if (myrank == 0) then
+         write(*, *)
+      endif
+      call MPI_Barrier(cart_comm, ierr)
 
 #endif
 
