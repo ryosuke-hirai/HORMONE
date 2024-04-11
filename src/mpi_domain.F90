@@ -28,7 +28,7 @@ module mpi_domain
 #ifdef MPI
       integer :: nx, ny, nz
       integer :: ierr
-      integer :: dims(3), coords(3)
+      integer :: dims(3)
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
