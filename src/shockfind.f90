@@ -26,7 +26,7 @@ contains
 
   call start_clock(wtsho)
 
-  if(crdnt==2.and.ke==1)then
+  if(crdnt==2.and.ke==ks)then
 !$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
    do k = ks, ke
     do j = js, je
@@ -53,7 +53,7 @@ contains
     end do
    end do
 !$omp end parallel do
-  elseif(crdnt==1.and.je==1)then
+  elseif(crdnt==1.and.je==js)then
 !$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
    do k = ks, ke
     do j = js, je

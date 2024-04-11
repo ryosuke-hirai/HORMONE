@@ -143,7 +143,7 @@ subroutine gravity
 !$omp end parallel do
 
 
-  if(je==1.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
+  if(je==js.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
 
    do k = gks,gke
     do j = js,je
@@ -154,7 +154,7 @@ subroutine gravity
    grvphi(gis:gie,js:je,gks-2) = grvphi(gis:gie,js:je,gks)
    grvphi(gis:gie,js:je,gks-1) = grvphi(gis:gie,js:je,gks)
 
-  elseif(ke==1.and.crdnt==2.and.dim==2)then ! for spherical coordinates (2D)
+  elseif(ke==ks.and.crdnt==2.and.dim==2)then ! for spherical coordinates (2D)
 
    grvphi(is-1:gie+1,js-2,ks) = grvphi(is-1:gie+1,js+1,ks)
    grvphi(is-1:gie+1,js-1,ks) = grvphi(is-1:gie+1,js,ks)
@@ -789,7 +789,7 @@ subroutine gravsetup
 ! For Hyperbolic gravity solver ----------------------------------------------
  if(gravswitch==3)then
 ! for axisymmetric cylindrical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  if(je==1.and.dim==2.and.crdnt==1)then
+  if(je==js.and.dim==2.and.crdnt==1)then
 ! Cartoon mesh method
    allocate( hg123(gis-1:gie+1,1:1,gks-1:gke+1), &
              lag(-1:1,gis-1:gie+1),&
@@ -860,7 +860,7 @@ subroutine gravsetup
    end do
 
 ! for axisymmetrical spherical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  elseif(crdnt==2.and.ke==1.and.dim==2)then
+  elseif(crdnt==2.and.ke==ks.and.dim==2)then
 ! Normal discretization
    allocate( hg123(gis:gie,gjs:gje,1:1) )
    allocate( hg11(gis:gie),hg12(gis:gie) )

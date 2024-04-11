@@ -316,7 +316,7 @@ contains
 !------------------------------------------------------------------------------
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  if(crdnt==2.and.ke==1)then
+  if(crdnt==2.and.ke==ks)then
    k = ks
    ml = 0d0
 !$omp parallel do private(i,j) collapse(2) reduction(+:ml)
