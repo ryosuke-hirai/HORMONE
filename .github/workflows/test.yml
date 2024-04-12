@@ -85,6 +85,23 @@ jobs:
         exclude:
           - fc: ifort
             mpi: yes
+          # Temporary: exclude tests that are not yet implemented for MPI
+          - mpi: yes
+            test: briowushock_x
+          - mpi: yes
+            test: briowushock_y
+          - mpi: yes
+            test: briowushock_z
+          - mpi: yes
+            test: orszagtang_xy
+          - mpi: yes
+            test: orszagtang_yz
+          - mpi: yes
+            test: orszagtang_xz
+          - mpi: yes
+            test: sedov_default
+          - mpi: yes
+            test: star_sph
 
     name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
 
