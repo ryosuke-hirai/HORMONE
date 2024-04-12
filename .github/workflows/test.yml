@@ -86,6 +86,8 @@ jobs:
           - fc: ifort
             mpi: yes
 
+    name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
+
     steps:
     - uses: actions/checkout@v4
 
