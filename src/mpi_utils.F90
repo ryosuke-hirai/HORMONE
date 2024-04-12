@@ -4,7 +4,7 @@ module mpi_utils
 #endif
   implicit none
 
-  integer :: myrank, nprocs
+  integer :: myrank, nprocs, type_mpi_array
 
   contains
 
