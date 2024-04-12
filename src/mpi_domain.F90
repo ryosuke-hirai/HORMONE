@@ -215,18 +215,27 @@ module mpi_domain
 #ifdef MPI
       integer :: d
       integer :: ierr
+      integer :: i, n
 
       do d = 1, 3
+         n = 1
          if (d == 1) then
             if (is_global == ie_global) cycle
             if (is==is_global .and. ie==ie_global) cycle
+            if (is == ie) n = 2
          else if (d == 2) then
             if (js_global == je_global) cycle
             if (js==js_global .and. je==je_global) cycle
+            if (js == je) n = 2
          else if (d == 3) then
             if (ks_global == ke_global) cycle
             if (ks==ks_global .and. ke==ke_global) cycle
+            if (ks == ke) n = 2
          endif
+
+         ! If the domain is only one cell wide in this direction, exchange twice
+         ! so that the ghost cells (two deep) are propagated correctly
+         do i = 1, n
 
          ! Send left real cells to left neighbour's right ghost cells
          call MPI_Sendrecv(val(l_real (1,d), l_real (2,d), l_real (3,d)), 1, subarray(d), left_rank (d), 0, &
@@ -237,6 +246,7 @@ module mpi_domain
          call MPI_Sendrecv(val(r_real (1,d), r_real (2,d), r_real (3,d)), 1, subarray(d), right_rank(d), 0, &
                            val(l_ghost(1,d), l_ghost(2,d), l_ghost(3,d)), 1, subarray(d), left_rank (d), 0, &
                            cart_comm, MPI_STATUS_IGNORE, ierr)
+         enddo
       enddo
 #endif
    end subroutine exchange_scalar
