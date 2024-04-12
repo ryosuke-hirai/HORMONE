@@ -42,6 +42,7 @@ jobs:
       run: make ${{ matrix.debug == 'yes' && 'debug' || '' }}
       env:
         FC: ${{ matrix.fc }}
+        MPI: ${{ matrix.mpi }}
 
     - name: Save binary as artifact
       uses: actions/upload-artifact@v4
