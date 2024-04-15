@@ -26,14 +26,14 @@
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
-&eos_con eostype = 0 eoserr=1d-15  /
+&eos_con eostype = 0 eoserr=1d-15 gamma=1.4d0 /
 
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
 &simucon  crdnt=0 mag_on=.false. /
 
-! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
+! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)
 ! eq_sym : Set to .true. for equatorial symmetry
 &bouncon  bc1is=0 bc1os=0 bc2is=0 bc2os=0 bc3is=0 bc3os=0

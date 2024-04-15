@@ -45,12 +45,10 @@ subroutine shocktube
 ! Select the type of shock tube problem
  select case(simtype(1:strl-2))
  case('sodshock')
-  gamma = 1.4d0
   dl = 1d0 ; dr = 0.125d0
   pl = 1d0 ; pr = 0.1d0
 
  case('briowushock')
-  gamma = 2d0
   dl  = 1d0    ; dr  = 0.125d0
   pl  = 1d0    ; pr  = 0.1d0
   select case(dir)

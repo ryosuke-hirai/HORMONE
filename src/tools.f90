@@ -54,7 +54,7 @@ subroutine tools
    Pl(1,j) = cosc(j)
    Pl(2,j) = (3d0*cosc(j)*Pl(1,j) - Pl(0,j)) * 0.5d0
 
-   do ll=3,llmax 
+   do ll=3,llmax
     Pl(ll,j)   = (dble(2*ll-1)*cosc(j)*Pl(ll-1,j) &
                -  dble(ll-1)          *Pl(ll-2,j)) /dble(ll)
    end do
@@ -86,7 +86,7 @@ subroutine tools
 !!$ deallocate(dum)
 !!$
 !!$ do i = 1, lines
-!!$  read(40,*) dat(lines-i+1,1:rows) 
+!!$  read(40,*) dat(lines-i+1,1:rows)
 !!$ end do
 !!$
 !!$ allocate(comp_ej(0:8,1:lines))
@@ -128,7 +128,6 @@ subroutine tools
 !!$ comp_ej(0:8,1:compsize) = dat(0:8,compsize:1:-1)
 
 ! EoS parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- gamma = 5d0/3d0 ! for EoS
  fac_egas = kbol/((gamma-1d0)*amu) ! frequently used factor for egas
  fac_pgas = kbol/amu ! frequently used factor for Pgas
  imu(is-2:ie+2,js-2:je+2,ks-2:ke+2) = 1d0/muconst

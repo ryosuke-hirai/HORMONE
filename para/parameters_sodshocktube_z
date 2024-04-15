@@ -26,7 +26,7 @@
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
-&eos_con eostype = 0  /
+&eos_con eostype = 0 gamma=1.4d0 /
 
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
