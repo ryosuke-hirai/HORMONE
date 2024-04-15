@@ -460,8 +460,8 @@ subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
  real(8),allocatable,dimension(:),intent(inout)::rho,p
  integer,intent(out)::ierr
 
- integer Nmax,i
- real(8)::Sc,mass,mold,msoft,fac,Sedge,T,imu,eostype0
+ integer Nmax,i,eostype0
+ real(8)::Sc,mass,mold,msoft,fac,Sedge,T,imu
 
 !-----------------------------------------------------------------------------
 
