@@ -39,9 +39,9 @@ subroutine gravity
 !-----------------------------------------------------------------------------
 
  if(gravswitch==0.or.gravswitch==1)return
- 
+
  call start_clock(wtgrv)
- 
+
  gin = gie - gis + 1
  gjn = gje - gjs + 1
  gkn = gke - gks + 1
@@ -51,7 +51,7 @@ subroutine gravity
 
  if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
   allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
- 
+
   if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -277,7 +277,7 @@ if(gravswitch==3.and.tn/=0)then
 ! Axisymmetric spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   allocate(newphi,mold=hgsrc)
-  
+
   k = gks
 
   tngrav = ceiling((time+dt-grvtime)/dtgrav)
@@ -314,7 +314,7 @@ if(gravswitch==3.and.tn/=0)then
      grvphi(i,j,k) = newphi(i,j,k)
     end do
    end do
-!$omp end do 
+!$omp end do
 
 !$omp single
    dt_old  = dtgrav
@@ -326,7 +326,7 @@ if(gravswitch==3.and.tn/=0)then
 ! Boundary conditions
 !$omp do
   do j = gjs, gje
-   grvphi(gis-1,j,gks) = grvphi(gis,j,gks)   
+   grvphi(gis-1,j,gks) = grvphi(gis,j,gks)
   end do
 !$omp end do nowait
 !$omp do
@@ -504,7 +504,7 @@ if(gravswitch==3.and.tn/=0)then
 !!$    end do
 !!$   end do
 !!$!$omp end do
-!!$   
+!!$
 !!$!$omp do private(i,j,k) collapse(3) schedule(static)
 !!$   do k = gks, gke
 !!$    do j = gjs, gje
@@ -550,9 +550,9 @@ if(gravswitch==3.and.tn/=0)then
 !!$  grvphi(gis:gie,gjs:gje,gke+1) = grvphi(gis:gie,gjs:gje,gks)
 !!$!$omp end workshare
 !!$!$omp end parallel
-!!$  
+!!$
 !!$  deallocate(newphi)
-  
+
  end if
 
  call stop_clock(wthyp)
@@ -653,10 +653,10 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
     end if
     if(i==ie)cg%A(2,l) = 0d0
     if(k==ke)cg%A(3,l) = 0d0
-    
+
     if(eq_sym.and.k==ks)& ! for Neumann boundary at bc3i (equatorial symmetry)
      cg%A(1,l) = cg%A(1,l) + x1(i)*dxi1(i)/dx3(k+1)
-   
+
    end do
 
 ! 2D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -699,9 +699,9 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
   cg%ic(3) = in-1
   cg%ic(4) = in
   cg%alpha = 0.99d0
-  
 
- case(3) ! 3D 
+
+ case(3) ! 3D
 ! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if(crdnt==2)then
 
@@ -764,7 +764,7 @@ end subroutine setup_grvcg
 ! PURPOSE: To set up the matrix for Poisson equation
 
 subroutine gravsetup
-  
+
  use settings,only:courant
  use constants,only:huge
  use grid
@@ -785,7 +785,7 @@ subroutine gravsetup
  if(gravswitch==2.or.gravswitch==3)then
   call setup_grvcg(gis,gie,gjs,gje,gks,gke,cg_grv)
  end if
- 
+
 ! For Hyperbolic gravity solver ----------------------------------------------
  if(gravswitch==3)then
 ! for axisymmetric cylindrical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -899,7 +899,7 @@ subroutine gravsetup
    if(gbtype==1)hg11(gie) = 0d0
    hg21(gje) = 0d0
    hg22(gjs) = 0d0
-   
+
    hg_dx = huge
    do j = js, je
     do i = is, ie

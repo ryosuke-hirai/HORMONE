@@ -285,7 +285,7 @@ subroutine allocations
   allocate(snkphi,mold=d)
   allocate(sink(1:nsink))
  end if
- 
+
  return
 end subroutine allocations
 

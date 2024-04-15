@@ -49,7 +49,7 @@ subroutine shocktube
   gamma = 1.4d0
   dl = 1d0 ; dr = 0.125d0
   pl = 1d0 ; pr = 0.1d0
-  
+
  case('briowushock')
   mag_on = .true.
   gamma = 2d0
@@ -69,7 +69,7 @@ subroutine shocktube
    b2l = 0d0    ; b2r = 0d0
    b3l = 0.75d0 ; b3r = 0.75d0
   end select
-  
+
  case('other_shocktube')
   open(newunit=ui,file=extrasfile,status='old',iostat=istat)
   if(istat/=0)call error_extras('shocktube',extrasfile)

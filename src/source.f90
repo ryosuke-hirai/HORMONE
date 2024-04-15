@@ -163,7 +163,7 @@ subroutine source
 
  if(radswitch>0)     call radiative_force
  if(include_extforce)call externalforce
- 
+
  call stop_clock(wtsrc)
 
  return
@@ -252,7 +252,7 @@ subroutine phidamp
 
 ! ratio between diffusive and advection timescales (td/ta)
  alpha9wave = 0.1d0
- 
+
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je

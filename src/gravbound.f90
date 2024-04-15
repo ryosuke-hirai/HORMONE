@@ -106,7 +106,7 @@ contains
 
    do i = gis, gie
     do k = gke+1, gke+2
-     grvphi(i,js,k) = phi3o(i,k)     
+     grvphi(i,js,k) = phi3o(i,k)
     end do
     do k = gks-2, gks-1
      grvphi(i,js,k) = phi3i(i,k)

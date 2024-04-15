@@ -63,7 +63,7 @@ subroutine eci
  deallocate(dum)
 
  do i = 1, lines
-  read(40,*) dat(lines-i+1,1:rows) 
+  read(40,*) dat(lines-i+1,1:rows)
  end do
 
  allocate(m(1:lines),r(1:lines),pres(1:lines),rho(1:lines),ene(1:lines), Temp(1:lines),&
@@ -188,7 +188,7 @@ subroutine eci
   if(rnow<=rsoft)then
    shellp = shellp - G*(mnow/(rnow*rnow)+coremass*rnow/rsoft**3d0)*shelld*dr
   else
-   shellp = shellp - G*(mnow+coremass)/(rnow*rnow)*shelld*dr   
+   shellp = shellp - G*(mnow+coremass)/(rnow*rnow)*shelld*dr
   end if
   do k = ks, ke
    do i = is, ie
@@ -204,7 +204,7 @@ subroutine eci
  end do
 
  p(is:ie,js:je,ks:ke) = p(is:ie,js:je,ks:ke) - minval(p(is:ie,js:je,ks:ke))+pres(lines)
- 
+
  shellv = 0d0
  do k = ks, ke
   do i = is, ie
@@ -314,4 +314,3 @@ close(9191)
 
  return
 end subroutine eci
-

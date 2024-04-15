@@ -49,7 +49,7 @@ subroutine miccg(cg,b,x)
   normb = normb + b(l)**2
  end do
 !$omp end do
- 
+
  call Apk(cg,x,p)
 
 !$omp do private(l)
@@ -92,7 +92,7 @@ subroutine miccg(cg,b,x)
 !$omp end single
 !$omp do private(l) reduction(+:error)
   do l = 1, lmax
-   x(l) = x(l) + alpha*p(l) ! x_k+1 = x_k + alpha*p_k 
+   x(l) = x(l) + alpha*p(l) ! x_k+1 = x_k + alpha*p_k
    r(l) = r(l) - alpha*q(l) ! r_k+1 = r_k - alpha*Ap_k
    error = error + r(l)**2
   end do
@@ -128,7 +128,7 @@ subroutine miccg(cg,b,x)
 ! End loop =================================================================
 
 !$omp end parallel
- 
+
  deallocate(r,p,q)
 
 return
@@ -162,7 +162,7 @@ subroutine Apk(cg,p,q)
    end do
   end do
 !$omp end do
-  
+
  return
 end subroutine Apk
 
@@ -244,7 +244,7 @@ pure subroutine ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
  i=is+i-1
  j=js+j
  k=ks+k
- 
+
 return
 end subroutine ijk_from_l
 
@@ -279,7 +279,7 @@ subroutine get_preconditioner(cg)
   end do
  end do
 !$omp end parallel do
- 
+
  do l = 1, cg%lmax
 
   do ll = 2, cg%cdiags
@@ -315,4 +315,3 @@ return
 end subroutine get_preconditioner
 
 end module miccg_mod
-

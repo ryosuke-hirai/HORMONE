@@ -1,7 +1,7 @@
 module merger_mod
 
  use constants
- 
+
  implicit none
  real(8),parameter:: sep = 20d0*rsun
  real(8),allocatable:: spin_coeffr(:), spin_coefft(:)
@@ -37,7 +37,7 @@ contains
 !-----------------------------------------------------------------------------
 
   allocate(Edist(js:je),Edistorg(js:je),heatV(js:je))
-  
+
   if(time==inifile)then
    open(unit=60,file='data/angmom.dat',status='replace')
 
@@ -71,7 +71,7 @@ contains
    open(unit=100,file='data/iniEJ.dat',status='replace',form='unformatted')
    write(100)iniEtot,iniJtot,Iinertia,Jinitial,Einitial,Mtot,Edistorg
    close(100)
- 
+
   else
    open(unit=60,file='data/angmom.dat',status='old',position='append')
    open(unit=100,file='data/iniEJ.dat',status='old',form='unformatted')
@@ -79,7 +79,7 @@ contains
    close(100)
   end if
 
-  
+
   M1 = 0.5d0*Mtot
   Einject = -G*M1*(Mtot-M1)/(2d0*sep)
   Jinject = M1*(Mtot-M1)/Mtot*sqrt(G*Mtot*sep)
@@ -147,7 +147,7 @@ subroutine merger
      !        if(grvphi(i,j,k)*d(i,j,k)+e(i,j,k)<0d0)then
      !        if(x1(i)>sep*0.5d0.and.x1(i)<sep*1d0)then
      if(d(i,j,k)<=din.and.d(i,j,k)>=dout)then
-      heatV(j) = heatV(j) + d(i,j,k)*dvol(i,j,k)*2d0          
+      heatV(j) = heatV(j) + d(i,j,k)*dvol(i,j,k)*2d0
      end if
      !        Erot=Erot+0.5d0*d(i,j,k)*v2(i,j,k)*v2(i,j,k)*dvol(i,j,k)*2d0
      curEtot = curEtot + (0.5d0*grvphi(i,j,k)*d(i,j,k)+e(i,j,k))&

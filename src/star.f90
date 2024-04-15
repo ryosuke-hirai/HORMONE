@@ -25,7 +25,7 @@ subroutine replace_core(rcore,r,m,rho,pres,comp,comp_list)
  integer::i,j,ih1,ihe4,ierr
  real(8):: mcore,mpt,imuh
  real(8),allocatable,dimension(:):: softr,softrho,softp
- 
+
 !-----------------------------------------------------------------------------
 
  if(rcore<=0d0)return
@@ -91,7 +91,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use physval
  use gravmod,only:gravswitch,grvphi,grvphiold,mc
  use utils,only:intpol
- 
+
  real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
@@ -104,7 +104,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  lines = size(r)-1
  mass = m(lines)
  radius = r(lines)
- 
+
 ! calculate gravitational potential
  allocate(gpot(0:lines))
  do n = 0, lines-1
@@ -135,7 +135,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  do i = is, ie
   Vshell(i) = sum(dvol(i,js:je,ks:ke))
  end do
- 
+
  if(eq_sym)then
   volfac=2d0
  else
@@ -240,7 +240,7 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
    rdis0(i,k) = sqrt( x1(i)**2+x3(k)**2 )
   end do
  end do
- 
+
  mass=m(size(m)-1)
  radius=r(size(r)-1)
  dr = dx1(is)*1.d0
@@ -334,7 +334,7 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
 
 return
 end subroutine set_star_cyl_grid
- 
+
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                       SUBROUTINE ONE_SHOT_INWARDS
@@ -347,7 +347,7 @@ subroutine one_shot_inwards(Sc,imu,r,mcore,msoft,rho,p,mass)
  use constants,only:G,pi
  use pressure_mod,only:get_d_from_ps
  use utils,only:softened_acc
- 
+
  real(8),intent(in)::Sc,mcore,msoft
  real(8),intent(inout)::imu
  real(8),allocatable,dimension(:),intent(in)::r
@@ -394,7 +394,7 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
  use constants,only:G,pi
  use pressure_mod,only:get_d_from_ps
  use utils,only:softened_acc
- 
+
  real(8),intent(in)::Sc,rsoft
  real(8),intent(inout)::imu
  real(8),allocatable,dimension(:),intent(in)::m
@@ -439,7 +439,7 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
  end do convergence_loop
 
 ! print'(4(1PE13.5e2))',r(i),m(i),rho(i),p(i)
- 
+
 return
 end subroutine isentropic_star1
 
@@ -468,7 +468,7 @@ subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
 ! Instructions
 
 ! input variables should be given in the following format
- 
+
 ! r(0:Nmax+1): Array of radial grid. Should be set so that r(0)=0 and r(Nmax)=hsoft
 ! mpt: Core particle mass
 ! mh: Mass coordinate at hsoft
@@ -481,7 +481,7 @@ subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
 ! This module does not work with non-ideal EoSs
  eostype0 = eostype
  if(eostype>=2) eostype = 1
- 
+
  ierr=0
  mpt=mh*0.5d0 ! initial guess for point particle mass
  msoft=mh-mpt
@@ -530,7 +530,7 @@ subroutine isentropic_star(mass,radius,mcore,rsoft,imu,m,r,rho,p)
  use constants,only:G,pi
  use pressure_mod,only:eostype,entropy_from_dp
  use utils,only:geometrical_series
- 
+
  real(8),intent(in)::mass,radius,mcore,rsoft
  real(8),intent(inout):: imu
  real(8),allocatable,dimension(:),intent(inout)::m,r,rho,p
@@ -544,7 +544,7 @@ subroutine isentropic_star(mass,radius,mcore,rsoft,imu,m,r,rho,p)
 ! This module does not work with non-ideal EoSs
  eostype0 = eostype
  if(eostype>=2) eostype = 1
- 
+
  Nmax = 3000
  allocate( m(0:Nmax),r(0:Nmax),rho(0:Nmax),p(0:Nmax),dm(-1:Nmax+2) )
  m(0) = mcore

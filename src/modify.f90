@@ -117,7 +117,7 @@ subroutine blowup
  integer:: i,j,k,iinj
  real(8):: Ebind,Eexp,Rinj,rad,Mheat
  character(len=30)::startfile
- 
+
 !-----------------------------------------------------------------------------
 
  start = 20000
@@ -135,7 +135,7 @@ subroutine blowup
    end do
   end do
  end do
- 
+
  t_out = time + dt_out
  if(gravswitch==3)grvtime = time
 
