@@ -284,11 +284,19 @@ subroutine write_real8(fh, var)
 end subroutine write_real8
 
 subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
+  use mpi_utils, only: type_mpi_array
   integer, intent(in) :: fh
   real(8), intent(in) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
 #ifdef MPI
-  ! TODO: MPI
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: ierr, nbuff
+
+  nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
+
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, type_mpi_array, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend,jstart:jend,kstart:kend)
 #endif
@@ -299,8 +307,11 @@ subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
   integer, intent(in) :: fh
   real(8), intent(in) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
+
+  ! TODO MPI
 #ifdef MPI
-  ! TODO: MPI
+  print*, "ERROR: write_array_4d_real8 not implemented for MPI"
+  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
 #else
   write(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
@@ -311,8 +322,11 @@ subroutine write_array_1d_sink(fh, arr, istart, iend)
   integer, intent(in) :: fh
   type(sink_prop), intent(in) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
+
+  ! TODO MPI
 #ifdef MPI
-  ! TODO: MPI
+  print*, "ERROR: write_array_1d_sink not implemented for MPI"
+  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
 #else
   write(fh) arr(istart:iend)
 #endif
@@ -323,8 +337,11 @@ subroutine write_array_1d_char(fh, arr, istart, iend)
   integer, intent(in) :: fh
   character(len=10), intent(in) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
+
+  ! TODO MPI
 #ifdef MPI
-  ! TODO: MPI
+  print*, "ERROR: write_array_1d_char not implemented for MPI"
+  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
 #else
   write(fh) arr(istart:iend)
 #endif
