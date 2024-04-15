@@ -173,13 +173,7 @@ subroutine read_dummy_recordmarker(fh, legacy)
   integer :: dummy
 
   if (legacy) then
-#ifdef MPI
-    call mpi_file_set_view(fh, offset, MPI_INTEGER4, MPI_INTEGER4, 'native', MPI_INFO_NULL, ierr)
-    call mpi_file_read_all(fh, dummy, 1, MPI_INTEGER4, MPI_STATUS_IGNORE, ierr)
-    call update_offset(fh, MPI_INTEGER4)
-#else
-    read(fh) dummy
-#endif
+    call read_int4(fh, dummy)
   endif
 
 end subroutine read_dummy_recordmarker
