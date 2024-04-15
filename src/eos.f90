@@ -271,7 +271,8 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
  real(8),intent(in):: d,T
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: imu
- real(8):: p,entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+ real(8):: p,entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,xion(1:4)
+ real(8):: eta = 0.  ! Set to zero for now
 
  select case(eostype)
  case(0) ! ideal gas
