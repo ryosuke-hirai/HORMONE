@@ -31,6 +31,7 @@ contains
   use gravmod
   use pressure_mod
   use output_mod
+  use utils, only: isequal
 
   integer:: i,j,k
 
@@ -38,7 +39,7 @@ contains
 
   allocate(Edist(js:je),Edistorg(js:je),heatV(js:je))
 
-  if(time==inifile)then
+  if(isequal(time, inifile))then
    open(unit=60,file='data/angmom.dat',status='replace')
 
 !   call conserve
@@ -103,6 +104,7 @@ subroutine merger
  use grid
  use physval
  use gravmod
+ use utils,only:isequal
 
  integer:: i,j,k
 
@@ -124,13 +126,13 @@ subroutine merger
   domega_dt = 0d0
  end if
 
- if(domega_dt==0d0.and.(.not.heatdone))then
+ if(isequal(domega_dt, 0d0) .and. (.not.heatdone))then
   heatV = 0d0;Erot=0d0;curEtot = 0d0
   din = 0d0;dout = 0d0
   do i = is, ie
-   if(x1(i)>0.5d0*sep.and.din==0d0)then
+   if(x1(i)>0.5d0*sep .and. isequal(din, 0d0))then
     din = d(i,je,ks)
-   elseif(x1(i)>1d0*sep.and.dout==0d0)then
+   elseif(x1(i)>1d0*sep .and. isequal(dout, 0d0))then
     dout = d(i,je,ks)
     exit
    end if

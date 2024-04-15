@@ -765,6 +765,7 @@ end subroutine setup_grvcg
 
 subroutine gravsetup
 
+ use utils,only:isequal
  use settings,only:courant
  use constants,only:huge
  use grid
@@ -778,7 +779,7 @@ subroutine gravsetup
 
 ! set initial x0
 
- if(tn==0.and.maxval(grvphi(gis:gie,gjs:gje,gks:gke))==0d0) grvphi = -1d3
+ if(tn==0 .and. isequal(maxval(grvphi(gis:gie,gjs:gje,gks:gke)), 0d0)) grvphi = -1d3
 
  if(tn==0) dt_old = dt
 

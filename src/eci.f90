@@ -12,7 +12,7 @@ subroutine eci
  use settings,only:dt_out
  use physval
  use constants
- use utils,only:intpol
+ use utils,only:intpol,isequal
  use ejectamod
  use gravmod,only:extgrv,grvtime,include_extgrv,coremass
  use pressure_mod
@@ -175,13 +175,13 @@ subroutine eci
 
   do k = ks, ke
    do i = is, ie
-    if(rdis(i,k)<=rnow.and.d(i,j,k)==0d0)then
+    if(rdis(i,k)<=rnow .and. isequal(d(i,j,k),0d0)) then
      shellv = shellv + dvol(i,j,k)
     end if
    end do
   end do
   shelld = (mnow-mold)/shellv
-  if(shellv==0d0)then
+  if(isequal(shellv,0d0))then
    rnow = rnow + dr
    cycle
   end if
@@ -192,7 +192,7 @@ subroutine eci
   end if
   do k = ks, ke
    do i = is, ie
-    if(rdis(i,k)<=rnow.and.d(i,j,k)==0d0)then
+    if(rdis(i,k)<=rnow .and. isequal(d(i,j,k),0d0)) then
      d(i,j,k) = shelld
      p(i,j,k) = shellp
     end if
@@ -208,14 +208,14 @@ subroutine eci
  shellv = 0d0
  do k = ks, ke
   do i = is, ie
-   if(rdis(i,k)<=radius+dr.and.d(i,j,k)==0d0)then
+   if(rdis(i,k)<=radius+dr .and. isequal(d(i,j,k),0d0)) then
     shellv = shellv + dvol(i,j,k)
    end if
   end do
  end do
  do k = ks, ke
   do i = is, ie
-   if(rdis(i,k)<radius+dr.and.d(i,j,k)==0d0)then
+   if(rdis(i,k)<radius+dr .and. isequal(d(i,j,k),0d0))then
     d(i,j,k) = (mass-coremass-mnow)/shellv
     p(i,j,k) = pres(lines)
    end if
@@ -224,7 +224,7 @@ subroutine eci
 
  do k = ks, ke
   do i = is, ie
-   if(d(i,j,k)==0d0)then
+   if(isequal(d(i,j,k),0d0))then
     d(i,j,k) = Mdot/(4d0*pi*rdis(i,k)*rdis(i,k)*vwind)
     p(i,j,k) = pres(lines)*1d-2
     v1(i,j,k) = vwind*sincyl(i,k)

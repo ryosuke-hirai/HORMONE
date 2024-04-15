@@ -304,4 +304,10 @@ subroutine masscoordinate
 return
 end subroutine masscoordinate
 
+logical function isequal(a,b)
+  implicit none
+  real(8),intent(in):: a,b
+  isequal = abs(a-b) < epsilon(real(0.,kind=8))
+end function isequal
+
 end module utils
