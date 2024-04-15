@@ -94,12 +94,14 @@ subroutine open_evofile
 
  use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,write_evo,start
  use grid,only:dim
+ use mpi_utils, only:myrank
 
  integer::ierr
  character(len=50):: forma
 
 !-----------------------------------------------------------------------------
 
+ if (myrank/=0) return
  if(.not.write_evo)return
 
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
@@ -144,6 +146,7 @@ subroutine evo_output
  use grid
  use physval
  use gravmod
+ use mpi_utils, only:myrank, allreduce_mpi
 
  implicit none
 
@@ -260,20 +263,33 @@ subroutine evo_output
   if(eq_sym) Jtot = 2d0*Jtot
  end if
 
- write(ievo,'(i10)',advance='no')tn
- call write_anyval(ievo,forme,time)
- call write_anyval(ievo,forme,Mtot)
- call write_anyval(ievo,forme,Etot)
- call write_anyval(ievo,forme,Eitot)
- call write_anyval(ievo,forme,Ektot)
- if(gravswitch>=1)call write_anyval(ievo,forme,Egtot)
- if(gravswitch>=1)call write_anyval(ievo,forme,Mbound)
- if(gravswitch>=1)call write_anyval(ievo,forme,Ebound)
- if(gravswitch>=1)call write_anyval(ievo,forme,Jbound)
- if(mag_on)call write_anyval(ievo,forme,Ebtot)
- if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
- write(ievo,'()')
- flush(ievo)
+ call allreduce_mpi('sum', Mtot)
+ call allreduce_mpi('sum', Etot)
+ call allreduce_mpi('sum', Eitot)
+ call allreduce_mpi('sum', Ektot)
+ call allreduce_mpi('sum', Egtot)
+ call allreduce_mpi('sum', Mbound)
+ call allreduce_mpi('sum', Ebound)
+ call allreduce_mpi('sum', Jbound)
+ call allreduce_mpi('sum', Ebtot)
+ call allreduce_mpi('sum', Jtot)
+
+ if (myrank==0) then
+   write(ievo,'(i10)',advance='no')tn
+   call write_anyval(ievo,forme,time)
+   call write_anyval(ievo,forme,Mtot)
+   call write_anyval(ievo,forme,Etot)
+   call write_anyval(ievo,forme,Eitot)
+   call write_anyval(ievo,forme,Ektot)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Egtot)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Mbound)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Ebound)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Jbound)
+   if(mag_on)call write_anyval(ievo,forme,Ebtot)
+   if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
+   write(ievo,'()')
+   flush(ievo)
+ end if
 
 return
 end subroutine evo_output
