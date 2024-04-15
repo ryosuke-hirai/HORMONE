@@ -38,9 +38,8 @@ subroutine source
   call masscoordinate
 
 !$omp parallel do private(i)
-  ! TODO: k is uninitialized here...
   do i = is, ie
-   grv1(i,js:je,k) = -G*d(i,js:je,k)*mc(i)/x1(i)**2
+   grv1(i,js:je,ks:ke) = -G*d(i,js:je,ks:ke)*mc(i)/x1(i)**2
   end do
 !$omp end parallel do
 
