@@ -108,8 +108,13 @@ subroutine read_array_1d_char(fh, arr, istart, iend)
   character(len=10), allocatable, intent(inout) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
 
-  read(fh) arr(istart:iend)
   ! TODO MPI
+#ifdef MPI
+  print*, "ERROR: read_array_1d_char not implemented for MPI"
+  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+#else
+  read(fh) arr(istart:iend)
+#endif
 
 end subroutine read_array_1d_char
 
@@ -136,9 +141,13 @@ subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
   real(8), allocatable, intent(inout) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
 
+  ! TODO MPI
+#ifdef MPI
+  print*, "ERROR: read_array_4d_real8 not implemented for MPI"
+  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+#else
   read(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
-
-  !TODO MPI
+#endif
 
 end subroutine read_array_4d_real8
 
@@ -148,8 +157,13 @@ subroutine read_array_1d_sink(fh, arr, istart, iend)
   type(sink_prop), allocatable, intent(inout) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
 
-  read(fh) arr(istart:iend)
   ! TODO MPI
+#ifdef MPI
+  print*, "ERROR: read_array_1d_sink not implemented for MPI"
+  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+#else
+  read(fh) arr(istart:iend)
+#endif
 
 end subroutine read_array_1d_sink
 
