@@ -99,7 +99,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
   element_loop: do j = 1, nrel
    do i = 1, rows
     if(trim(header(i))==trim(element_list(j)))then
-     comp_list(nn) = header(i)
+     comp_list(nn) = trim(header(i))
      nn = nn + 1
      if(nn>nel)exit element_loop
      exit
