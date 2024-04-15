@@ -23,7 +23,7 @@ subroutine eostest
  real(8):: Qi, Qf, Q, erec, imu2, imu3, T0, cs
  real(8):: T3, p3, p4, d2, S, T4
  real(8):: rerrp1,rerrp2,rerrp3,rerrT1,rerrT2,rerrd1
- integer:: i,j,k, iie, jje, kke, ierr, ui
+ integer:: j,k, iie, jje, kke, ierr, ui
  character(len=100):: form1
 
 !-----------------------------------------------------------------------------
@@ -33,7 +33,7 @@ subroutine eostest
  jje = 100
  kke = 100
  Z = 0.02d0
- 
+
 ! Set range of grid for the EoS test
  Xi = 0.6d0
  Xf = 0.8d0
@@ -93,7 +93,7 @@ subroutine eostest
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
     p4/p-1d0,S,d2
-   
+
   end do
   write(ui,'()')
  end do
@@ -154,7 +154,7 @@ subroutine eostest
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
     p4/p-1d0,S,d2
-   
+
   end do
   write(ui,'()')
  end do
@@ -169,7 +169,7 @@ subroutine eostest
  print form1,'get_p_from_ds: pressure =',rerrp3
  print*,'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
  print*,''
- 
+
 ! Test gas + radiation + recombination EoS
  print*,'Testing gas+rad+rec EoS forwards and backwards consistency...'
  eostype = 2
@@ -220,7 +220,7 @@ subroutine eostest
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
     p4/p-1d0,S,d2
-   
+
   end do
   write(ui,'()')
  end do
@@ -235,7 +235,7 @@ subroutine eostest
  print*,'Entropy calculations for eostype=2 currently under construction'
 
  stop
- 
+
 return
 end subroutine eostest
 

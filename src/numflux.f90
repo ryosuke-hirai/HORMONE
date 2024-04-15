@@ -13,7 +13,7 @@ contains
 
  subroutine numflux
 
-  use settings,only:compswitch,spn,eq_sym,eostype,mag_on,fluxbound_on,&
+  use settings,only:compswitch,spn,eostype,mag_on,fluxbound_on,&
                     bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
   use grid
   use physval
@@ -23,7 +23,7 @@ contains
   use interpolation_mod
   use fluxbound_mod
   use profiler_mod
-  
+
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
            v2l, v2r, v3l, v3r, eil, eir, csl, csr, fix
@@ -129,17 +129,17 @@ contains
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(1) = rinji
 !!$
-!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
+!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r
 !!$       ul = dl*v1l ; ur = dr*v1r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(2) = rinji
 !!$
-!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
+!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r
 !!$       ul = dl*v2l ; ur = dr*v2r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(3) = rinji
 !!$
-!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
+!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r
 !!$       ul = dl*v3l ; ur = dr*v3r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(4) = rinji
@@ -169,7 +169,7 @@ contains
 !!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$        tmpflux(9) = rinji
 !!$       end if
-!!$       
+!!$
 !!$      end if
 !!$     end if
 
@@ -282,17 +282,17 @@ contains
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(1) = rinji
 !!$
-!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
+!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r
 !!$       ul = dl*v1l ; ur = dr*v1r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(2) = rinji
 !!$
-!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
+!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r
 !!$       ul = dl*v2l ; ur = dr*v2r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(3) = rinji
 !!$
-!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
+!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r
 !!$       ul = dl*v3l ; ur = dr*v3r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(4) = rinji
@@ -312,7 +312,7 @@ contains
 !!$        ul = b2l ; ur = b2r
 !!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$        tmpflux(6) = rinji
-!!$ 
+!!$
 !!$        fl = b3l*v1l-b1l*v3l;fr = b3r*v1r-b1r*v3r
 !!$        ul = b3l ; ur = b3r
 !!$        call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
@@ -443,17 +443,17 @@ contains
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(1) = rinji
 !!$
-!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r 
+!!$       fl = dl*v1l*v1l+ptl-b1l*b1l;fr = dr*v1r*v1r+ptr-b1r*b1r
 !!$       ul = dl*v1l ; ur = dr*v1r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(2) = rinji
 !!$
-!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r 
+!!$       fl = dl*v1l*v2l-b1l*b2l;fr = dr*v1r*v2r-b1r*b2r
 !!$       ul = dl*v2l ; ur = dr*v2r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(3) = rinji
 !!$
-!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r 
+!!$       fl = dl*v1l*v3l-b1l*b3l;fr = dr*v1r*v3r-b1r*b3r
 !!$       ul = dl*v3l ; ur = dr*v3r
 !!$       call hllflux(rinji,fl,fr,ul,ur,cfl,cfr,v1l,v1r)
 !!$       tmpflux(4) = rinji
@@ -516,12 +516,12 @@ contains
      end do
     end do
    end do
-!$omp end do 
+!$omp end do
   end if
 !$omp end parallel
 
   if(fluxbound_on)call fluxboundary
-  
+
   call stop_clock(wtflx)
 
   return

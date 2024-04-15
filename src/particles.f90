@@ -3,12 +3,12 @@ module particle_mod
  use settings,only:include_particles,maxptc
 
  implicit none
- 
+
  integer:: np, jmax, npl
  integer,allocatable,dimension(:,:):: ptci
  integer,allocatable,dimension(:):: ptc_in
  real(8),allocatable:: ptcx(:,:), cosiptc(:), sincptc(:), coscptc(:)
- 
+
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -129,7 +129,7 @@ subroutine particles
 
 ! for axisymmetrical cylindrical coordinates
  if(crdnt==1.and.dim==2.and.je==js)then
-  
+
   n = 1 ; j = js
 
   do
@@ -192,7 +192,7 @@ subroutine particles
     if(ptclt>=x2(j-1))then;if(ptclt<x2(j))then
      do i = is, ie+1
       if(ptclr>=x1(i-1))then;if(ptclr<x1(i))then
-       
+
        v1tmp1 =( v1(i-1,j-1,k)*(x1(i)-ptclr)+v1(i,j-1,k)*(ptclr-x1(i-1)) )&
               * idx1(i)
        v1tmp2 =( v1(i-1,j  ,k)*(x1(i)-ptclr)+v1(i,j  ,k)*(ptclr-x1(i-1)) )&

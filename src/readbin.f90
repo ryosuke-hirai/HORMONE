@@ -107,7 +107,7 @@ subroutine read_extgrv(filename)
  close(ui)
 
  mc(is-1) = coremass
- 
+
  return
 end subroutine read_extgrv
 

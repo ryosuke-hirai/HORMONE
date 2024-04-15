@@ -39,7 +39,7 @@ contains
   elseif(q>=0d0)then
    phi = (2d0/3d0*q**2-0.3d0*q**4+0.1d0*q**5-1.4d0)/h
   end if
- 
+
  end function softened_pot
 
  pure function softened_acc(r,hsoft) result(acc)
@@ -56,7 +56,7 @@ contains
   else
    acc=1d0/r**2
   end if
-  
+
  end function softened_acc
 
 
@@ -69,7 +69,7 @@ contains
 subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
 
  use constants,only:pi
- 
+
  implicit none
 
  real(8),intent(in):: xcar(1:3),x3,v1,v2,v3
@@ -81,8 +81,8 @@ subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
  uvec1 = xcar/norm2(xcar)
  uvec2 = rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
  uvec3 = cross(uvec1,uvec2)
- 
- vcar = v1*uvec1 + v2*uvec2 + v3*uvec3 
+
+ vcar = v1*uvec1 + v2*uvec2 + v3*uvec3
 
 return
 end subroutine get_vcar
@@ -97,7 +97,7 @@ end subroutine get_vcar
 subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
 
  use constants,only:pi
- 
+
  implicit none
 
  real(8),intent(in):: xcar(1:3),x3,vcar(1:3)
@@ -109,7 +109,7 @@ subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
  uvec1 = xcar/norm2(xcar)
  uvec2 = rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
  uvec3 = cross(uvec1,uvec2)
- 
+
  v1 = dot_product(vcar,uvec1)
  v2 = dot_product(vcar,uvec2)
  v3 = dot_product(vcar,uvec3)
@@ -303,5 +303,11 @@ subroutine masscoordinate
 
 return
 end subroutine masscoordinate
+
+logical function isequal(a,b)
+  implicit none
+  real(8),intent(in):: a,b
+  isequal = abs(a-b) < epsilon(real(0.,kind=8))
+end function isequal
 
 end module utils

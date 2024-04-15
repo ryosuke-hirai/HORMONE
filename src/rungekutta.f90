@@ -203,7 +203,7 @@ end subroutine get_runge_coeff
   integer:: i,j,k
 
 !-----------------------------------------------------------------------------
-  
+
 !$omp parallel do private(i,j,k) collapse(3)
   do k = ks,ke
    do j = js,je
@@ -230,6 +230,5 @@ end subroutine get_runge_coeff
   return
  end subroutine primitive
 
- 
-end module rungekutta_mod
 
+end module rungekutta_mod

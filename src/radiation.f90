@@ -30,13 +30,13 @@ subroutine radiation
  call start_clock(wtrad)
 
  allocate(radK(1:3,cg%is-1:cg%ie,cg%js-1:cg%je,cg%ks-1:cg%ke))
- 
+
  call get_radflux(urad,d,T,cg,radK)
  call get_radA(radK,cg)
  call get_source_term(d,T,urad,dt,cg,rsrc)
 
 ! call miccg(cg,rsrc,x)
- 
+
  call stop_clock(wtrad)
 
 return
@@ -92,7 +92,6 @@ end function lambda_K89
 
 ! Get Rosseland mean opacity
 function kappa_r(d,T) result(kappa)
- use settings,only:opacitytype
  real(8),intent(in)::d,T
  real(8):: kappa
  kappa = 1d0
@@ -100,7 +99,6 @@ end function kappa_r
 
 ! Get Planck mean opacity
 function kappa_p(d,T) result(kappa)
- use settings,only:opacitytype
  real(8),intent(in)::d,T
  real(8):: kappa
  kappa = 1d0
@@ -117,7 +115,7 @@ end function kappa_p
 
 subroutine get_radflux(urad,d,T,cg,radK)
 
- use constants,only:c=>clight,arad
+ use constants,only:c=>clight
  use grid,only: x1,xi1,x2,xi2,x3,xi3,dx1,dx2,dx3,g22,g33
  use miccg_mod,only:cg_set
  use utils,only:intpol
@@ -150,7 +148,7 @@ subroutine get_radflux(urad,d,T,cg,radK)
     R = abs(gradE)/(kappa_r(rho,TT)*rho*xi)
     radK(2,i,j,k) = c*lambda(R)/(kappa_r(rho,TT)*rho)
 
-! Flux in x3 direction    
+! Flux in x3 direction
     gradE = (urad(i,j,k+1) - urad(i,j,k))/(dx3(k+1)*g33(i,j))
     rho = intpol(x3(k:k+1),d   (i,j,k:k+1),xi3(k))
     TT  = intpol(x3(k:k+1),T   (i,j,k:k+1),xi3(k))
@@ -161,7 +159,7 @@ subroutine get_radflux(urad,d,T,cg,radK)
    end do
   end do
  end do
-!$omp end parallel do 
+!$omp end parallel do
 
 return
 end subroutine get_radflux
@@ -184,8 +182,8 @@ subroutine get_radA(radK,cg)
 
  real(8),allocatable,intent(in):: radK(:,:,:,:)
  type(cg_set),intent(inout)::cg
- integer:: i,j,k,in,jn,kn,l,dim
- real(8):: kappap,cv
+ integer:: i,j,k,l,dim
+ real(8):: kappap
 
 !-----------------------------------------------------------------------------
 
@@ -292,12 +290,12 @@ end subroutine get_radA
 
 subroutine setup_radcg(is,ie,js,je,ks,ke,cg)
 
- use settings,only:crdnt,eq_sym
+ use settings,only:crdnt
  use miccg_mod,only:cg_set
 
  integer,intent(in)::is,ie,js,je,ks,ke
  type(cg_set),intent(out):: cg
- integer:: in,jn,kn,lmax,dim,i,j,k,l
+ integer:: in,jn,kn,lmax,dim
 
 !-----------------------------------------------------------------------------
 
@@ -361,9 +359,9 @@ subroutine setup_radcg(is,ie,js,je,ks,ke,cg)
   cg%ic(3) = in-1
   cg%ic(4) = in
   cg%alpha = 0.99d0
-  
 
- case(3) ! 3D 
+
+ case(3) ! 3D
 ! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if(crdnt==2)then
 
@@ -403,7 +401,6 @@ end subroutine setup_radcg
 subroutine get_source_term(d,T,urad,dt,cg,rsrc)
 
  use grid,only:dim,crdnt
- use constants,only:arad,fac_egas
  use miccg_mod,only:cg_set,ijk_from_l
 
  real(8),allocatable,dimension(:,:,:),intent(in):: d,T,urad
@@ -411,7 +408,6 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
  type(cg_set),intent(inout):: cg
  real(8),allocatable,intent(inout):: rsrc(:,:,:)
  integer:: i,j,k,l
- real(8):: cv
 
 !-----------------------------------------------------------------------------
 
@@ -479,7 +475,7 @@ end subroutine get_source_term
 
 subroutine get_geo
 
- use grid,only:is,ie,js,je,ks,ke,dim,dvol,sa1,sa2,sa3,dx1,dx2,dx3,x1,g22,g33
+ use grid,only:is,ie,js,je,ks,ke,sa1,sa2,sa3,dx1,dx2,dx3,g22,g33
 
  integer:: i,j,k
 
@@ -498,7 +494,7 @@ subroutine get_geo
   end do
  end do
 !$omp end parallel do
- 
+
 return
 end subroutine get_geo
 
@@ -515,9 +511,9 @@ subroutine radiation_setup
  use settings,only:radswitch
  use grid,only:is,ie,js,je,ks,ke
  use miccg_mod,only:cg_rad
- 
+
 !-----------------------------------------------------------------------------
- 
+
  if(radswitch==1)then
   call setup_radcg(is,ie,js,je,ks,ke,cg_rad)
   call get_geo
@@ -540,7 +536,7 @@ subroutine radiative_force
 
 !-----------------------------------------------------------------------------
 
- 
+
 
 return
 end subroutine radiative_force

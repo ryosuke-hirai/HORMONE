@@ -18,7 +18,7 @@ subroutine gridset
   use constants,only:pi
   use utils,only:geometrical_series
   use readbin_mod,only:readgrid
-  
+
   integer::i,j,k,jetmp,ketmp
 
 !-------------------------------------------------------------------------
@@ -442,7 +442,7 @@ subroutine gridset
   xi1s = xi1(is-1)
 
  end if
- 
+
  return
 end subroutine gridset
 
@@ -471,11 +471,11 @@ subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
  xrmax = 1.015d0
  maxerr = 1d-10
  radstar = 5.6d13
- 
+
  xr = 1.01d0
  xrng = radstar - xi1s ; irng = dble(400 - is + 1)
  xmin = 9d10
- 
+
  if(xrng/irng<xmin)then
   print *,"Error from geometrical_series ;"
   print *,"xmin should be smaller or uniform mesh should be chosen",xmin

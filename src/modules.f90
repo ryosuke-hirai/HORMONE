@@ -37,7 +37,7 @@ end module settings
 module grid
 
  use settings,only:crdnt
- 
+
   implicit none
 
 ! number of grids
@@ -88,7 +88,7 @@ end module constants
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module physval
-  
+
   implicit none
 
   integer:: icnt,imo1,imo2,imo3,iene,img1,img2,img3,i9wv,ufnmax
@@ -150,4 +150,3 @@ module ejectamod
 end module ejectamod
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-

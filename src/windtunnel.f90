@@ -39,7 +39,7 @@ subroutine windtunnel
 
  mass = mass*msun
  radius = radius*rsun
- 
+
 ! Create polytrope
  gamma0=gamma
  gamma=1d0+1d0/poly_n

@@ -17,7 +17,7 @@ contains
 ! Rapid hyperbolic tangent function
   real(8),intent(in)::x
   real(8):: a,b,x2,rapid_tanh
-  
+
   if(abs(x)>=tanh_edge)then
    rapid_tanh = sign(1d0,x)-tanh_c/x
   else
@@ -33,7 +33,7 @@ contains
 ! Rapid hyperbolic tangent derivative (1/cosh^2)
   real(8),intent(in)::x
   real(8):: a,b,x2,rapid_dtanh
-  
+
   if(abs(x)>=tanh_edge)then
    rapid_dtanh = dtanh_c/x**2
   else
@@ -105,7 +105,7 @@ contains
   end if
  end function brec1
 ! ***************************************************************************
- 
+
  pure subroutine get_xion(logd,T,X,Y,xion,dxion)
 ! PURPOSE: Get ionization fractions (and dxdT) given rho and T
   real(8),intent(in):: logd,T,X,Y
@@ -140,7 +140,7 @@ contains
  end subroutine get_xion
 
 ! ***************************************************************************
- 
+
  pure subroutine get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
 ! PURPOSE: Get recombination energy and mean molecular weight given rho and T
   real(8),intent(in):: logd,T,X,Y
@@ -176,7 +176,7 @@ contains
  end subroutine get_erec_imurec
 
 ! ***************************************************************************
- 
+
  pure subroutine get_imurec(logd,T,X,Y,imurec,dimurecdT)
 ! PURPOSE: Get the mean molecular weight for partially ionised plasma
   real(8),intent(in):: logd,T,X,Y
@@ -197,7 +197,7 @@ contains
   if(present(dimurecdT))then
    dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
   end if
-  
+
   return
  end subroutine get_imurec
 

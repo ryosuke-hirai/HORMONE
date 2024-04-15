@@ -43,7 +43,7 @@ contains
 subroutine init_profiler
 
  integer::i
- 
+
 !-----------------------------------------------------------------------------
 
  wtime = 0d0
@@ -73,7 +73,7 @@ subroutine init_profiler
  parent(wtrfl) = wtrad ! radiative flux
  parent(wtsnk) = wtlop ! sink particles
  parent(wttot) =-1     ! Total
- 
+
 ! Make sure to keep routine name short
  routine_name(wtini) = 'Setup'       ! initial conditions
  routine_name(wtgri) = '1st_Gravity' ! initial gravity
@@ -105,7 +105,7 @@ subroutine init_profiler
  maxlbl = maxlbl + 1
 
  clock_on(0:n_wt) = .false.
- 
+
  return
 end subroutine init_profiler
 
@@ -262,13 +262,13 @@ subroutine profiler_output1(ui,wti)
   end if
 
   if(next/=n_wt+1)then
-   lbl = "├─"//lbl
+   lbl = "├─"//trim(lbl)
   else
-   lbl = "└─"//lbl
+   lbl = "└─"//trim(lbl)
   end if
   if(j>1)then
    do k = j, 2, -1
-    lbl = "│ "//lbl
+    lbl = "│ "//trim(lbl)
    end do
   end if
  end if

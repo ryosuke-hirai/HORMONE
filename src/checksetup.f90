@@ -9,14 +9,14 @@ contains
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 subroutine checksetup
-  
+
 ! purpose: To check whether the setups are consistent.
 
   use settings
   use grid
   use physval
   use tests_mod
-  
+
 !-----------------------------------------------------------------------------
 
 ! Reading dimension of grid
@@ -45,12 +45,12 @@ subroutine checksetup
    call add_equation(img3,ufnmax) ! Magnetic field equation 3
    call add_equation(i9wv,ufnmax) ! Divergence cleaning (9-wave method)
   end if
-  
+
 ! Set uniform mesh if that dimension it not used
   if(ie==0)imesh=0
   if(je==0)jmesh=0
   if(ke==0)kmesh=0
-  
+
 ! To warn the periodic boundary condition
   if(bc1is*bc1os==0.and.bc1is+bc1os/=0)then
    print *,"Error from boundary condition 'bc1is,bc1os'"
@@ -98,7 +98,7 @@ subroutine checksetup
    bc2is=1 ; bc2os=1 ; bc2iv=1 ; bc2ov=1
    bc3is=0 ; bc3os=0 ; bc3iv=0 ; bc3ov=0
   end if
-  
+
 ! Setting boundary condition for equatorial symmetry
   if(eq_sym.and.crdnt==1)then
    bc3is=1
@@ -214,7 +214,7 @@ subroutine checksetup
 
 ! Output temperature if eostype>=1
   if(eostype>=1)write_temp = .true.
-  
+
   return
  end subroutine checksetup
 
@@ -224,5 +224,5 @@ subroutine checksetup
   ufnmax = ufnmax + 1
   i = ufnmax
  end subroutine add_equation
- 
+
 end module checksetup_mod

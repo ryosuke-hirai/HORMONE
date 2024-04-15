@@ -37,9 +37,9 @@ subroutine boundarycondition
 ! 10: Flux b.c. (flux values should be given elsewhere!)
 
  call start_clock(wtbnd)
- 
+
 !$omp parallel
- 
+
 ! x1-direction ***********************************************************
 
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -911,7 +911,7 @@ if(ke>ks)then
    do i = is, ie
     d(i,j,ks-2:ks-1) = d(i,j,ks)
     p(i,j,ks-2:ks-1) = p(i,j,ks)
-    if(mag_on)phi(i,j,ks-2:ks-1) = phi(i,j,ks)     
+    if(mag_on)phi(i,j,ks-2:ks-1) = phi(i,j,ks)
     if(compswitch>=2)then
      spc(1:spn,i,j,ks-2) = spc(1:spn,i,j,ks)
      spc(1:spn,i,j,ks-1) = spc(1:spn,i,j,ks)

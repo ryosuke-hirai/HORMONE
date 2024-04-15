@@ -106,7 +106,6 @@ end subroutine extend2Dto3D
 
 subroutine blowup
 
- use constants,only:pi
  use settings,only:start,dt_unit,eq_sym,dt_out,gravswitch
  use grid
  use physval
@@ -117,7 +116,7 @@ subroutine blowup
  integer:: i,j,k,iinj
  real(8):: Ebind,Eexp,Rinj,rad,Mheat
  character(len=30)::startfile
- 
+
 !-----------------------------------------------------------------------------
 
  start = 20000
@@ -135,7 +134,7 @@ subroutine blowup
    end do
   end do
  end do
- 
+
  t_out = time + dt_out
  if(gravswitch==3)grvtime = time
 

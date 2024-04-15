@@ -52,7 +52,7 @@ subroutine agndisk
  spc(8,:,:,:) = 3.353548168440335d-3!other metals
  spc(1,:,:,:) = 1d0-spc(2,:,:,:)-spc(3,:,:,:)-spc(4,:,:,:)-spc(5,:,:,:) &
                    -spc(6,:,:,:)-spc(7,:,:,:)-spc(8,:,:,:)
- 
+
 
  do i = is, ie
   if(xi1(i)>Rexp)then
@@ -60,7 +60,7 @@ subroutine agndisk
    exit
   end if
  end do
- 
+
  rgrav = 2d0*G*M_SMBH/clight**2
  r_disk = r_disk*rgrav
  hdisk = r_disk*aspratio
@@ -110,7 +110,7 @@ subroutine agndisk
  species(6) = 'ne20'
  species(7) = 'fe56'
  species(8) = 'others'
- 
+
 return
 end subroutine agndisk
 
