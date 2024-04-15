@@ -27,7 +27,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
  integer:: nn,ui, i,j, lines, rows, nrel, nel,istat
  character(len=10),allocatable:: element_list(:)
 
- 
+
 !-----------------------------------------------------------------------------
 
 ! list of relevant elements ! ------------------------------------------------
@@ -53,7 +53,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
  element_list(18) = 'fe56'
  element_list(19) = 'co56'
  element_list(20) = 'ni56'
- 
+
 ! reading data from datafile ! -----------------------------------------------
  open(newunit=ui,file=mesafile,status='old',iostat=istat)
  if(istat/=0)then
@@ -99,7 +99,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
   element_loop: do j = 1, nrel
    do i = 1, rows
     if(trim(header(i))==trim(element_list(j)))then
-     comp_list(nn) = header(i)
+     comp_list(nn) = trim(header(i))
      nn = nn + 1
      if(nn>nel)exit element_loop
      exit
@@ -109,7 +109,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
  end if
 
  do i = 1, lines
-  read(ui,*) dat(lines-i+1,1:rows) 
+  read(ui,*) dat(lines-i+1,1:rows)
  end do
 
  allocate(m(0:lines),r(0:lines),rho(0:lines),pres(0:lines),comp(1:nel,0:lines))
@@ -129,7 +129,7 @@ subroutine read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
  end do
 
  close(ui)
- 
+
  r(0) = 0d0
  m(0) = 0d0
  rho(0) = rho(1)
@@ -196,7 +196,7 @@ end subroutine read_mesa
 subroutine error_extras(simutype,extrasfile)
 
  character(len=*),intent(in):: simutype,extrasfile
- 
+
 !-----------------------------------------------------------------------------
 
  print*,'Error: Model parameter file cannot be found.'

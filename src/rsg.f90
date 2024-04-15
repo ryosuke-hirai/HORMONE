@@ -34,7 +34,7 @@ subroutine redsupergiant
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const
  real(8),allocatable:: comptmp(:)
  logical::isentropic,core_is_sink
- 
+
 !-----------------------------------------------------------------------------
 
  namelist /rsg_con/ mesafile,spc_list,rcore,isentropic,core_is_sink

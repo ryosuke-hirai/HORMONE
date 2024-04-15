@@ -941,20 +941,20 @@ if(ke>ks)then ! TODO: In MPI, this can be false even when x3 is active
     end do
   !$omp end do
 
-  case(2:3) x3_inner_scalar ! outgoing/free -------------------------------
-  !$omp do private(i,j) collapse(2)
-    do j = js, je
-    do i = is, ie
-      d(i,j,ks-2:ks-1) = d(i,j,ks)
-      p(i,j,ks-2:ks-1) = p(i,j,ks)
-      if(mag_on)phi(i,j,ks-2:ks-1) = phi(i,j,ks)
-      if(compswitch>=2)then
-      spc(1:spn,i,j,ks-2) = spc(1:spn,i,j,ks)
-      spc(1:spn,i,j,ks-1) = spc(1:spn,i,j,ks)
-      end if
-    end do
-    end do
-  !$omp end do
+ case(2:3) x3_inner_scalar ! outgoing/free -------------------------------
+!$omp do private(i,j) collapse(2)
+  do j = js, je
+   do i = is, ie
+    d(i,j,ks-2:ks-1) = d(i,j,ks)
+    p(i,j,ks-2:ks-1) = p(i,j,ks)
+    if(mag_on)phi(i,j,ks-2:ks-1) = phi(i,j,ks)
+    if(compswitch>=2)then
+     spc(1:spn,i,j,ks-2) = spc(1:spn,i,j,ks)
+     spc(1:spn,i,j,ks-1) = spc(1:spn,i,j,ks)
+    end if
+   end do
+  end do
+!$omp end do
 
   case(4:5) x3_inner_scalar ! linear --------------------------------------
   !$omp do private(i,j) collapse(2)

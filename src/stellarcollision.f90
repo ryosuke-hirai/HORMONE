@@ -14,16 +14,15 @@ contains
 
 subroutine stellarcollision
 
- use settings,only:compswitch,spn,extrasfile,include_sinks,eostype
+ use settings,only:compswitch,spn,extrasfile,eostype
  use constants,only:G,msun,rsun,pi
  use grid
  use physval
  use input_mod
  use star_mod,only:isentropic_star,replace_core,set_star_sph_grid
- use gravmod,only:extgrv,mc ,grvphi,totphi
+ use gravmod,only:mc ,grvphi,totphi
  use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot,polcar
- use output_mod,only:write_extgrv
  use composition_mod,only:get_imu
  use pressure_mod,only:eos_e,eos_p
 
@@ -37,7 +36,7 @@ subroutine stellarcollision
  real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv,ecc,xcar(1:3)
  real(8),allocatable:: comptmp(:)
  logical::isentropic
- 
+
 !-----------------------------------------------------------------------------
 
  namelist /col_con/ mesafile,spc_list,rcore,isentropic,&

@@ -2,7 +2,8 @@ module tests_mod
  implicit none
 
  public:: check_testlist,test
- private:: testfilename
+ private:: testfilename,print_errors,ratio,&
+           max_norm_error,L1_norm_error,L2_norm_error
 
 contains
 
@@ -52,7 +53,6 @@ contains
 
   logical, intent(out) :: passed
   integer,parameter:: nn = 9
-  integer:: n
   character(30):: testfile
   real(8),parameter:: tol=1d-4
   real(8):: error(nn)
@@ -61,7 +61,7 @@ contains
 
 !-----------------------------------------------------------------------------
 
-  allocate(val(nn,is:ie,js:je,ks:ke))
+  allocate(val(is:ie,js:je,ks:ke,nn))
   allocate(valorg,mold=val)
   error = 0d0
 
@@ -78,16 +78,16 @@ contains
   if(.not.mag_on) label(6:8) = 'aaa'
 
 ! First record simulated variables
-  val(1,:,:,:) = d (is:ie,js:je,ks:ke)
-  val(2,:,:,:) = e (is:ie,js:je,ks:ke)
-  val(3,:,:,:) = v1(is:ie,js:je,ks:ke)
-  val(4,:,:,:) = v2(is:ie,js:je,ks:ke)
-  val(5,:,:,:) = v3(is:ie,js:je,ks:ke)
-  val(6,:,:,:) = b1(is:ie,js:je,ks:ke)
-  val(7,:,:,:) = b2(is:ie,js:je,ks:ke)
-  val(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  val(:,:,:,1) = d (is:ie,js:je,ks:ke)
+  val(:,:,:,2) = e (is:ie,js:je,ks:ke)
+  val(:,:,:,3) = v1(is:ie,js:je,ks:ke)
+  val(:,:,:,4) = v2(is:ie,js:je,ks:ke)
+  val(:,:,:,5) = v3(is:ie,js:je,ks:ke)
+  val(:,:,:,6) = b1(is:ie,js:je,ks:ke)
+  val(:,:,:,7) = b2(is:ie,js:je,ks:ke)
+  val(:,:,:,8) = b3(is:ie,js:je,ks:ke)
   if(gravswitch>0)then
-   val(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+   val(:,:,:,9) = grvphi(is:ie,js:je,ks:ke)
   else
    label(9) = 'aaa'
   end if
@@ -98,16 +98,16 @@ contains
   call readbin(testfile)
 
 ! Next record variables from pre-computed file
-  valorg(1,:,:,:) = d (is:ie,js:je,ks:ke)
-  valorg(2,:,:,:) = e (is:ie,js:je,ks:ke)
-  valorg(3,:,:,:) = v1(is:ie,js:je,ks:ke)
-  valorg(4,:,:,:) = v2(is:ie,js:je,ks:ke)
-  valorg(5,:,:,:) = v3(is:ie,js:je,ks:ke)
-  valorg(6,:,:,:) = b1(is:ie,js:je,ks:ke)
-  valorg(7,:,:,:) = b2(is:ie,js:je,ks:ke)
-  valorg(8,:,:,:) = b3(is:ie,js:je,ks:ke)
+  valorg(:,:,:,1) = d (is:ie,js:je,ks:ke)
+  valorg(:,:,:,2) = e (is:ie,js:je,ks:ke)
+  valorg(:,:,:,3) = v1(is:ie,js:je,ks:ke)
+  valorg(:,:,:,4) = v2(is:ie,js:je,ks:ke)
+  valorg(:,:,:,5) = v3(is:ie,js:je,ks:ke)
+  valorg(:,:,:,6) = b1(is:ie,js:je,ks:ke)
+  valorg(:,:,:,7) = b2(is:ie,js:je,ks:ke)
+  valorg(:,:,:,8) = b3(is:ie,js:je,ks:ke)
   if(gravswitch>0)then
-   valorg(9,:,:,:) = grvphi(is:ie,js:je,ks:ke)
+   valorg(:,:,:,9) = grvphi(is:ie,js:je,ks:ke)
   end if
 
 ! Calculate max norm errors
@@ -164,7 +164,7 @@ contains
 
 ! Define weight function = volume
   allocate(w,mold=var)
-  w(is:ie,js:je,ks:ke) = dvol(is:ie,js:je,ks:ke)
+  w(:,:,:) = dvol(is:ie,js:je,ks:ke)
 
   if(pos>0d0)then ! for strictly positive quantities
    norm = sum(abs(var/var0-1d0)*w)/sum(w)
@@ -184,17 +184,22 @@ contains
 
   pos = maxval(var)*minval(var)
 
+  ! var and var0, when passed through as regular array arguments,
+  ! have the same shape as the original arrays, but indices starting from 1,
+  ! not is, js, ks. When relerr and w are allocated with mold=var, they will
+  ! also have indices starting from 1.
+
   allocate(relerr,w,mold=var)
-  w(is:ie,js:je,ks:ke) = dvol(is:ie,js:je,ks:ke)
+  w(:,:,:) = dvol(is:ie,js:je,ks:ke)
 
 ! Weigh down the error if there is a discontinuity within this number of cells
   disco_range = 3
-  do k = ks, ke
-   kl=min(disco_range,k-ks);ku=min(disco_range,ke-k)
-   do j = js, je
-    jl=min(disco_range,j-js);ju=min(disco_range,je-j)
-    do i = is, ie
-     il=min(disco_range,i-is);iu=min(disco_range,ie-i)
+  do k = lbound(var,3), ubound(var,3)
+   kl=min(disco_range,k-lbound(var,3));ku=min(disco_range,ubound(var,3)-k)
+   do j = lbound(var,2), ubound(var,2)
+    jl=min(disco_range,j-lbound(var,2));ju=min(disco_range,ubound(var,2)-j)
+    do i = lbound(var,1), ubound(var,1)
+     il=min(disco_range,i-lbound(var,1));iu=min(disco_range,ubound(var,1)-i)
      base = var0(i,j,k)
      denom = maxval(abs(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku)))
      floor = 0d0
@@ -222,7 +227,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE PRINT_ERRORS
+!                        SUBROUTINE PRINT_ERRORS
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -249,7 +254,7 @@ contains
   print*,trim(name),' norm errors:'
   do n = 1, size(error)
    if(trim(label(n))=='aaa')cycle
-   error(n) = f(val(n,:,:,:),valorg(n,:,:,:),tol)
+   error(n) = f(val(:,:,:,n),valorg(:,:,:,n),tol)
    print*,'  ',label(n),' =',error(n)
   end do
 

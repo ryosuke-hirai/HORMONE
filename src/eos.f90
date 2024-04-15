@@ -3,7 +3,7 @@ module pressure_mod
  use physval,only:gamma
  use settings,only:eostype,eoserr
  implicit none
- 
+
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -27,7 +27,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  select case (eostype)
  case(0) ! ideal gas
   T = eint/(fac_egas*imu)
-  
+
  case(1) ! ideal gas + radiation
   corr = huge
   do n = 1, 50
@@ -67,7 +67,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
    stop
   end if
   if(present(erec_out)) erec_out = erec
-  
+
  case default
   stop 'Error in eostype'
  end select
@@ -91,11 +91,11 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
  integer:: n
 
  if(T<=0d0) T=1d3
- 
+
  select case (eostype)
  case(0) ! ideal gas
   T = p/(fac_pgas*imu)
-  
+
  case(1) ! ideal gas + radiation
   corr = huge
   do n = 1, 500
@@ -109,7 +109,7 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
    print*,'d=',d,'p=',p,'mu=',1d0/imu
    stop
   end if
-  
+
  case(2) ! ideal gas + radiation + recombination
   corr = huge; logd = log10(d)
   do n = 1, 500
@@ -157,7 +157,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
   ierr=1
   return
  end if
- 
+
  select case (eostype)
  case(0) ! ideal gas
   p = eos_p(d,eint,T,imu)
@@ -168,7 +168,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
  case(1) ! ideal gas + radiation pressure
   p = eos_p(d,eint,T,imu)
   gamma_eff = 1d0+p/eint
-  
+
   cs = sqrt(gamma_eff*p/d)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
@@ -199,7 +199,7 @@ function eos_p(d,eint,T,imu,X,Y)
  case(0) ! ideal gas
   call getT_from_de(d,eint,T,imu)
   eos_p = (gamma-1d0)*eint
-  
+
  case(1) ! ideal gas + radiation
   call getT_from_de(d,eint,T,imu)
   eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
@@ -223,16 +223,16 @@ function eos_e(d,p,T,imu,X,Y)
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: imu,T
  real(8):: eos_e, erec
- 
+
  select case (eostype)
  case(0) ! ideal gas
   call getT_from_dp(d,p,T,imu)
   eos_e = p/(gamma-1d0)
-  
+
  case(1) ! ideal gas + radiation
   call getT_from_dp(d,p,T,imu)
   eos_e = ( fac_egas*imu*d + arad*T**3 )*T
-  
+
  case(2) ! ideal gas + radiation + recombination
   call getT_from_dp(d,p,T,imu,X,Y,erec)
   eos_e = ( fac_egas*imu*d + arad*T**3 )*T + d*erec
@@ -271,7 +271,8 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
  real(8),intent(in):: d,T
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: imu
- real(8):: p,entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,eta,xion(1:4)
+ real(8):: p,entropy,S_ion,S_rad,S_ele,n_x,n_y,n_z,n_e,fac,xion(1:4)
+ real(8):: eta = 0.  ! Set to zero for now
 
  select case(eostype)
  case(0) ! ideal gas
@@ -282,7 +283,7 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
   S_ion = fac_pgas*imu*log(T**1.5d0/d)
   S_rad = 4d0*arad*T**3/(3d0*d)
   entropy = (S_ion + S_rad) / fac_pgas
-  
+
  case(2) ! ideal gas + radiation + recombination
   call get_xion(log(d),T,X,Y,xion)
   n_x = d*X/amu
@@ -300,15 +301,15 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
 ! 1. Write a routine to calculate the degeneracy parameter eta given d,T,X,Y
 ! 2. Add ionization entropy
 ! 3. Is S_ion correct with the current expression for partial degeneracy?
-  
+
   print*, 'Entropy calculation for eostype=2 still needs work'
   stop
 
  case default
   stop 'Error in eostype'
-  
+
  end select
-  
+
 end function entropy_from_dT
 
 ! ***************************************************************************
@@ -330,16 +331,16 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
  case(1) ! ideal gas + radiation
   call getT_from_dp(d,p,T,imu)
   entropy = entropy_from_dT(d,T,imu)
-  
+
  case(2) ! ideal gas + radiation + recombination
   call getT_from_dp(d,p,T,imu,X,Y)
   entropy = entropy_from_dT(d,T,imu,X,Y)
 
  case default
   stop 'Error in eostype'
-  
+
  end select
-  
+
 end function entropy_from_dp
 
 ! ***************************************************************************
@@ -361,16 +362,16 @@ function entropy_from_de(d,e,T,imu,X,Y) result(entropy)
  case(1) ! ideal gas + radiation
   call getT_from_de(d,e,T,imu)
   entropy = entropy_from_dT(d,T,imu)
-  
+
  case(2) ! ideal gas + radiation + recombination
   call getT_from_de(d,e,T,imu,X,Y)
   entropy = entropy_from_dT(d,T,imu,X,Y)
 
  case default
   stop 'Error in eostype'
-  
+
  end select
-  
+
 end function entropy_from_de
 
 ! **************************************************************************
@@ -410,7 +411,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
   end if
-  
+
  case(2) ! ideal gas + radiation + recombination
   d = 1d-8 ! initial guess
   T = 1d3
@@ -482,7 +483,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
   end if
-  
+
  case(2) ! ideal gas + radiation + recombination
   e = 1d-8 ! initial guess
   T = 1d3
@@ -529,7 +530,7 @@ function get_p_from_ds(d,S,imu,X,Y) result(p)
  real(8):: eint,p,T
 
 !-----------------------------------------------------------------------------
- 
+
  select case(eostype)
  case(0) ! ideal gas
   p = S*d**gamma
@@ -544,7 +545,7 @@ function get_p_from_ds(d,S,imu,X,Y) result(p)
 
  case default
   stop 'Error in eostype'
-  
+
  end select
 
  return
@@ -602,7 +603,7 @@ subroutine pressure
    end do
   end do
 !$omp end parallel do
-  
+
  case default
   stop 'Error in eostype'
  end select
@@ -654,7 +655,7 @@ subroutine internalenergy
   print*,'etot=',e(i,j,k),'eint=',eint(i,j,k)
   stop
  end if
- 
+
 return
 end subroutine internalenergy
 
@@ -678,8 +679,7 @@ function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
  end if
 
  if(present(ierr).and.eint<=0d0)ierr=1
- 
+
 end function get_eint
 
 end module pressure_mod
-

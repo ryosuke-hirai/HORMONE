@@ -9,13 +9,14 @@ contains
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: Calculates interpolated values at cell boundaries based on MUSCL 
+! PURPOSE: Calculates interpolated values at cell boundaries based on MUSCL
 !          interpolation.
 
 subroutine interpolation
 
- use settings,only:compswitch,spn,eostype,mag_on,flux_limiter, &
+ use settings,only:compswitch,spn,mag_on,flux_limiter, &
                    bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
+!  use settings, only:eostype
  use grid
  use physval
  use fluxlimiter
@@ -40,6 +41,7 @@ subroutine interpolation
 ! Flat reconstruction
  if(flux_limiter=='flat')then
   dd=0d0;de=0d0;dm1=0d0;dm2=0d0;dm3=0d0;db1=0d0;db2=0d0;db3=0d0;dphi=0d0
+  call stop_clock(wtint)
   return
  end if
 
@@ -68,7 +70,7 @@ if(ie/=is)then
 !    call minmod(du,uu,dx) ; dd(i,j,k,1) = du
     call modified_mc(du,uu,x,xi) ; dd(i,j,k,1) = du
     dl = uu(2) - (x1(i)-xi1(i-1))*du ; dr = uu(2) + (xi1(i)-x1(i))*du
-    
+
     uu(1:3) = e(i-1:i+1,j,k)
 !    call minmod(du,uu,dx) ; de(i,j,k,1) = du
     call modified_mc(du,uu,x,xi) ; de(i,j,k,1) = du
@@ -106,7 +108,7 @@ if(ie/=is)then
      b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
     end if
 
-    
+
 ! check stability at cell boundary ---------------------------------------- !
     ! first calculate mean molecular weight at the surface
     select case (compswitch)
@@ -164,7 +166,7 @@ if(ie/=is)then
 !!$     end if
     end if
 ! ------------------------------------------------------------------------- !
-    
+
    end do
   end do
  end do
@@ -231,7 +233,7 @@ if(je/=js)then
     else
      b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
     end if
-    
+
 ! check stability at cell boundary ---------------------------------------- !
     ! first calculate mean molecular weight at boundaries
     select case (compswitch)
@@ -289,7 +291,7 @@ if(je/=js)then
 !!$     end if
     end if
 ! -------------------------------------------------------------------------- !
-    
+
    end do
   end do
  end do

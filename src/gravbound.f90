@@ -15,6 +15,7 @@ contains
 
  subroutine gravbound
 
+  use utils,only:isequal
   use settings,only:bc3is,crdnt,grverr
   use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,xi1s,x1,tn,rdis
   use constants,only:G
@@ -106,7 +107,7 @@ contains
 
    do i = gis, gie
     do k = gke+1, gke+2
-     grvphi(i,js,k) = phi3o(i,k)     
+     grvphi(i,js,k) = phi3o(i,k)
     end do
     do k = gks-2, gks-1
      grvphi(i,js,k) = phi3i(i,k)
@@ -232,8 +233,7 @@ contains
     end do
    end if
 
-
-   if(mc(is-1)==0.d0.and.xi1s/=0.d0)error1=1
+   if(isequal(mc(is-1),0.d0) .and. (.not. isequal(xi1s,0.d0))) error1=1
    if(error1==1)then
     write(6,*)"Error from gravbound i: inner boundary is wrong",xi1s,mc(is-1)
     stop
@@ -316,7 +316,7 @@ contains
 !------------------------------------------------------------------------------
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  if(crdnt==2.and.ke==1)then
+  if(crdnt==2.and.ke==ks)then
    k = ks
    ml = 0d0
 !$omp parallel do private(i,j) collapse(2) reduction(+:ml)

@@ -26,7 +26,7 @@ contains
 
   call start_clock(wtsho)
 
-  if(crdnt==2.and.ke==1)then
+  if(crdnt==2.and.ke==ks)then
 !$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
    do k = ks, ke
     do j = js, je
@@ -45,7 +45,7 @@ contains
        if(gradT(1)*gradd(1)>0d0.and.gradT(2)*gradd(2)>0d0)then
         Mjump = max( &
          abs(Mach(i,j,k)-Mach(i-1,j,k)), abs(Mach(i,j,k)-Mach(i+1,j,k)),&
-         abs(Mach(i,j,k)-Mach(i,j-1,k)), abs(Mach(i,j,k)-Mach(i,j+1,k)) ) 
+         abs(Mach(i,j,k)-Mach(i,j-1,k)), abs(Mach(i,j,k)-Mach(i,j+1,k)) )
         if(Mjump>1.3d0)shock(i,j,k) = 1
        end if
       end if
@@ -53,7 +53,7 @@ contains
     end do
    end do
 !$omp end parallel do
-  elseif(crdnt==1.and.je==1)then
+  elseif(crdnt==1.and.je==js)then
 !$omp parallel do private(i,j,k,divergence,gradT,gradd,Mjump) collapse(3)
    do k = ks, ke
     do j = js, je
@@ -73,7 +73,7 @@ contains
        if(gradT(1)*gradd(1)>0d0.and.gradT(2)*gradd(2)>0d0)then
 !!$     Mjump = max( &
 !!$      abs(Mach(i,j,k)-Mach(i-1,j,k)), abs(Mach(i,j,k)-Mach(i+1,j,k)),&
-!!$      abs(Mach(i,j,k)-Mach(i,j,k-1)), abs(Mach(i,j,k)-Mach(i,j,k+1)) ) 
+!!$      abs(Mach(i,j,k)-Mach(i,j,k-1)), abs(Mach(i,j,k)-Mach(i,j,k+1)) )
         Mjump = max( Mach(i+1,j,k),Mach(i-1,j,k), &
                      Mach(i,j,k-1),Mach(i,j,k+1), Mach(i,j,k) )
         Mjump = ( sign(0.5d0,Mjump-0.1d0)+0.5d0 )*Mjump &
@@ -89,7 +89,7 @@ contains
   end if
 
   call stop_clock(wtsho)
-  
+
   return
  end subroutine shockfind
 

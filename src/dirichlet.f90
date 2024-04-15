@@ -119,7 +119,7 @@ subroutine ejecta_boundary
           exit
          end if
         end do
-        
+
        end if
       end do
      elseif(time*nsdfr(i,j,k)<tstart)then !free until the ejecta comes
@@ -151,9 +151,9 @@ subroutine ejecta_boundary
     end do
    end do
   end do
- 
+
 
 return
-end subroutine ejecta_boundary 
+end subroutine ejecta_boundary
 
 end module dirichlet_mod

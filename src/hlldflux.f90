@@ -1,10 +1,10 @@
 module hllflux_mod
 
  implicit none
- 
+
  public:: hlldflux,hllflux
  private:: fstar
- 
+
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -118,19 +118,19 @@ contains
 
   v2la =   sortsla * v2la &
          + sortslr * v2aa &
-         + sortsra * v2ra 
+         + sortsra * v2ra
 
   v3la =   sortsla * v3la &
          + sortslr * v3aa &
-         + sortsra * v3ra 
+         + sortsra * v3ra
 
   b2la =   sortsla * b2la &
          + sortslr * b2aa &
-         + sortsra * b2ra 
+         + sortsra * b2ra
 
   b3la =   sortsla * b3la &
          + sortslr * b3aa &
-         + sortsra * b3ra 
+         + sortsra * b3ra
 
   ela  =   sortsla * ela &
          + (0.5d0-sign(0.5d0, sla*sm)) * elaa &
@@ -157,12 +157,12 @@ contains
 
   tmpflux(1) = d*v1
   tmpflux(2) = d*v1*v1 + p - b1*b1
-  tmpflux(3) = d*v1*v2 - b1*b2 
+  tmpflux(3) = d*v1*v2 - b1*b2
   tmpflux(4) = d*v1*v3 - b1*b3
   tmpflux(5) = (e+p)*v1 - b1*(v1*b1+v2*b2+v3*b3 )
   tmpflux(6) = phi
-  tmpflux(7) = b2*v1 - b1*v2 
-  tmpflux(8) = b3*v1 - b1*v3 
+  tmpflux(7) = b2*v1 - b1*v2
+  tmpflux(8) = b3*v1 - b1*v3
 ! for 9wave method
   tmpflux(9) = ch**2 * b1
 ! end 9wave method

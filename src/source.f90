@@ -32,17 +32,16 @@ subroutine source
 
 ! To calculate gravitational forces ********************************************
  if(gravswitch==0)then ! gravity off
-  grv1 = 0d0 ; grv2 = 0d0 ; grv3 = 0d0
+! Don't do anything
 
  elseif(gravswitch==1.and.crdnt==2)then ! point-source
   call masscoordinate
 
 !$omp parallel do private(i)
   do i = is, ie
-   grv1(i,js:je,k) = -G*d(i,js:je,k)*mc(i)/x1(i)**2
+   grv1(i,js:je,ks:ke) = -G*d(i,js:je,ks:ke)*mc(i)/x1(i)**2
   end do
 !$omp end parallel do
-  grv2 = 0d0 ; grv3 = 0d0
 
  elseif(gravswitch==2.or.gravswitch==3)then
 
@@ -62,7 +61,6 @@ subroutine source
   call get_fieldforce(totphi,d,grv1,grv2,grv3)
 
   if(eq_sym.and.crdnt==1)grv3(is:ie,js:je,ks) = 0d0
-  if(ie==is)grv1 = 0d0; if(je==js)grv2 = 0d0!; if(ke==1)grv3 = 0d0
 
  else
   print *,"Error from gravswitch (source.f90)"
@@ -165,7 +163,7 @@ subroutine source
 
  if(radswitch>0)     call radiative_force
  if(include_extforce)call externalforce
- 
+
  call stop_clock(wtsrc)
 
  return
@@ -254,7 +252,7 @@ subroutine phidamp
 
 ! ratio between diffusive and advection timescales (td/ta)
  alpha9wave = 0.1d0
- 
+
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je

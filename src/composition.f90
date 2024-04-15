@@ -2,7 +2,7 @@ module composition_mod
  implicit none
 
  public:: meanmolweight, get_imu
- 
+
  contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -108,7 +108,7 @@ function get_imu(spc) result(imu)
  real(8):: imu
 
  imu = 0.25d0*(6d0*spc(1)+spc(2)+2d0)
- 
+
 end function get_imu
 
 end module composition_mod
