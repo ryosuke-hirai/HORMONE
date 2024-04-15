@@ -17,7 +17,7 @@ module mpi_domain
       use mpi_utils, only: type_mpi_array
       integer :: nx, ny, nz
       integer :: ierr
-      integer, dimension(3) :: dims, coords, sizes, subsizes, starts
+      integer, dimension(3) :: dims, sizes, subsizes, starts
       logical :: periods(3)
       integer :: mycoords(3)
 #endif
@@ -81,7 +81,7 @@ module mpi_domain
       use settings
       use grid
       use physval
-      integer :: i, left_rank, right_rank, ierr
+      integer :: i
       ! Exchange data between MPI domains
       ! Scalar quantities: d, p, phi, spc
       ! Vector quantities: v1, v2, v3, b1, b2, b3
