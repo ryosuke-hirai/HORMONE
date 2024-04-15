@@ -42,7 +42,7 @@ end subroutine fluxboundary
 subroutine fluxboundary3i
 
  use settings,only:compswitch,extrasfile
- use constants,only:arad,fac_pgas,fac_egas
+ use constants,only:fac_pgas,fac_egas
  use grid
  use physval,only:flux3,spcflx,muconst,imo3,iene,icnt
  use input_mod,only:error_extras,error_nml

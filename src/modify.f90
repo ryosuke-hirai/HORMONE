@@ -106,7 +106,6 @@ end subroutine extend2Dto3D
 
 subroutine blowup
 
- use constants,only:pi
  use settings,only:start,dt_unit,eq_sym,dt_out,gravswitch
  use grid
  use physval

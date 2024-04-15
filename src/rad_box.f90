@@ -17,7 +17,6 @@ contains
   use physval
 
   integer:: i,j,k
-  real(8),parameter:: ptb = 1d-2
 
 !--------------------------------------------------------------------
 

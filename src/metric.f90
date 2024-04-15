@@ -14,7 +14,6 @@ contains
 subroutine metric
 
  use settings,only:include_extforce
- use constants,only:pi
  use grid
 
  integer:: i,j,k

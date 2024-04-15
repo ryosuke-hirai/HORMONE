@@ -115,7 +115,7 @@ end function kappa_p
 
 subroutine get_radflux(urad,d,T,cg,radK)
 
- use constants,only:c=>clight,arad
+ use constants,only:c=>clight
  use grid,only: x1,xi1,x2,xi2,x3,xi3,dx1,dx2,dx3,g22,g33
  use miccg_mod,only:cg_set
  use utils,only:intpol
@@ -401,7 +401,6 @@ end subroutine setup_radcg
 subroutine get_source_term(d,T,urad,dt,cg,rsrc)
 
  use grid,only:dim,crdnt
- use constants,only:arad
  use miccg_mod,only:cg_set,ijk_from_l
 
  real(8),allocatable,dimension(:,:,:),intent(in):: d,T,urad

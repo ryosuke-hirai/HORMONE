@@ -24,7 +24,6 @@ contains
 
 subroutine sink_motion
 
- use constants,only:huge
  use grid,only:dt
  use profiler_mod
 
@@ -230,7 +229,6 @@ end subroutine get_sinksink_acc
 
 subroutine get_sink_loc(sink)
 
- use constants,only:huge
  use settings,only:crdnt
  use grid,only:is,ie,js,je,ks,ke,x1,x2,x3,dxi1,dxi2,dxi3,g22
  use utils,only:carpol
