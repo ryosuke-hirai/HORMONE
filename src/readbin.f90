@@ -184,6 +184,7 @@ subroutine read_extgrv(filename)
  integer:: ui
 !-----------------------------------------------------------------------------
 
+ ! TODO: MPI
  open(newunit=ui,file=filename,status='old',form='unformatted')
  extgrv = 0d0
  read(ui)coremass

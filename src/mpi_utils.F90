@@ -14,6 +14,9 @@ module mpi_utils
     call MPI_INIT(ierr)
     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ierr)
     call MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierr)
+#else
+    myrank = 0
+    nprocs = 1
 #endif
   end subroutine init_mpi
 
