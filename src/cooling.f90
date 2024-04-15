@@ -8,7 +8,7 @@ module cooling_mod
 
  public cooling_setup,cooling
  private coolingcondition
- 
+
  contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -60,7 +60,7 @@ subroutine cooling_setup
 return
 end subroutine cooling_setup
 
-  
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                           SUBROUTINE COOLING

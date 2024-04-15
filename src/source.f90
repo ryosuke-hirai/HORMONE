@@ -39,7 +39,7 @@ subroutine source
 
 !$omp parallel do private(i)
   do i = is, ie
-   grv1(i,js:je,k) = -G*d(i,js:je,k)*mc(i)/x1(i)**2
+   grv1(i,js:je,ks:ke) = -G*d(i,js:je,ks:ke)*mc(i)/x1(i)**2
   end do
 !$omp end parallel do
 
@@ -163,7 +163,7 @@ subroutine source
 
  if(radswitch>0)     call radiative_force
  if(include_extforce)call externalforce
- 
+
  call stop_clock(wtsrc)
 
  return
@@ -252,7 +252,7 @@ subroutine phidamp
 
 ! ratio between diffusive and advection timescales (td/ta)
  alpha9wave = 0.1d0
- 
+
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je

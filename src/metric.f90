@@ -14,7 +14,6 @@ contains
 subroutine metric
 
  use settings,only:include_extforce
- use constants,only:pi
  use grid
 
  integer:: i,j,k
@@ -86,9 +85,9 @@ subroutine metric
   end do
 
   if(je==js)then
-   dvol = dvol * 4d0 
-   sa1  = sa1  * 4d0 
-   sa3  = sa3  * 4d0 
+   dvol = dvol * 4d0
+   sa1  = sa1  * 4d0
+   sa3  = sa3  * 4d0
   end if
 
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -121,7 +120,7 @@ subroutine metric
 
   fac_k=1d0; if(ke==ks)fac_k=4d0
   fac_j=1d0; if(je==js)fac_j=2d0
-  
+
   do k = ks-1, ke+1
    do j = js-1, je+1
     do i = is-1, ie+1
@@ -154,7 +153,7 @@ subroutine metric
                          +sin(2d0*xi2(j-1)))/(cosi(j-1)-cosi(j))
    end do
   end if
-   
+
  end select
 
  return

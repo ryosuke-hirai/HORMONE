@@ -20,7 +20,7 @@ subroutine externalforce
 
 !-----------------------------------------------------------------------------
 
- 
+
 
  return
 end subroutine externalforce

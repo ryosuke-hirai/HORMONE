@@ -42,7 +42,7 @@ subroutine initialcondition
   select case(simtype)
   case('eostest')
    call eostest
-   
+
   case('sodshock_x','sodshock_y','sodshock_z',&
        'briowushock_x','briowushock_y','briowushock_z',&
        'other_shocktube_x','other_shocktube_y','other_shocktube_z')

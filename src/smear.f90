@@ -50,9 +50,9 @@ subroutine smear
 !$omp end do
   end do
 !$omp end parallel
-  
+
  end if
- 
+
  return
 end subroutine smear
 
@@ -68,18 +68,18 @@ end subroutine smear
  subroutine angular_smear(i,js,je,ks,ke)
 
   use settings,only:spn,compswitch
-  use grid,only:x1,x2,x3,dvol,sinc
-  use physval,only:u,spc,v1,v2,v3,eint,icnt,iene,imo1,imo2,imo3,ufnmax
+  use grid,only:x1,x2,x3,dvol
+  use physval,only:u,spc,v1,v2,v3,icnt,iene,imo1,imo2,imo3
   use utils
-  use gravmod,only:totphi,extgrv,gravswitch,include_extgrv
+  use gravmod,only:totphi,gravswitch
 
   implicit none
 
   integer,intent(in)::i,js,je,ks,ke
   integer:: n,j,k
-  real(8):: mtot, etot, Jtot, Itot, vol, eave
+  real(8):: mtot, etot, vol
   real(8),dimension(1:3):: vcar, xcar, momtot, vave
-  
+
 !-----------------------------------------------------------------------------
 
   vol = sum(dvol(i,js:je,ks:ke))
@@ -92,12 +92,12 @@ end subroutine smear
                          / mtot
    end do
   end if
-  
+
 !!$  do n = 1, ufnmax
 !!$   u(i,js:je,ks:ke,n) = sum(u(i,js:je,ks:ke,n)*dvol(i,js:je,ks:ke))/vol
 !!$  end do
 !!$  return
-  
+
   momtot=0d0;etot=0d0
   do j = js, je
    do k = ks, ke
@@ -192,7 +192,7 @@ end subroutine smear
 !!$    u(i,j,k,iene) = eave + 0.5d0*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k))*u(i,j,k,icnt)
 !!$   end do
 !!$  end do
-  
+
  return
 end subroutine angular_smear
 

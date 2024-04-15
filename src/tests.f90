@@ -54,7 +54,6 @@ contains
 
   logical, intent(out) :: passed
   integer,parameter:: nn = 9
-  integer:: n
   character(30):: testfile
   real(8),parameter:: tol=1d-4
   real(8):: error(nn)

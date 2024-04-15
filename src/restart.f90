@@ -23,7 +23,7 @@ subroutine restart
  use dirichlet_mod
  use output_mod,only:set_file_name
  use readbin_mod,only:readbin,read_extgrv
- 
+
  real(8):: starttime
  character(len=30):: startfile, bptfile
  integer:: ui
@@ -32,7 +32,7 @@ subroutine restart
 
  starttime = dble(start)*dt_unit_in_sec
  call set_file_name('bin',start,starttime,startfile)
- 
+
  call readbin(startfile)
 
 

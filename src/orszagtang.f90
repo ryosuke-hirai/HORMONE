@@ -78,7 +78,7 @@ subroutine orszagtang
   case default
    stop 'Something is wrong with the grid. Make it 2D.'
   end select
-  
+
 return
 end subroutine orszagtang
 

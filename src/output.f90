@@ -92,8 +92,7 @@ end subroutine terminal_output
 
 subroutine open_evofile
 
- use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,include_sinks,&
-                   write_evo,start
+ use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,write_evo,start
  use grid,only:dim
 
  integer::ierr
@@ -289,9 +288,8 @@ end subroutine evo_output
 
 subroutine open_sinkfile
 
- use settings,only:include_sinks,crdnt,sigfig,eq_sym,start
+ use settings,only:include_sinks,sigfig,start
  use constants,only:msun
- use grid,only:is,ie,js,je,ks,ke
  use sink_mod,only:nsink,sink
 
  integer:: ierr,n
@@ -344,8 +342,8 @@ end subroutine open_sinkfile
 
 subroutine sink_output
 
- use settings,only:sigfig,include_sinks,crdnt,eq_sym
- use grid,only:tn,time,is,ie,js,je,ks,ke
+ use settings,only:sigfig,include_sinks
+ use grid,only:tn,time
  use sink_mod,only:nsink,sink
 
  integer:: n
@@ -413,7 +411,7 @@ subroutine write_grid
  case(1)
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3
-  
+
   if(ie>is)then
    write(ui,formhead)'  i','x1','dvol'
    j=js;k=ks
@@ -438,7 +436,7 @@ subroutine write_grid
  case(2)
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3,4,5
-  
+
   if(ke==ks)then! For 2D Cartesian, polar or axisymmetrical spherical
    write(ui,formhead)'  i','j','x1','x2','dvol'
    k=ks
@@ -466,7 +464,7 @@ subroutine write_grid
     end do
     write(ui,'()')
    end if
-   
+
   elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    write(ui,formhead)'  i','k','x1','x3','dvol'
    j=js
@@ -478,8 +476,8 @@ subroutine write_grid
      write(ui,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
-   end do   
-   
+   end do
+
   elseif(ie==is)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    write(ui,formhead)'  j','k','x2','x3','dvol'
@@ -698,7 +696,7 @@ subroutine write_plt
  select case (dim)
 ! 1D outputs
  case(1)
- 
+
   if(ie>is)then
    j=js;k=ks
    do i = is, ie
@@ -718,7 +716,7 @@ subroutine write_plt
 
 ! 2D outputs
  case(2)
-  
+
   if(ke==ks)then! For 2D Cartesian, polar or axisymmetrical spherical
    k=ks
 ! output coordinate axis if cylindrical or spherical coordinates
@@ -755,8 +753,8 @@ subroutine write_plt
      call write_val(ui,i,j,k,forme,header)
     end do
     write(ui,'()')
-   end do   
-   
+   end do
+
   elseif(ie==is)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    i=is

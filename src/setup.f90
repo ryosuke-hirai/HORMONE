@@ -20,7 +20,7 @@ contains
 !-----------------------------------------------------------------------------
 
   namelist /startcon/ start, simtype, parafile
-  
+
   open(unit=1,file='startfile',status='old')
   read(1,NML=startcon)
   close(1)
@@ -46,7 +46,7 @@ contains
   integer:: strl
 
 !-----------------------------------------------------------------------------
-  
+
   strl = len(trim(simtype))
   if(simtype(strl-4:strl)==' test')then
    is_test = .true.
@@ -163,7 +163,7 @@ subroutine read_parameters(filename)
  namelist /partcon/ include_particles, maxptc
 
  if(filename=='')return
- 
+
  open(newunit=ui,file=filename,status='old',iostat=istat)
  if(istat/=0)then
   print*,'Error: Simulation parameter file cannot be found'
@@ -180,7 +180,7 @@ subroutine read_parameters(filename)
  read(ui,NML=rad_con,iostat=istat);rewind(ui)
  read(ui,NML=partcon,iostat=istat)
  close(ui)
-  
+
 return
 end subroutine read_parameters
 

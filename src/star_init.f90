@@ -12,7 +12,7 @@ contains
 ! PURPOSE: To place a red supergiant model at the centre of a spherical grid.
 
 subroutine star_init
- 
+
  use settings,only:compswitch,spn,extrasfile,is_test
  use constants,only:G
  use grid
@@ -27,7 +27,7 @@ subroutine star_init
  character(len=10)::spc_list(1:1000)
  integer::i,j,k,nn,sn,istat
  real(8)::dbg,mass,radius,spc_bg(1:spn)
- 
+
 !-----------------------------------------------------------------------------
 
  namelist /starcon/ mesafile,spc_list
@@ -55,7 +55,7 @@ subroutine star_init
           spcflx (1:spn,is-1:ie+1,js-1:je+1,ks-1:ke+1,1:3), &
           species(1:spn) )
  species(1:spn) = spc_list(1:spn)
- 
+
  call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 
  mass = m(size(m)-1)
