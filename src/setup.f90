@@ -20,7 +20,7 @@ contains
 !-----------------------------------------------------------------------------
 
   namelist /startcon/ start, simtype, parafile
-  
+
   open(unit=1,file='startfile',status='old')
   read(1,NML=startcon)
   close(1)
@@ -46,7 +46,7 @@ contains
   integer:: strl
 
 !-----------------------------------------------------------------------------
-  
+
   strl = len(trim(simtype))
   if(simtype(strl-4:strl)==' test')then
    is_test = .true.
@@ -89,12 +89,24 @@ subroutine read_default
   filename='../para/parameters_orszagtang_yz'
  case('orszagtang_xz')
   filename='../para/parameters_orszagtang_xz'
- case('sodshock_x','briowushock_x','other_shocktube_x')
-  filename='../para/parameters_shocktube_x'
- case('sodshock_y','briowushock_y','other_shocktube_y')
-  filename='../para/parameters_shocktube_y'
- case('sodshock_z','briowushock_z','other_shocktube_z')
-  filename='../para/parameters_shocktube_z'
+ case('sodshock_x')
+  filename='../para/parameters_sodshocktube_x'
+ case('sodshock_y')
+  filename='../para/parameters_sodshocktube_y'
+ case('sodshock_z')
+  filename='../para/parameters_sodshocktube_z'
+ case('briowushock_x')
+  filename='../para/parameters_briowushocktube_x'
+ case('briowushock_y')
+  filename='../para/parameters_briowushocktube_y'
+ case('briowushock_z')
+  filename='../para/parameters_briowushocktube_z'
+ case('other_shocktube_x')
+  filename='../para/parameters_othershocktube_x'
+ case('other_shocktube_y')
+  filename='../para/parameters_othershocktube_y'
+ case('other_shocktube_z')
+  filename='../para/parameters_othershocktube_z'
  case('sedov_default','sedov_other')
   filename='../para/parameters_sedov'
  case('KHtest')
@@ -163,7 +175,7 @@ subroutine read_parameters(filename)
  namelist /partcon/ include_particles, maxptc
 
  if(filename=='')return
- 
+
  open(newunit=ui,file=filename,status='old',iostat=istat)
  if(istat/=0)then
   print*,'Error: Simulation parameter file cannot be found'
@@ -180,7 +192,7 @@ subroutine read_parameters(filename)
  read(ui,NML=rad_con,iostat=istat);rewind(ui)
  read(ui,NML=partcon,iostat=istat)
  close(ui)
-  
+
 return
 end subroutine read_parameters
 
