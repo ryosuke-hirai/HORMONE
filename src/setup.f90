@@ -162,7 +162,7 @@ subroutine read_parameters(filename)
  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, tn_evo,&
                     dt_unit, sigfig, outres, write_other_vel, write_shock, &
                     write_evo, write_other_slice, write_temp
- namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn, gamma
+ namelist /eos_con/ eostype, gamma, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, &
                     include_cooling, include_extforce, extrasfile
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &

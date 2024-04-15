@@ -34,6 +34,7 @@
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
+! gamma: gas adiabatic index
 &eos_con eostype = 0 eoserr=1d-15 compswitch=0 muconst=0.62d0 spn=0
 		 gamma=1.6666666666666667d0 /
 
