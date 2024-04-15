@@ -603,6 +603,8 @@ end subroutine write_grid
 subroutine write_bin
 
  use settings
+ use mpi_utils, only:myrank
+ use io, only:open_file_write,close_file, write_var, write_dummy_recordmarker
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
  use gravmod,only:grvphi,grvphidot,dt_old
@@ -611,33 +613,67 @@ subroutine write_bin
  implicit none
 
  character(len=50):: binfile
- integer:: un
+ integer :: un
+ logical :: legacy = .true.
 
 !-----------------------------------------------------------------------------
 
  call set_file_name('bin',tn,time,binfile)
- open(newunit=un,file=binfile,status='replace',form='unformatted')
+ call open_file_write(binfile, un)
 
- write(un)tn,time
- write(un) d (is:ie,js:je,ks:ke), &
-           v1(is:ie,js:je,ks:ke), &
-           v2(is:ie,js:je,ks:ke), &
-           v3(is:ie,js:je,ks:ke), &
-           e (is:ie,js:je,ks:ke)
- if(gravswitch>=2)write(un)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)write(un)grvphidot(gis:gie,gjs:gje,gks:gke),dt_old
- if(compswitch>=2)write(un)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
- if(mag_on)then
-  write(un) b1(is:ie,js:je,ks:ke), &
-            b2(is:ie,js:je,ks:ke), &
-            b3(is:ie,js:je,ks:ke), &
-            phi(is:ie,js:je,ks:ke)
+ call write_dummy_recordmarker(un, legacy)
+ call write_var(un, tn)
+ call write_var(un, time)
+ call write_dummy_recordmarker(un, legacy)
+
+ call write_dummy_recordmarker(un, legacy)
+ call write_var(un, d, is, ie, js, je, ks, ke)
+ call write_var(un, v1, is, ie, js, je, ks, ke)
+ call write_var(un, v2, is, ie, js, je, ks, ke)
+ call write_var(un, v3, is, ie, js, je, ks, ke)
+ call write_var(un, e, is, ie, js, je, ks, ke)
+ call write_dummy_recordmarker(un, legacy)
+
+ if(gravswitch>=2) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke)
+   call write_dummy_recordmarker(un, legacy)
  end if
- if(include_sinks)write(un)sink(1:nsink)
 
- close(un)
+ if(gravswitch==3) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke)
+   call write_var(un, dt_old)
+   call write_dummy_recordmarker(un, legacy)
+ endif
 
- print*,"Outputted: ",trim(binfile)
+ if(compswitch>=2) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
+   call write_var(un, species, 1, spn)
+   call write_dummy_recordmarker(un, legacy)
+ endif
+
+ if(mag_on) then
+  call write_dummy_recordmarker(un, legacy)
+  call write_var(un, b1, is, ie, js, je, ks, ke)
+  call write_var(un, b2, is, ie, js, je, ks, ke)
+  call write_var(un, b3, is, ie, js, je, ks, ke)
+  call write_var(un, phi, is, ie, js, je, ks, ke)
+  call write_dummy_recordmarker(un, legacy)
+ end if
+
+ if(include_sinks) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, sink, 1, nsink)
+   call write_dummy_recordmarker(un, legacy)
+ endif
+
+ call close_file(un)
+
+ if (myrank==0) then
+   print*,"Outputted: ",trim(binfile)
+ end if
 
 return
 end subroutine write_bin

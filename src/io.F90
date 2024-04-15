@@ -2,6 +2,7 @@ module io
 #ifdef MPI
   use mpi
 #endif
+  use sink_mod, only: sink_prop
   implicit none
 
   interface read_var
@@ -13,7 +14,18 @@ module io
     module procedure read_array_1d_sink
   end interface read_var
 
-  public :: read_var, read_dummy_recordmarker, open_file_read, close_file
+  interface write_var
+    module procedure write_int4
+    module procedure write_real8
+    module procedure write_array_1d_char
+    module procedure write_array_3d_real8
+    module procedure write_array_4d_real8
+    module procedure write_array_1d_sink
+  end interface write_var
+
+  public :: read_var, read_dummy_recordmarker
+  public :: write_var, write_dummy_recordmarker
+  public :: open_file_read, close_file, open_file_write
   private
 
 #ifdef MPI
@@ -22,6 +34,57 @@ module io
 #endif
 
 contains
+
+#ifdef MPI
+subroutine get_file_end(fh, end_bytes)
+  integer, intent(in) :: fh
+  integer :: ierr
+  integer(kind=MPI_OFFSET_KIND), intent(out) :: end_bytes
+  integer(kind=MPI_OFFSET_KIND) :: disp
+  integer :: method = 1
+
+  if (method == 1) then
+    ! This may or may not be better than the method below... idk yet
+    call mpi_file_sync(fh, ierr)
+    call MPI_File_get_size(fh, end_bytes, ierr)
+  else
+! --- Alternative method------------------------------------
+    ! Reset view to default ("absolute" view in bytes)
+    call mpi_file_set_view(fh, 0_MPI_OFFSET_KIND, MPI_BYTE, MPI_BYTE, 'native', MPI_INFO_NULL, ierr)
+    ! Move individual file positions to absolute end of file
+    call mpi_file_seek(fh, 0_MPI_OFFSET_KIND, MPI_SEEK_END, ierr)
+    call mpi_file_get_position(fh, disp, ierr)
+    call mpi_file_get_byte_offset(fh, disp, end_bytes, ierr)
+! ----------------------------------------------------------
+  endif
+
+end subroutine get_file_end
+#endif
+
+subroutine open_file_write(filename, fh)
+  use mpi_utils, only: myrank
+  character(len=*), intent(in) :: filename
+  integer, intent(out) :: fh
+#ifdef MPI
+  integer :: ierr
+#endif
+
+  if (myrank == 0) then
+    ! Create new file
+    open(newunit=fh, file=filename, status='replace', form='unformatted', action='write', access='stream')
+#ifdef MPI
+    ! Close the file so that other ranks can open it in MPI mode
+    close(fh)
+#endif
+  end if
+
+#ifdef MPI
+  call mpi_barrier(MPI_COMM_WORLD, ierr)
+  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_RDWR + MPI_MODE_APPEND, MPI_INFO_NULL, fh, ierr)
+  call mpi_barrier(MPI_COMM_WORLD, ierr)
+#endif
+
+end subroutine open_file_write
 
 subroutine open_file_read(filename, fh)
   character(len=*), intent(in) :: filename
@@ -152,7 +215,6 @@ subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
 end subroutine read_array_4d_real8
 
 subroutine read_array_1d_sink(fh, arr, istart, iend)
-  use sink_mod, only: sink_prop
   integer, intent(in) :: fh
   type(sink_prop), allocatable, intent(inout) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
@@ -177,5 +239,96 @@ subroutine read_dummy_recordmarker(fh, legacy)
   endif
 
 end subroutine read_dummy_recordmarker
+
+subroutine write_dummy_recordmarker(fh, legacy)
+  integer, intent(in) :: fh
+  logical, intent(in) :: legacy
+  integer, parameter :: dummy = -1 ! Assmuing record marker is the size of an integer
+
+  if (legacy) then
+    call write_int4(fh, dummy)
+  endif
+
+end subroutine write_dummy_recordmarker
+
+subroutine write_int4(fh, var)
+  integer, intent(in) :: fh
+  integer, intent(in) :: var
+#ifdef MPI
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: ierr
+
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_INTEGER4, MPI_INTEGER4, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, var, 1, MPI_INTEGER4, MPI_STATUS_IGNORE, ierr)
+#else
+  write(fh) var
+#endif
+
+end subroutine write_int4
+
+subroutine write_real8(fh, var)
+  integer, intent(in) :: fh
+  real(8), intent(in) :: var
+#ifdef MPI
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: ierr
+
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, var, 1, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+#else
+  write(fh) var
+#endif
+
+end subroutine write_real8
+
+subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
+  integer, intent(in) :: fh
+  real(8), intent(in) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
+#ifdef MPI
+  ! TODO: MPI
+#else
+  write(fh) arr(istart:iend,jstart:jend,kstart:kend)
+#endif
+
+end subroutine write_array_3d_real8
+
+subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
+  integer, intent(in) :: fh
+  real(8), intent(in) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
+#ifdef MPI
+  ! TODO: MPI
+#else
+  write(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
+#endif
+
+end subroutine write_array_4d_real8
+
+subroutine write_array_1d_sink(fh, arr, istart, iend)
+  integer, intent(in) :: fh
+  type(sink_prop), intent(in) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer, intent(in) :: istart, iend
+#ifdef MPI
+  ! TODO: MPI
+#else
+  write(fh) arr(istart:iend)
+#endif
+
+end subroutine write_array_1d_sink
+
+subroutine write_array_1d_char(fh, arr, istart, iend)
+  integer, intent(in) :: fh
+  character(len=10), intent(in) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer, intent(in) :: istart, iend
+#ifdef MPI
+  ! TODO: MPI
+#else
+  write(fh) arr(istart:iend)
+#endif
+
+end subroutine write_array_1d_char
 
 end module io
