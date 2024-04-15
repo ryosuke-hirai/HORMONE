@@ -178,7 +178,7 @@ contains
  end function L1_norm_error
 
  function L2_norm_error(var,var0,tol) result(norm)
-  use mpi_utils,only:allreduce_mpi,myrank
+  use mpi_utils,only:allreduce_mpi
   use grid,only:is,ie,js,je,ks,ke,dvol
   real(8),dimension(:,:,:),intent(in):: var,var0
   real(8),intent(in):: tol
