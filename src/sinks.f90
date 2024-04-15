@@ -134,7 +134,7 @@ subroutine get_sinkgas_acc(sink)
  use constants,only:tiny
  use settings,only:crdnt,eq_sym,courant
  use utils,only:carpol
- use grid,only:idx1,idx2,idx3,x1,g22,dxi1,dxi2,dxi3,x1,x2,x3
+ use grid,only:idx1,idx3,x1,g22,dxi1,dxi2,dxi3,x1,x3
  use gravmod,only:gphi=>grvphi
 
  type(sink_prop),intent(inout):: sink
@@ -342,7 +342,7 @@ end subroutine get_sink_loc
 !!$
 !!$  totmom = totmom*2d0
 !!$  totmom(3) = 0d0
-!!$  
+!!$
 !!$  return
 !!$ end subroutine get_totmom
 

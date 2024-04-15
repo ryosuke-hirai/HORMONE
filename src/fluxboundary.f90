@@ -41,10 +41,10 @@ end subroutine fluxboundary
 
 subroutine fluxboundary3i
 
- use settings,only:compswitch,spn,extrasfile
+ use settings,only:compswitch,extrasfile
  use constants,only:arad,fac_pgas,fac_egas
  use grid
- use physval,only:flux3,spcflx,muconst,imo3,iene,icnt,spc,dspc
+ use physval,only:flux3,spcflx,muconst,imo3,iene,icnt
  use input_mod,only:error_extras,error_nml
 
  integer:: i,j,k,n,istat
@@ -52,7 +52,7 @@ subroutine fluxboundary3i
  character(len=100):: mesafile,star_type
 
 !-----------------------------------------------------------------------------
- 
+
 ! Read wind parameters
  namelist /wtnlcon/ star_type,mass,radius,poly_n,mesafile,vwind,dwind,Twind
 
