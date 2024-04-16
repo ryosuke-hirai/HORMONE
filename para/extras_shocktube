@@ -2,7 +2,6 @@
 
 ! Variables ending with l/r are for left/right states
 
-&tubecon mag_on=.false. gamma=1.4d0
-         dl=1d0 dr=1d0 pl=1d0 pr=1d0
+&tubecon dl=1d0 dr=1d0 pl=1d0 pr=1d0
          v1l=0d0 v1r=0d0 v2l=0d0 v2r=0d0 v3l=0d0 v3r=0d0
          b1l=0d0 b1r=0d0 b2l=0d0 b2r=0d0 b3l=0d0 b3r=0d0 /
