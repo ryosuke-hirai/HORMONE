@@ -286,7 +286,7 @@ end subroutine write_real8
 subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
   use mpi_utils, only: type_mpi_array
   integer, intent(in) :: fh
-  real(8), intent(in) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
@@ -305,7 +305,7 @@ end subroutine write_array_3d_real8
 
 subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
   integer, intent(in) :: fh
-  real(8), intent(in) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  real(8), intent(in), allocatable :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
 
   ! TODO MPI
@@ -320,7 +320,7 @@ end subroutine write_array_4d_real8
 
 subroutine write_array_1d_sink(fh, arr, istart, iend)
   integer, intent(in) :: fh
-  type(sink_prop), intent(in) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
+  type(sink_prop), intent(in), allocatable :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
 
   ! TODO MPI
@@ -335,7 +335,7 @@ end subroutine write_array_1d_sink
 
 subroutine write_array_1d_char(fh, arr, istart, iend)
   integer, intent(in) :: fh
-  character(len=10), intent(in) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
+  character(len=10), intent(in), allocatable :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
 
   ! TODO MPI
