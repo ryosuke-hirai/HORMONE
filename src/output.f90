@@ -396,11 +396,14 @@ subroutine write_grid
 
  use settings
  use grid
+ use mpi_utils, only:myrank
 
  implicit none
 
  character(len=50):: formhead,formval,formnum
  integer:: i,j,k,ui
+
+ if (myrank/=0) return
 
 !-----------------------------------------------------------------------------
 
