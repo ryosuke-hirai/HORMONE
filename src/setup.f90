@@ -125,6 +125,8 @@ subroutine read_default
   filename='../para/parameters_stellarcollision'
  case('modify')
   filename='../para/parameters_rsg_sph'!temporary
+ case('iotest')
+  filename='../para/parameters_iotest'
  case default
   print*,'This simtype does not exist yet, simtype ="',trim(simtype),'"'
   stop
