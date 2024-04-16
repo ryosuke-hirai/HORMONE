@@ -22,7 +22,6 @@ contains
 
 !--------------------------------------------------------------------
 
-  gamma = 1.4d0
 ! for Kelvin-Helmholtz test
   do k = ks-1,ke+1
    do j = js-1,je+1

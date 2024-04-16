@@ -89,12 +89,24 @@ subroutine read_default
   filename='../para/parameters_orszagtang_yz'
  case('orszagtang_xz')
   filename='../para/parameters_orszagtang_xz'
- case('sodshock_x','briowushock_x','other_shocktube_x')
-  filename='../para/parameters_shocktube_x'
- case('sodshock_y','briowushock_y','other_shocktube_y')
-  filename='../para/parameters_shocktube_y'
- case('sodshock_z','briowushock_z','other_shocktube_z')
-  filename='../para/parameters_shocktube_z'
+ case('sodshock_x')
+  filename='../para/parameters_sodshocktube_x'
+ case('sodshock_y')
+  filename='../para/parameters_sodshocktube_y'
+ case('sodshock_z')
+  filename='../para/parameters_sodshocktube_z'
+ case('briowushock_x')
+  filename='../para/parameters_briowushocktube_x'
+ case('briowushock_y')
+  filename='../para/parameters_briowushocktube_y'
+ case('briowushock_z')
+  filename='../para/parameters_briowushocktube_z'
+ case('other_shocktube_x')
+  filename='../para/parameters_othershocktube_x'
+ case('other_shocktube_y')
+  filename='../para/parameters_othershocktube_y'
+ case('other_shocktube_z')
+  filename='../para/parameters_othershocktube_z'
  case('sedov_default','sedov_other')
   filename='../para/parameters_sedov'
  case('KHtest')
@@ -150,7 +162,7 @@ subroutine read_parameters(filename)
  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, tn_evo,&
                     dt_unit, sigfig, outres, write_other_vel, write_shock, &
                     write_evo, write_other_slice, write_temp
- namelist /eos_con/ eostype, eoserr, compswitch, muconst, spn
+ namelist /eos_con/ eostype, gamma, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, &
                     include_cooling, include_extforce, extrasfile
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
