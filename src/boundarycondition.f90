@@ -51,7 +51,7 @@ if(is==is_global)then
  x1_inner_scalar: select case (bc1is)
  case(0) x1_inner_scalar ! periodic --------------------------------------
 ! When MPI is used, periodic BCs are already applied by the exchange
-! and applying them here with is and ie will product wrong results.
+! and applying them here with is and ie will produce wrong results.
 ! In serial, this is still necessary.
 if (is==is_global .and. ie==ie_global) then
 !$omp do private(j,k) collapse(2)
