@@ -23,7 +23,7 @@ module mpi_domain
 
    contains
 
-   subroutine domain_decomp()
+   subroutine domain_decomp
       use grid
 #ifdef MPI
       use mpi_utils, only: type_mpi_array
@@ -33,6 +33,7 @@ module mpi_domain
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
+
 #endif
 
       is_global = is
@@ -104,6 +105,7 @@ module mpi_domain
       call MPI_Barrier(cart_comm, ierr)
 
       ! Set up the subarray which selects only the real cells for I/O
+
       sizes = [nx,ny,nz]
       subsizes = [ie-is+1,je-js+1,ke-ks+1]
       starts = [is-1,js-1,ks-1]
@@ -219,6 +221,7 @@ module mpi_domain
 
    subroutine exchange_scalar(val)
       use grid
+
       real(8), intent(inout) :: val(is-2:ie+2,js-2:je+2,ks-2:ke+2)
 
 #ifdef MPI
