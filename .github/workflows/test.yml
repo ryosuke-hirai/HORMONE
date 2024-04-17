@@ -69,6 +69,7 @@ jobs:
           - orszagtang_xz
           - sedov_default
           - star_sph
+          - iotest
 
     steps:
     - uses: actions/checkout@v4
@@ -89,12 +90,17 @@ jobs:
       working-directory: ./work
       run: sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
 
+    - name: Remove "test" after test name if doing iotest
+      if: matrix.test == 'iotest'
+      working-directory: ./work
+      run: sed -i "s/iotest test/iotest/g" startfile
+
     - name: Run test
       working-directory: ./work
       run: ./hormone | tee output.txt
 
-    - name: Check results are identical (all tests except star_sph)
-      if: matrix.test != 'star_sph'
+    - name: Check results are identical (all tests except star_sph, iotest)
+      if: matrix.test != 'star_sph' && matrix.test != 'iotest'
       run: |
         if grep -q "Identical!" ./work/output.txt; then
           echo "Test results identical"

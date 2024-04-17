@@ -84,6 +84,7 @@ module iotest_mod
       if (numerr > 0) then
         print*, 'Number of errors = ',numerr
         print*, 'Test failed'
+        error stop 1
       else
         print*, 'Test passed'
       endif
