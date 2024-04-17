@@ -6,7 +6,6 @@ on:
     paths-ignore:
       - 'README.md'
   pull_request:
-    branches: [ master ]
     paths-ignore:
       - 'README.md'
 
@@ -21,8 +20,14 @@ jobs:
         debug:
           - no
           - yes
+        mpi:
+          - no
+          - yes
+        exclude:
+          - fc: ifort
+            mpi: yes
 
-    name: compile (fc=${{ matrix.fc }}, debug=${{ matrix.debug }})
+    name: compile (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
 
     runs-on: ubuntu-latest
 
@@ -32,16 +37,21 @@ jobs:
     - uses: ./.github/actions/setup-intel-oneapi
       if: matrix.fc == 'ifort'
 
+    - name: Set up OpenMPI
+      if: matrix.mpi == 'yes'
+      run: sudo apt-get install -y openmpi-bin libopenmpi-dev
+
     - name: Compile
       working-directory: ./work
       run: make ${{ matrix.debug == 'yes' && 'debug' || '' }}
       env:
         FC: ${{ matrix.fc }}
+        MPI: ${{ matrix.mpi }}
 
     - name: Save binary as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
         path: ./work/hormone
 
   test:
@@ -57,6 +67,9 @@ jobs:
         debug:
           - no
           - yes
+        mpi:
+          - no
+          - yes
         test:
           - sodshock_x
           - sodshock_y
@@ -70,6 +83,28 @@ jobs:
           - sedov_default
           - star_sph
           - iotest
+        exclude:
+          - fc: ifort
+            mpi: yes
+          # Temporary: exclude tests that are not yet implemented for MPI
+          - mpi: yes
+            test: briowushock_x
+          - mpi: yes
+            test: briowushock_y
+          - mpi: yes
+            test: briowushock_z
+          - mpi: yes
+            test: orszagtang_xy
+          - mpi: yes
+            test: orszagtang_yz
+          - mpi: yes
+            test: orszagtang_xz
+          - mpi: yes
+            test: sedov_default
+          - mpi: yes
+            test: star_sph
+
+    name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
 
     steps:
     - uses: actions/checkout@v4
@@ -77,10 +112,14 @@ jobs:
     - uses: ./.github/actions/setup-intel-oneapi
       if: matrix.fc == 'ifort'
 
+    - name: Set up OpenMPI
+      if: matrix.mpi == 'yes'
+      run: sudo apt-get install -y openmpi-bin libopenmpi-dev
+
     - name: Download binary
       uses: actions/download-artifact@v4
       with:
-        name: ${{ matrix.fc }}-${{ matrix.debug }}
+        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
         path: ./work
 
     - name: Set executable permissions for binary
@@ -97,7 +136,12 @@ jobs:
 
     - name: Run test
       working-directory: ./work
-      run: ./hormone | tee output.txt
+      run: |
+        if [[ "${{ matrix.mpi }}" == "yes" ]]; then
+          mpirun -np 4 --oversubscribe ./hormone | tee output.txt
+        else
+          ./hormone | tee output.txt
+        fi
 
     - name: Check results are identical (all tests except star_sph, iotest)
       if: matrix.test != 'star_sph' && matrix.test != 'iotest'
