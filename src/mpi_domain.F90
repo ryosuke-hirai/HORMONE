@@ -23,7 +23,7 @@ module mpi_domain
 
    contains
 
-   subroutine domain_decomp()
+   subroutine domain_decomp
       use grid
 #ifdef MPI
       use mpi_utils, only: type_mpi_array
@@ -32,6 +32,7 @@ module mpi_domain
       integer, dimension(3) :: dims, sizes, subsizes, starts
       logical :: periods(3)
       integer :: mycoords(3)
+      integer :: i
 
 #endif
 
