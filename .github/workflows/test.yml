@@ -100,8 +100,6 @@ jobs:
           - mpi: yes
             test: orszagtang_xz
           - mpi: yes
-            test: sedov_default
-          - mpi: yes
             test: star_sph
 
     name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
