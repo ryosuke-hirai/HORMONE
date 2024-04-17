@@ -704,6 +704,7 @@ end subroutine write_bin
 ! PURPOSE: To output ascii file for plotting
 
 subroutine write_plt
+ ! TODO: MPI
 
  use settings
  use grid,only:is,ie,js,je,ks,ke,time,tn,dim
