@@ -66,15 +66,18 @@ end subroutine output
 
 subroutine terminal_output
 
+ use mpi_utils,only:myrank
  use settings,only:dt_unit_in_sec,dt_unit
  use grid,only:tn,time,dt
 
 !-----------------------------------------------------------------------------
 
- print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
-  'tn =',tn,&
-  'time =',time/dt_unit_in_sec,dt_unit,&
-  'dt =',dt/dt_unit_in_sec,dt_unit
+ if (myrank==0) then
+  print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
+    'tn =',tn,&
+    'time =',time/dt_unit_in_sec,dt_unit,&
+    'dt =',dt/dt_unit_in_sec,dt_unit
+ end if
 
 return
 end subroutine terminal_output

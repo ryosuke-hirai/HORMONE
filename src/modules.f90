@@ -43,6 +43,10 @@ module grid
 ! number of grids
   integer:: is, ie, js, je, ks, ke
   integer:: gis, gie, gjs, gje, gks, gke
+
+  integer:: is_global, ie_global, js_global, je_global, ks_global, ke_global
+  integer:: gis_global, gie_global, gjs_global, gje_global, gks_global, gke_global
+
   integer:: tn,dim
   integer:: rungen
   integer:: musize,fmr_max,fmr_lvl(0:20)

@@ -14,6 +14,7 @@ contains
 
  subroutine timestep
 
+  use mpi_utils,only:allreduce_mpi
   use constants,only:tiny
   use settings,only:courant,outstyle,HGfac,hgcfl
   use grid
@@ -85,6 +86,10 @@ contains
   end if
 
   dt = courant * minval(dti)
+
+  ! Reduce quantities across all MPI tasks
+  call allreduce_mpi('min',dt)
+  call allreduce_mpi('max',cfmax)
 
   if(outstyle==1) dt = min(dt,t_out-time)
 
