@@ -63,12 +63,6 @@ subroutine sedov
  vol_tot = sum(dvol(is:ie,js:je,ks:ke))
  call allreduce_mpi('sum', vol_tot)
 
-
-!  print*, 'volumes', vol_inj, vol_tot, 'is,ie', is, ie
-!  print*, 'dvol range', dvol(is,js:je,ks:ke), dvol(ie,js:je,ks:ke)
-
-!  stop
-
  pamb = 1d-3*Eexp/vol_tot ! Low energy
 
  d(is:ie,js:je,ks:ke) = damb
