@@ -26,10 +26,9 @@ module mpi_domain
    subroutine domain_decomp
       use grid
 #ifdef MPI
-      use mpi_utils, only: type_mpi_array
       integer :: nx, ny, nz
       integer :: ierr
-      integer, dimension(3) :: dims, sizes, subsizes, starts
+      integer, dimension(3) :: dims
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
@@ -85,6 +84,7 @@ module mpi_domain
       if (mycoords(3) == dims(3) - 1) ke = nz - (ks_global - 1)
 
       call setup_mpi_exchange
+      call setup_mpi_io
 
       ! Print out the domain decomposition
       if (myrank == 0) then
@@ -103,15 +103,6 @@ module mpi_domain
          write(*, *)
       endif
       call MPI_Barrier(cart_comm, ierr)
-
-      ! Set up the subarray which selects only the real cells for I/O
-
-      sizes = [nx,ny,nz]
-      subsizes = [ie-is+1,je-js+1,ke-ks+1]
-      starts = [is-1,js-1,ks-1]
-
-      call mpi_type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, type_mpi_array, ierr)
-      call mpi_type_commit(type_mpi_array, ierr)
 
 #endif
 
@@ -262,5 +253,23 @@ module mpi_domain
       enddo
 #endif
    end subroutine exchange_scalar
+
+   subroutine setup_mpi_io
+#ifdef MPI
+      use mpi
+      use mpi_utils, only: type_mpi_array
+      use grid
+      integer, dimension(3) :: dims, sizes, subsizes, starts
+      integer :: ierr
+
+      ! Set up the subarray which selects only the real cells for I/O
+      sizes = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
+      subsizes = [ie-is+1,je-js+1,ke-ks+1]
+      starts = [is-1,js-1,ks-1]
+
+      call mpi_type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, type_mpi_array, ierr)
+      call mpi_type_commit(type_mpi_array, ierr)
+#endif
+   end subroutine setup_mpi_io
 
 end module mpi_domain
