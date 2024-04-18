@@ -19,16 +19,21 @@ subroutine checksetup
 
 !-----------------------------------------------------------------------------
 
+! Select which directions to solve
+  solve_i=.false.;solve_j=.false.;solve_k=.false.
+  if(ie>is)solve_i=.true.
+  if(je>js)solve_j=.true.
+  if(ke>ks)solve_k=.true.
+
 ! Reading dimension of grid
-  if(ie==is.and.je==js.and.ke==ks) print *,"Error from gridset"
-  if(ie==is.and.je==js.and.ke==ks) stop
-  if(ie/=is.and.je==js.and.ke==ks) dim=1
-  if(ie==is.and.je/=js.and.ke==ks) dim=1
-  if(ie==is.and.je==js.and.ke/=ks) dim=1
-  if(ie/=is.and.je/=js.and.ke==ks) dim=2
-  if(ie/=is.and.je==js.and.ke/=ks) dim=2
-  if(ie==is.and.je/=js.and.ke/=ks) dim=2
-  if(ie/=is.and.je/=js.and.ke/=ks) dim=3
+  dim=0
+  if(solve_i)dim=dim+1
+  if(solve_j)dim=dim+1
+  if(solve_k)dim=dim+1
+  if(dim==0)then
+   print*,"Error from gridset"
+   stop
+  end if
   if(dim/=2) write_other_vel = .false.
   if(dim/=3) write_other_slice = .false.
 
@@ -46,10 +51,10 @@ subroutine checksetup
    call add_equation(i9wv,ufnmax) ! Divergence cleaning (9-wave method)
   end if
 
-! Set uniform mesh if that dimension it not used
-  if(ie==0)imesh=0
-  if(je==0)jmesh=0
-  if(ke==0)kmesh=0
+! Set uniform mesh if that dimension is not used
+  if(.not.solve_i)imesh=0
+  if(.not.solve_j)jmesh=0
+  if(.not.solve_k)kmesh=0
 
 ! To warn the periodic boundary condition
   if(bc1is*bc1os==0.and.bc1is+bc1os/=0)then
@@ -79,15 +84,15 @@ subroutine checksetup
   end if
 
 ! Setting boundary conditions for 1D and 2D simulations
-  if(is==ie)then
+  if(.not.solve_i)then
    bc1is=2 ; bc1os=2 ; bc1iv=2 ; bc1ov=2
   end if
 
-  if(js==je)then
+  if(.not.solve_j)then
    bc2is=3 ; bc2os=3 ; bc2iv=3 ; bc2ov=3
   end if
 
-  if(ks==ke)then
+  if(.not.solve_k)then
    bc3is=3 ; bc3os=3 ; bc3iv=3 ; bc3ov=3
   end if
 
