@@ -11,7 +11,7 @@ module mpi_utils
 
   public :: allreduce_mpi
 
-  integer :: myrank, nprocs, type_mpi_array
+  integer :: myrank, nprocs, mpitype_array3d_real8
 
   contains
 
