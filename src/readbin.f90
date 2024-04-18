@@ -18,39 +18,69 @@ subroutine readbin(filename)
  use settings
  use grid
  use physval
+ use io
  use pressure_mod
  use composition_mod
  use gravmod
  use sink_mod,only:nsink,sink
 
  character(len=*),intent(in):: filename
- integer:: un,istat
+ integer:: un
+ logical :: legacy = .true.
 
 !-----------------------------------------------------------------------------
 
- open(newunit=un,file=filename,status='old',form='unformatted',iostat=istat)
- if(istat/=0)then
-  print*,'Binary dump file not found'
-  print'(3a)','File name = "',trim(filename),'"'
-  stop
- end if
- read(un) tn,time
- read(un) d (is:ie,js:je,ks:ke), &
-          v1(is:ie,js:je,ks:ke), &
-          v2(is:ie,js:je,ks:ke), &
-          v3(is:ie,js:je,ks:ke), &
-          e (is:ie,js:je,ks:ke)
- if(gravswitch>=2)read(un)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)read(un)grvphidot(gis:gie,gjs:gje,gks:gke),dt_old
- if(compswitch>=2)read(un)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
+ call open_file_read(filename, un)
+
+ call read_dummy_recordmarker(un, legacy)
+ call read_var(un, tn)
+ call read_var(un, time)
+ call read_dummy_recordmarker(un, legacy)
+
+ call read_dummy_recordmarker(un, legacy)
+ call read_var(un, d, is, ie, js, je, ks, ke)
+ call read_var(un, v1, is, ie, js, je, ks, ke)
+ call read_var(un, v2, is, ie, js, je, ks, ke)
+ call read_var(un, v3, is, ie, js, je, ks, ke)
+ call read_var(un, e, is, ie, js, je, ks, ke)
+ call read_dummy_recordmarker(un, legacy)
+
+ if(gravswitch>=2) then
+   call read_dummy_recordmarker(un, legacy)
+   call read_var(un, grvphi, gis, gie, gjs, gje, gks, gke)
+   call read_dummy_recordmarker(un, legacy)
+ endif
+
+ if(gravswitch==3) then
+   call read_dummy_recordmarker(un, legacy)
+   call read_var(un, grvphidot, gis, gie, gjs, gje, gks, gke)
+   call read_var(un, dt_old)
+   call read_dummy_recordmarker(un, legacy)
+ endif
+
+ if(compswitch>=2) then
+   call read_dummy_recordmarker(un, legacy)
+   call read_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
+   call read_var(un, species, 1, spn)
+   call read_dummy_recordmarker(un, legacy)
+ endif
+
  if(mag_on)then
-  read(un) b1(is:ie,js:je,ks:ke), &
-           b2(is:ie,js:je,ks:ke), &
-           b3(is:ie,js:je,ks:ke), &
-           phi(is:ie,js:je,ks:ke)
+  call read_dummy_recordmarker(un, legacy)
+  call read_var(un, b1, is, ie, js, je, ks, ke)
+  call read_var(un, b2, is, ie, js, je, ks, ke)
+  call read_var(un, b3, is, ie, js, je, ks, ke)
+  call read_var(un, phi, is, ie, js, je, ks, ke)
+  call read_dummy_recordmarker(un, legacy)
  end if
- if(include_sinks)read(un)sink(1:nsink)
- close(un)
+
+ if(include_sinks) then
+   call read_dummy_recordmarker(un, legacy)
+   call read_var(un, sink, 1, nsink)
+   call read_dummy_recordmarker(un, legacy)
+ endif
+
+ call close_file(un)
 
  call meanmolweight
  call pressure
@@ -100,6 +130,7 @@ subroutine read_extgrv(filename)
  integer:: ui
 !-----------------------------------------------------------------------------
 
+ ! TODO: MPI
  open(newunit=ui,file=filename,status='old',form='unformatted')
  extgrv = 0d0
  read(ui)coremass

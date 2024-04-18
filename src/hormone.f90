@@ -19,6 +19,7 @@
 program hormone
 
   use mpi_utils
+  use mpi_domain
   use settings
   use grid
   use physval
@@ -77,9 +78,12 @@ program hormone
 
 ! Reading parameters
   call read_parameters(parafile)
+  call checksetup
+
+! Decompose domain onto MPI tasks
+  call domain_decomp
 
 ! Start initial setup
-  call checksetup
   call allocations
   call gridset
   call metric
@@ -87,6 +91,7 @@ program hormone
 
   call initialcondition
   if(dirichlet_on)call dirichletbound
+  call exchange_mpi
   call boundarycondition
   call meanmolweight
   call conserve
@@ -129,6 +134,7 @@ program hormone
     call shockfind
 
     do rungen = 1, rktype
+     call exchange_mpi
      call boundarycondition
      call numflux
      call source
@@ -185,7 +191,7 @@ program hormone
 
   if(tn/=0)call output ! To see final state
 
-  print *, 'Calculation complete! tn = ',tn
+  if(myrank==0) print *, 'Calculation complete! tn = ',tn
 
   if(is_test) then
     call test(passed)

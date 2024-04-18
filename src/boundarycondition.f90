@@ -44,9 +44,16 @@ subroutine boundarycondition
 
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+! If physical boundary condition (not MPI)
+if(is==is_global)then
+
 ! scalar values
  x1_inner_scalar: select case (bc1is)
  case(0) x1_inner_scalar ! periodic --------------------------------------
+! When MPI is used, periodic BCs are already applied by the exchange
+! and applying them here with is and ie will produce wrong results.
+! In serial, this is still necessary.
+if (is==is_global .and. ie==ie_global) then
 !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
@@ -57,6 +64,7 @@ subroutine boundarycondition
    end do
   end do
 !$omp end do
+endif
 
  case(1) x1_inner_scalar ! reflective ------------------------------------
 !$omp do private(j,k) collapse(2)
@@ -112,6 +120,7 @@ subroutine boundarycondition
 ! vector values
  x1_inner_vector: select case (bc1iv)
  case (0) x1_inner_vector ! periodic -------------------------------------
+if (is==is_global .and. ie==ie_global) then
 !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
@@ -126,6 +135,7 @@ subroutine boundarycondition
    end do
   end do
 !$omp end do
+endif
 
  case(1) x1_inner_vector ! reflective ------------------------------------
 !$omp do private(j,k) collapse(2)
@@ -229,12 +239,17 @@ subroutine boundarycondition
  end do
 !$omp end do
 ! ========================================================================
+end if
 
 ! >>> outer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+! If physical boundary condition (not MPI)
+if(ie==ie_global)then
 
 ! scalar values
  x1_outer_scalar: select case (bc1os)
  case(0) x1_outer_scalar ! periodic --------------------------------------
+ if (is==is_global .and. ie==ie_global) then
 !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
@@ -245,6 +260,7 @@ subroutine boundarycondition
    end do
   end do
 !$omp end do
+endif
 
  case(1) x1_outer_scalar ! reflective ------------------------------------
 !$omp do private(j,k) collapse(2)
@@ -329,6 +345,7 @@ subroutine boundarycondition
 ! vector values
  x1_outer_vector: select case (bc1ov)
  case(0) x1_outer_vector ! periodic --------------------------------------
+ if (is==is_global .and. ie==ie_global) then
 !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
@@ -343,6 +360,7 @@ subroutine boundarycondition
    end do
   end do
 !$omp end do
+endif
 
  case(1) x1_outer_vector ! reflective ------------------------------------
 !$omp do private(j,k) collapse(2)
@@ -495,14 +513,17 @@ subroutine boundarycondition
  end do
 !$omp end do
  ! =======================================================================
+end if
 
 ! x2-direction ***********************************************************
-
+! If physical boundary condition (not MPI)
+if(je>js)then ! TODO: In MPI, this can be false even when x2 is active
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-if(je>js)then
+if(js==js_global)then
 ! scalar values
  x2_inner_scalar: select case (bc2is)
  case(0) x2_inner_scalar ! periodic --------------------------------------
+ if (js==js_global .and. je==je_global) then
 !$omp do private(i,k) collapse(2)
   do k = ks, ke
    do i = is, ie
@@ -518,6 +539,7 @@ if(je>js)then
    end do
   end do
 !$omp end do
+endif
 
  case(1) x2_inner_scalar ! reflective ------------------------------------
 !$omp do private(i,k) collapse(2)
@@ -574,6 +596,7 @@ if(je>js)then
 ! vector values
  x2_inner_vector: select case (bc2iv)
  case(0) x2_inner_vector ! periodic -------------------------------------
+if (js==js_global .and. je==je_global) then
 !$omp do private(i,k) collapse(2)
   do k = ks, ke
    do i = is, ie
@@ -587,6 +610,8 @@ if(je>js)then
     end if
    end do
   end do
+!$omp end do
+endif
 
  case(1) x2_inner_vector ! reflective -----------------------------------
 !$omp do private(i,k) collapse(2)
@@ -686,12 +711,15 @@ if(je>js)then
  end do
 !$omp end do
 ! ========================================================================
+end if
 
 ! >>> outer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+! If physical boundary condition (not MPI)
+if(je==je_global)then
 ! scalar values
  x2_outer_scalar: select case (bc2os)
  case(0) x2_outer_scalar ! periodic --------------------------------------
+if (js==js_global .and. je==je_global) then
 !$omp do private(i,k) collapse(2)
   do k = ks, ke
    do i = is, ie
@@ -701,6 +729,8 @@ if(je>js)then
     if(compswitch>=2)spc(1:spn,i,je+1:je+2,k) = spc(1:spn,i,js:js+1,k)
    end do
   end do
+!$omp end do
+endif
 
  case(1) x2_outer_scalar ! reflective ------------------------------------
 !$omp do private(i,k) collapse(2)
@@ -755,6 +785,7 @@ if(je>js)then
 ! vector values
  x2_outer_vector: select case (bc2ov)
  case(0) x2_outer_vector ! periodic --------------------------------------
+if (js==js_global .and. je==je_global) then
 !$omp do private(i,k) collapse(2)
   do k = ks, ke
    do i = is, ie
@@ -768,6 +799,8 @@ if(je>js)then
     end if
    end do
   end do
+!$omp end do
+endif
 
  case(1) x2_outer_vector ! reflective ------------------------------------
 !$omp do private(i,k) collapse(2)
@@ -860,18 +893,21 @@ if(je>js)then
                          + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
    end do
   end do
- end do
+end do
 !$omp end do
 ! ========================================================================
 end if
+end if
 
 ! x3-direction ***********************************************************
-
+if(ke>ks)then ! TODO: In MPI, this can be false even when x3 is active
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-if(ke>ks)then
+! If physical boundary condition (not MPI)
+if(ks==ks_global)then
 ! scalar values
  x3_inner_scalar: select case (bc3is)
  case(0) x3_inner_scalar ! periodic --------------------------------------
+if (ks==ks_global .and. ke==ke_global) then
 !$omp do private(i,j) collapse(2)
   do j = js, je
    do i = is, ie
@@ -887,6 +923,7 @@ if(ke>ks)then
    end do
   end do
 !$omp end do
+endif
 
  case(1) x3_inner_scalar ! reflective ------------------------------------
 !$omp do private(i,j) collapse(2)
@@ -965,6 +1002,7 @@ if(ke>ks)then
 ! vector values
  x3_inner_vector: select case (bc3iv)
  case(0) x3_inner_vector ! periodic --------------------------------------
+if (ks==ks_global .and. ke==ke_global) then
 !$omp do private(i,j) collapse(2)
   do j = js, je
    do i = is, ie
@@ -979,6 +1017,7 @@ if(ke>ks)then
    end do
   end do
 !$omp end do
+endif
 
  case(1) x3_inner_vector ! reflective ------------------------------------
 !$omp do private(i,j) collapse(2)
@@ -1124,12 +1163,15 @@ if(ke>ks)then
  end do
 !$omp end do
 ! ========================================================================
+end if
 
 ! >>> outer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+! If physical boundary condition (not MPI)
+if(ke==ke_global)then
 ! scalar values
  x3_outer_scalar: select case (bc3os)
  case(0) x3_outer_scalar ! periodic --------------------------------------
+if (ks==ks_global .and. ke==ke_global) then
 !$omp do private(i,j) collapse(2)
   do j = js, je
    do i = is, ie
@@ -1140,6 +1182,7 @@ if(ke>ks)then
    end do
   end do
 !$omp end do
+endif
 
  case(1) x3_outer_scalar ! reflective ------------------------------------
 !$omp do private(i,j) collapse(2)
@@ -1220,6 +1263,7 @@ if(ke>ks)then
 ! vector values
  x3_outer_vector: select case (bc3ov)
  case(0) x3_outer_vector ! periodic --------------------------------------
+if (ks==ks_global .and. ke==ke_global) then
 !$omp do private(i,j) collapse(2)
   do j = js, je
    do i = is, ie
@@ -1234,6 +1278,7 @@ if(ke>ks)then
    end do
   end do
 !$omp end do
+endif
 
  case(1) x3_outer_vector ! reflective ------------------------------------
 !$omp do private(i,j) collapse(2)
@@ -1380,6 +1425,7 @@ if(ke>ks)then
  end do
 !$omp end do
 ! ========================================================================
+end if
 end if
 
 !$omp end parallel

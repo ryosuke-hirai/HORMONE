@@ -32,6 +32,7 @@ subroutine initialcondition
  use modify_mod
  use windtunnel_mod
  use stellarcollision_mod
+ use iotest_mod
 
  integer:: i,j,k
 
@@ -77,6 +78,9 @@ subroutine initialcondition
 
   case('modify')
    call modify
+
+  case('iotest')
+    call iotest
 
   case default
    print*,'Chosen simtype not available, simtype = ',simtype

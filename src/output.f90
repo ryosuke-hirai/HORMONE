@@ -66,15 +66,18 @@ end subroutine output
 
 subroutine terminal_output
 
+ use mpi_utils,only:myrank
  use settings,only:dt_unit_in_sec,dt_unit
  use grid,only:tn,time,dt
 
 !-----------------------------------------------------------------------------
 
- print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
-  'tn =',tn,&
-  'time =',time/dt_unit_in_sec,dt_unit,&
-  'dt =',dt/dt_unit_in_sec,dt_unit
+ if (myrank==0) then
+  print'(a,i8,2(3X,a,1PE13.5e2,1X,a))',&
+    'tn =',tn,&
+    'time =',time/dt_unit_in_sec,dt_unit,&
+    'dt =',dt/dt_unit_in_sec,dt_unit
+ end if
 
 return
 end subroutine terminal_output
@@ -91,12 +94,14 @@ subroutine open_evofile
 
  use settings,only:crdnt,sigfig,gravswitch,mag_on,crdnt,write_evo,start
  use grid,only:dim
+ use mpi_utils, only:myrank
 
  integer::ierr
  character(len=50):: forma
 
 !-----------------------------------------------------------------------------
 
+ if (myrank/=0) return
  if(.not.write_evo)return
 
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
@@ -141,6 +146,7 @@ subroutine evo_output
  use grid
  use physval
  use gravmod
+ use mpi_utils, only:myrank, allreduce_mpi
 
  implicit none
 
@@ -257,20 +263,33 @@ subroutine evo_output
   if(eq_sym) Jtot = 2d0*Jtot
  end if
 
- write(ievo,'(i10)',advance='no')tn
- call write_anyval(ievo,forme,time)
- call write_anyval(ievo,forme,Mtot)
- call write_anyval(ievo,forme,Etot)
- call write_anyval(ievo,forme,Eitot)
- call write_anyval(ievo,forme,Ektot)
- if(gravswitch>=1)call write_anyval(ievo,forme,Egtot)
- if(gravswitch>=1)call write_anyval(ievo,forme,Mbound)
- if(gravswitch>=1)call write_anyval(ievo,forme,Ebound)
- if(gravswitch>=1)call write_anyval(ievo,forme,Jbound)
- if(mag_on)call write_anyval(ievo,forme,Ebtot)
- if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
- write(ievo,'()')
- flush(ievo)
+ call allreduce_mpi('sum', Mtot)
+ call allreduce_mpi('sum', Etot)
+ call allreduce_mpi('sum', Eitot)
+ call allreduce_mpi('sum', Ektot)
+ call allreduce_mpi('sum', Egtot)
+ call allreduce_mpi('sum', Mbound)
+ call allreduce_mpi('sum', Ebound)
+ call allreduce_mpi('sum', Jbound)
+ call allreduce_mpi('sum', Ebtot)
+ call allreduce_mpi('sum', Jtot)
+
+ if (myrank==0) then
+   write(ievo,'(i10)',advance='no')tn
+   call write_anyval(ievo,forme,time)
+   call write_anyval(ievo,forme,Mtot)
+   call write_anyval(ievo,forme,Etot)
+   call write_anyval(ievo,forme,Eitot)
+   call write_anyval(ievo,forme,Ektot)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Egtot)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Mbound)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Ebound)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Jbound)
+   if(mag_on)call write_anyval(ievo,forme,Ebtot)
+   if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
+   write(ievo,'()')
+   flush(ievo)
+ end if
 
 return
 end subroutine evo_output
@@ -377,11 +396,14 @@ subroutine write_grid
 
  use settings
  use grid
+ use mpi_utils, only:myrank
 
  implicit none
 
  character(len=50):: formhead,formval,formnum
  integer:: i,j,k,ui
+
+ if (myrank/=0) return
 
 !-----------------------------------------------------------------------------
 
@@ -598,6 +620,8 @@ end subroutine write_grid
 subroutine write_bin
 
  use settings
+ use mpi_utils, only:myrank
+ use io, only:open_file_write,close_file, write_var, write_dummy_recordmarker
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
  use gravmod,only:grvphi,grvphidot,dt_old
@@ -606,33 +630,67 @@ subroutine write_bin
  implicit none
 
  character(len=50):: binfile
- integer:: un
+ integer :: un
+ logical :: legacy = .true.
 
 !-----------------------------------------------------------------------------
 
  call set_file_name('bin',tn,time,binfile)
- open(newunit=un,file=binfile,status='replace',form='unformatted')
+ call open_file_write(binfile, un)
 
- write(un)tn,time
- write(un) d (is:ie,js:je,ks:ke), &
-           v1(is:ie,js:je,ks:ke), &
-           v2(is:ie,js:je,ks:ke), &
-           v3(is:ie,js:je,ks:ke), &
-           e (is:ie,js:je,ks:ke)
- if(gravswitch>=2)write(un)grvphi(gis:gie,gjs:gje,gks:gke)
- if(gravswitch==3)write(un)grvphidot(gis:gie,gjs:gje,gks:gke),dt_old
- if(compswitch>=2)write(un)spc(1:spn,is:ie,js:je,ks:ke),species(1:spn)
- if(mag_on)then
-  write(un) b1(is:ie,js:je,ks:ke), &
-            b2(is:ie,js:je,ks:ke), &
-            b3(is:ie,js:je,ks:ke), &
-            phi(is:ie,js:je,ks:ke)
+ call write_dummy_recordmarker(un, legacy)
+ call write_var(un, tn)
+ call write_var(un, time)
+ call write_dummy_recordmarker(un, legacy)
+
+ call write_dummy_recordmarker(un, legacy)
+ call write_var(un, d, is, ie, js, je, ks, ke)
+ call write_var(un, v1, is, ie, js, je, ks, ke)
+ call write_var(un, v2, is, ie, js, je, ks, ke)
+ call write_var(un, v3, is, ie, js, je, ks, ke)
+ call write_var(un, e, is, ie, js, je, ks, ke)
+ call write_dummy_recordmarker(un, legacy)
+
+ if(gravswitch>=2) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke)
+   call write_dummy_recordmarker(un, legacy)
  end if
- if(include_sinks)write(un)sink(1:nsink)
 
- close(un)
+ if(gravswitch==3) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke)
+   call write_var(un, dt_old)
+   call write_dummy_recordmarker(un, legacy)
+ endif
 
- print*,"Outputted: ",trim(binfile)
+ if(compswitch>=2) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
+   call write_var(un, species, 1, spn)
+   call write_dummy_recordmarker(un, legacy)
+ endif
+
+ if(mag_on) then
+  call write_dummy_recordmarker(un, legacy)
+  call write_var(un, b1, is, ie, js, je, ks, ke)
+  call write_var(un, b2, is, ie, js, je, ks, ke)
+  call write_var(un, b3, is, ie, js, je, ks, ke)
+  call write_var(un, phi, is, ie, js, je, ks, ke)
+  call write_dummy_recordmarker(un, legacy)
+ end if
+
+ if(include_sinks) then
+   call write_dummy_recordmarker(un, legacy)
+   call write_var(un, sink, 1, nsink)
+   call write_dummy_recordmarker(un, legacy)
+ endif
+
+ call close_file(un)
+
+ if (myrank==0) then
+   print*,"Outputted: ",trim(binfile)
+ end if
 
 return
 end subroutine write_bin
@@ -646,6 +704,7 @@ end subroutine write_bin
 ! PURPOSE: To output ascii file for plotting
 
 subroutine write_plt
+ ! TODO: MPI
 
  use settings
  use grid,only:is,ie,js,je,ks,ke,time,tn,dim
@@ -882,7 +941,7 @@ subroutine write_extgrv
  integer:: ui
 
 !-----------------------------------------------------------------------------
-
+ ! TODO: MPI
  open(newunit=ui,file='data/extgrv.bin',status='replace',form='unformatted')
  write(ui)mc(is-1)
  write(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
