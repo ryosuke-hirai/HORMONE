@@ -28,7 +28,10 @@ module mpi_domain
 #ifdef MPI
       integer :: nx, ny, nz
       integer :: ierr
-      integer, dimension(3) :: dims
+      integer, allocatable :: factors(:)
+      integer :: num_factors, axis
+      real(8) :: n_tmp(3)
+      integer, dimension(3) :: dims, sizes, subsizes, starts
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
@@ -54,16 +57,17 @@ module mpi_domain
       ny = je - js + 1
       nz = ke - ks + 1
 
-      ! Trivial decomposition for now
-      ! Slice along the dimension with most cells to ensure that all 1D problems work
-      ! TODO: decompose along all 3 dimensions
-      if (nx >= ny .and. nx >= nz) then
-         dims = [nprocs, 1, 1]
-      else if (ny >= nx .and. ny >= nz) then
-         dims = [1, nprocs, 1]
-      else
-         dims = [1, 1, nprocs]
-      endif
+      ! Prime factors of the number of MPI tasks
+      call prime_factors(nprocs, factors, num_factors)
+
+      ! For each factor, split the domain along the dimension with the most cells
+      dims = [1, 1, 1]
+      n_tmp = [real(nx), real(ny), real(nz)] ! Real, because cells may not divide exactly
+      do i = 1, num_factors
+         axis = maxloc(n_tmp, 1) ! Index of the largest value in n_tmp
+         dims(axis) = dims(axis) * factors(i)
+         n_tmp(axis) = n_tmp(axis) / real(factors(i))
+      enddo
 
       periods = [.true., .true., .true.] ! Always set to periodic and allow boundary conditions to override
 
@@ -283,5 +287,40 @@ module mpi_domain
       endif
 #endif
    end subroutine setup_mpi_io
+
+   subroutine prime_factors(n, factors, num_factors)
+      ! Compute the prime factors of a number
+      implicit none
+      integer, intent(in) :: n
+      integer, dimension(:), allocatable, intent(out) :: factors
+      integer, intent(out) :: num_factors
+      integer :: i, j, count, temp
+
+      ! Count the number of factors
+      temp = n
+      count = 0
+      do i = 2, n
+         do while (mod(temp, i) == 0)
+            temp = temp / i
+            count = count + 1
+         enddo
+        if (temp == 1) exit
+      end do
+
+      ! Repeat, saving the factors
+      allocate(factors(count))
+      temp = n
+      count = 0
+      do i = 2, n
+         do while (mod(temp, i) == 0)
+            temp = temp / i
+            count = count + 1
+            factors(count) = i
+         enddo
+        if (temp == 1) exit
+      end do
+
+      num_factors = count
+   end subroutine prime_factors
 
 end module mpi_domain
