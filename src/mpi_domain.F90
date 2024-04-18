@@ -32,6 +32,7 @@ module mpi_domain
       integer :: num_factors, axis
       real(8) :: n_tmp(3)
       integer, dimension(3) :: dims, sizes, subsizes, starts
+      real(8) :: eff
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
@@ -90,6 +91,19 @@ module mpi_domain
       call setup_mpi_exchange
       call setup_mpi_io
 
+      ! Calculate the ratio: (real cells) / (total cells including ghost)
+      eff = 0.d0
+      if (dims(1) > 1) then
+         eff = eff + real(2 * (je - js + 1) * (ke - ks + 1))
+      endif
+      if (dims(2) > 1) then
+         eff = eff + real(2 * (ie - is + 1) * (ke - ks + 1))
+      endif
+      if (dims(3) > 1) then
+         eff = eff + real(2 * (ie - is + 1) * (je - js + 1))
+      endif
+      eff = 1.d0 - (eff / real((ie - is + 5) * (je - js + 5) * (ke - ks + 5)))
+
       ! Print out the domain decomposition
       if (myrank == 0) then
          write(*,'(A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A)') 'Global domain (', is_global, ':', ie_global, ',', js_global, ':', je_global, ',', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
@@ -98,7 +112,7 @@ module mpi_domain
 
       do i = 1, nprocs
          if (myrank == i-1) then
-            write(*,'(A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, ')'
+            write(*,'(A,I0,A,I4,A,I4,A,I4,A,I4,A,I0,A,I0,A,F5.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
          endif
          call MPI_Barrier(cart_comm, ierr)
       enddo
