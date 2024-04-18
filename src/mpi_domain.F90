@@ -308,7 +308,7 @@ module mpi_domain
       integer, intent(in) :: n
       integer, dimension(:), allocatable, intent(out) :: factors
       integer, intent(out) :: num_factors
-      integer :: i, j, count, temp
+      integer :: i, count, temp
 
       ! Count the number of factors
       temp = n
