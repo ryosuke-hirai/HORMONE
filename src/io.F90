@@ -170,11 +170,16 @@ subroutine read_array_1d_char(fh, arr, istart, iend)
   integer, intent(in) :: fh
   character(len=10), allocatable, intent(inout) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
-
-  ! TODO MPI
 #ifdef MPI
-  print*, "ERROR: read_array_1d_char not implemented for MPI"
-  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+  integer :: i, nbuff
+
+  nbuff = (iend - istart + 1) * 10
+
+  call mpi_file_set_view(fh, offset, MPI_CHARACTER, MPI_CHARACTER, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend), nbuff, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+  do i = 1,nbuff
+    call update_offset(fh, MPI_CHARACTER)
+  end do
 #else
   read(fh) arr(istart:iend)
 #endif
@@ -182,7 +187,7 @@ subroutine read_array_1d_char(fh, arr, istart, iend)
 end subroutine read_array_1d_char
 
 subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
-  use mpi_utils, only: type_mpi_array
+  use mpi_utils, only: mpitype_array3d_real8
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
@@ -190,9 +195,9 @@ subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
   integer :: nbuff
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, type_mpi_array, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpitype_array3d_real8, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, type_mpi_array)
+  call update_offset(fh, mpitype_array3d_real8)
 #else
   read(fh) arr(istart:iend,jstart:jend,kstart:kend)
 #endif
@@ -200,14 +205,17 @@ subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
 end subroutine read_array_3d_real8
 
 subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
+  use mpi_utils, only: mpitype_array4d_real8
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
-
-  ! TODO MPI
 #ifdef MPI
-  print*, "ERROR: read_array_4d_real8 not implemented for MPI"
-  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+  integer :: nbuff
+  nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)*(lend-lstart+1)
+
+  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend, jstart:jend, kstart:kend, lstart:lend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpitype_array4d_real8)
 #else
   read(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
@@ -284,7 +292,7 @@ subroutine write_real8(fh, var)
 end subroutine write_real8
 
 subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
-  use mpi_utils, only: type_mpi_array
+  use mpi_utils, only: mpitype_array3d_real8
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
@@ -295,7 +303,7 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
   call get_file_end(fh, end_bytes)
-  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, type_mpi_array, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpitype_array3d_real8, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend,jstart:jend,kstart:kend)
@@ -304,14 +312,19 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
 end subroutine write_array_3d_real8
 
 subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
+  use mpi_utils, only: mpitype_array4d_real8
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
-
-  ! TODO MPI
 #ifdef MPI
-  print*, "ERROR: write_array_4d_real8 not implemented for MPI"
-  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: ierr, nbuff
+
+  nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)*(lend-lstart+1)
+
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpitype_array4d_real8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend, jstart:jend, kstart:kend, lstart:lend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
@@ -337,11 +350,15 @@ subroutine write_array_1d_char(fh, arr, istart, iend)
   integer, intent(in) :: fh
   character(len=10), intent(in), allocatable :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
-
-  ! TODO MPI
 #ifdef MPI
-  print*, "ERROR: write_array_1d_char not implemented for MPI"
-  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: nbuff
+
+  nbuff = (iend - istart + 1) * 10
+
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_CHARACTER, MPI_CHARACTER, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend), nbuff, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend)
 #endif

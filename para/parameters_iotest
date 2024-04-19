@@ -8,5 +8,11 @@
 	  x1min=0d0 x2min=0 x3min=0d0
 	  fmr_max=0 /
 
+! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
+! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
+! muconst : mean molecular weight (if compswitch=0 or background)
+! spn : number of species (>=3)
+&eos_con eostype = 1 eoserr=1d-15 compswitch=2 muconst=0.62d0 spn=8 /
+
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 &gravcon gravswitch=0 /

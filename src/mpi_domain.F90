@@ -257,18 +257,30 @@ module mpi_domain
    subroutine setup_mpi_io
 #ifdef MPI
       use mpi
-      use mpi_utils, only: type_mpi_array
+      use mpi_utils, only: mpitype_array3d_real8, mpitype_array4d_real8
       use grid
-      integer, dimension(3) :: dims, sizes, subsizes, starts
+      use settings, only: spn, compswitch
+      integer, dimension(3) :: sizes3, subsizes3, starts3
+      integer, dimension(4) :: sizes4, subsizes4, starts4
       integer :: ierr
 
       ! Set up the subarray which selects only the real cells for I/O
-      sizes = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
-      subsizes = [ie-is+1,je-js+1,ke-ks+1]
-      starts = [is-1,js-1,ks-1]
+      sizes3 = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
+      subsizes3 = [ie-is+1,je-js+1,ke-ks+1]
+      starts3 = [is-1,js-1,ks-1]
 
-      call mpi_type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, type_mpi_array, ierr)
-      call mpi_type_commit(type_mpi_array, ierr)
+      call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array3d_real8, ierr)
+      call mpi_type_commit(mpitype_array3d_real8, ierr)
+
+      if (compswitch>=2) then
+         ! Set up the subarray for spc
+         sizes4 = [spn,ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
+         subsizes4 = [spn,ie-is+1,je-js+1,ke-ks+1]
+         starts4 = [0,is-1,js-1,ks-1]
+
+         call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, ierr)
+         call mpi_type_commit(mpitype_array4d_real8, ierr)
+      endif
 #endif
    end subroutine setup_mpi_io
 
