@@ -17,9 +17,11 @@ module iotest_mod
     use output_mod
     use profiler_mod
     use readbin_mod
+    use settings, only: spn
 
-    integer:: i,j,k,numerr
+    integer:: a,i,j,k,numerr
     real(8):: err
+    character(len=4) :: speci
 
     if (myrank == 0) print*, 'Running I/O test'
 
@@ -42,6 +44,19 @@ module iotest_mod
       end do
     end do
 
+    do a = 1, spn
+      do i = is, ie
+        do j = js, je
+          do k = ks, ke
+            spc(a,i,j,k) = 8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+          end do
+        end do
+      end do
+      write(speci, '(I0)') a
+      species(a) = 'spc'//trim(speci)
+    end do
+
+
     ! Override the profiler time to prevent a divide by zero error during output
     wtime(wtlop) = 1.d0
 
@@ -55,6 +70,9 @@ module iotest_mod
     v2 = 0.d0
     v3 = 0.d0
     e = 0.d0
+
+    spc = 0.d0
+    species = ''
 
     ! Read the arrays from file
     call readbin('data/bin00000000000s.dat')
@@ -76,6 +94,26 @@ module iotest_mod
           endif
         end do
       end do
+    end do
+
+    do a = 1,spn
+      do i = is, ie
+        do j = js, je
+          do k = ks, ke
+            err = 0.d0
+            err = err + abs(spc(a,i,j,k) - (8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            if (err > 0.d0) then
+              print*, 'Error in spc values at a=',a,'i=',i,'j=',j,'k=',k,'err=',err
+              numerr = numerr + 1
+            endif
+          end do
+        end do
+      end do
+      write(speci, '(I0)') a
+      if (trim(species(a)) /= 'spc'//trim(speci)) then
+        print*, 'Error in species names at a=',a,'species(a)=',trim(species(a))
+        numerr = numerr + 1
+      end if
     end do
 
     call allreduce_mpi('sum', numerr)
