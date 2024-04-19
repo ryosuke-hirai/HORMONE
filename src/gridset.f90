@@ -162,95 +162,95 @@ subroutine gridset
 ! set r direction
    mesh_cyl1: select case (imesh)
    case(0) mesh_cyl1 ! uniform mesh
-    dxi1 = (xi1e-xi1s) / dble(ie-is+1)
+    dxi1 = (xi1e-xi1s) / dble(ie_global-is_global+1)
    case(1) mesh_cyl1 ! geometrical series
-    call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
+    call geometrical_series(dxi1,x1min,is_global,ie_global,xi1s,xi1e)
    case(2) mesh_cyl1 ! user specified mesh
-    call other_imesh(dxi1,is,ie,xi1s,xi1e)
+    call other_imesh(dxi1,is_global,ie_global,xi1s,xi1e)
    end select mesh_cyl1
 
-   do i = is-1,ie+2
+   do i = is_global-1,ie_global+2
     dx1(i)  = 0.5d0 * ( dxi1(i-1) + dxi1(i) )
     idxi1(i)= 1.d0 / dxi1(i)
     idx1(i) = 1.d0 / dx1(i)
    end do
 
-   x1(is-1)  = xi1s - dxi1(is-1)*0.5d0
-   x1(is-2)  = x1(is-1) - dx1(is-1)
-   xi1(is-1) = xi1s
-   xi1(is-2) = xi1s - dxi1(is-1)
-   do i = is,ie+2
+   x1(is_global-1)  = xi1s - dxi1(is_global-1)*0.5d0
+   x1(is_global-2)  = x1(is_global-1) - dx1(is_global-1)
+   xi1(is_global-1) = xi1s
+   xi1(is_global-2) = xi1s - dxi1(is_global-1)
+   do i = is_global,ie_global+2
     x1(i)  = x1(i-1)  + dx1(i)
     xi1(i) = xi1(i-1) + dxi1(i)
    end do
 
 
 ! for volumetric centre
-   do i = is-1, ie+2
+   do i = is_global-1, ie_global+2
     x1(i)  = sqrt( (xi1(i-1)*xi1(i-1)+xi1(i)*xi1(i)) *5d-1 )
-    if(i==is-1)x1(i)=-x1(i)
+    if(i==is_global-1)x1(i)=-x1(i)
     dx1(i) = x1(i) - x1(i-1)
     idx1(i) = 1d0 / dx1(i)
    end do
 
 ! extend grid for gravitational potential
    if(gravswitch/=0)then
-    do i = ie+1, gie+2
+    do i = ie_global+1, gie_global+2
      dxi1(i) = dxi1(i-1) * dxi1(ie)/dxi1(ie-1)
      xi1(i) = xi1(i-1) + dxi1(i)
      x1(i)  = 0.5d0*(xi1(i)+xi1(i-1))!sqrt( (xi1(i-1)*xi1(i-1)+xi1(i)*xi1(i)) *5d-1 )
      dx1(i) = x1(i) - x1(i-1)
      idx1(i) = 1d0 / dx1(i)
     end do
-    dx1(gis-2) = dxi1(gis-2) ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
+    dx1(gis_global-2) = dxi1(gis_global-2) ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
    end if
 
 ! set theta direction
-   if    (je==js)then
+   if    (je_global==js_global)then
     jetmp=4
-   elseif(je>=4)then
-    jetmp=je
+   elseif(je_global>=4)then
+    jetmp=je_global
    else
     print *,"Error from je",je
    endif
-   do j = js-1,je+2
+   do j = js_global-1,je_global+2
     dxi2(j) = 2.d0*pi / dble(jetmp)
     dx2(j)  = 0.5d0 * ( dxi2(j-1) + dxi2(j) )
     idxi2(j)= 1.d0 / dxi2(j)
     idx2(j) = 1.d0 / dx2(j)
    end do
 
-   x2(js-1)  = xi2s - dxi2(js-1)*0.5d0
-   x2(js-2)  = x2(js-1) - dx2(js-1)
-   xi2(js-1) = xi2s
-   xi2(js-2) = xi2s - dxi2(js-1)
-   do j = js,je+2
+   x2(js_global-1)  = xi2s - dxi2(js_global-1)*0.5d0
+   x2(js_global-2)  = x2(js_global-1) - dx2(js_global-1)
+   xi2(js_global-1) = xi2s
+   xi2(js_global-2) = xi2s - dxi2(js_global-1)
+   do j = js_global,je_global+2
     x2(j)  = x2(j-1)  + dx2(j)
     xi2(j) = xi2(j-1) + dxi2(j)
    end do
-   xi2e = xi2(je)
+   xi2e = xi2(je_global)
 
 ! set z direction
    mesh_cyl3: select case (kmesh)
    case(0) mesh_cyl3 ! uniform mesh
-    dxi3 = (xi3e-xi3s) / dble(ke-ks+1)
+    dxi3 = (xi3e-xi3s) / dble(ke_global-ks_global+1)
    case(1) mesh_cyl3 ! geometrical series
-    call geometrical_series(dxi3,x3min,ks,ke,xi3s,xi3e)
+    call geometrical_series(dxi3,x3min,ks_global,ke_global,xi3s,xi3e)
    case(2) mesh_cyl3 ! user specified mesh
-    call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
+    call other_kmesh(dxi3,ks_global,ke_global,xi3s,xi3e)
    end select mesh_cyl3
 
-   do k = ks-1,ke+2
+   do k = ks_global-1,ke_global+2
     dx3(k)  = 0.5d0 * ( dxi3(k-1) + dxi3(k) )
     idxi3(k)= 1.d0 / dxi3(k)
     idx3(k) = 1.d0 / dx3(k)
    end do
 
-   x3(ks-1)  = xi3s - dxi3(ks-1)*0.5d0
-   x3(ks-2)  = x3(ks-1) - dx3(ks-1)
-   xi3(ks-1) = xi3s
-   xi3(ks-2) = xi3s - dxi3(ks-1)
-   do k = ks,ke+2
+   x3(ks_global-1)  = xi3s - dxi3(ks_global-1)*0.5d0
+   x3(ks_global-2)  = x3(ks_global-1) - dx3(ks_global-1)
+   xi3(ks_global-1) = xi3s
+   xi3(ks_global-2) = xi3s - dxi3(ks_global-1)
+   do k = ks_global,ke_global+2
     x3(k)  = x3(k-1)  + dx3(k)
     xi3(k) = xi3(k-1) + dxi3(k)
    end do
@@ -258,18 +258,18 @@ subroutine gridset
 ! extend grid for gravitational potential
    if(gravswitch/=0)then
 !    dx3 = dxi3 ; idx3 = 1d0 / dx3 ; idxi3 = 1d0 / dxi3
-    do k = ks-1, gks-2, -1
+    do k = ks_global-1, gks_global-2, -1
      dxi3(k) = dxi3(k+1) * dxi3(ks)/dxi3(ks+1)
      idxi3(k)= 1d0 / dxi3(k)
     end do
-    do k = ks-1, gks-1, -1
+    do k = ks_global-1, gks_global-1, -1
      dx3(k) = 0.5d0*(dxi3(k-1) + dxi3(k))
      idx3(k) = 1d0/dx3(k)
      xi3(k) = xi3(k+1) - dxi3(k+1)
      x3 (k) = x3 (k+1) - dx3 (k+1)
     end do
-    do k = ke+1, gke+2
-     dxi3(k) = dxi3(k-1) * dxi3(ke)/dxi3(ke-1)
+    do k = ke_global+1, gke_global+2
+     dxi3(k) = dxi3(k-1) * dxi3(ke_global)/dxi3(ke_global-1)
      idxi3(k)= 1d0 / dxi3(k)
      dx3(k) = 0.5d0*(dxi3(k-1) + dxi3(k))
      idx3(k)= 1d0 / dx3(k)
@@ -277,14 +277,14 @@ subroutine gridset
      x3 (k) = x3 (k-1) + dx3 (k)
     end do
     if(eq_sym)then
-     dxi3(gks-2:gks-1) = dxi3(gks+1:gks:-1)
-     idxi3(gks-2:gks-1) = 1d0/dxi3(gks-2:gks-1)
-     dx3(gks) = 0.5d0*(dxi3(gks-1)+dxi3(gks))
-     dx3(gks-1) = 0.5d0*(dxi3(gks-2)+dxi3(gks-1))
-     idx3(gis:gks-1) = 1d0/dx3(gks:gks-1)
-     xi3(gks-2) = xi3(gks-1)-dxi3(gks-1)
-     x3(gks-1) = x3(gks) - dx3(gks)
-     x3(gks-2) = x3(gks-1) - dx3(gks-1)
+     dxi3(gks_global-2:gks_global-1) = dxi3(gks_global+1:gks_global:-1)
+     idxi3(gks_global-2:gks_global-1) = 1d0/dxi3(gks_global-2:gks_global-1)
+     dx3(gks_global) = 0.5d0*(dxi3(gks_global-1)+dxi3(gks_global))
+     dx3(gks_global-1) = 0.5d0*(dxi3(gks_global-2)+dxi3(gks_global-1))
+     idx3(gis_global:gks_global-1) = 1d0/dx3(gks_global:gks_global-1)
+     xi3(gks_global-2) = xi3(gks_global-1)-dxi3(gks_global-1)
+     x3(gks_global-1) = x3(gks_global) - dx3(gks_global)
+     x3(gks_global-2) = x3(gks_global-1) - dx3(gks_global-1)
     end if
    end if
 
@@ -297,40 +297,40 @@ subroutine gridset
 ! set r direction
    mesh_sph1: select case (imesh)
    case(0) mesh_sph1 ! uniform mesh
-    dxi1 = (xi1e-xi1s) / dble(ie-is+1)
+    dxi1 = (xi1e-xi1s) / dble(ie_global-is_global+1)
    case(1) mesh_sph1 ! geometrical series
-    call geometrical_series(dxi1,x1min,is,ie,xi1s,xi1e)
+    call geometrical_series(dxi1,x1min,is_global,ie_global,xi1s,xi1e)
    case(2) mesh_sph1 ! user specified mesh
-    call other_imesh(dxi1,is,ie,xi1s,xi1e)
+    call other_imesh(dxi1,is_global,ie_global,xi1s,xi1e)
    end select mesh_sph1
 
-   do i = is-1,ie+2
+   do i = is_global-1,ie_global+2
     dx1(i)  = 0.5d0 * ( dxi1(i-1) + dxi1(i) )
     idxi1(i)= 1.d0 / dxi1(i)
     idx1(i) = 1.d0 / dx1(i)
    end do
 
-   x1(is-1)  = xi1s - dxi1(is-1)*0.5d0
-   x1(is-2)  = x1(is-1) - dx1(is-1)
-   xi1(is-1) = xi1s
-   xi1(is-2) = xi1s - dxi1(is-1)
-   do i = is,ie+2
+   x1(is_global-1)  = xi1s - dxi1(is_global-1)*0.5d0
+   x1(is_global-2)  = x1(is_global-1) - dx1(is_global-1)
+   xi1(is_global-1) = xi1s
+   xi1(is_global-2) = xi1s - dxi1(is_global-1)
+   do i = is_global,ie_global+2
     x1(i)  = x1(i-1)  + dx1(i)
     xi1(i) = xi1(i-1) + dxi1(i)
    end do
 
 ! for volumetric centre
-   do i = is-1, ie+2
+   do i = is_global-1, ie_global+2
     x1(i) = 0.75d0*(xi1(i)+xi1(i-1))*(xi1(i)*xi1(i)+xi1(i-1)*xi1(i-1)) &
                   /(xi1(i)*xi1(i)+xi1(i)*xi1(i-1)+xi1(i-1)*xi1(i-1))
-    if(i==is)x1(i-1)=-x1(i)
+    if(i==is_global)x1(i-1)=-x1(i)
     dx1(i) = x1(i) - x1(i-1)
     idx1(i) = 1d0 / dx1(i)
    end do
 
 ! extend grid for gravitational potential
    if(gravswitch/=0)then
-    do i = ie+1, gie+2
+    do i = ie_global+1, gie_global+2
      dxi1(i) = dxi1(i-1) * dxi1(ie)/dxi1(ie-1)
      idxi1(i) = 1d0/dxi1(i)
      xi1(i) = xi1(i-1) + dxi1(i)
@@ -339,7 +339,7 @@ subroutine gridset
      dx1(i) = x1(i) - x1(i-1)
      idx1(i) = 1d0 / dx1(i)
     end do
-    dx1(gis-2) = dxi1(gis-2) ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
+    dx1(gis_global-2) = dxi1(gis_global-2) ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
    end if
 
 !!$   if(gravswitch/=0)then
@@ -355,38 +355,38 @@ subroutine gridset
 ! set theta direction
    mesh_sph2: select case (jmesh)
    case(0) mesh_sph2 ! uniform theta
-    if    (je==js)then
+    if    (je_global==js_global)then
      jetmp=1
-    elseif(je>=js+1)then
-     jetmp=je
+    elseif(je_global>=js_global+1)then
+     jetmp=je_global
     endif
-    dxi2(js-2:je+2) = xi2e / dble(jetmp)
+    dxi2(js_global-2:je_global+2) = xi2e / dble(jetmp)
    case(2) mesh_sph2 ! user specified mesh
-    call other_jmesh(dxi2,js,je,xi2s,xi2e)
+    call other_jmesh(dxi2,js_global,je_global,xi2s,xi2e)
    end select mesh_sph2
 
-   do j = js-1,je+2
+   do j = js_global-1,je_global+2
     dx2(j)  = 0.5d0 * ( dxi2(j-1) + dxi2(j) )
     idxi2(j)= 1.d0 / dxi2(j)
     idx2(j) = 1.d0 / dx2(j)
    end do
 
-   x2(js-1)  = xi2s - dxi2(js-1)*0.5d0
-   x2(js-2)  = x2(js-1) - dx2(js-1)
-   xi2(js-1) = xi2s
-   xi2(js-2) = xi2s-dxi2(js-1)
-   do j = js,je+2
+   x2(js_global-1)  = xi2s - dxi2(js_global-1)*0.5d0
+   x2(js_global-2)  = x2(js_global-1) - dx2(js_global-1)
+   xi2(js_global-1) = xi2s
+   xi2(js_global-2) = xi2s-dxi2(js_global-1)
+   do j = js_global,je_global+2
     x2(j)  = x2(j-1)  + dx2(j)
     xi2(j) = xi2(j-1) + dxi2(j)
    end do
-   xi2e = xi2(je)
+   xi2e = xi2(je_global)
 
 ! for volumetric centre
-   do j = js-1, je+2
+   do j = js_global-1, je_global+2
     x2(j) = ( xi2(j-1)*cos(xi2(j-1))-xi2(j)*cos(xi2(j)) &
              +sin(xi2(j))-sin(xi2(j-1)) ) &
           / (cos(xi2(j-1))-cos(xi2(j)))
-    if(j==js)x2(j-1)=-x2(j)
+    if(j==js_global)x2(j-1)=-x2(j)
     dx2(j) = x2(j) - x2(j-1)
     idx2(j) = 1d0 / dx2(j)
    end do
@@ -394,33 +394,33 @@ subroutine gridset
 ! set phi direction
    mesh_sph3: select case (kmesh)
    case(0) mesh_sph3 ! uniform theta
-    if    (ke==ks)then
+    if    (ke_global==ks_global)then
      ketmp=4
-    elseif(ke>=ks+3)then
-     ketmp=ke
+    elseif(ke_global>=ks_global+3)then
+     ketmp=ke_global
     else
-     print *,"Error from ke",ke
+     print *,"Error from ke",ke_global
     endif
-    dxi3(ks-2:ke+2) = (xi3e-xi3s) / dble(ketmp)
+    dxi3(ks_global-2:ke_global+2) = (xi3e-xi3s) / dble(ketmp)
    case(2) mesh_sph3 ! user specified mesh
-    call other_kmesh(dxi3,ks,ke,xi3s,xi3e)
+    call other_kmesh(dxi3,ks_global,ke_global,xi3s,xi3e)
    end select mesh_sph3
 
-   do k = ks-1,ke+2
+   do k = ks_global-1,ke_global+2
     dx3(k)  = 0.5d0 * ( dxi3(k-1) + dxi3(k) )
     idxi3(k)= 1.d0 / dxi3(k)
     idx3(k) = 1.d0 / dx3(k)
    end do
 
-   x3(ks-1)  = xi3s - dxi3(ks-1)*0.5d0
-   x3(ks-2)  = x3(ks-1) - dx3(ks-1)
-   xi3(ks-1) = xi3s
-   xi3(ks-2) = xi3s-dxi3(ks-1)
-   do k = ks,ke+2
+   x3(ks_global-1)  = xi3s - dxi3(ks_global-1)*0.5d0
+   x3(ks_global-2)  = x3(ks_global-1) - dx3(ks_global-1)
+   xi3(ks_global-1) = xi3s
+   xi3(ks_global-2) = xi3s-dxi3(ks_global-1)
+   do k = ks_global,ke_global+2
     x3(k)  = x3(k-1)  + dx3(k)
     xi3(k) = xi3(k-1) + dxi3(k)
    end do
-   xi3e = xi3(ke)
+   xi3e = xi3(ke_global)
 
   case default coordinate_system
    print *,"Error from crdnt",crdnt

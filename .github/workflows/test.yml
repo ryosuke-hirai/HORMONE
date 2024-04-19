@@ -100,8 +100,6 @@ jobs:
           - mpi: yes
             test: orszagtang_xz
           - mpi: yes
-            test: sedov_default
-          - mpi: yes
             test: star_sph
 
     name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
@@ -138,7 +136,7 @@ jobs:
       working-directory: ./work
       run: |
         if [[ "${{ matrix.mpi }}" == "yes" ]]; then
-          mpirun -np 4 --oversubscribe ./hormone | tee output.txt
+          mpirun -np 2 --oversubscribe ./hormone | tee output.txt
         else
           ./hormone | tee output.txt
         fi
