@@ -584,6 +584,9 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
 !-----------------------------------------------------------------------------
 
+! NOTE: The coordinate bounds is,ie,js,je,ks,ke do not necessarily need to
+!       coincide with the _global values. This has in mind a possible future
+!       application where hydro is solve in 3D but gravity in 2D, etc.
  cg%is=is;cg%ie=ie; cg%js=js;cg%je=je; cg%ks=ks;cg%ke=ke
  in = ie-is+1; jn = je-js+1; kn = ke-ks+1
  cg%in=in; cg%jn=jn; cg%kn=kn

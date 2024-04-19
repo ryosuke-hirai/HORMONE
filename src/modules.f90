@@ -23,6 +23,7 @@ module settings
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl
  integer:: imesh, jmesh, kmesh
 ! switches
+ logical:: solve_i, solve_j, solve_k
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, include_sinks, is_test
  logical:: write_other_vel, write_shock, grav_init_other, write_evo

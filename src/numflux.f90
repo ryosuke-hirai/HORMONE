@@ -13,7 +13,8 @@ contains
 
  subroutine numflux
 
-  use settings,only:compswitch,spn,eostype,mag_on,fluxbound_on,&
+  use settings,only:solve_i,solve_j,solve_k,&
+                    compswitch,spn,eostype,mag_on,fluxbound_on,&
                     bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
   use grid
   use physval
@@ -44,7 +45,7 @@ contains
 
 ! flux1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !$omp parallel
-  if(ie>is)then
+  if(solve_i)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
@@ -198,7 +199,7 @@ contains
   end if
 
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  if(je>js)then
+  if(solve_j)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr) collapse(3)
@@ -359,7 +360,7 @@ contains
   end if
 
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  if(ke>ks)then
+  if(solve_k)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
