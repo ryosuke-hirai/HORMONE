@@ -48,7 +48,7 @@ module iotest_mod
       do i = is, ie
         do j = js, je
           do k = ks, ke
-            spc(a,i,j,k) = 8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+            spc(a,i,j,k) = 8.d0 + 1.d0*a + 1.d-2*i + 1.d-4*j + 1.d-6*k
           end do
         end do
       end do
@@ -101,7 +101,7 @@ module iotest_mod
         do j = js, je
           do k = ks, ke
             err = 0.d0
-            err = err + abs(spc(a,i,j,k) - (8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            err = err + abs(spc(a,i,j,k) - (8.d0 + 1.d0*a + 1.d-2*i + 1.d-4*j + 1.d-6*k))
             if (err > 0.d0) then
               print*, 'Error in spc values at a=',a,'i=',i,'j=',j,'k=',k,'err=',err
               numerr = numerr + 1
