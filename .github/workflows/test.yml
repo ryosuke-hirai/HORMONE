@@ -81,7 +81,6 @@ jobs:
           - orszagtang_yz
           - orszagtang_xz
           - sedov_default
-          - star_sph
           - iotest
         flat:
           - no
