@@ -90,23 +90,23 @@ subroutine read_default
  case('orszagtang_xz')
   filename='../para/parameters_orszagtang_xz'
  case('sodshock_x')
-  filename='../para/parameters_sodshocktube_x'
+  filename='../para/parameters_sodshock_x'
  case('sodshock_y')
-  filename='../para/parameters_sodshocktube_y'
+  filename='../para/parameters_sodshock_y'
  case('sodshock_z')
-  filename='../para/parameters_sodshocktube_z'
+  filename='../para/parameters_sodshock_z'
  case('briowushock_x')
-  filename='../para/parameters_briowushocktube_x'
+  filename='../para/parameters_briowushock_x'
  case('briowushock_y')
-  filename='../para/parameters_briowushocktube_y'
+  filename='../para/parameters_briowushock_y'
  case('briowushock_z')
-  filename='../para/parameters_briowushocktube_z'
+  filename='../para/parameters_briowushock_z'
  case('other_shocktube_x')
-  filename='../para/parameters_othershocktube_x'
+  filename='../para/parameters_othershock_x'
  case('other_shocktube_y')
-  filename='../para/parameters_othershocktube_y'
+  filename='../para/parameters_othershock_y'
  case('other_shocktube_z')
-  filename='../para/parameters_othershocktube_z'
+  filename='../para/parameters_othershock_z'
  case('sedov_default','sedov_other')
   filename='../para/parameters_sedov'
  case('KHtest')
