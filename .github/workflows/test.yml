@@ -83,6 +83,9 @@ jobs:
           - sedov_default
           - star_sph
           - iotest
+        flat:
+          - no
+          - yes
         exclude:
           - fc: ifort
             mpi: yes
@@ -119,6 +122,11 @@ jobs:
       if: matrix.test == 'iotest'
       working-directory: ./work
       run: sed -i "s/iotest test/iotest/g" startfile
+
+    - name: Flat reconstruction switch
+      if: matrix.flat == 'yes'
+      working-directory: ./work
+      run: sed -i "s/&simucon/&simucon &simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
 
     - name: Run test
       working-directory: ./work
