@@ -93,7 +93,7 @@ jobs:
           - mpi: yes
             test: star_sph
 
-    name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
+    name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }}, flat=${{ matrix.flat }})
 
     steps:
     - uses: actions/checkout@v4
