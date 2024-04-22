@@ -19,7 +19,7 @@ contains
 
   character(len=*),intent(in)::simtype
   logical:: test_available
-  character(30):: filename
+  character(40):: filename
 
 !-----------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ contains
 
   logical, intent(out) :: passed
   integer,parameter:: nn = 9
-  character(30):: testfile
+  character(40):: testfile
   real(8),parameter:: tol=1d-4
   real(8):: error(nn)
   real(8),allocatable,dimension(:,:,:,:):: val,valorg
@@ -136,9 +136,17 @@ contains
  end subroutine test
 
  function testfilename(simtype) result(file)
+  use settings,only:flux_limiter
   character(len=*),intent(in)::simtype
-  character(30)::file
-  file = '../tests/'//trim(simtype)//'.bin'
+  character(40)::file
+
+  if(flux_limiter=='flat')then
+   ! If using flat reconstruction
+   file = '../tests/'//trim(simtype)//'_flat.bin'
+  else
+   file = '../tests/'//trim(simtype)//'.bin'
+  end if
+
  end function testfilename
 
  function max_norm_error(var,var0,tol) result(norm)
