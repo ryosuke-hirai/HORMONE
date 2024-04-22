@@ -39,3 +39,6 @@
 ! eq_sym : Set to .true. for equatorial symmetry
 &bouncon  bc1is=0 bc1os=0 bc2is=0 bc2os=0 bc3is=3 bc3os=3
 	  bc1iv=0 bc1ov=0 bc2iv=0 bc2ov=0 bc3iv=3 bc3ov=3 eq_sym=.false. /
+
+! test tolerance
+&testcon  test_tol=1d-15 /

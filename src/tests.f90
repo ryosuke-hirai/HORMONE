@@ -46,7 +46,7 @@ contains
  subroutine test(passed)
 
   use mpi_utils,only:myrank
-  use settings,only:simtype,mag_on
+  use settings,only:simtype,mag_on,test_tol
   use grid,only:is,ie,js,je,ks,ke
   use physval
   use gravmod
@@ -55,7 +55,6 @@ contains
   logical, intent(out) :: passed
   integer,parameter:: nn = 9
   character(40):: testfile
-  real(8),parameter:: tol=1d-4
   real(8):: error(nn)
   real(8),allocatable,dimension(:,:,:,:):: val,valorg
   character(len=10):: label(nn)
@@ -112,16 +111,16 @@ contains
   end if
 
 ! Calculate max norm errors
-  call print_errors('max',max_norm_error,label,val,valorg,tol,error)
+  call print_errors('max',max_norm_error,label,val,valorg,test_tol,error)
 
 ! Calculate L1 norm errors
-  call print_errors('L1',L1_norm_error,label,val,valorg,tol,error)
+  call print_errors('L1',L1_norm_error,label,val,valorg,test_tol,error)
 
 ! Calculate L2 norm errors
-  call print_errors('L2',L2_norm_error,label,val,valorg,tol,error)
+  call print_errors('L2',L2_norm_error,label,val,valorg,test_tol,error)
 
 ! Check if maximum L2 norm error is within acceptable bounds
-  if(maxval(error)<tol)then
+  if(maxval(error)<test_tol)then
    if (myrank==0) then
       print*,trim(simtype),' test: passed'
       if(maxval(error)<=0d0) print*,trim(simtype),'     : Identical!'

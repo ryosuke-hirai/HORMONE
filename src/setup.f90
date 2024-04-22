@@ -175,6 +175,7 @@ subroutine read_parameters(filename)
  namelist /sinkcon/ include_sinks, nsink
  namelist /rad_con/ radswitch, opacitytype, lambdatype
  namelist /partcon/ include_particles, maxptc
+ namelist /testcon/ test_tol
 
  if(filename=='')return
 
@@ -192,7 +193,8 @@ subroutine read_parameters(filename)
  read(ui,NML=gravcon,iostat=istat);rewind(ui)
  read(ui,NML=sinkcon,iostat=istat);rewind(ui)
  read(ui,NML=rad_con,iostat=istat);rewind(ui)
- read(ui,NML=partcon,iostat=istat)
+ read(ui,NML=partcon,iostat=istat);rewind(ui)
+ read(ui,NML=testcon,iostat=istat)
  close(ui)
 
 return

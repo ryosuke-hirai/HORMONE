@@ -38,7 +38,7 @@
 	  include_cooling = .false.
 	  include_extforce = .false. /
 
-! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
+! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)
 ! eq_sym : Set to .true. for equatorial symmetry
 &bouncon  bc1is=1 bc1os=2 bc2is=1 bc2os=1 bc3is=0 bc3os=0
@@ -51,3 +51,5 @@
 	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
+! test tolerance
+&testcon  test_tol=1d-15 /

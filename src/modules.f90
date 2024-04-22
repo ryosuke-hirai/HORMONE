@@ -22,6 +22,8 @@ module settings
  character(len=5):: dt_unit
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl
  integer:: imesh, jmesh, kmesh
+! test tolerance
+ real(8):: test_tol
 ! switches
  logical:: solve_i, solve_j, solve_k
  logical:: include_extgrv, include_particles, include_cooling, mag_on
