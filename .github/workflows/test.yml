@@ -125,7 +125,7 @@ jobs:
 
     - name: Flat reconstruction switch
       if: matrix.flat == 'yes'
-      working-directory: ./work
+      working-directory: ./para
       run: sed -i "s/&simucon/&simucon &simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
 
     - name: Run test
