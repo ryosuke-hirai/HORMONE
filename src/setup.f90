@@ -108,7 +108,7 @@ subroutine read_default
  case('other_shocktube_z')
   filename='../para/parameters_othershock_z'
  case('sedov_default','sedov_other')
-  filename='../para/parameters_sedov'
+  filename='../para/parameters_sedov_default'
  case('KHtest')
   filename='../para/parameters_KHtest'
  case('rad_box')
