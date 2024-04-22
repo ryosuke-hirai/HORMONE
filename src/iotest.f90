@@ -25,12 +25,6 @@ module iotest_mod
 
     if (myrank == 0) print*, 'Running I/O test'
 
-    ! MHD unused
-    ! TODO: test these quantities
-    b1 = 0.d0
-    b2 = 0.d0
-    b3 = 0.d0
-
     ! Initialize the arrays
     do i = is, ie
       do j = js, je
@@ -39,6 +33,9 @@ module iotest_mod
           v1(i,j,k) = 2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           v2(i,j,k) = 3.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           v3(i,j,k) = 4.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+          b1(i,j,k) = 5.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+          b2(i,j,k) = 6.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+          b3(i,j,k) = 7.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           e(i,j,k)  = 1.d3 + 1.d-2*i + 1.d-4*j + 1.d-6*k
         end do
       end do
@@ -69,6 +66,9 @@ module iotest_mod
     v1 = 0.d0
     v2 = 0.d0
     v3 = 0.d0
+    b1 = 0.d0
+    b2 = 0.d0
+    b3 = 0.d0
     e = 0.d0
 
     spc = 0.d0
@@ -87,6 +87,9 @@ module iotest_mod
           err = err + abs(v1(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           err = err + abs(v2(i,j,k) - (3.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           err = err + abs(v3(i,j,k) - (4.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          err = err + abs(b1(i,j,k) - (5.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          err = err + abs(b2(i,j,k) - (6.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          err = err + abs(b3(i,j,k) - (7.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           err = err + abs(e(i,j,k)  - (1.d3 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           if (err > 0.d0) then
             print*, 'Error in array values at i=',i,'j=',j,'k=',k,'err=',err
