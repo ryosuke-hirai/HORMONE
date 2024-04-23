@@ -20,12 +20,12 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'briowushock_{x,y,z}': Brio & Wu shocktube problem in the x/y/z direction
 'orszagtang_{xy,yz,xz}': Orszag-Tang test in the xy/yz/xz plane
 'sedov_default': Sedov blast wave with default parameters.
+'KHinstability': Kelvin-Helmholtz instability test.
 'star_sph': Do something with a star on spherical coordinates
 'iotest': Test the read/write routines
 ** Test files NOT available **
 'sedov_other': Sedov blast wave. Set model parameters in extras file.
 'other_shocktube_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
-'KHtest': Kelvin-Helmholtz instability test.
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 'agndisk': Explosions in AGN disks (Grishin+2021)
 'windtunnel': Wind tunnel simulations

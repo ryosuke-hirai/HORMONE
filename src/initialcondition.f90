@@ -24,7 +24,7 @@ subroutine initialcondition
  use shocktube_mod
  use sedov_mod
  use orszagtang_mod
- use KHtest_mod
+ use KHinstability_mod
  use rad_box_mod
  use star_init_mod
  use redsupergiant_mod
@@ -55,8 +55,8 @@ subroutine initialcondition
   case('orszagtang_xy','orszagtang_yz','orszagtang_xz')
    call orszagtang
 
-  case('KHtest')
-   call KHtest
+  case('KHinstability')
+   call KHinstability
 
   case('rad_box')
    call rad_box
