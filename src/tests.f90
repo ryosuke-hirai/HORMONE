@@ -134,7 +134,7 @@ contains
   call print_errors('L2',L2_norm_error,label,val,valorg,test_tol,error)
 
 ! Check if maximum L2 norm error is within acceptable bounds
-  print*, 'Test tolerance (L2) =', test_tol
+  if (myrank==0) print*, 'Test tolerance (L2) =', test_tol
   if(maxval(error)<test_tol)then
    if (myrank==0) then
       print*,trim(simtype),' test: passed'

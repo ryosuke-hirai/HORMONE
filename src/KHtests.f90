@@ -1,17 +1,17 @@
-module KHtest_mod
+module KHinstability_mod
  implicit none
 
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE KHTESTS
+!                        SUBROUTINE KHINSTABILITY
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To set initial condition for Kelvin-Helmholtz instability tests.
 
- subroutine KHtest
+ subroutine KHinstability
 
   use constants,only:pi
   use grid
@@ -56,6 +56,6 @@ contains
   end do
 
   return
- end subroutine KHtest
+ end subroutine KHinstability
 
-end module KHtest_mod
+end module KHinstability_mod
