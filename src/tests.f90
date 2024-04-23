@@ -98,7 +98,7 @@ contains
   if(gravswitch>0) val(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
   if(compswitch>=2)then
    do n = 1, spn
-    val(:,:,:,10+n) = spc(n,:,:,:)
+    val(:,:,:,10+n) = spc(n,is:ie,js:je,ks:ke)
    end do
   end if
 
@@ -120,7 +120,7 @@ contains
   if(gravswitch>0) valorg(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
   if(compswitch>=2)then
    do n = 1, spn
-    valorg(:,:,:,10+n) = spc(n,:,:,:)
+    valorg(:,:,:,10+n) = spc(n,is:ie,js:je,ks:ke)
    end do
   end if
 
