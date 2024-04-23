@@ -46,22 +46,23 @@ contains
  subroutine test(passed)
 
   use mpi_utils,only:myrank
-  use settings,only:simtype,mag_on,test_tol,spn
+  use settings,only:simtype,mag_on,test_tol,compswitch,spn
   use grid,only:is,ie,js,je,ks,ke,dim
   use physval
   use gravmod
   use readbin_mod,only:readbin
 
   logical, intent(out) :: passed
-  integer,parameter:: nn = 12
+  integer:: n
+  integer,parameter:: nn = 10
   character(40):: testfile
-  real(8):: error(nn)
+  real(8),allocatable:: error(:)
   real(8),allocatable,dimension(:,:,:,:):: val,valorg
-  character(len=10):: label(nn)
+  character(len=10),allocatable:: label(:)
 
 !-----------------------------------------------------------------------------
 
-  allocate(val(is:ie,js:je,ks:ke,nn))
+  allocate(val(is:ie,js:je,ks:ke,nn+spn),label(1:nn+spn),error(1:nn+spn))
   allocate(valorg,mold=val)
   error = 0d0
 
@@ -75,12 +76,14 @@ contains
   label( 8) = 'b3'
   label( 9) = 'divB'
   label(10) = 'gravity'
-  label(11) = 'chem1'
-  label(12) = 'chem2'
+  if(compswitch>=2)then ! Chemical elements
+   do n = 1, spn
+    label(10+n) = trim(species(n))
+   end do
+  end if
   if(.not.mag_on)       label(6:9) = 'aaa'   ! No magnetic field
   if(mag_on.and.dim==1) label(9) = 'aaa'     ! 1D MHD
   if(gravswitch==0)     label(10) = 'aaa'    ! No gravity
-  if(spn==0)            label(11:12) = 'aaa' ! No chemistry
 
 ! First record simulated variables
   val(:,:,:,1) = d (is:ie,js:je,ks:ke)
@@ -93,10 +96,10 @@ contains
   val(:,:,:,8) = b3(is:ie,js:je,ks:ke)
   if(mag_on.and.dim>=2) val(:,:,:,9) = phi(is:ie,js:je,ks:ke)
   if(gravswitch>0) val(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
-  if(spn>=2)then
-! Only check first two elements for now
-   val(:,:,:,11) = spc(1,:,:,:)
-   val(:,:,:,12) = spc(2,:,:,:)
+  if(compswitch>=2)then
+   do n = 1, spn
+    val(:,:,:,10+n) = spc(n,:,:,:)
+   end do
   end if
 
 ! Open test data file
@@ -115,10 +118,10 @@ contains
   valorg(:,:,:,8) = b3(is:ie,js:je,ks:ke)
   if(mag_on.and.dim>=2) valorg(:,:,:,9) = phi(is:ie,js:je,ks:ke)
   if(gravswitch>0) valorg(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
-  if(spn>=2)then
-! Only check first two elements for now
-   valorg(:,:,:,11) = spc(1,:,:,:)
-   valorg(:,:,:,12) = spc(2,:,:,:)
+  if(compswitch>=2)then
+   do n = 1, spn
+    valorg(:,:,:,10+n) = spc(n,:,:,:)
+   end do
   end if
 
 ! Calculate max norm errors

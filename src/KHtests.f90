@@ -23,8 +23,8 @@ contains
 
 !--------------------------------------------------------------------
 
-  species(1) = 'outer'
-  species(2) = 'inner'
+  species(1) = 'scalar1'
+  species(2) = 'scalar2'
   rho1 = 1d0
   rho2 = 2d0
   rhom = 0.5d0*(rho1-rho2)
