@@ -81,7 +81,7 @@ jobs:
           - orszagtang_yz
           - orszagtang_xz
           - sedov_default
-	  - KHtest
+          - KHtest
           - iotest
         flat:
           - no
