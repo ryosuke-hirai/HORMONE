@@ -90,25 +90,25 @@ subroutine read_default
  case('orszagtang_xz')
   filename='../para/parameters_orszagtang_xz'
  case('sodshock_x')
-  filename='../para/parameters_sodshocktube_x'
+  filename='../para/parameters_sodshock_x'
  case('sodshock_y')
-  filename='../para/parameters_sodshocktube_y'
+  filename='../para/parameters_sodshock_y'
  case('sodshock_z')
-  filename='../para/parameters_sodshocktube_z'
+  filename='../para/parameters_sodshock_z'
  case('briowushock_x')
-  filename='../para/parameters_briowushocktube_x'
+  filename='../para/parameters_briowushock_x'
  case('briowushock_y')
-  filename='../para/parameters_briowushocktube_y'
+  filename='../para/parameters_briowushock_y'
  case('briowushock_z')
-  filename='../para/parameters_briowushocktube_z'
+  filename='../para/parameters_briowushock_z'
  case('other_shocktube_x')
-  filename='../para/parameters_othershocktube_x'
+  filename='../para/parameters_othershock_x'
  case('other_shocktube_y')
-  filename='../para/parameters_othershocktube_y'
+  filename='../para/parameters_othershock_y'
  case('other_shocktube_z')
-  filename='../para/parameters_othershocktube_z'
+  filename='../para/parameters_othershock_z'
  case('sedov_default','sedov_other')
-  filename='../para/parameters_sedov'
+  filename='../para/parameters_sedov_default'
  case('KHtest')
   filename='../para/parameters_KHtest'
  case('rad_box')
@@ -175,6 +175,7 @@ subroutine read_parameters(filename)
  namelist /sinkcon/ include_sinks, nsink
  namelist /rad_con/ radswitch, opacitytype, lambdatype
  namelist /partcon/ include_particles, maxptc
+ namelist /testcon/ test_tol
 
  if(filename=='')return
 
@@ -192,7 +193,8 @@ subroutine read_parameters(filename)
  read(ui,NML=gravcon,iostat=istat);rewind(ui)
  read(ui,NML=sinkcon,iostat=istat);rewind(ui)
  read(ui,NML=rad_con,iostat=istat);rewind(ui)
- read(ui,NML=partcon,iostat=istat)
+ read(ui,NML=partcon,iostat=istat);rewind(ui)
+ read(ui,NML=testcon,iostat=istat)
  close(ui)
 
 return

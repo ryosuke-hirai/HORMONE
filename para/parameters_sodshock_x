@@ -5,8 +5,7 @@
 &gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
 	  is=1 ie=500 js=1 je=1 ks=1 ke=1
 	  imesh=0 jmesh=0 kmesh=0
-	  x1min=0d0 x2min=0 x3min=0d0
-	  fmr_max=0 /
+	  x1min=0d0 x2min=0 x3min=0d0 /
 
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
@@ -20,22 +19,26 @@
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
-          tnlim=100000 t_end=300d0 dt_out=300d0 tn_out=1
-          dt_unit='ms' outres=1 write_shock =.false. /
+          tnlim=100000 t_end=200d0 dt_out=200d0 tn_out=1
+          dt_unit='ms' sigfig=7 /
 
 ! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
-&eos_con eostype = 0 eoserr=1d-15  /
+&eos_con eostype = 0 gamma=1.4d0 /
 
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-&simucon  crdnt=2 /
+! extrasfile: file containing model parameters
+&simucon  crdnt=0 mag_on=.false. /
 
-! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
+! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)
 ! eq_sym : Set to .true. for equatorial symmetry
-&bouncon  bc1is=1 bc1os=2 bc2is=0 bc2os=0 bc3is=0 bc3os=0
-	  bc1iv=1 bc1ov=2 bc2iv=0 bc2ov=0 bc3iv=0 bc3ov=0 eq_sym=.false. /
+&bouncon  bc1is=3 bc1os=3 bc2is=0 bc2os=0 bc3is=0 bc3os=0
+	  bc1iv=3 bc1ov=3 bc2iv=0 bc2ov=0 bc3iv=0 bc3ov=0 eq_sym=.false. /
+
+! test tolerance
+&testcon  test_tol=1d-15 /
