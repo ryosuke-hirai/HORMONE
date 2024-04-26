@@ -31,7 +31,7 @@ module mpi_domain
       integer, allocatable :: factors(:)
       integer :: num_factors, axis
       real(8) :: n_tmp(3)
-      integer, dimension(3) :: dims, sizes, subsizes, starts
+      integer, dimension(3) :: dims
       real(8) :: eff
       logical :: periods(3)
       integer :: mycoords(3)
