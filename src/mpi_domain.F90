@@ -307,6 +307,7 @@ module mpi_domain
    end subroutine setup_mpi_io
 
    subroutine create_sink_type_mpi
+#ifdef MPI
       use mpi_utils, only: mpitype_sink_prop
       use sink_mod, only: sink_prop
       type(sink_prop) :: sink
@@ -343,7 +344,7 @@ module mpi_domain
       ! Create the custom datatype
       call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpitype_sink_prop, ierr)
       call MPI_Type_commit(mpitype_sink_prop, ierr)
-
+#endif
    end subroutine create_sink_type_mpi
 
    subroutine prime_factors(n, factors, num_factors)
