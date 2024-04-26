@@ -69,6 +69,7 @@ module iotest_mod
       sink(i)%a = (/3.d0*i,30.d0*i,300.d0*i/)
       sink(i)%xpol = (/4.d0*i,40.d0*i,400.d0*i/)
     end do
+    call open_sinkfile
 
     ! Override the profiler time to prevent a divide by zero error during output
     wtime(wtlop) = 1.d0
