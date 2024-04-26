@@ -18,6 +18,7 @@ module iotest_mod
     use profiler_mod
     use readbin_mod
     use settings, only: spn
+    use sink_mod, only: sink, nsink, sink_prop
 
     integer:: a,i,j,k,numerr
     real(8):: err
@@ -54,10 +55,23 @@ module iotest_mod
       species(a) = 'spc'//trim(speci)
     end do
 
+    do i=1,nsink
+      sink(i)%i = 1*i
+      sink(i)%j = 10*i
+      sink(i)%k = 100*i
+      sink(i)%mass = 1.d0*i
+      sink(i)%softfac = 10.d0*i
+      sink(i)%lsoft = 100.d0*i
+      sink(i)%locres = 1000.d0*i
+      sink(i)%dt = 10000.d0*i
+      sink(i)%x = (/1.d0*i,10.d0*i,100.d0*i/)
+      sink(i)%v = (/2.d0*i,20.d0*i,200.d0*i/)
+      sink(i)%a = (/3.d0*i,30.d0*i,300.d0*i/)
+      sink(i)%xpol = (/4.d0*i,40.d0*i,400.d0*i/)
+    end do
 
     ! Override the profiler time to prevent a divide by zero error during output
     wtime(wtlop) = 1.d0
-
 
     ! Write the arrays to file
     call output
@@ -75,6 +89,21 @@ module iotest_mod
 
     spc = 0.d0
     species = ''
+
+    do i = 1, size(sink)
+      sink(i)%i = 0
+      sink(i)%j = 0
+      sink(i)%k = 0
+      sink(i)%mass = 0.d0
+      sink(i)%softfac = 0.d0
+      sink(i)%lsoft = 0.d0
+      sink(i)%locres = 0.d0
+      sink(i)%dt = 0.d0
+      sink(i)%x = 0.d0
+      sink(i)%v = 0.d0
+      sink(i)%a = 0.d0
+      sink(i)%xpol = 0.d0
+    end do
 
     ! Read the arrays from file
     call readbin('data/bin00000000000s.dat')
@@ -118,6 +147,26 @@ module iotest_mod
       write(speci, '(I0)') a
       if (trim(species(a)) /= 'spc'//trim(speci)) then
         print*, 'Error in species names at a=',a,'species(a)=',trim(species(a))
+        numerr = numerr + 1
+      end if
+    end do
+
+    do i = 1, nsink
+      err = 0.d0
+      err = err + abs(sink(i)%i - 1*i)
+      err = err + abs(sink(i)%j - 10*i)
+      err = err + abs(sink(i)%k - 100*i)
+      err = err + abs(sink(i)%mass - 1.d0*i)
+      err = err + abs(sink(i)%softfac - 10.d0*i)
+      err = err + abs(sink(i)%lsoft - 100.d0*i)
+      err = err + abs(sink(i)%locres - 1000.d0*i)
+      err = err + abs(sink(i)%dt - 10000.d0*i)
+      err = err + sum(abs(sink(i)%x - (/1.d0*i, 10.d0*i, 100.d0*i/)))
+      err = err + sum(abs(sink(i)%v - (/2.d0*i, 20.d0*i, 200.d0*i/)))
+      err = err + sum(abs(sink(i)%a - (/3.d0*i, 30.d0*i, 300.d0*i/)))
+      err = err + sum(abs(sink(i)%xpol - (/4.d0*i, 40.d0*i, 400.d0*i/)))
+      if (err > 0.d0) then
+        print*, 'Error in sink array values at i=', i, 'err=', err
         numerr = numerr + 1
       end if
     end do
