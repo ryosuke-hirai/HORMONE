@@ -112,7 +112,7 @@ module mpi_domain
 
       do i = 1, nprocs
          if (myrank == i-1) then
-            write(*,'(A,I0,A,I4,A,I4,A,I4,A,I4,A,I0,A,I0,A,F5.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
+            write(*,'(A,I0,A,I4,A,I4,A,I4,A,I4,A,I0,A,I0,A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
          endif
          call MPI_Barrier(cart_comm, ierr)
       enddo
