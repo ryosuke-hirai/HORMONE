@@ -630,6 +630,10 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
    cg%ic(2) = 1
    cg%alpha = 0.99d0
 
+  else
+   write(*,'(A,I0,A,I0)') 'Error (setup_grvcg): dimension is not supported; dim = ',dim,' with crdnt = ',crdnt
+   error stop
+
   end if
 
  case(2) ! 2D
@@ -692,6 +696,11 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
    end do
 
+  else
+
+   write(*,'(8(A,I0))') 'Error (setup_grvcg): dimension is not supported; dim = ',dim,' with crdnt = ',crdnt,' is = ',is,' ie = ',ie,' js = ',js,' je = ',je,' ks = ',ks,' ke = ',ke
+   error stop
+
   end if
 
 ! Pre-conditioner matrix with MICCG(1,2) method
@@ -749,6 +758,10 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
    cg%ic(4) = in*jn
    cg%ic(5) = in*jn*(kn-1)
    cg%alpha = 0.999d0 ! No modification
+
+  else
+   write(*,'(A,I0,A,I0)') 'Error (setup_grvcg): dimension is not supported; dim = ',dim,' with crdnt = ',crdnt
+   error stop
   end if
 
  end select
