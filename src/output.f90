@@ -392,23 +392,27 @@ end subroutine sink_output
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output gridfile.bin and gridfile.dat
-
 subroutine write_grid
+ use mpi_utils, only:myrank,nprocs
 
- use settings
+ if (myrank==0) then
+  call write_grid_bin
+  if (nprocs==1) then
+    call write_grid_dat
+  else
+    write(*,'(60("*"))')
+    print*, 'WARNING: write_grid_dat not implemented for nprocs>1'
+    write(*,'(60("*"))')
+  end if
+ end if
+
+ return
+end subroutine write_grid
+
+subroutine write_grid_bin
  use grid
- use mpi_utils, only:myrank
+ integer :: ui
 
- implicit none
-
- character(len=50):: formhead,formval,formnum
- integer:: i,j,k,ui
-
- if (myrank/=0) return
-
-!-----------------------------------------------------------------------------
-
-!binary gridfile--------------------------------------------------------------
  open(newunit=ui,file='data/gridfile.bin',status='replace',form='unformatted')
 
  write(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2),&
@@ -417,8 +421,14 @@ subroutine write_grid
  close(ui)
 
  print*,"Outputted: ",'gridfile.bin'
+end subroutine write_grid_bin
 
-!gridfile---------------------------------------------------------------------
+subroutine write_grid_dat
+ use settings
+ use grid
+
+ character(len=50):: formhead,formval,formnum
+ integer:: i,j,k,ui
 
  open(newunit=ui,file='data/gridfile.dat',status='replace')
  write(ui,'()')
@@ -607,8 +617,7 @@ subroutine write_grid
  end if
 
  return
-end subroutine write_grid
-
+end subroutine write_grid_dat
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
