@@ -202,7 +202,12 @@ module mpi_domain
       use settings
       use grid
       use physval
+      use profiler_mod
+      
       integer :: i
+
+      call start_clock(wtmpi)
+
       ! Exchange data between MPI domains
       ! Scalar quantities: d, p, phi, spc
       ! Vector quantities: v1, v2, v3, b1, b2, b3
@@ -225,6 +230,8 @@ module mpi_domain
 
       call exchange_scalar(e)
       call exchange_scalar(eint)
+
+      call stop_clock(wtmpi)
 
    end subroutine exchange_mpi
 

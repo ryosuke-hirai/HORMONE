@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=22 ! number of profiling categories
+ integer,parameter:: n_wt=23 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -27,6 +27,7 @@ module profiler_mod
   wtrfl=20,& ! radiative flux
   wtsnk=21,& ! sink particles
   wtout=22,& ! output
+  wtmpi=23,& ! mpi exchange
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -72,6 +73,7 @@ subroutine init_profiler
  parent(wtopc) = wtrad ! opacity
  parent(wtrfl) = wtrad ! radiative flux
  parent(wtsnk) = wtlop ! sink particles
+ parent(wtmpi) = wtlop ! mpi exchange
  parent(wttot) =-1     ! Total
 
 ! Make sure to keep routine name short
@@ -97,6 +99,7 @@ subroutine init_profiler
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad_flux'    ! radiative flux
  routine_name(wtsnk) = 'Sinks'       ! sink particles
+ routine_name(wtmpi) = 'MPI'         ! MPI exchange
  routine_name(wttot) = 'Total'       ! total
 
  do i = 0, n_wt
@@ -237,7 +240,7 @@ end subroutine reset_clock
 subroutine reduce_clocks_mpi
   use mpi_utils, only:allreduce_mpi,nprocs
 
-  integer::i
+  integer::wti
 
   ! The average walltime for each category gives the most meaningful
   ! diagnostic, because it indicates where time is spent. Simply taking the
@@ -245,23 +248,23 @@ subroutine reduce_clocks_mpi
   ! record less time in that step, but more time in the subsequent step,
   ! meaning the times may add up to more than the total time.
   
-  do i = 0, n_wt
-    wtime_avg(i) = wtime(i)
-    wtime_max(i) = wtime(i)
-    wtime_min(i) = wtime(i)
+  do wti = 0, n_wt
+    wtime_avg(wti) = wtime(wti)
+    wtime_max(wti) = wtime(wti)
+    wtime_min(wti) = wtime(wti)
 
-    call allreduce_mpi('sum', wtime_avg(i))
-    call allreduce_mpi('max', wtime_max(i))
-    call allreduce_mpi('min', wtime_min(i))
+    call allreduce_mpi('sum', wtime_avg(wti))
+    call allreduce_mpi('max', wtime_max(wti))
+    call allreduce_mpi('min', wtime_min(wti))
 
-    wtime_avg(i) = wtime_avg(i) / real(nprocs)
+    wtime_avg(wti) = wtime_avg(wti) / real(nprocs)
 
     ! Imbalance is the difference between the maximum and minimum wall time
     ! as a fraction of the average wall time
-    if(wtime_avg(i) > 0) then
-      imbalance(i) = (wtime_max(i) - wtime_min(i)) / wtime_avg(i)
+    if(wtime_avg(wti) > 0) then
+      imbalance(wti) = (wtime_max(wti) - wtime_min(wti)) / wtime_avg(wti)
     else
-      imbalance(i) = 0
+      imbalance(wti) = 0
     end if
 
   end do
