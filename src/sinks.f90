@@ -2,6 +2,7 @@ module sink_mod
  implicit none
 
  type sink_prop
+  sequence
   integer:: i,j,k
   real(8):: mass, softfac, lsoft, locres, dt
   real(8),dimension(1:3):: x,v,a,xpol

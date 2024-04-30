@@ -223,14 +223,17 @@ subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
 end subroutine read_array_4d_real8
 
 subroutine read_array_1d_sink(fh, arr, istart, iend)
+  use mpi_utils, only: mpitype_sink_prop
   integer, intent(in) :: fh
   type(sink_prop), allocatable, intent(inout) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
-
-  ! TODO MPI
 #ifdef MPI
-  print*, "ERROR: read_array_1d_sink not implemented for MPI"
-  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+  integer :: nbuff
+  nbuff = (iend-istart+1)
+
+  call mpi_file_set_view(fh, offset, mpitype_sink_prop, mpitype_sink_prop, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend), nbuff, mpitype_sink_prop, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpitype_sink_prop)
 #else
   read(fh) arr(istart:iend)
 #endif
@@ -332,14 +335,19 @@ subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
 end subroutine write_array_4d_real8
 
 subroutine write_array_1d_sink(fh, arr, istart, iend)
+  use mpi_utils, only: mpitype_sink_prop
   integer, intent(in) :: fh
   type(sink_prop), intent(in), allocatable :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
-
-  ! TODO MPI
 #ifdef MPI
-  print*, "ERROR: write_array_1d_sink not implemented for MPI"
-  call mpi_abort(MPI_COMM_WORLD, 1, ierr)
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: ierr, nbuff
+
+  nbuff = (iend-istart+1)
+
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, mpitype_sink_prop, mpitype_sink_prop, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend), nbuff, mpitype_sink_prop, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend)
 #endif

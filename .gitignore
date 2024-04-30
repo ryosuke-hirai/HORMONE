@@ -1,3 +1,5 @@
 *.o
 *.mod
 hormone
+*.bin
+*.dat
