@@ -1,4 +1,5 @@
 module readbin_mod
+ use io, only: legacy
  implicit none
 
  public:: readbin,readgrid,read_extgrv
@@ -26,7 +27,6 @@ subroutine readbin(filename)
 
  character(len=*),intent(in):: filename
  integer:: un
- logical :: legacy = .true.
 
 !-----------------------------------------------------------------------------
 

@@ -1,4 +1,5 @@
 module output_mod
+ use io, only: legacy
  implicit none
 
  integer:: ievo,iskf
@@ -631,7 +632,6 @@ subroutine write_bin
 
  character(len=50):: binfile
  integer :: un
- logical :: legacy = .true.
 
 !-----------------------------------------------------------------------------
 

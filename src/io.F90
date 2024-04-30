@@ -5,6 +5,8 @@ module io
   use sink_mod, only: sink_prop
   implicit none
 
+  logical, public :: legacy = .true.
+
   interface read_var
     module procedure read_int4
     module procedure read_real8
