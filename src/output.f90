@@ -1094,17 +1094,20 @@ subroutine profiler_output
   if(clock_on(i))wtime(i) = wtime(i) + omp_get_wtime()
  end do
 
- write(form1,'("(",i2,"X,3a12)")')maxlbl+1
- write(forml,'("(",i2,"a)")')maxlbl+1 + 3*12
+! Reduce clocks across MPI tasks
+ call reduce_clocks_mpi
+
+ write(form1,'("(",i2,"X4a12)")')maxlbl+1
+ write(forml,'("(",i2,"a)")')maxlbl+1 + 4*12
 
  open(newunit=ui,file='walltime.dat',status='replace')
- write(ui,form1)'wall_time','frac_loop','frac_tot'
+ write(ui,form1)'wall_time','frac_loop','frac_tot','imbalance'
 
  do i = 1, n_wt
-  if(get_layer(i)==wttot)write(ui,forml)('-',j=1,maxlbl+1+3*12)
+  if(get_layer(i)==wttot)write(ui,forml)('-',j=1,maxlbl+1+4*12)
   call profiler_output1(ui,i)
  end do
- write(ui,forml)('-',j=1,maxlbl+1+3*12)
+ write(ui,forml)('-',j=1,maxlbl+1+4*12)
  call profiler_output1(ui,wttot)
 
  close(ui)
