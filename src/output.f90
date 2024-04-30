@@ -188,7 +188,7 @@ subroutine evo_output
    Egtot = sum(d(is:ie,js:je,ks:ke) &
               *(0.5d0*grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
               *dvol(is:ie,js:je,ks:ke))
-   Mtot = Mtot + mc(is-1)
+   if (is==is_global) Mtot = Mtot + mc(is-1)
 
    Mbound=0d0;Ebound=0d0;Jbound=0d0
    do k = ks, ke
@@ -237,7 +237,7 @@ subroutine evo_output
    Ebound = 2d0*Ebound
    Jbound = 2d0*Jbound
   end if
-  if(include_extgrv)Mbound = Mbound+mc(is-1)
+  if (include_extgrv .and. is==is_global) Mbound = Mbound+mc(is-1)
  end if
 
  if(dim>=2.and.crdnt>=1)then
