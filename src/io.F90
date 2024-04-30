@@ -293,19 +293,33 @@ subroutine write_real8(fh, var)
 
 end subroutine write_real8
 
-subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
-  use mpi_utils, only: mpitype_array3d_real8
+subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, grav)
+  use mpi_utils, only: mpitype_array3d_real8, mpitype_array3d_real8_grav
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
+  logical, optional, intent(in) :: grav
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr, nbuff
+  integer :: ierr, nbuff, itype
+  logical :: gravity
+
+  if (present(grav)) then
+    gravity = grav
+  else
+    gravity = .false.
+  end if
+
+  if (gravity) then
+    itype = mpitype_array3d_real8_grav
+  else
+    itype = mpitype_array3d_real8
+  end if
 
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
   call get_file_end(fh, end_bytes)
-  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpitype_array3d_real8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, itype, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend,jstart:jend,kstart:kend)

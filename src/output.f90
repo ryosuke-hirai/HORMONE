@@ -934,20 +934,36 @@ end subroutine write_plt
 subroutine write_extgrv
 
  use grid
- use gravmod,only:extgrv,mc
+ use gravmod, only:extgrv,mc
+ use mpi_utils, only:myrank,allreduce_mpi
+ use io, only:open_file_write,close_file, write_var, write_dummy_recordmarker
 
  implicit none
 
- integer:: ui
+ integer :: ui
+ real(8) :: mcore
 
-!-----------------------------------------------------------------------------
- ! TODO: MPI
- open(newunit=ui,file='data/extgrv.bin',status='replace',form='unformatted')
- write(ui)mc(is-1)
- write(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
- close(ui)
+ ! get mcore and ensure each task has the same value
+ if (is==is_global) then
+   mcore = mc(is-1)
+ else
+   mcore = -1.
+ endif
+ call allreduce_mpi('max', mcore)
 
- print*,"Outputted: ",'extgrv.bin'
+ call open_file_write('data/extgrv.bin', ui)
+
+ call write_dummy_recordmarker(ui, legacy)
+ call write_var(ui, mcore)
+ call write_dummy_recordmarker(ui, legacy)
+
+ call write_dummy_recordmarker(ui, legacy)
+ call write_var(ui, extgrv, gis-2, gie+2, gjs-2, gje+2, gks-2, gke+2, grav=.true.)
+ call write_dummy_recordmarker(ui, legacy)
+
+ call close_file(ui)
+
+ if (myrank==0) print*,"Outputted: ",'extgrv.bin'
 
 return
 end subroutine write_extgrv

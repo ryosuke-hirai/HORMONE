@@ -122,22 +122,27 @@ end subroutine readgrid
 ! PURPOSE: To read gridfile.bin
 
 subroutine read_extgrv(filename)
-
- use grid,only:is,gis,gie,gjs,gje,gks,gke
- use gravmod,only:coremass,extgrv,mc
-
+ use grid, only:is,gis,gie,gjs,gje,gks,gke,is_global
+ use gravmod, only:coremass,extgrv,mc
+ use io, only:open_file_read,read_dummy_recordmarker,read_var,close_file
  character(len=*),intent(in)::filename
  integer:: ui
-!-----------------------------------------------------------------------------
 
- ! TODO: MPI
- open(newunit=ui,file=filename,status='old',form='unformatted')
  extgrv = 0d0
- read(ui)coremass
- read(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
- close(ui)
 
- mc(is-1) = coremass
+ call open_file_read(filename, ui)
+
+ call read_dummy_recordmarker(ui, legacy)
+ call read_var(ui, coremass)
+ call read_dummy_recordmarker(ui, legacy)
+
+ call read_dummy_recordmarker(ui, legacy)
+ call read_var(ui, extgrv, gis-2, gie+2, gjs-2, gje+2, gks-2, gke+2)
+ call read_dummy_recordmarker(ui, legacy)
+
+ call close_file(ui)
+
+ if (is==is_global) mc(is-1) = coremass
 
  return
 end subroutine read_extgrv

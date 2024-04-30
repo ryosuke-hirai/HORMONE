@@ -275,9 +275,9 @@ module mpi_domain
    subroutine setup_mpi_io
 #ifdef MPI
       use mpi
-      use mpi_utils, only: mpitype_array3d_real8, mpitype_array4d_real8
+      use mpi_utils, only: mpitype_array3d_real8, mpitype_array4d_real8, mpitype_array3d_real8_grav
       use grid
-      use settings, only: spn, compswitch
+      use settings, only: spn, compswitch, gravswitch, include_extgrv
       integer, dimension(3) :: sizes3, subsizes3, starts3
       integer, dimension(4) :: sizes4, subsizes4, starts4
       integer :: ierr
@@ -299,6 +299,15 @@ module mpi_domain
          call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, ierr)
          call mpi_type_commit(mpitype_array4d_real8, ierr)
       endif
+
+      if (gravswitch>=1 .or. include_extgrv) then
+         sizes3 = [gie_global-gis_global+1,gje_global-gjs_global+1,gke_global-gks_global+1]
+         subsizes3 = [gie-gis+1,gje-gjs+1,gke-gks+1]
+         starts3 = [gis-1,gjs-1,gks-1]
+         call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array3d_real8_grav, ierr)
+         call mpi_type_commit(mpitype_array3d_real8_grav, ierr)
+      end if
+
 #endif
    end subroutine setup_mpi_io
 
