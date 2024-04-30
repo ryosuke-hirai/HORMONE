@@ -14,7 +14,7 @@
 ! spn : number of species (>=3)
 &eos_con eostype = 1 eoserr=1d-15 compswitch=2 muconst=0.62d0 spn=8 /
 
-&simucon mag_on=.true. /
+&simucon mag_on=.true. crdnt=2 /
 
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 &gravcon gravswitch=0 /
