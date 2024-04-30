@@ -410,9 +410,9 @@ subroutine write_grid
 !binary gridfile--------------------------------------------------------------
  open(newunit=ui,file='data/gridfile.bin',status='replace',form='unformatted')
 
- write(ui)x1(gis-2:gie+2),xi1(gis-2:gie+2),dx1(gis-2:gie+2),dxi1(gis-2:gie+2),&
-          x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dx2(gjs-2:gje+2),dxi2(gjs-2:gje+2),&
-          x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
+ write(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2),&
+          x2(gjs_global-2:gje_global+2),xi2(gjs_global-2:gje_global+2),dx2(gjs_global-2:gje_global+2),dxi2(gjs_global-2:gje_global+2),&
+          x3(gks_global-2:gke_global+2),xi3(gks_global-2:gke_global+2),dx3(gks_global-2:gke_global+2),dxi3(gks_global-2:gke_global+2)
  close(ui)
 
  print*,"Outputted: ",'gridfile.bin'
@@ -431,22 +431,22 @@ subroutine write_grid
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3
 
-  if(ie>is)then
+  if(ie_global>is_global)then
    write(ui,formhead)'  i','x1','dvol'
-   j=js;k=ks
-   do i = is, ie
+   j=js_global;k=ks_global
+   do i = is_global, ie_global
     write(ui,formval)i,x1(i),dvol(i,j,k)
    end do
-  elseif(je>js)then
+  elseif(je_global>js_global)then
    write(ui,formhead)'  j','x2','dvol'
-   i=is;k=ks
-   do j = js, je
+   i=is_global;k=ks_global
+   do j = js_global, je_global
     write(ui,formval)j,x2(j),dvol(i,j,k)
    end do
-  elseif(ke>ks)then
+  elseif(ke_global>ks_global)then
    write(ui,formhead)'  k','x3','dvol'
-   i=is;j=js
-   do k = ks, ke
+   i=is_global;j=js_global
+   do k = ks_global, ke_global
     write(ui,formval)k,x3(k),dvol(i,j,k)
    end do
   end if
@@ -456,20 +456,20 @@ subroutine write_grid
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3,4,5
 
-  if(ke==ks)then! For 2D Cartesian, polar or axisymmetrical spherical
+  if(ke_global==ks_global)then! For 2D Cartesian, polar or axisymmetrical spherical
    write(ui,formhead)'  i','j','x1','x2','dvol'
-   k=ks
+   k=ks_global
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=js-1
-    do i = is, ie
+    j=js_global-1
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),xi2s,dvol(i,j,k)
     end do
     write(ui,'()')
    end if
 
-   do j = js, je
-    do i = is, ie
+   do j = js_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -477,32 +477,32 @@ subroutine write_grid
 
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=je+1
-    do i = is, ie
+    j=je_global+1
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),xi2e,dvol(i,j,k)
     end do
     write(ui,'()')
    end if
 
-  elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
+  elseif(je_global==js_global)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    write(ui,formhead)'  i','k','x1','x3','dvol'
-   j=js
-   do k = ks, ke, outres
+   j=js_global
+   do k = ks_global, ke_global, outres
 ! writing inner boundary for polar coordinates
     if(crdnt==1.or.crdnt==2)&
-     write(ui,formval)is-1,k,xi1(is-1),x3(k),dvol(is,j,k)
-    do i = is, ie, outres
+     write(ui,formval)is_global-1,k,xi1(is_global-1),x3(k),dvol(is_global,j,k)
+    do i = is_global, ie_global, outres
      write(ui,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
 
-  elseif(ie==is)then! For 2D Cartesian
+  elseif(ie_global==is_global)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    write(ui,formhead)'  j','k','x2','x3','dvol'
-   i=is
-   do k = ks, ke
-    do j = js, je
+   i=is_global
+   do k = ks_global, ke_global
+    do j = js_global, je_global
      write(ui,formval)j,k,x2(j),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -515,18 +515,18 @@ subroutine write_grid
 
   write(ui,formhead)'  i','j','k','x1','x2','x3','dvol'
   if(crdnt==2)then
-   k=ks-1
-   do j = je, je
-    do i = is, ie
+   k=ks_global-1
+   do j = je_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
   end if
 
-  do k = ks, ke
-   do j = je, je
-    do i = is, ie
+  do k = ks_global, ke_global
+   do j = je_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -534,9 +534,9 @@ subroutine write_grid
   end do
 
   if(crdnt==2)then
-   k=ke
-   do j = je, je
-    do i = is, ie
+   k=ke_global
+   do j = je_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -567,35 +567,35 @@ subroutine write_grid
   write(ui,formhead)'  i','j','x1','x2','dvol'
 
   if(crdnt==2)then
-   k = ks
-   do i = is, ie
-    write(ui,formval)i,-je-1,x1(i),-xi2(je),dvol(i,je,k)
+   k = ks_global
+   do i = is_global, ie_global
+    write(ui,formval)i,-je_global-1,x1(i),-xi2(je_global),dvol(i,je_global,k)
    end do
    write(ui,'()')
-   do j = je, js, -1
-    do i = is, ie
+   do j = je_global, js_global, -1
+    do i = is_global, ie_global
      write(ui,formval)i,-j,x1(i),-x2(j),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
-   do i = is, ie
-    write(ui,formval)i,0,x1(i),-xi2(js-1),dvol(i,js,k)
+   do i = is_global, ie_global
+    write(ui,formval)i,0,x1(i),-xi2(js_global-1),dvol(i,js_global,k)
    end do
    write(ui,'()')
 
-   k = (ks+ke-1)/2
-   do i = is, ie
-    write(ui,formval)i,0,x1(i),xi2(js-1),dvol(i,js,k)
+   k = (ks_global+ke_global-1)/2
+   do i = is_global, ie_global
+    write(ui,formval)i,0,x1(i),xi2(js_global-1),dvol(i,js_global,k)
    end do
    write(ui,'()')
-   do j = js, je
-    do i = is, ie
+   do j = js_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
-   do i = is, ie
-    write(ui,formval)i,je+1,x1(i),xi2(je),dvol(i,je,k)
+   do i = is_global, ie_global
+    write(ui,formval)i,je_global+1,x1(i),xi2(je_global),dvol(i,je_global,k)
    end do
   end if
 
