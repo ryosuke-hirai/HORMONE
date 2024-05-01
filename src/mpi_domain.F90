@@ -275,7 +275,7 @@ module mpi_domain
    subroutine setup_mpi_io
 #ifdef MPI
       use mpi
-      use mpi_utils, only: mpitype_array3d_real8, mpitype_array4d_real8, mpitype_array3d_real8_grav
+      use mpi_utils, only: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity
       use grid
       use settings, only: spn, compswitch, include_sinks, gravswitch, include_extgrv
       integer, dimension(3) :: sizes3, subsizes3, starts3
@@ -286,16 +286,16 @@ module mpi_domain
       sizes3 = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
       subsizes3 = [ie-is+1,je-js+1,ke-ks+1]
       starts3 = [is-is_global,js-js_global,ks-ks_global]
-      call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array3d_real8, ierr)
-      call mpi_type_commit(mpitype_array3d_real8, ierr)
+      call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_default, ierr)
+      call mpi_type_commit(mpi_subarray_default, ierr)
 
       if (compswitch>=2) then
          ! Set up the subarray for spc
          sizes4 = [spn,ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
          subsizes4 = [spn,ie-is+1,je-js+1,ke-ks+1]
          starts4 = [0,is-is_global,js-js_global,ks-ks_global]
-         call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, ierr)
-         call mpi_type_commit(mpitype_array4d_real8, ierr)
+         call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_spc, ierr)
+         call mpi_type_commit(mpi_subarray_spc, ierr)
       endif
 
       if (include_sinks) then
@@ -306,8 +306,8 @@ module mpi_domain
          sizes3 = [gie_global-gis_global+1,gje_global-gjs_global+1,gke_global-gks_global+1]
          subsizes3 = [gie-gis+1,gje-gjs+1,gke-gks+1]
          starts3 = [gis-1,gjs-1,gks-1]
-         call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array3d_real8_grav, ierr)
-         call mpi_type_commit(mpitype_array3d_real8_grav, ierr)
+         call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_gravity, ierr)
+         call mpi_type_commit(mpi_subarray_gravity, ierr)
       end if
 
 #endif
@@ -315,7 +315,7 @@ module mpi_domain
 
    subroutine create_sink_type_mpi
 #ifdef MPI
-      use mpi_utils, only: mpitype_sink_prop
+      use mpi_utils, only: mpi_type_sink_prop
       use sink_mod, only: sink_prop
       type(sink_prop) :: sink
       integer, parameter :: nattr = 12
@@ -349,8 +349,8 @@ module mpi_domain
                 MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION/)
 
       ! Create the custom datatype
-      call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpitype_sink_prop, ierr)
-      call MPI_Type_commit(mpitype_sink_prop, ierr)
+      call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpi_type_sink_prop, ierr)
+      call MPI_Type_commit(mpi_type_sink_prop, ierr)
 #endif
    end subroutine create_sink_type_mpi
 

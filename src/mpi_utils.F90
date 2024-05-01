@@ -11,7 +11,8 @@ module mpi_utils
 
   public :: allreduce_mpi
 
-  integer :: myrank, nprocs, mpitype_array3d_real8, mpitype_array4d_real8, mpitype_array3d_real8_grav, mpitype_sink_prop
+  integer :: myrank, nprocs
+  integer :: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity, mpi_type_sink_prop
 
   contains
 
