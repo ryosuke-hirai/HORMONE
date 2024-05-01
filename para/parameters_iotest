@@ -18,3 +18,8 @@
 
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 &gravcon gravswitch=0 /
+
+! include_sinks: switch for sink particles
+! nsink: number of sink particles
+!!! other quantities should be given in initial condition file
+&sinkcon include_sinks=.true. nsink=2 /

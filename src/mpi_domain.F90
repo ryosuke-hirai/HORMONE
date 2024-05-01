@@ -31,7 +31,7 @@ module mpi_domain
       integer, allocatable :: factors(:)
       integer :: num_factors, axis
       real(8) :: n_tmp(3)
-      integer, dimension(3) :: dims, sizes, subsizes, starts
+      integer, dimension(3) :: dims
       real(8) :: eff
       logical :: periods(3)
       integer :: mycoords(3)
@@ -112,7 +112,7 @@ module mpi_domain
 
       do i = 1, nprocs
          if (myrank == i-1) then
-            write(*,'(A,I0,A,I4,A,I4,A,I4,A,I4,A,I0,A,I0,A,F5.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
+            write(*,'(A,I0,A,I4,A,I4,A,I4,A,I4,A,I0,A,I0,A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
          endif
          call MPI_Barrier(cart_comm, ierr)
       enddo
@@ -284,7 +284,7 @@ module mpi_domain
       use mpi
       use mpi_utils, only: mpitype_array3d_real8, mpitype_array4d_real8
       use grid
-      use settings, only: spn, compswitch
+      use settings, only: spn, compswitch, include_sinks
       integer, dimension(3) :: sizes3, subsizes3, starts3
       integer, dimension(4) :: sizes4, subsizes4, starts4
       integer :: ierr
@@ -306,8 +306,53 @@ module mpi_domain
          call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, ierr)
          call mpi_type_commit(mpitype_array4d_real8, ierr)
       endif
+
+      if (include_sinks) then
+         call create_sink_type_mpi
+      endif
 #endif
    end subroutine setup_mpi_io
+
+   subroutine create_sink_type_mpi
+#ifdef MPI
+      use mpi_utils, only: mpitype_sink_prop
+      use sink_mod, only: sink_prop
+      type(sink_prop) :: sink
+      integer, parameter :: nattr = 12
+      integer, dimension(nattr) :: types, blocklengths
+      integer(kind=MPI_ADDRESS_KIND), dimension(nattr) :: offsets
+      integer :: ierr
+
+      ! Get the addresses of each component of sink_prop
+      call MPI_Get_address(sink%i, offsets(1), ierr)
+      call MPI_Get_address(sink%j, offsets(2), ierr)
+      call MPI_Get_address(sink%k, offsets(3), ierr)
+      call MPI_Get_address(sink%mass, offsets(4), ierr)
+      call MPI_Get_address(sink%softfac, offsets(5), ierr)
+      call MPI_Get_address(sink%lsoft, offsets(6), ierr)
+      call MPI_Get_address(sink%locres, offsets(7), ierr)
+      call MPI_Get_address(sink%dt, offsets(8), ierr)
+      call MPI_Get_address(sink%x, offsets(9), ierr)
+      call MPI_Get_address(sink%v, offsets(10), ierr)
+      call MPI_Get_address(sink%a, offsets(11), ierr)
+      call MPI_Get_address(sink%xpol, offsets(12), ierr)
+
+      ! Compute offsets as relative to the start of sink
+      offsets = offsets - offsets(1)
+
+      ! Set the blocklengths (number of elements in each block)
+      blocklengths = (/1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3/)
+
+      ! Set the types (type of each block)
+      types = (/MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION/)
+
+      ! Create the custom datatype
+      call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpitype_sink_prop, ierr)
+      call MPI_Type_commit(mpitype_sink_prop, ierr)
+#endif
+   end subroutine create_sink_type_mpi
 
    subroutine prime_factors(n, factors, num_factors)
       ! Compute the prime factors of a number
