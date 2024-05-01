@@ -308,12 +308,14 @@ subroutine open_sinkfile
  use settings,only:include_sinks,sigfig,start
  use constants,only:msun
  use sink_mod,only:nsink,sink
+ use mpi_utils, only:myrank
 
  integer:: ierr,n
  character(len=50):: forma, forme, header
 
 !-----------------------------------------------------------------------------
 
+ if (myrank/=0) return
  if(.not.include_sinks)return
 
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
@@ -359,15 +361,17 @@ end subroutine open_sinkfile
 
 subroutine sink_output
 
- use settings,only:sigfig,include_sinks
- use grid,only:tn,time
- use sink_mod,only:nsink,sink
+ use settings,  only: sigfig,include_sinks
+ use grid,      only: tn,time
+ use sink_mod,  only: nsink,sink
+ use mpi_utils, only: myrank
 
  integer:: n
  character(len=50):: forme
 
 !-----------------------------------------------------------------------------
 
+ if (myrank/=0) return
  if(.not.include_sinks)return
 
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
