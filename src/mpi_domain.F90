@@ -285,8 +285,7 @@ module mpi_domain
       ! Set up the subarray which selects only the real cells for I/O
       sizes3 = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
       subsizes3 = [ie-is+1,je-js+1,ke-ks+1]
-      starts3 = [is-1,js-1,ks-1]
-
+      starts3 = [is-is_global,js-js_global,ks-ks_global]
       call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array3d_real8, ierr)
       call mpi_type_commit(mpitype_array3d_real8, ierr)
 
@@ -294,8 +293,7 @@ module mpi_domain
          ! Set up the subarray for spc
          sizes4 = [spn,ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
          subsizes4 = [spn,ie-is+1,je-js+1,ke-ks+1]
-         starts4 = [0,is-1,js-1,ks-1]
-
+         starts4 = [0,is-is_global,js-js_global,ks-ks_global]
          call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, ierr)
          call mpi_type_commit(mpitype_array4d_real8, ierr)
       endif
