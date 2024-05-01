@@ -106,13 +106,13 @@ module mpi_domain
 
       ! Print out the domain decomposition
       if (myrank == 0) then
-         write(*,'(A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A)') 'Global domain (', is_global, ':', ie_global, ',', js_global, ':', je_global, ',', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
+         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
       endif
       call MPI_Barrier(cart_comm, ierr)
 
       do i = 1, nprocs
          if (myrank == i-1) then
-            write(*,'(A,I0,A,I4,A,I4,A,I4,A,I4,A,I0,A,I0,A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
+            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
          endif
          call MPI_Barrier(cart_comm, ierr)
       enddo
