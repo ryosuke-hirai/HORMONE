@@ -76,17 +76,17 @@ module mpi_domain
       call MPI_Cart_coords(cart_comm, myrank, 3, mycoords, ierr)
 
       ! Compute local domain, including offset if starting index is not 1
-      is = mycoords(1) * (nx / dims(1)) + 1 - (is_global - 1)
-      ie = (mycoords(1) + 1) * (nx / dims(1)) - (is_global - 1)
-      js = mycoords(2) * (ny / dims(2)) + 1 - (js_global - 1)
-      je = (mycoords(2) + 1) * (ny / dims(2)) - (js_global - 1)
-      ks = mycoords(3) * (nz / dims(3)) + 1 - (ks_global - 1)
-      ke = (mycoords(3) + 1) * (nz / dims(3)) - (ks_global - 1)
+      is = mycoords(1) * (nx / dims(1)) + 1 + (is_global - 1)
+      ie = (mycoords(1) + 1) * (nx / dims(1)) + (is_global - 1)
+      js = mycoords(2) * (ny / dims(2)) + 1 + (js_global - 1)
+      je = (mycoords(2) + 1) * (ny / dims(2)) + (js_global - 1)
+      ks = mycoords(3) * (nz / dims(3)) + 1 + (ks_global - 1)
+      ke = (mycoords(3) + 1) * (nz / dims(3)) + (ks_global - 1)
 
       ! Special treatment of final proc, in case nx/ny/nz is not divisible by nprocs
-      if (mycoords(1) == dims(1) - 1) ie = nx - (is_global - 1)
-      if (mycoords(2) == dims(2) - 1) je = ny - (js_global - 1)
-      if (mycoords(3) == dims(3) - 1) ke = nz - (ks_global - 1)
+      if (mycoords(1) == dims(1) - 1) ie = nx + (is_global - 1)
+      if (mycoords(2) == dims(2) - 1) je = ny + (js_global - 1)
+      if (mycoords(3) == dims(3) - 1) ke = nz + (ks_global - 1)
 
       call setup_mpi_exchange
       call setup_mpi_io
