@@ -1,7 +1,7 @@
 module io
 #ifdef MPI
   use mpi
-  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc
+  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc, mpi_type_sink_prop
 #endif
   use sink_mod, only: sink_prop
   implicit none
