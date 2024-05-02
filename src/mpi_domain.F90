@@ -277,7 +277,7 @@ module mpi_domain
       use mpi
       use mpi_utils, only: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity
       use grid
-      use settings, only: spn, compswitch, include_sinks, gravswitch, include_extgrv
+      use settings, only: spn, compswitch, include_sinks, gravswitch
       integer, dimension(3) :: sizes3, subsizes3, starts3
       integer, dimension(4) :: sizes4, subsizes4, starts4
       integer :: ierr
