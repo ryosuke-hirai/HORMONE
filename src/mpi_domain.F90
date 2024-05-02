@@ -302,12 +302,20 @@ module mpi_domain
          call create_sink_type_mpi
       endif
 
-      if (gravswitch>=1 .or. include_extgrv) then
+      if (gravswitch>=1) then
          sizes3 = [gie_global-gis_global+1,gje_global-gjs_global+1,gke_global-gks_global+1]
          subsizes3 = [gie-gis+1,gje-gjs+1,gke-gks+1]
-         starts3 = [gis-1,gjs-1,gks-1]
+         starts3 = [gis-gis_global,gjs-gjs_global,gks-gks_global]
          call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_gravity, ierr)
          call mpi_type_commit(mpi_subarray_gravity, ierr)
+      end if
+
+      if (include_extgrv) then
+         sizes3 = [(gie_global-gis_global+1)+4,(gje_global-gjs_global+1)+4,(gke_global-gks_global+1)+4]
+         subsizes3 = [gie-gis+1,gje-gjs+1,gke-gks+1]
+         starts3 = [gis-1,gjs-1,gks-1]
+         call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_extgrv, ierr)
+         call mpi_type_commit(mpi_subarray_extgrv, ierr)
       end if
 
 #endif
