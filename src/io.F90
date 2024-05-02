@@ -1,6 +1,7 @@
 module io
 #ifdef MPI
   use mpi
+  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc
 #endif
   use sink_mod, only: sink_prop
   implicit none
@@ -40,7 +41,6 @@ contains
 #ifdef MPI
 subroutine get_file_end(fh, end_bytes)
   integer, intent(in) :: fh
-  integer :: ierr
   integer(kind=MPI_OFFSET_KIND), intent(out) :: end_bytes
   integer(kind=MPI_OFFSET_KIND) :: disp
   integer :: method = 1
@@ -67,9 +67,6 @@ subroutine open_file_write(filename, fh)
   use mpi_utils, only: myrank
   character(len=*), intent(in) :: filename
   integer, intent(out) :: fh
-#ifdef MPI
-  integer :: ierr
-#endif
 
   if (myrank == 0) then
     ! Create new file
@@ -207,7 +204,6 @@ subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
 end subroutine read_array_3d_real8
 
 subroutine read_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
-  use mpi_utils, only: mpi_subarray_spc
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
@@ -225,7 +221,6 @@ subroutine read_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lst
 end subroutine read_array_spc
 
 subroutine read_array_1d_sink(fh, arr, istart, iend)
-  use mpi_utils, only: mpi_type_sink_prop
   integer, intent(in) :: fh
   type(sink_prop), allocatable, intent(inout) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
@@ -269,7 +264,6 @@ subroutine write_int4(fh, var)
   integer, intent(in) :: var
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr
 
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_INTEGER4, MPI_INTEGER4, 'native', MPI_INFO_NULL, ierr)
@@ -285,7 +279,6 @@ subroutine write_real8(fh, var)
   real(8), intent(in) :: var
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr
 
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
@@ -297,14 +290,13 @@ subroutine write_real8(fh, var)
 end subroutine write_real8
 
 subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, grav)
-  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
   logical, optional, intent(in) :: grav
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr, nbuff, itype
+  integer :: nbuff, itype
   logical :: gravity
 
   if (present(grav)) then
@@ -331,13 +323,12 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
 end subroutine write_array_3d_real8
 
 subroutine write_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
-  use mpi_utils, only: mpi_subarray_spc
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr, nbuff
+  integer :: nbuff
 
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)*(lend-lstart+1)
 
@@ -351,13 +342,12 @@ subroutine write_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, ls
 end subroutine write_array_spc
 
 subroutine write_array_1d_sink(fh, arr, istart, iend)
-  use mpi_utils, only: mpi_type_sink_prop
   integer, intent(in) :: fh
   type(sink_prop), intent(in), allocatable :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr, nbuff
+  integer :: nbuff
 
   nbuff = (iend-istart+1)
 
