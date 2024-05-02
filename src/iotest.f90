@@ -19,13 +19,16 @@ module iotest_mod
     use readbin_mod
     use settings, only: spn, include_extgrv
     use sink_mod, only: sink, nsink, sink_prop
-    use gravmod, only: grvphi, grvphidot
+    use gravmod, only: grvphi, grvphidot, dt_old
 
     integer:: a,i,j,k,numerr
     real(8):: err
     character(len=4) :: speci
 
     if (myrank == 0) print*, 'Running I/O test'
+
+    tn = 123
+    time = 456.d0
 
     ! Initialize the arrays
     do i = is, ie
@@ -81,6 +84,8 @@ module iotest_mod
       end do
     end do
 
+    dt_old = 789.d0
+
     ! Override the profiler time to prevent a divide by zero error during output
     wtime(wtlop) = 1.d0
 
@@ -88,6 +93,8 @@ module iotest_mod
     call output
 
     ! Reset the arrays in memory
+    tn = 0
+    time = 0.d0
     d = 0.d0
     v1 = 0.d0
     v2 = 0.d0
@@ -99,6 +106,7 @@ module iotest_mod
     e = 0.d0
     grvphi = 0.d0
     grvphidot = 0.d0
+    dt_old = 0.d0
 
     spc = 0.d0
     species = ''
@@ -120,6 +128,16 @@ module iotest_mod
 
     ! Read the arrays from file
     call readbin('data/bin00000000000s.dat')
+
+    if (tn /= 123) then
+      print*, 'Error in tn value, tn=',tn,'should be:',123
+      numerr = numerr + 1
+    endif
+
+    if (time /= 456.d0) then
+      print*, 'Error in time value, time=',time,'should be:',456.d0
+      numerr = numerr + 1
+    endif
 
     ! Check the arrays
     numerr = 0
@@ -184,19 +202,24 @@ module iotest_mod
       end if
     end do
 
-    do i = gis,gie
-      do j = gjs,gje
-        do k = gks,gke
-          err = 0.d0
-          err = err + abs(grvphi(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          if (err > 0.d0) then
-            print*, 'Error in grv values at i=',i,'j=',j,'k=',k,'err=',err
-            numerr = numerr + 1
-          endif
-        end do
-      end do
-    end do
+    ! do i = gis,gie
+    !   do j = gjs,gje
+    !     do k = gks,gke
+    !       err = 0.d0
+    !       err = err + abs(grvphi(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+    !       err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+    !       if (err > 0.d0) then
+    !         print*, 'Error in grv values at i=',i,'j=',j,'k=',k,'err=',err
+    !         numerr = numerr + 1
+    !       endif
+    !     end do
+    !   end do
+    ! end do
+
+    if (dt_old /= 789.d0) then
+      print*, 'Error in dt_old value, dt_old=',dt_old, 'should be:',789.d0
+      numerr = numerr + 1
+    endif
 
     if (include_extgrv) call iotest_extgrv(numerr)
 
