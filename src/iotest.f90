@@ -19,6 +19,7 @@ module iotest_mod
     use readbin_mod
     use settings, only: spn, include_extgrv
     use sink_mod, only: sink, nsink, sink_prop
+    use gravmod, only: grvphi, grvphidot
 
     integer:: a,i,j,k,numerr
     real(8):: err
@@ -71,6 +72,15 @@ module iotest_mod
     end do
     call open_sinkfile
 
+    do i = gis,gie
+      do j = gjs,gje
+        do k = gks,gke
+          grvphi(i,j,k) = 1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+          grvphidot(i,j,k) = 2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+        end do
+      end do
+    end do
+
     ! Override the profiler time to prevent a divide by zero error during output
     wtime(wtlop) = 1.d0
 
@@ -87,6 +97,8 @@ module iotest_mod
     b3 = 0.d0
     phi = 0.d0
     e = 0.d0
+    grvphi = 0.d0
+    grvphidot = 0.d0
 
     spc = 0.d0
     species = ''
@@ -170,6 +182,20 @@ module iotest_mod
         print*, 'Error in sink array values at i=', i, 'err=', err
         numerr = numerr + 1
       end if
+    end do
+
+    do i = gis,gie
+      do j = gjs,gje
+        do k = gks,gke
+          err = 0.d0
+          err = err + abs(grvphi(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          if (err > 0.d0) then
+            print*, 'Error in grv values at i=',i,'j=',j,'k=',k,'err=',err
+            numerr = numerr + 1
+          endif
+        end do
+      end do
     end do
 
     if (include_extgrv) call iotest_extgrv(numerr)
