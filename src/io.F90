@@ -12,7 +12,7 @@ module io
     module procedure read_real8
     module procedure read_array_1d_char
     module procedure read_array_3d_real8
-    module procedure read_array_4d_real8
+    module procedure read_array_spc
     module procedure read_array_1d_sink
   end interface read_var
 
@@ -21,7 +21,7 @@ module io
     module procedure write_real8
     module procedure write_array_1d_char
     module procedure write_array_3d_real8
-    module procedure write_array_4d_real8
+    module procedure write_array_spc
     module procedure write_array_1d_sink
   end interface write_var
 
@@ -206,7 +206,7 @@ subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
 
 end subroutine read_array_3d_real8
 
-subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
+subroutine read_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
   use mpi_utils, only: mpi_subarray_spc
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
@@ -222,7 +222,7 @@ subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
   read(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
 
-end subroutine read_array_4d_real8
+end subroutine read_array_spc
 
 subroutine read_array_1d_sink(fh, arr, istart, iend)
   use mpi_utils, only: mpi_type_sink_prop
@@ -330,7 +330,7 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
 
 end subroutine write_array_3d_real8
 
-subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
+subroutine write_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
   use mpi_utils, only: mpi_subarray_spc
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
@@ -348,7 +348,7 @@ subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
   write(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
 
-end subroutine write_array_4d_real8
+end subroutine write_array_spc
 
 subroutine write_array_1d_sink(fh, arr, istart, iend)
   use mpi_utils, only: mpi_type_sink_prop
