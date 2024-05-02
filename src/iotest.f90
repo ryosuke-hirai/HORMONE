@@ -127,7 +127,7 @@ module iotest_mod
     end do
 
     ! Read the arrays from file
-    call readbin('data/bin00000000000s.dat')
+    call readbin('data/bin00000000456s.dat')
 
     if (tn /= 123) then
       print*, 'Error in tn value, tn=',tn,'should be:',123
