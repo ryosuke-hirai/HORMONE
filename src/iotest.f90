@@ -17,7 +17,7 @@ module iotest_mod
     use output_mod
     use profiler_mod
     use readbin_mod
-    use settings, only: spn
+    use settings, only: spn, include_extgrv
     use sink_mod, only: sink, nsink, sink_prop
 
     integer:: a,i,j,k,numerr
@@ -172,6 +172,8 @@ module iotest_mod
       end if
     end do
 
+    if (include_extgrv) call iotest_extgrv(numerr)
+
     call allreduce_mpi('sum', numerr)
 
     if (myrank == 0) then
@@ -190,5 +192,55 @@ module iotest_mod
 
     return
   end subroutine iotest
+
+  subroutine iotest_extgrv(numerr)
+    use grid
+    use gravmod, only:extgrv,mc
+    use output_mod, only: write_extgrv
+    use readbin_mod, only: read_extgrv
+    integer, intent(inout) :: numerr
+    integer :: i,j,k
+    real(8) :: err
+
+    if (is==is_global) then
+      mc(is-1) = 1.d0
+    endif
+
+    do i = gis, gie
+      do j = gjs, gje
+        do k = gks, gke
+          extgrv(i,j,k) = 1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+        enddo
+      enddo
+    enddo
+
+    call write_extgrv
+
+    mc = -999.d0
+    extgrv = -999.d0
+
+    call read_extgrv('data/extgrv.bin')
+
+    if (is==is_global) then
+      err = abs(mc(is-1) - 1.d0)
+      if ( err > 0.d0 ) then
+        print*, 'Error in mc values at i=',is-1,'err=',err
+        numerr = numerr + 1
+      endif
+    endif
+
+    do i = gis, gie
+      do j = gjs, gje
+        do k = gks, gke
+          err = abs(extgrv(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          if ( err > 0.d0 ) then
+            print*, 'Error in extgrv values at i=',i,'j=',j,'k=',k,'err=',err
+            numerr = numerr + 1
+          endif
+        enddo
+      enddo
+    enddo
+
+  end subroutine iotest_extgrv
 
 end module iotest_mod
