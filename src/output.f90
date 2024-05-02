@@ -666,13 +666,13 @@ subroutine write_bin
 
  if(gravswitch>=2) then
    call write_dummy_recordmarker(un, legacy)
-   call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke)
+   call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke, grav=.true.)
    call write_dummy_recordmarker(un, legacy)
  end if
 
  if(gravswitch==3) then
    call write_dummy_recordmarker(un, legacy)
-   call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke)
+   call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke, grav=.true.)
    call write_var(un, dt_old)
    call write_dummy_recordmarker(un, legacy)
  endif
