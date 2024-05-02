@@ -723,12 +723,22 @@ subroutine write_plt
  use grid,only:is,ie,js,je,ks,ke,time,tn,dim
  use utils,only:gravpot1d
  use shockfind_mod,only:shockfind
+ use mpi_utils, only:nprocs,myrank
 
  implicit none
 
  character(len=50):: pltfile
  character(len=20):: header(50)='aaa',forma,forme,formi
  integer:: i,j,k,n,ui,columns
+
+ if (nprocs>1) then
+    if (myrank==0) then
+      write(*,'(60("*"))')
+      print*, 'WARNING: write_plt not implemented for nprocs>1'
+      write(*,'(60("*"))')
+    endif
+    return
+ endif
 
 !-----------------------------------------------------------------------------
 
