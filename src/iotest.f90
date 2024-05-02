@@ -21,6 +21,7 @@ module iotest_mod
     use sink_mod, only: sink, nsink, sink_prop
     use gravmod, only: grvphi, grvphidot, dt_old
     use utils, only: isequal
+    use settings, only: include_sinks, compswitch, mag_on, gravswitch
 
     integer:: a,i,j,k,numerr
     real(8):: err
@@ -40,53 +41,76 @@ module iotest_mod
           v1(i,j,k)  = 2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           v2(i,j,k)  = 3.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           v3(i,j,k)  = 4.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
-          b1(i,j,k)  = 5.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
-          b2(i,j,k)  = 6.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
-          b3(i,j,k)  = 7.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
-          phi(i,j,k) = 8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           e(i,j,k)   = 1.d3 + 1.d-2*i + 1.d-4*j + 1.d-6*k
         end do
       end do
     end do
 
-    do a = 1, spn
+    if (mag_on) then
       do i = is, ie
         do j = js, je
           do k = ks, ke
-            spc(a,i,j,k) = 8.d0 + 1.d0*a + 1.d-2*i + 1.d-4*j + 1.d-6*k
+            b1(i,j,k)  = 5.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+            b2(i,j,k)  = 6.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+            b3(i,j,k)  = 7.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+            phi(i,j,k) = 8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           end do
         end do
       end do
-      write(speci, '(I0)') a
-      species(a) = 'spc'//trim(speci)
-    end do
+    endif
 
-    do i=1,nsink
-      sink(i)%i = 1*i
-      sink(i)%j = 10*i
-      sink(i)%k = 100*i
-      sink(i)%mass = 1.d0*i
-      sink(i)%softfac = 10.d0*i
-      sink(i)%lsoft = 100.d0*i
-      sink(i)%locres = 1000.d0*i
-      sink(i)%dt = 10000.d0*i
-      sink(i)%x = (/1.d0*i,10.d0*i,100.d0*i/)
-      sink(i)%v = (/2.d0*i,20.d0*i,200.d0*i/)
-      sink(i)%a = (/3.d0*i,30.d0*i,300.d0*i/)
-      sink(i)%xpol = (/4.d0*i,40.d0*i,400.d0*i/)
-    end do
-    call open_sinkfile
+    if (compswitch>=2) then
+      do a = 1, spn
+        do i = is, ie
+          do j = js, je
+            do k = ks, ke
+              spc(a,i,j,k) = 8.d0 + 1.d0*a + 1.d-2*i + 1.d-4*j + 1.d-6*k
+            end do
+          end do
+        end do
+        write(speci, '(I0)') a
+        species(a) = 'spc'//trim(speci)
+      end do
+    endif
 
-    do i = gis,gie
-      do j = gjs,gje
-        do k = gks,gke
-          grvphi(i,j,k) = 1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
-          grvphidot(i,j,k) = 2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+    if (include_sinks) then
+      do i=1,nsink
+        sink(i)%i = 1*i
+        sink(i)%j = 10*i
+        sink(i)%k = 100*i
+        sink(i)%mass = 1.d0*i
+        sink(i)%softfac = 10.d0*i
+        sink(i)%lsoft = 100.d0*i
+        sink(i)%locres = 1000.d0*i
+        sink(i)%dt = 10000.d0*i
+        sink(i)%x = (/1.d0*i,10.d0*i,100.d0*i/)
+        sink(i)%v = (/2.d0*i,20.d0*i,200.d0*i/)
+        sink(i)%a = (/3.d0*i,30.d0*i,300.d0*i/)
+        sink(i)%xpol = (/4.d0*i,40.d0*i,400.d0*i/)
+      end do
+      call open_sinkfile
+    endif
+
+    if (gravswitch>=2) then
+      do i = gis,gie
+        do j = gjs,gje
+          do k = gks,gke
+            grvphi(i,j,k) = 1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+          end do
         end do
       end do
-    end do
+    endif
 
-    dt_old = 789.d0
+    if (gravswitch==3) then
+      do i = gis,gie
+        do j = gjs,gje
+          do k = gks,gke
+            grvphidot(i,j,k) = 2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+          end do
+        end do
+      end do
+      dt_old = 789.d0
+    endif
 
     ! Override the profiler time to prevent a divide by zero error during output
     wtime(wtlop) = 1.d0
@@ -144,8 +168,9 @@ module iotest_mod
       numerr = numerr + 1
     endif
 
-    ! Check the arrays
     numerr = 0
+
+    ! Check the arrays
     do i = is, ie
       do j = js, je
         do k = ks, ke
@@ -154,10 +179,6 @@ module iotest_mod
           err = err + abs(v1(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           err = err + abs(v2(i,j,k) - (3.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           err = err + abs(v3(i,j,k) - (4.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          err = err + abs(b1(i,j,k) - (5.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          err = err + abs(b2(i,j,k) - (6.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          err = err + abs(b3(i,j,k) - (7.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          err = err + abs(phi(i,j,k)- (8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           err = err + abs(e(i,j,k)  - (1.d3 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           if (err > 0.d0) then
             print*, 'Error in array values at i=',i,'j=',j,'k=',k,'err=',err
@@ -167,63 +188,100 @@ module iotest_mod
       end do
     end do
 
-    do a = 1,spn
+    if (mag_on) then
       do i = is, ie
         do j = js, je
           do k = ks, ke
             err = 0.d0
-            err = err + abs(spc(a,i,j,k) - (8.d0 + 1.d0*a + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            err = err + abs(b1(i,j,k) - (5.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            err = err + abs(b2(i,j,k) - (6.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            err = err + abs(b3(i,j,k) - (7.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            err = err + abs(phi(i,j,k)- (8.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
             if (err > 0.d0) then
-              print*, 'Error in spc values at a=',a,'i=',i,'j=',j,'k=',k,'err=',err
+              print*, 'Error in array values at i=',i,'j=',j,'k=',k,'err=',err
               numerr = numerr + 1
             endif
           end do
         end do
       end do
-      write(speci, '(I0)') a
-      if (trim(species(a)) /= 'spc'//trim(speci)) then
-        print*, 'Error in species names at a=',a,'species(a)=',trim(species(a))
-        numerr = numerr + 1
-      end if
-    end do
+    endif
 
-    do i = 1, nsink
-      err = 0.d0
-      err = err + abs(sink(i)%i - 1*i)
-      err = err + abs(sink(i)%j - 10*i)
-      err = err + abs(sink(i)%k - 100*i)
-      err = err + abs(sink(i)%mass - 1.d0*i)
-      err = err + abs(sink(i)%softfac - 10.d0*i)
-      err = err + abs(sink(i)%lsoft - 100.d0*i)
-      err = err + abs(sink(i)%locres - 1000.d0*i)
-      err = err + abs(sink(i)%dt - 10000.d0*i)
-      err = err + sum(abs(sink(i)%x - (/1.d0*i, 10.d0*i, 100.d0*i/)))
-      err = err + sum(abs(sink(i)%v - (/2.d0*i, 20.d0*i, 200.d0*i/)))
-      err = err + sum(abs(sink(i)%a - (/3.d0*i, 30.d0*i, 300.d0*i/)))
-      err = err + sum(abs(sink(i)%xpol - (/4.d0*i, 40.d0*i, 400.d0*i/)))
-      if (err > 0.d0) then
-        print*, 'Error in sink array values at i=', i, 'err=', err
-        numerr = numerr + 1
-      end if
-    end do
+    if (compswitch>=2) then
+      do a = 1,spn
+        do i = is, ie
+          do j = js, je
+            do k = ks, ke
+              err = 0.d0
+              err = err + abs(spc(a,i,j,k) - (8.d0 + 1.d0*a + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+              if (err > 0.d0) then
+                print*, 'Error in spc values at a=',a,'i=',i,'j=',j,'k=',k,'err=',err
+                numerr = numerr + 1
+              endif
+            end do
+          end do
+        end do
+        write(speci, '(I0)') a
+        if (trim(species(a)) /= 'spc'//trim(speci)) then
+          print*, 'Error in species names at a=',a,'species(a)=',trim(species(a))
+          numerr = numerr + 1
+        end if
+      end do
+    endif
 
-    do i = gis,gie
-      do j = gjs,gje
-        do k = gks,gke
-          err = 0.d0
-          err = err + abs(grvphi(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-          if (err > 0.d0) then
-            print*, 'Error in grv values at i=',i,'j=',j,'k=',k,'err=',err
-            numerr = numerr + 1
-          endif
+    if (include_sinks) then
+      do i = 1, nsink
+        err = 0.d0
+        err = err + abs(sink(i)%i - 1*i)
+        err = err + abs(sink(i)%j - 10*i)
+        err = err + abs(sink(i)%k - 100*i)
+        err = err + abs(sink(i)%mass - 1.d0*i)
+        err = err + abs(sink(i)%softfac - 10.d0*i)
+        err = err + abs(sink(i)%lsoft - 100.d0*i)
+        err = err + abs(sink(i)%locres - 1000.d0*i)
+        err = err + abs(sink(i)%dt - 10000.d0*i)
+        err = err + sum(abs(sink(i)%x - (/1.d0*i, 10.d0*i, 100.d0*i/)))
+        err = err + sum(abs(sink(i)%v - (/2.d0*i, 20.d0*i, 200.d0*i/)))
+        err = err + sum(abs(sink(i)%a - (/3.d0*i, 30.d0*i, 300.d0*i/)))
+        err = err + sum(abs(sink(i)%xpol - (/4.d0*i, 40.d0*i, 400.d0*i/)))
+        if (err > 0.d0) then
+          print*, 'Error in sink array values at i=', i, 'err=', err
+          numerr = numerr + 1
+        end if
+      end do
+    endif
+
+    if (gravswitch>=2) then
+      do i = gis,gie
+        do j = gjs,gje
+          do k = gks,gke
+            err = 0.d0
+            err = err + abs(grvphi(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            if (err > 0.d0) then
+              print*, 'Error in grvphi values at i=',i,'j=',j,'k=',k,'err=',err
+              numerr = numerr + 1
+            endif
+          end do
         end do
       end do
-    end do
+    endif
 
-    if (.not. isequal(dt_old, 789.d0)) then
-      print*, 'Error in dt_old value, dt_old=', dt_old, 'should be:', 789.d0
-      numerr = numerr + 1
+    if (gravswitch==3) then
+      do i = gis,gie
+        do j = gjs,gje
+          do k = gks,gke
+            err = 0.d0
+            err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            if (err > 0.d0) then
+              print*, 'Error in grvphidot values at i=',i,'j=',j,'k=',k,'err=',err
+              numerr = numerr + 1
+            endif
+          end do
+        end do
+      end do
+      if (.not. isequal(dt_old, 789.d0)) then
+        print*, 'Error in dt_old value, dt_old=', dt_old, 'should be:', 789.d0
+        numerr = numerr + 1
+      endif
     endif
 
     if (include_extgrv) call iotest_extgrv(numerr)
