@@ -207,19 +207,19 @@ module iotest_mod
       end if
     end do
 
-    ! do i = gis,gie
-    !   do j = gjs,gje
-    !     do k = gks,gke
-    !       err = 0.d0
-    !       err = err + abs(grvphi(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-    !       err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
-    !       if (err > 0.d0) then
-    !         print*, 'Error in grv values at i=',i,'j=',j,'k=',k,'err=',err
-    !         numerr = numerr + 1
-    !       endif
-    !     end do
-    !   end do
-    ! end do
+    do i = gis,gie
+      do j = gjs,gje
+        do k = gks,gke
+          err = 0.d0
+          err = err + abs(grvphi(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+          if (err > 0.d0) then
+            print*, 'Error in grv values at i=',i,'j=',j,'k=',k,'err=',err
+            numerr = numerr + 1
+          endif
+        end do
+      end do
+    end do
 
     if (.not. isequal(dt_old, 789.d0)) then
       print*, 'Error in dt_old value, dt_old=', dt_old, 'should be:', 789.d0
