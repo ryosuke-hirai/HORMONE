@@ -250,9 +250,8 @@ subroutine read_array_1d_sink(fh, arr, istart, iend)
 
 end subroutine read_array_1d_sink
 
-subroutine read_dummy_recordmarker(fh, legacy)
+subroutine read_dummy_recordmarker(fh)
   integer, intent(in) :: fh
-  logical, intent(in) :: legacy
   integer :: dummy
 
   if (legacy) then
@@ -261,9 +260,8 @@ subroutine read_dummy_recordmarker(fh, legacy)
 
 end subroutine read_dummy_recordmarker
 
-subroutine write_dummy_recordmarker(fh, legacy)
+subroutine write_dummy_recordmarker(fh)
   integer, intent(in) :: fh
-  logical, intent(in) :: legacy
   integer, parameter :: dummy = -1 ! Assmuing record marker is the size of an integer
 
   if (legacy) then

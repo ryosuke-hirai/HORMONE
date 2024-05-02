@@ -1,5 +1,4 @@
 module output_mod
- use io, only: legacy
  implicit none
 
  integer:: ievo,iskf
@@ -651,52 +650,52 @@ subroutine write_bin
  call set_file_name('bin',tn,time,binfile)
  call open_file_write(binfile, un)
 
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
  call write_var(un, tn)
  call write_var(un, time)
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
 
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
  call write_var(un, d, is, ie, js, je, ks, ke)
  call write_var(un, v1, is, ie, js, je, ks, ke)
  call write_var(un, v2, is, ie, js, je, ks, ke)
  call write_var(un, v3, is, ie, js, je, ks, ke)
  call write_var(un, e, is, ie, js, je, ks, ke)
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
 
  if(gravswitch>=2) then
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
    call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke, grav=.true.)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
  end if
 
  if(gravswitch==3) then
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
    call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke, grav=.true.)
    call write_var(un, dt_old)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
  endif
 
  if(compswitch>=2) then
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
    call write_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
    call write_var(un, species, 1, spn)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
  endif
 
  if(mag_on) then
-  call write_dummy_recordmarker(un, legacy)
+  call write_dummy_recordmarker(un)
   call write_var(un, b1, is, ie, js, je, ks, ke)
   call write_var(un, b2, is, ie, js, je, ks, ke)
   call write_var(un, b3, is, ie, js, je, ks, ke)
   call write_var(un, phi, is, ie, js, je, ks, ke)
-  call write_dummy_recordmarker(un, legacy)
+  call write_dummy_recordmarker(un)
  end if
 
  if(include_sinks) then
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
    call write_var(un, sink, 1, nsink)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
  endif
 
  call close_file(un)
@@ -976,13 +975,13 @@ subroutine write_extgrv
 
  call open_file_write('data/extgrv.bin', ui)
 
- call write_dummy_recordmarker(ui, legacy)
+ call write_dummy_recordmarker(ui)
  call write_var(ui, mcore)
- call write_dummy_recordmarker(ui, legacy)
+ call write_dummy_recordmarker(ui)
 
- call write_dummy_recordmarker(ui, legacy)
+ call write_dummy_recordmarker(ui)
  call write_var(ui, extgrv, gis, gie, gjs, gje, gks, gke, grav=.true.)
- call write_dummy_recordmarker(ui, legacy)
+ call write_dummy_recordmarker(ui)
 
  call close_file(ui)
 

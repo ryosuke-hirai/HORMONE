@@ -1,5 +1,4 @@
 module readbin_mod
- use io, only: legacy
  implicit none
 
  public:: readbin,readgrid,read_extgrv
@@ -32,52 +31,52 @@ subroutine readbin(filename)
 
  call open_file_read(filename, un)
 
- call read_dummy_recordmarker(un, legacy)
+ call read_dummy_recordmarker(un)
  call read_var(un, tn)
  call read_var(un, time)
- call read_dummy_recordmarker(un, legacy)
+ call read_dummy_recordmarker(un)
 
- call read_dummy_recordmarker(un, legacy)
+ call read_dummy_recordmarker(un)
  call read_var(un, d, is, ie, js, je, ks, ke)
  call read_var(un, v1, is, ie, js, je, ks, ke)
  call read_var(un, v2, is, ie, js, je, ks, ke)
  call read_var(un, v3, is, ie, js, je, ks, ke)
  call read_var(un, e, is, ie, js, je, ks, ke)
- call read_dummy_recordmarker(un, legacy)
+ call read_dummy_recordmarker(un)
 
  if(gravswitch>=2) then
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
    call read_var(un, grvphi, gis, gie, gjs, gje, gks, gke)
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
  endif
 
  if(gravswitch==3) then
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
    call read_var(un, grvphidot, gis, gie, gjs, gje, gks, gke)
    call read_var(un, dt_old)
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
  endif
 
  if(compswitch>=2) then
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
    call read_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
    call read_var(un, species, 1, spn)
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
  endif
 
  if(mag_on)then
-  call read_dummy_recordmarker(un, legacy)
+  call read_dummy_recordmarker(un)
   call read_var(un, b1, is, ie, js, je, ks, ke)
   call read_var(un, b2, is, ie, js, je, ks, ke)
   call read_var(un, b3, is, ie, js, je, ks, ke)
   call read_var(un, phi, is, ie, js, je, ks, ke)
-  call read_dummy_recordmarker(un, legacy)
+  call read_dummy_recordmarker(un)
  end if
 
  if(include_sinks) then
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
    call read_var(un, sink, 1, nsink)
-   call read_dummy_recordmarker(un, legacy)
+   call read_dummy_recordmarker(un)
  endif
 
  call close_file(un)
@@ -132,13 +131,13 @@ subroutine read_extgrv(filename)
 
  call open_file_read(filename, ui)
 
- call read_dummy_recordmarker(ui, legacy)
+ call read_dummy_recordmarker(ui)
  call read_var(ui, coremass)
- call read_dummy_recordmarker(ui, legacy)
+ call read_dummy_recordmarker(ui)
 
- call read_dummy_recordmarker(ui, legacy)
+ call read_dummy_recordmarker(ui)
  call read_var(ui, extgrv, gis, gie, gjs, gje, gks, gke, grav=.true.)
- call read_dummy_recordmarker(ui, legacy)
+ call read_dummy_recordmarker(ui)
 
  call close_file(ui)
 
