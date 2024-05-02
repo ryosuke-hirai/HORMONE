@@ -185,18 +185,31 @@ subroutine read_array_1d_char(fh, arr, istart, iend)
 
 end subroutine read_array_1d_char
 
-subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
-  use mpi_utils, only: mpi_subarray_default
+subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, grav)
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
+  logical, optional, intent(in) :: grav
 #ifdef MPI
-  integer :: nbuff
+  integer :: nbuff, itype
+  logical :: gravity
+
+  if (present(grav)) then
+    gravity = grav
+  else
+    gravity = .false.
+  end if
+
+  if (gravity) then
+    itype = mpi_subarray_gravity
+  else
+    itype = mpi_subarray_default
+  end if
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpi_subarray_default, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, itype, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, mpi_subarray_default)
+  call update_offset(fh, itype)
 #else
   read(fh) arr(istart:iend,jstart:jend,kstart:kend)
 #endif
