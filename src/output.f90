@@ -971,7 +971,7 @@ subroutine write_extgrv
  call write_dummy_recordmarker(ui, legacy)
 
  call write_dummy_recordmarker(ui, legacy)
- call write_var(ui, extgrv, gis-2, gie+2, gjs-2, gje+2, gks-2, gke+2, grav=.true.)
+ call write_var(ui, extgrv, gis, gie, gjs, gje, gks, gke, grav=.true.)
  call write_dummy_recordmarker(ui, legacy)
 
  call close_file(ui)
