@@ -24,6 +24,7 @@ module mpi_domain
    contains
 
    subroutine domain_decomp
+      use settings, only:gravswitch
       use grid
 #ifdef MPI
       integer :: nx, ny, nz
@@ -32,7 +33,6 @@ module mpi_domain
       integer :: num_factors, axis
       real(8) :: n_tmp(3)
       integer, dimension(3) :: dims
-      real(8) :: eff
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
@@ -70,7 +70,8 @@ module mpi_domain
          n_tmp(axis) = n_tmp(axis) / real(factors(i))
       enddo
 
-      periods = [.true., .true., .true.] ! Always set to periodic and allow boundary conditions to override
+      ! Always set to periodic and allow boundary conditions to override
+      periods = [.true., .true., .true.] 
 
       call MPI_Cart_create(MPI_COMM_WORLD, 3, dims, periods, .false., cart_comm, ierr)
       call MPI_Cart_coords(cart_comm, myrank, 3, mycoords, ierr)
@@ -88,39 +89,39 @@ module mpi_domain
       if (mycoords(2) == dims(2) - 1) je = ny + (js_global - 1)
       if (mycoords(3) == dims(3) - 1) ke = nz + (ks_global - 1)
 
+      ! Copy the hydro grid decomposition to the gravity grid
+      gis = is
+      gie = ie
+      gjs = js
+      gje = je
+      gks = ks
+      gke = ke
+
+      ! Check for gravity grid extension and adjust if necessary
+      if (gravswitch >= 1) then
+         if (mycoords(1) == 0) then
+            if (gis_global /= is_global) gis = gis_global
+         endif
+         if (mycoords(1) == dims(1) - 1) then
+            if (gie_global /= ie_global) gie = gie_global
+         endif
+         if (mycoords(2) == 0) then
+            if (gjs_global /= js_global) gjs = gjs_global
+         endif
+         if (mycoords(2) == dims(2) - 1) then
+            if (gje_global /= je_global) gje = gje_global
+         endif
+         if (mycoords(3) == 0) then
+            if (gks_global /= ks_global) gks = gks_global
+         endif
+         if (mycoords(3) == dims(3) - 1) then
+            if (gke_global /= ke_global) gke = gke_global
+         endif
+      endif
+
       call setup_mpi_exchange
       call setup_mpi_io
-
-      ! Calculate the ratio: (real cells) / (total cells including ghost)
-      eff = 0.d0
-      if (dims(1) > 1) then
-         eff = eff + real(2 * (je - js + 1) * (ke - ks + 1))
-      endif
-      if (dims(2) > 1) then
-         eff = eff + real(2 * (ie - is + 1) * (ke - ks + 1))
-      endif
-      if (dims(3) > 1) then
-         eff = eff + real(2 * (ie - is + 1) * (je - js + 1))
-      endif
-      eff = 1.d0 - (eff / real((ie - is + 5) * (je - js + 5) * (ke - ks + 5)))
-
-      ! Print out the domain decomposition
-      if (myrank == 0) then
-         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
-      endif
-      call MPI_Barrier(cart_comm, ierr)
-
-      do i = 1, nprocs
-         if (myrank == i-1) then
-            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
-         endif
-         call MPI_Barrier(cart_comm, ierr)
-      enddo
-
-      if (myrank == 0) then
-         write(*, *)
-      endif
-      call MPI_Barrier(cart_comm, ierr)
+      call print_domain_decomposition
 
 #endif
 
@@ -388,5 +389,50 @@ module mpi_domain
 
       num_factors = count
    end subroutine prime_factors
+
+   subroutine calculate_decomposition_efficiency(eff)
+      use settings
+      use grid
+      real(8), intent(out) :: eff
+      ! Calculate the ratio: (real cells) / (total cells including ghost)
+      eff = 0.d0
+      if (solve_i) then
+         eff = eff + real(2 * (je - js + 1) * (ke - ks + 1))
+      endif
+      if (solve_j) then
+         eff = eff + real(2 * (ie - is + 1) * (ke - ks + 1))
+      endif
+      if (solve_k) then
+         eff = eff + real(2 * (ie - is + 1) * (je - js + 1))
+      endif
+      eff = 1.d0 - (eff / real((ie - is + 5) * (je - js + 5) * (ke - ks + 5)))
+   end subroutine calculate_decomposition_efficiency
+
+   subroutine print_domain_decomposition
+#ifdef MPI
+      use grid
+      real(8) :: eff
+      integer :: i, ierr
+
+      call calculate_decomposition_efficiency(eff)
+
+      if (myrank == 0) then
+         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
+      endif
+      call MPI_Barrier(cart_comm, ierr)
+    
+      do i = 1, nprocs
+         if (myrank == i-1) then
+            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
+         endif
+         call MPI_Barrier(cart_comm, ierr)
+      enddo
+    
+      if (myrank == 0) then
+         write(*, *)
+      endif
+      call MPI_Barrier(cart_comm, ierr)
+#endif
+   end subroutine print_domain_decomposition
 
 end module mpi_domain
