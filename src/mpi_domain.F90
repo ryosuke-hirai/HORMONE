@@ -98,7 +98,7 @@ module mpi_domain
       gke = ke
 
       ! Check for gravity grid extension and adjust if necessary
-      if (gravswitch > 0) then
+      if (gravswitch >= 1) then
          if (mycoords(1) == 0) then
             if (gis_global /= is_global) gis = gis_global
          endif
