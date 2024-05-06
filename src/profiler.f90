@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=23 ! number of profiling categories
+ integer,parameter:: n_wt=24 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -28,6 +28,7 @@ module profiler_mod
   wtsnk=21,& ! sink particles
   wtout=22,& ! output
   wtmpi=23,& ! mpi exchange
+  wtwai=24,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -74,6 +75,7 @@ subroutine init_profiler
  parent(wtrfl) = wtrad ! radiative flux
  parent(wtsnk) = wtlop ! sink particles
  parent(wtmpi) = wtlop ! mpi exchange
+ parent(wtwai) = wtlop ! mpi wait
  parent(wttot) =-1     ! Total
 
 ! Make sure to keep routine name short
@@ -99,7 +101,8 @@ subroutine init_profiler
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad_flux'    ! radiative flux
  routine_name(wtsnk) = 'Sinks'       ! sink particles
- routine_name(wtmpi) = 'MPI'         ! MPI exchange
+ routine_name(wtmpi) = 'MPI exchange'! MPI exchange
+ routine_name(wtwai) = 'MPI wait'    ! MPI wait
  routine_name(wttot) = 'Total'       ! total
 
  do i = 0, n_wt

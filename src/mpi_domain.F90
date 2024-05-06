@@ -203,8 +203,14 @@ module mpi_domain
       use grid
       use physval
       use profiler_mod
+      use mpi_utils
       
-      integer :: i
+      integer :: i, ierr
+
+      ! Timing: measure the time spent waiting for other tasks to catch up
+      call start_clock(wtwai)
+      call barrier_mpi
+      call stop_clock(wtwai)
 
       call start_clock(wtmpi)
 
