@@ -32,7 +32,6 @@ module mpi_domain
       integer :: num_factors, axis
       real(8) :: n_tmp(3)
       integer, dimension(3) :: dims
-      real(8) :: eff
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
@@ -90,37 +89,7 @@ module mpi_domain
 
       call setup_mpi_exchange
       call setup_mpi_io
-
-      ! Calculate the ratio: (real cells) / (total cells including ghost)
-      eff = 0.d0
-      if (dims(1) > 1) then
-         eff = eff + real(2 * (je - js + 1) * (ke - ks + 1))
-      endif
-      if (dims(2) > 1) then
-         eff = eff + real(2 * (ie - is + 1) * (ke - ks + 1))
-      endif
-      if (dims(3) > 1) then
-         eff = eff + real(2 * (ie - is + 1) * (je - js + 1))
-      endif
-      eff = 1.d0 - (eff / real((ie - is + 5) * (je - js + 5) * (ke - ks + 5)))
-
-      ! Print out the domain decomposition
-      if (myrank == 0) then
-         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
-      endif
-      call MPI_Barrier(cart_comm, ierr)
-
-      do i = 1, nprocs
-         if (myrank == i-1) then
-            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
-         endif
-         call MPI_Barrier(cart_comm, ierr)
-      enddo
-
-      if (myrank == 0) then
-         write(*, *)
-      endif
-      call MPI_Barrier(cart_comm, ierr)
+      call print_domain_decomposition
 
 #endif
 
@@ -388,5 +357,50 @@ module mpi_domain
 
       num_factors = count
    end subroutine prime_factors
+
+   subroutine calculate_decomposition_efficiency(eff)
+      use settings
+      use grid
+      real(8), intent(out) :: eff
+      ! Calculate the ratio: (real cells) / (total cells including ghost)
+      eff = 0.d0
+      if (solve_i) then
+         eff = eff + real(2 * (je - js + 1) * (ke - ks + 1))
+      endif
+      if (solve_j) then
+         eff = eff + real(2 * (ie - is + 1) * (ke - ks + 1))
+      endif
+      if (solve_k) then
+         eff = eff + real(2 * (ie - is + 1) * (je - js + 1))
+      endif
+      eff = 1.d0 - (eff / real((ie - is + 5) * (je - js + 5) * (ke - ks + 5)))
+   end subroutine calculate_decomposition_efficiency
+
+   subroutine print_domain_decomposition
+#ifdef MPI
+      use grid
+      real(8) :: eff
+      integer :: i, ierr
+
+      call calculate_decomposition_efficiency(eff)
+
+      if (myrank == 0) then
+         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
+      endif
+      call MPI_Barrier(cart_comm, ierr)
+    
+      do i = 1, nprocs
+         if (myrank == i-1) then
+            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
+         endif
+         call MPI_Barrier(cart_comm, ierr)
+      enddo
+    
+      if (myrank == 0) then
+         write(*, *)
+      endif
+      call MPI_Barrier(cart_comm, ierr)
+#endif
+   end subroutine print_domain_decomposition
 
 end module mpi_domain
