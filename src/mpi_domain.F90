@@ -76,17 +76,17 @@ module mpi_domain
       call MPI_Cart_coords(cart_comm, myrank, 3, mycoords, ierr)
 
       ! Compute local domain, including offset if starting index is not 1
-      is = mycoords(1) * (nx / dims(1)) + 1 - (is_global - 1)
-      ie = (mycoords(1) + 1) * (nx / dims(1)) - (is_global - 1)
-      js = mycoords(2) * (ny / dims(2)) + 1 - (js_global - 1)
-      je = (mycoords(2) + 1) * (ny / dims(2)) - (js_global - 1)
-      ks = mycoords(3) * (nz / dims(3)) + 1 - (ks_global - 1)
-      ke = (mycoords(3) + 1) * (nz / dims(3)) - (ks_global - 1)
+      is = mycoords(1) * (nx / dims(1)) + 1 + (is_global - 1)
+      ie = (mycoords(1) + 1) * (nx / dims(1)) + (is_global - 1)
+      js = mycoords(2) * (ny / dims(2)) + 1 + (js_global - 1)
+      je = (mycoords(2) + 1) * (ny / dims(2)) + (js_global - 1)
+      ks = mycoords(3) * (nz / dims(3)) + 1 + (ks_global - 1)
+      ke = (mycoords(3) + 1) * (nz / dims(3)) + (ks_global - 1)
 
       ! Special treatment of final proc, in case nx/ny/nz is not divisible by nprocs
-      if (mycoords(1) == dims(1) - 1) ie = nx - (is_global - 1)
-      if (mycoords(2) == dims(2) - 1) je = ny - (js_global - 1)
-      if (mycoords(3) == dims(3) - 1) ke = nz - (ks_global - 1)
+      if (mycoords(1) == dims(1) - 1) ie = nx + (is_global - 1)
+      if (mycoords(2) == dims(2) - 1) je = ny + (js_global - 1)
+      if (mycoords(3) == dims(3) - 1) ke = nz + (ks_global - 1)
 
       call setup_mpi_exchange
       call setup_mpi_io
@@ -106,13 +106,13 @@ module mpi_domain
 
       ! Print out the domain decomposition
       if (myrank == 0) then
-         write(*,'(A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A,I0,A)') 'Global domain (', is_global, ':', ie_global, ',', js_global, ':', je_global, ',', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
+         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
       endif
       call MPI_Barrier(cart_comm, ierr)
 
       do i = 1, nprocs
          if (myrank == i-1) then
-            write(*,'(A,I0,A,I4,A,I4,A,I4,A,I4,A,I0,A,I0,A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ',', js, ':', je, ',', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
+            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
          endif
          call MPI_Barrier(cart_comm, ierr)
       enddo
@@ -292,8 +292,7 @@ module mpi_domain
       ! Set up the subarray which selects only the real cells for I/O
       sizes3 = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
       subsizes3 = [ie-is+1,je-js+1,ke-ks+1]
-      starts3 = [is-1,js-1,ks-1]
-
+      starts3 = [is-is_global,js-js_global,ks-ks_global]
       call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array3d_real8, ierr)
       call mpi_type_commit(mpitype_array3d_real8, ierr)
 
@@ -301,8 +300,7 @@ module mpi_domain
          ! Set up the subarray for spc
          sizes4 = [spn,ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
          subsizes4 = [spn,ie-is+1,je-js+1,ke-ks+1]
-         starts4 = [0,is-1,js-1,ks-1]
-
+         starts4 = [0,is-is_global,js-js_global,ks-ks_global]
          call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, ierr)
          call mpi_type_commit(mpitype_array4d_real8, ierr)
       endif
