@@ -190,9 +190,10 @@ subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
   real(8), allocatable, intent(inout) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
   logical, optional, intent(in) :: grav
+  logical :: gravity
 #ifdef MPI
   integer :: nbuff, itype
-  logical :: gravity
+#endif
 
   if (present(grav)) then
     gravity = grav
@@ -200,6 +201,7 @@ subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
     gravity = .false.
   end if
 
+#ifdef MPI
   if (gravity) then
     itype = mpi_subarray_gravity
   else
@@ -305,10 +307,11 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
   real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
   logical, optional, intent(in) :: grav
+  logical :: gravity
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
   integer :: nbuff, itype
-  logical :: gravity
+#endif
 
   if (present(grav)) then
     gravity = grav
@@ -316,6 +319,7 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
     gravity = .false.
   end if
 
+#ifdef MPI
   if (gravity) then
     itype = mpi_subarray_gravity
   else

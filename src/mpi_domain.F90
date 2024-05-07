@@ -24,9 +24,10 @@ module mpi_domain
    contains
 
    subroutine domain_decomp
-      use settings, only:gravswitch
       use grid
 #ifdef MPI
+      use settings, only:gravswitch
+
       integer :: nx, ny, nz
       integer :: ierr
       integer, allocatable :: factors(:)
@@ -71,7 +72,7 @@ module mpi_domain
       enddo
 
       ! Always set to periodic and allow boundary conditions to override
-      periods = [.true., .true., .true.] 
+      periods = [.true., .true., .true.]
 
       call MPI_Cart_create(MPI_COMM_WORLD, 3, dims, periods, .false., cart_comm, ierr)
       call MPI_Cart_coords(cart_comm, myrank, 3, mycoords, ierr)
@@ -420,14 +421,14 @@ module mpi_domain
          write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
       endif
       call MPI_Barrier(cart_comm, ierr)
-    
+
       do i = 1, nprocs
          if (myrank == i-1) then
             write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
          endif
          call MPI_Barrier(cart_comm, ierr)
       enddo
-    
+
       if (myrank == 0) then
          write(*, *)
       endif
