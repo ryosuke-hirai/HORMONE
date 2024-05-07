@@ -27,7 +27,7 @@ jobs:
           - fc: ifort
             mpi: yes
 
-    name: compile (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }})
+    name: compile ({{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }} ${{ matrix.debug == 'yes' && 'debug' || '' }})
 
     runs-on: ubuntu-latest
 
@@ -93,7 +93,7 @@ jobs:
           - mpi: yes
             test: star_sph
 
-    name: test ${{ matrix.test }} (fc=${{ matrix.fc }}, debug=${{ matrix.debug }}, MPI=${{ matrix.mpi }}, flat=${{ matrix.flat }})
+    name: ${{ matrix.test }} ({{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }} ${{ matrix.debug == 'yes' && 'debug' || '' }} ${{ matrix.flat == 'yes' && 'flat' || '' }})
 
     steps:
     - uses: actions/checkout@v4
