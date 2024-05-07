@@ -94,7 +94,7 @@ subroutine metric
  case(2)
 
   allocate( sinc, sini, cosc, cosi, mold=x2 )
-  do j = gjs-2, gje+2 ! TODO: might need to set other arrays over the 'g' indices too...
+  do j = js-2, je+2
    sinc(j)=sin(x2 (j))
    sini(j)=sin(xi2(j))
    cosc(j)=cos(x2 (j))
