@@ -517,7 +517,7 @@ end if
 
 ! x2-direction ***********************************************************
 ! If physical boundary condition (not MPI)
-if(je>js)then ! TODO: In MPI, this can be false even when x2 is active
+if(solve_j)then
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 if(js==js_global)then
 ! scalar values
@@ -900,7 +900,7 @@ end if
 end if
 
 ! x3-direction ***********************************************************
-if(ke>ks)then ! TODO: In MPI, this can be false even when x3 is active
+if(solve_k)then
 ! >>> inner >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ! If physical boundary condition (not MPI)
 if(ks==ks_global)then
