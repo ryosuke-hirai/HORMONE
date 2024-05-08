@@ -277,12 +277,12 @@ module mpi_domain
    subroutine setup_mpi_io
 #ifdef MPI
       use mpi
-      use mpi_utils, only: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity
+      use mpi_utils, only: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity, mpi_subarray_extgrtv
       use grid
-      use settings, only: spn, compswitch, include_sinks, gravswitch
+      use settings, only: spn, compswitch, include_sinks, gravswitch, include_extgrv
       integer, dimension(3) :: sizes3, subsizes3, starts3
       integer, dimension(4) :: sizes4, subsizes4, starts4
-      integer :: ierr
+      integer :: ierr, istart, iend, jstart, jend, kstart, kend
 
       ! Set up the subarray which selects only the real cells for I/O
       sizes3 = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
@@ -311,6 +311,23 @@ module mpi_domain
          call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_gravity, ierr)
          call mpi_type_commit(mpi_subarray_gravity, ierr)
       end if
+
+      if (include_extgrv) then
+         istart = gis; iend = gie
+         jstart = gjs; jend = gje
+         kstart = gks; kend = gke
+         if (gis==gis_global) istart = gis-2
+         if (gie==gie_global) iend = gie+2
+         if (gjs==gjs_global) jstart = gjs-2
+         if (gje==gje_global) jend = gje+2
+         if (gks==gks_global) kstart = gks-2
+         if (gke==gke_global) kend = gke+2
+         sizes3 = [(gie_global+2)-(gis_global-2)+1, (gje_global+2)-(gjs_global-2)+1, (gke_global+2)-(gks_global-2)+1]
+         subsizes3 = [iend-istart+1, jend-jstart+1, kend-kstart+1]
+         starts3 = [istart-(gis_global-2), jstart-(gjs_global-2), kstart-(gks_global-2)]
+         call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_extgrtv, ierr)
+         call mpi_type_commit(mpi_subarray_extgrtv, ierr)
+      endif
 
 #endif
    end subroutine setup_mpi_io
