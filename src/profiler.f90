@@ -2,8 +2,8 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=22 ! number of profiling categories
- real(8):: wtime(0:n_wt)
+ integer,parameter:: n_wt=24 ! number of profiling categories
+ real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
   wtgri=2 ,& ! initial gravity
@@ -27,6 +27,8 @@ module profiler_mod
   wtrfl=20,& ! radiative flux
   wtsnk=21,& ! sink particles
   wtout=22,& ! output
+  wtmpi=23,& ! mpi exchange
+  wtwai=24,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -72,6 +74,8 @@ subroutine init_profiler
  parent(wtopc) = wtrad ! opacity
  parent(wtrfl) = wtrad ! radiative flux
  parent(wtsnk) = wtlop ! sink particles
+ parent(wtmpi) = wtlop ! mpi exchange
+ parent(wtwai) = wtlop ! mpi wait
  parent(wttot) =-1     ! Total
 
 ! Make sure to keep routine name short
@@ -97,6 +101,8 @@ subroutine init_profiler
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad_flux'    ! radiative flux
  routine_name(wtsnk) = 'Sinks'       ! sink particles
+ routine_name(wtmpi) = 'MPI exchange'! MPI exchange
+ routine_name(wtwai) = 'MPI wait'    ! MPI wait
  routine_name(wttot) = 'Total'       ! total
 
  do i = 0, n_wt
@@ -230,6 +236,45 @@ return
 end subroutine reset_clock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE REDUCE_CLOCKS_MPI
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To reduce profiling clocks across MPI tasks
+subroutine reduce_clocks_mpi
+  use mpi_utils, only:allreduce_mpi,nprocs
+
+  integer::wti
+
+  ! The average walltime for each category gives the most meaningful
+  ! diagnostic, because it indicates where time is spent. Simply taking the
+  ! max may not be useful, because a task that finishes a step quickly will
+  ! record less time in that step, but more time in the subsequent step,
+  ! meaning the times may add up to more than the total time.
+  
+  do wti = 0, n_wt
+    wtime_avg(wti) = wtime(wti)
+    wtime_max(wti) = wtime(wti)
+    wtime_min(wti) = wtime(wti)
+
+    call allreduce_mpi('sum', wtime_avg(wti))
+    call allreduce_mpi('max', wtime_max(wti))
+    call allreduce_mpi('min', wtime_min(wti))
+
+    wtime_avg(wti) = wtime_avg(wti) / real(nprocs)
+
+    ! Imbalance is the difference between the maximum and minimum wall time
+    ! as a fraction of the average wall time
+    if(wtime_avg(wti) > 0) then
+      imbalance(wti) = (wtime_max(wti) - wtime_min(wti)) / wtime_avg(wti)
+    else
+      imbalance(wti) = 0
+    end if
+
+  end do
+
+end subroutine reduce_clocks_mpi
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                      SUBROUTINE PROFILER_OUTPUT1
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -244,7 +289,7 @@ subroutine profiler_output1(ui,wti)
 
 !-----------------------------------------------------------------------------
 
- if(wtime(wti)<=thres)return
+ if(wtime_max(wti)<=thres)return
 
  lbl = trim(routine_name(wti))
  j = get_layer(wti)
@@ -254,7 +299,7 @@ subroutine profiler_output1(ui,wti)
   next = n_wt+1
   if(wti<n_wt)then
    do k = wti+1, n_wt
-    if(parent(k)==parent(wti).and.wtime(k)>thres)then
+    if(parent(k)==parent(wti).and.wtime_max(k)>thres)then
      next = k
      exit
     end if
@@ -279,10 +324,11 @@ subroutine profiler_output1(ui,wti)
  case(1:)
   k = maxlbl + 2 + get_layer(wti)*2
  end select
- write(form1,'(a,i2,a)')'(a',k,',":",3(1X,F10.3,a))'
- write(ui,form1)adjustl(lbl),wtime(wti),'s',&
-                wtime(wti)/wtime(wtlop)*1d2,'%',&
-                wtime(wti)/wtime(wttot)*1d2,'%'
+ write(form1,'(a,i2,a)')'(a',k,',":",4(1X,F10.3,a))'
+ write(ui,form1)adjustl(lbl),wtime_avg(wti),'s',&
+                wtime_avg(wti)/wtime_avg(wtlop)*1d2,'%',&
+                wtime_avg(wti)/wtime_avg(wttot)*1d2,'%',&
+                imbalance(wti)*1d2,'%'
 
 return
 end subroutine profiler_output1
