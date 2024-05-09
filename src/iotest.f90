@@ -23,7 +23,7 @@ module iotest_mod
     use utils, only: isequal
     use settings, only: include_sinks, compswitch, mag_on, gravswitch
 
-    integer:: a,i,j,k,numerr
+    integer:: a,i,j,k,numerr=0
     real(8):: err
     character(len=4) :: speci
     character(len=30) :: filename
@@ -32,6 +32,8 @@ module iotest_mod
 
     tn = 123
     time = 456.d0
+
+    call iotest_grid(numerr)
 
     ! Initialize the arrays
     do i = is, ie
@@ -168,8 +170,6 @@ module iotest_mod
       print*, 'Error in time value, time=',time,'should be:',456.d0
       numerr = numerr + 1
     endif
-
-    numerr = 0
 
     ! Check the arrays
     do i = is, ie
@@ -368,5 +368,100 @@ module iotest_mod
     enddo
 
   end subroutine iotest_extgrv
+
+  subroutine iotest_grid(numerr)
+    use grid
+    use output_mod, only: write_grid
+    use readbin_mod, only: readgrid
+    integer, intent(inout) :: numerr
+    integer :: i
+    real(8) :: err
+    real(8),allocatable,dimension(:):: x1_old, xi1_old, dx1_old, dxi1_old
+    real(8),allocatable,dimension(:):: x2_old, xi2_old, dx2_old, dxi2_old
+    real(8),allocatable,dimension(:):: x3_old, xi3_old, dx3_old, dxi3_old
+
+    allocate(x1_old,mold=x1)
+    allocate(x2_old,mold=x2)
+    allocate(x3_old,mold=x3)
+    allocate(xi1_old,mold=xi1)
+    allocate(xi2_old,mold=xi2)
+    allocate(xi3_old,mold=xi3)
+    allocate(dx1_old,mold=dx1)
+    allocate(dx2_old,mold=dx2)
+    allocate(dx3_old,mold=dx3)
+    allocate(dxi1_old,mold=dxi1)
+    allocate(dxi2_old,mold=dxi2)
+    allocate(dxi3_old,mold=dxi3)
+
+    ! backup arrays
+    x1_old(:) = x1(:)
+    x2_old(:) = x2(:)
+    x3_old(:) = x3(:)
+    xi1_old(:) = xi1(:)
+    xi2_old(:) = xi2(:)
+    xi3_old(:) = xi3(:)
+    dx1_old(:) = dx1(:)
+    dx2_old(:) = dx2(:)
+    dx3_old(:) = dx3(:)
+    dxi1_old(:) = dxi1(:)
+    dxi2_old(:) = dxi2(:)
+    dxi3_old(:) = dxi3(:)
+
+    call write_grid
+
+    ! reset values
+    x1(:) = -999.d0
+    x2(:) = -999.d0
+    x3(:) = -999.d0
+    xi1(:) = -999.d0
+    xi2(:) = -999.d0
+    xi3(:) = -999.d0
+    dx1(:) = -999.d0
+    dx2(:) = -999.d0
+    dx3(:) = -999.d0
+    dxi1(:) = -999.d0
+    dxi2(:) = -999.d0
+    dxi3(:) = -999.d0
+
+    call readgrid('data/gridfile.bin')
+
+    ! Check the arrays
+    do i = gis_global-2, gie_global+2
+      err = 0.d0
+      err = err + abs(x1(i) - x1_old(i))
+      err = err + abs(xi1(i) - xi1_old(i))
+      err = err + abs(dx1(i) - dx1_old(i))
+      err = err + abs(dxi1(i) - dxi1_old(i))
+      if (err > 0.d0) then
+        print*, 'Error in x grid values at i=',i,'err=',err
+        numerr = numerr + 1
+      endif
+    end do
+
+    do i = gjs_global-2, gje_global+2
+      err = 0.d0
+      err = err + abs(x2(i) - x2_old(i))
+      err = err + abs(xi2(i) - xi2_old(i))
+      err = err + abs(dx2(i) - dx2_old(i))
+      err = err + abs(dxi2(i) - dxi2_old(i))
+      if (err > 0.d0) then
+        print*, 'Error in y grid values at i=',i,'err=',err
+        numerr = numerr + 1
+      endif
+    end do
+
+    do i = gks_global-2, gke_global+2
+      err = 0.d0
+      err = err + abs(x3(i) - x3_old(i))
+      err = err + abs(xi3(i) - xi3_old(i))
+      err = err + abs(dx3(i) - dx3_old(i))
+      err = err + abs(dxi3(i) - dxi3_old(i))
+      if (err > 0.d0) then
+        print*, 'Error in z grid values at i=',i,'err=',err
+        numerr = numerr + 1
+      endif
+    end do
+
+  end subroutine iotest_grid
 
 end module iotest_mod

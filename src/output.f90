@@ -3,8 +3,8 @@ module output_mod
 
  integer:: ievo,iskf
  public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
-          scaling_output
- private:: write_grid,write_bin,write_plt,get_header,add_column, &
+          scaling_output, write_grid
+ private:: write_bin,write_plt,get_header,add_column, &
            write_val
 
  contains
@@ -1114,7 +1114,7 @@ end subroutine write_bpt
 ! PURPOSE: To output wall time for each subroutine
 
 subroutine profiler_output
- 
+
  use settings
  use profiler_mod
  use omp_lib
