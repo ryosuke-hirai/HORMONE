@@ -273,18 +273,16 @@ module mpi_domain
       call exchange_scalar(d)
       call exchange_scalar(p)
       call exchange_scalar(phi)
-      do i = 1, spn
-         call exchange_scalar(spc(i,:,:,:)) ! TODO: This is inefficient, but works for now
-      enddo
       call exchange_scalar(v1)
       call exchange_scalar(v2)
       call exchange_scalar(v3)
       call exchange_scalar(b1)
       call exchange_scalar(b2)
       call exchange_scalar(b3)
-
       call exchange_scalar(e)
       call exchange_scalar(eint)
+
+      if (spn > 0) call exchange_spc(spc)
 
       call stop_clock(wtmpi)
 
@@ -319,20 +317,63 @@ module mpi_domain
          ! If the domain is only one cell wide in this direction, exchange twice
          ! so that the ghost cells (two deep) are propagated correctly
          do i = 1, n
+            ! Send left real cells to left neighbour's right ghost cells
+            call MPI_Sendrecv(val(l_real_scalar (1,d), l_real_scalar (2,d), l_real_scalar (3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
+                              val(r_ghost_scalar(1,d), r_ghost_scalar(2,d), r_ghost_scalar(3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
 
-         ! Send left real cells to left neighbour's right ghost cells
-         call MPI_Sendrecv(val(l_real_scalar (1,d), l_real_scalar (2,d), l_real_scalar (3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
-                           val(r_ghost_scalar(1,d), r_ghost_scalar(2,d), r_ghost_scalar(3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
-                           cart_comm, MPI_STATUS_IGNORE, ierr)
-
-         ! Send right real cells to right neighbour's left ghost cells
-         call MPI_Sendrecv(val(r_real_scalar (1,d), r_real_scalar (2,d), r_real_scalar (3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
-                           val(l_ghost_scalar(1,d), l_ghost_scalar(2,d), l_ghost_scalar(3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
-                           cart_comm, MPI_STATUS_IGNORE, ierr)
+            ! Send right real cells to right neighbour's left ghost cells
+            call MPI_Sendrecv(val(r_real_scalar (1,d), r_real_scalar (2,d), r_real_scalar (3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
+                              val(l_ghost_scalar(1,d), l_ghost_scalar(2,d), l_ghost_scalar(3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
 #endif
    end subroutine exchange_scalar
+
+   subroutine exchange_spc(val)
+      use settings
+      use grid
+
+      real(8), intent(inout) :: val(1:spn,is-2:ie+2,js-2:je+2,ks-2:ke+2)
+
+#ifdef MPI
+      integer :: d
+      integer :: ierr
+      integer :: i, n
+
+      do d = 1, 3
+         n = 1
+         if (d == 1) then
+            if (is_global == ie_global) cycle
+            if (is==is_global .and. ie==ie_global) cycle
+            if (is == ie) n = 2
+         else if (d == 2) then
+            if (js_global == je_global) cycle
+            if (js==js_global .and. je==je_global) cycle
+            if (js == je) n = 2
+         else if (d == 3) then
+            if (ks_global == ke_global) cycle
+            if (ks==ks_global .and. ke==ke_global) cycle
+            if (ks == ke) n = 2
+         endif
+
+         ! If the domain is only one cell wide in this direction, exchange twice
+         ! so that the ghost cells (two deep) are propagated correctly
+         do i = 1, n
+            ! Send left real cells to left neighbour's right ghost cells
+            call MPI_Sendrecv(val(l_real_spc (1,d), l_real_spc (2,d), l_real_spc (3,d), l_real_spc (4,d)), 1, subarray_spc(d), left_rank (d), 0, &
+                              val(r_ghost_spc(1,d), r_ghost_spc(2,d), r_ghost_spc(3,d), r_ghost_spc(4,d)), 1, subarray_spc(d), right_rank(d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
+
+            ! Send right real cells to right neighbour's left ghost cells
+            call MPI_Sendrecv(val(r_real_spc (1,d), r_real_spc (2,d), r_real_spc (3,d), r_real_spc (4,d)), 1, subarray_spc(d), right_rank(d), 0, &
+                              val(l_ghost_spc(1,d), l_ghost_spc(2,d), l_ghost_spc(3,d), l_ghost_spc(4,d)), 1, subarray_spc(d), left_rank (d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
+         enddo
+      enddo
+#endif
+   end subroutine exchange_spc
 
    subroutine setup_mpi_io
 #ifdef MPI
