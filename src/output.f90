@@ -396,7 +396,7 @@ end subroutine sink_output
 
 ! PURPOSE: To output gridfile.bin and gridfile.dat
 subroutine write_grid
- use mpi_utils, only:myrank,nprocs
+ use mpi_utils, only:myrank,nprocs,barrier_mpi
 
  if (myrank==0) then
   call write_grid_bin
@@ -408,6 +408,8 @@ subroutine write_grid
     write(*,'(60("*"))')
   end if
  end if
+
+ call barrier_mpi
 
  return
 end subroutine write_grid
