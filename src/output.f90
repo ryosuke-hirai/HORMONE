@@ -955,14 +955,10 @@ end subroutine write_plt
 ! PURPOSE: To write extgrv file
 
 subroutine write_extgrv
-
  use grid
- use gravmod, only:extgrv,mc
- use mpi_utils, only:myrank,allreduce_mpi
- use io, only:open_file_write,close_file, write_var, write_dummy_recordmarker
-
- implicit none
-
+ use gravmod, only:extgrv, mc
+ use mpi_utils, only:myrank, allreduce_mpi
+ use io, only:open_file_write,close_file, write_var, write_extgrv_array, write_dummy_recordmarker
  integer :: ui
  real(8) :: mcore
 
@@ -981,7 +977,7 @@ subroutine write_extgrv
  call write_dummy_recordmarker(ui)
 
  call write_dummy_recordmarker(ui)
- call write_var(ui, extgrv, gis, gie, gjs, gje, gks, gke, grav=.true.)
+ call write_extgrv_array(ui, extgrv)
  call write_dummy_recordmarker(ui)
 
  call close_file(ui)

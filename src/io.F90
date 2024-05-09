@@ -1,7 +1,7 @@
 module io
 #ifdef MPI
   use mpi
-  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc, mpi_type_sink_prop
+  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc, mpi_type_sink_prop, mpi_subarray_extgrtv
 #endif
   use sink_mod, only: sink_prop
   implicit none
@@ -26,8 +26,8 @@ module io
     module procedure write_array_1d_sink
   end interface write_var
 
-  public :: read_var, read_dummy_recordmarker
-  public :: write_var, write_dummy_recordmarker
+  public :: read_var, read_dummy_recordmarker, read_extgrv_array
+  public :: write_var, write_dummy_recordmarker, write_extgrv_array
   public :: open_file_read, close_file, open_file_write
   private
 
@@ -252,6 +252,37 @@ subroutine read_array_1d_sink(fh, arr, istart, iend)
 
 end subroutine read_array_1d_sink
 
+subroutine read_extgrv_array(fh, arr)
+  use grid
+  integer, intent(in) :: fh
+  real(8), allocatable, intent(inout) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer :: istart, iend, jstart, jend, kstart, kend
+#ifdef MPI
+  integer :: nbuff
+#endif
+
+  istart = gis; iend = gie
+  jstart = gjs; jend = gje
+  kstart = gks; kend = gke
+  if (gis==gis_global) istart = gis-2
+  if (gie==gie_global) iend = gie+2
+  if (gjs==gjs_global) jstart = gjs-2
+  if (gje==gje_global) jend = gje+2
+  if (gks==gks_global) kstart = gks-2
+  if (gke==gke_global) kend = gke+2
+
+#ifdef MPI
+  nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
+
+  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpi_subarray_extgrtv, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpi_subarray_extgrtv)
+#else
+  read(fh) arr(istart:iend,jstart:jend,kstart:kend)
+#endif
+
+end subroutine read_extgrv_array
+
 subroutine read_dummy_recordmarker(fh)
   integer, intent(in) :: fh
   integer :: dummy
@@ -393,5 +424,36 @@ subroutine write_array_1d_char(fh, arr, istart, iend)
 #endif
 
 end subroutine write_array_1d_char
+
+subroutine write_extgrv_array(fh, arr)
+  use grid
+  integer, intent(in) :: fh
+  real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer :: istart, iend, jstart, jend, kstart, kend
+#ifdef MPI
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: nbuff
+#endif
+
+  istart = gis; iend = gie
+  jstart = gjs; jend = gje
+  kstart = gks; kend = gke
+  if (gis==gis_global) istart = gis-2
+  if (gie==gie_global) iend = gie+2
+  if (gjs==gjs_global) jstart = gjs-2
+  if (gje==gje_global) jend = gje+2
+  if (gks==gks_global) kstart = gks-2
+  if (gke==gke_global) kend = gke+2
+
+#ifdef MPI
+  nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpi_subarray_extgrtv, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+#else
+  write(fh) arr(istart:iend,jstart:jend,kstart:kend)
+#endif
+
+end subroutine write_extgrv_array
 
 end module io

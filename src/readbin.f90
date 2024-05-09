@@ -121,11 +121,11 @@ end subroutine readgrid
 ! PURPOSE: To read gridfile.bin
 
 subroutine read_extgrv(filename)
- use grid, only:is,gis,gie,gjs,gje,gks,gke,is_global
- use gravmod, only:coremass,extgrv,mc
- use io, only:open_file_read,read_dummy_recordmarker,read_var,close_file
- character(len=*),intent(in)::filename
- integer:: ui
+ use grid
+ use gravmod, only:coremass, extgrv, mc
+ use io, only:open_file_read, read_dummy_recordmarker, read_var, read_extgrv_array, close_file
+ character(len=*), intent(in) :: filename
+ integer:: ui, istart, iend, jstart, jend, kstart, kend
 
  extgrv = 0d0
 
@@ -135,8 +135,18 @@ subroutine read_extgrv(filename)
  call read_var(ui, coremass)
  call read_dummy_recordmarker(ui)
 
+  istart = gis; iend = gie
+  jstart = gjs; jend = gje
+  kstart = gks; kend = gke
+  if (gis==gis_global) istart = gis-2
+  if (gie==gie_global) iend = gie+2
+  if (gjs==gjs_global) jstart = gjs-2
+  if (gje==gje_global) jend = gje+2
+  if (gks==gks_global) kstart = gks-2
+  if (gke==gke_global) kend = gke+2
+
  call read_dummy_recordmarker(ui)
- call read_var(ui, extgrv, gis, gie, gjs, gje, gks, gke, grav=.true.)
+ call read_extgrv_array(ui, extgrv)
  call read_dummy_recordmarker(ui)
 
  call close_file(ui)

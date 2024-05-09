@@ -315,14 +315,25 @@ module iotest_mod
     integer, intent(inout) :: numerr
     integer :: i,j,k
     real(8) :: err
+    integer :: istart, iend, jstart, jend, kstart, kend
 
     if (is==is_global) then
       mc(is-1) = 1.d0
     endif
 
-    do i = gis, gie
-      do j = gjs, gje
-        do k = gks, gke
+    istart = gis; iend = gie
+    jstart = gjs; jend = gje
+    kstart = gks; kend = gke
+    if (gis==gis_global) istart = gis-2
+    if (gie==gie_global) iend = gie+2
+    if (gjs==gjs_global) jstart = gjs-2
+    if (gje==gje_global) jend = gje+2
+    if (gks==gks_global) kstart = gks-2
+    if (gke==gke_global) kend = gke+2
+
+    do i = istart, iend
+      do j = jstart, jend
+        do k = kstart, kend
           extgrv(i,j,k) = 1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
         enddo
       enddo
@@ -344,9 +355,9 @@ module iotest_mod
       endif
     endif
 
-    do i = gis, gie
-      do j = gjs, gje
-        do k = gks, gke
+    do i = istart, iend
+      do j = jstart, jend
+        do k = kstart, kend
           err = abs(extgrv(i,j,k) - (1.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
           if ( err > 0.d0 ) then
             print*, 'Error in extgrv values at i=',i,'j=',j,'k=',k,'err=',err
