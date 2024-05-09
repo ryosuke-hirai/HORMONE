@@ -373,9 +373,9 @@ module iotest_mod
     use grid
     use output_mod, only: write_grid
     use readbin_mod, only: readgrid
+    use utils, only: isequal
     integer, intent(inout) :: numerr
     integer :: i
-    real(8) :: err
     real(8),allocatable,dimension(:):: x1_old, xi1_old, dx1_old, dxi1_old
     real(8),allocatable,dimension(:):: x2_old, xi2_old, dx2_old, dxi2_old
     real(8),allocatable,dimension(:):: x3_old, xi3_old, dx3_old, dxi3_old
@@ -427,37 +427,58 @@ module iotest_mod
 
     ! Check the arrays
     do i = gis_global-2, gie_global+2
-      err = 0.d0
-      err = err + abs(x1(i) - x1_old(i))
-      err = err + abs(xi1(i) - xi1_old(i))
-      err = err + abs(dx1(i) - dx1_old(i))
-      err = err + abs(dxi1(i) - dxi1_old(i))
-      if (err > 0.d0) then
-        print*, 'Error in x grid values at i=',i,'err=',err
+      if ( .not. isequal(x1(i), x1_old(i))) then
+        print*, 'Error in x1 values at i=',i,'x1(i)=',x1(i),'should be:',x1_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(xi1(i), xi1_old(i))) then
+        print*, 'Error in xi1 values at i=',i,'xi1(i)=',xi1(i),'should be:',xi1_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(dx1(i), dx1_old(i))) then
+        print*, 'Error in dx1 values at i=',i,'dx1(i)=',dx1(i),'should be:',dx1_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(dxi1(i), dxi1_old(i))) then
+        print*, 'Error in dxi1 values at i=',i,'dxi1(i)=',dxi1(i),'should be:',dxi1_old(i)
         numerr = numerr + 1
       endif
     end do
 
     do i = gjs_global-2, gje_global+2
-      err = 0.d0
-      err = err + abs(x2(i) - x2_old(i))
-      err = err + abs(xi2(i) - xi2_old(i))
-      err = err + abs(dx2(i) - dx2_old(i))
-      err = err + abs(dxi2(i) - dxi2_old(i))
-      if (err > 0.d0) then
-        print*, 'Error in y grid values at i=',i,'err=',err
+      if ( .not. isequal(x2(i), x2_old(i))) then
+        print*, 'Error in x2 values at i=',i,'x2(i)=',x2(i),'should be:',x2_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(xi2(i), xi2_old(i))) then
+        print*, 'Error in xi2 values at i=',i,'xi2(i)=',xi2(i),'should be:',xi2_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(dx2(i), dx2_old(i))) then
+        print*, 'Error in dx2 values at i=',i,'dx2(i)=',dx2(i),'should be:',dx2_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(dxi2(i), dxi2_old(i))) then
+        print*, 'Error in dxi2 values at i=',i,'dxi2(i)=',dxi2(i),'should be:',dxi2_old(i)
         numerr = numerr + 1
       endif
     end do
 
     do i = gks_global-2, gke_global+2
-      err = 0.d0
-      err = err + abs(x3(i) - x3_old(i))
-      err = err + abs(xi3(i) - xi3_old(i))
-      err = err + abs(dx3(i) - dx3_old(i))
-      err = err + abs(dxi3(i) - dxi3_old(i))
-      if (err > 0.d0) then
-        print*, 'Error in z grid values at i=',i,'err=',err
+      if ( .not. isequal(x3(i), x3_old(i))) then
+        print*, 'Error in x3 values at i=',i,'x3(i)=',x3(i),'should be:',x3_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(xi3(i), xi3_old(i))) then
+        print*, 'Error in xi3 values at i=',i,'xi3(i)=',xi3(i),'should be:',xi3_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(dx3(i), dx3_old(i))) then
+        print*, 'Error in dx3 values at i=',i,'dx3(i)=',dx3(i),'should be:',dx3_old(i)
+        numerr = numerr + 1
+      endif
+      if ( .not. isequal(dxi3(i), dxi3_old(i))) then
+        print*, 'Error in dxi3 values at i=',i,'dxi3(i)=',dxi3(i),'should be:',dxi3_old(i)
         numerr = numerr + 1
       endif
     end do
