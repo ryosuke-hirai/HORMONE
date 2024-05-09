@@ -104,9 +104,9 @@ subroutine readgrid(filename)
 !-----------------------------------------------------------------------------
 
  open(newunit=ui,file=filename,status='old',form='unformatted')
- read(ui)x1(gis-2:gie+2),xi1(gis-2:gie+2),dx1(gis-2:gie+2),dxi1(gis-2:gie+2), &
-         x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dx2(gjs-2:gje+2),dxi2(gjs-2:gje+2), &
-         x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
+ read(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2), &
+         x2(gjs_global-2:gje_global+2),xi2(gjs_global-2:gje_global+2),dx2(gjs_global-2:gje_global+2),dxi2(gjs_global-2:gje_global+2), &
+         x3(gks_global-2:gke_global+2),xi3(gks_global-2:gke_global+2),dx3(gks_global-2:gke_global+2),dxi3(gks_global-2:gke_global+2)
  close(ui)
 
  return
