@@ -15,7 +15,7 @@ module mpi_domain
    integer :: l_ghost(3,3), r_ghost(3,3), l_real(3,3), r_real(3,3)
 
    ! MPI subarray datatype for exchange
-   integer :: subarray(3)
+   integer :: subarray_scalar(3)
 
    ! Left and right neighbours in each direction
    integer :: left_rank(3), right_rank(3)
@@ -162,8 +162,8 @@ module mpi_domain
       ! --- x-1 direction ---
       subsizes = [2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
       starts   = [0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray(1), ierr)
-      call MPI_Type_commit(subarray(1), ierr)
+      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(1), ierr)
+      call MPI_Type_commit(subarray_scalar(1), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
       l_real (:,1) = [is,   js-2, ks-2]
@@ -174,8 +174,8 @@ module mpi_domain
       ! --- x-2 direction ---
       subsizes = [ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
       starts   = [2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray(2), ierr)
-      call MPI_Type_commit(subarray(2), ierr)
+      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(2), ierr)
+      call MPI_Type_commit(subarray_scalar(2), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
       l_real (:,2) = [is-2, js,   ks-2]
@@ -186,8 +186,8 @@ module mpi_domain
       ! --- x-3 direction ---
       subsizes = [ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
       starts   = [2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray(3), ierr)
-      call MPI_Type_commit(subarray(3), ierr)
+      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(3), ierr)
+      call MPI_Type_commit(subarray_scalar(3), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
       l_real (:,3) = [is-2, js-2, ks  ]
@@ -204,7 +204,7 @@ module mpi_domain
       use physval
       use profiler_mod
       use mpi_utils
-      
+
       integer :: i, ierr
 
       ! Timing: measure the time spent waiting for other tasks to catch up
@@ -272,13 +272,13 @@ module mpi_domain
          do i = 1, n
 
          ! Send left real cells to left neighbour's right ghost cells
-         call MPI_Sendrecv(val(l_real (1,d), l_real (2,d), l_real (3,d)), 1, subarray(d), left_rank (d), 0, &
-                           val(r_ghost(1,d), r_ghost(2,d), r_ghost(3,d)), 1, subarray(d), right_rank(d), 0, &
+         call MPI_Sendrecv(val(l_real (1,d), l_real (2,d), l_real (3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
+                           val(r_ghost(1,d), r_ghost(2,d), r_ghost(3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
                            cart_comm, MPI_STATUS_IGNORE, ierr)
 
          ! Send right real cells to right neighbour's left ghost cells
-         call MPI_Sendrecv(val(r_real (1,d), r_real (2,d), r_real (3,d)), 1, subarray(d), right_rank(d), 0, &
-                           val(l_ghost(1,d), l_ghost(2,d), l_ghost(3,d)), 1, subarray(d), left_rank (d), 0, &
+         call MPI_Sendrecv(val(r_real (1,d), r_real (2,d), r_real (3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
+                           val(l_ghost(1,d), l_ghost(2,d), l_ghost(3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
                            cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
