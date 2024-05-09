@@ -296,27 +296,10 @@ module mpi_domain
 #ifdef MPI
       integer :: d
       integer :: ierr
-      integer :: i, n
+      integer :: i
 
       do d = 1, 3
-         n = 1
-         if (d == 1) then
-            if (is_global == ie_global) cycle
-            if (is==is_global .and. ie==ie_global) cycle
-            if (is == ie) n = 2
-         else if (d == 2) then
-            if (js_global == je_global) cycle
-            if (js==js_global .and. je==je_global) cycle
-            if (js == je) n = 2
-         else if (d == 3) then
-            if (ks_global == ke_global) cycle
-            if (ks==ks_global .and. ke==ke_global) cycle
-            if (ks == ke) n = 2
-         endif
-
-         ! If the domain is only one cell wide in this direction, exchange twice
-         ! so that the ghost cells (two deep) are propagated correctly
-         do i = 1, n
+         do i = 1, n_exchange(d)
             ! Send left real cells to left neighbour's right ghost cells
             call MPI_Sendrecv(val(l_real_scalar (1,d), l_real_scalar (2,d), l_real_scalar (3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
                               val(r_ghost_scalar(1,d), r_ghost_scalar(2,d), r_ghost_scalar(3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
@@ -340,27 +323,10 @@ module mpi_domain
 #ifdef MPI
       integer :: d
       integer :: ierr
-      integer :: i, n
+      integer :: i
 
       do d = 1, 3
-         n = 1
-         if (d == 1) then
-            if (is_global == ie_global) cycle
-            if (is==is_global .and. ie==ie_global) cycle
-            if (is == ie) n = 2
-         else if (d == 2) then
-            if (js_global == je_global) cycle
-            if (js==js_global .and. je==je_global) cycle
-            if (js == je) n = 2
-         else if (d == 3) then
-            if (ks_global == ke_global) cycle
-            if (ks==ks_global .and. ke==ke_global) cycle
-            if (ks == ke) n = 2
-         endif
-
-         ! If the domain is only one cell wide in this direction, exchange twice
-         ! so that the ghost cells (two deep) are propagated correctly
-         do i = 1, n
+         do i = 1, n_exchange(d)
             ! Send left real cells to left neighbour's right ghost cells
             call MPI_Sendrecv(val(l_real_spc (1,d), l_real_spc (2,d), l_real_spc (3,d), l_real_spc (4,d)), 1, subarray_spc(d), left_rank (d), 0, &
                               val(r_ghost_spc(1,d), r_ghost_spc(2,d), r_ghost_spc(3,d), r_ghost_spc(4,d)), 1, subarray_spc(d), right_rank(d), 0, &
@@ -374,6 +340,53 @@ module mpi_domain
       enddo
 #endif
    end subroutine exchange_spc
+
+   function n_exchange(d) result(n)
+      use settings
+      use grid
+      integer, intent(in) :: d
+      integer :: n
+
+      ! Returns the number of exchanges needed in direction d
+      ! - If the dimension is inactive, return 0
+      ! - If the task owns the entire domain in this direction, return 0
+      ! - If the domain is only one cell wide in this direction, return 2
+      !   so that the ghost cells (two deep) are propagated correctly
+      ! - Otherwise, return 1
+
+      if (d == 1) then
+         if (.not. solve_i) then
+            n = 0
+         elseif (is==is_global .and. ie==ie_global) then
+            n = 0
+         elseif (is == ie) then
+            n = 2
+         else
+            n = 1
+         endif
+      else if (d == 2) then
+         if (.not. solve_j) then
+            n = 0
+         elseif (js==js_global .and. je==je_global) then
+            n = 0
+         elseif (js == je) then
+            n = 2
+         else
+            n = 1
+         endif
+      else if (d == 3) then
+         if (.not. solve_k) then
+            n = 0
+         elseif (ks==ks_global .and. ke==ke_global) then
+            n = 0
+         elseif (ks == ke) then
+            n = 2
+         else
+            n = 1
+         endif
+      endif
+
+   end function n_exchange
 
    subroutine setup_mpi_io
 #ifdef MPI
