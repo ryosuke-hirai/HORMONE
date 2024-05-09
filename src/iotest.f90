@@ -118,7 +118,8 @@ module iotest_mod
     ! Write the arrays to file
     call output
 
-    write(filename, '(a,i11.11,a)') 'data/bin', int(time), 's.dat'
+    ! Get filename, based off time
+    call set_file_name('bin', tn, time, filename)
 
     ! Reset the arrays in memory
     tn = 0
