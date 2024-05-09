@@ -12,10 +12,11 @@ module mpi_domain
 
    ! Indices for the real and ghost zones involved in the exchange
    ! (2nd index j is for exchange in the j-direction)
-   integer :: l_ghost(3,3), r_ghost(3,3), l_real(3,3), r_real(3,3)
+   integer :: l_ghost_scalar(3,3), r_ghost_scalar(3,3), l_real_scalar(3,3), r_real_scalar(3,3)
 
    ! MPI subarray datatype for exchange
    integer :: subarray_scalar(3)
+   integer :: subarray_spc(3)
 
    ! Left and right neighbours in each direction
    integer :: left_rank(3), right_rank(3)
@@ -166,10 +167,10 @@ module mpi_domain
       call MPI_Type_commit(subarray_scalar(1), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real (:,1) = [is,   js-2, ks-2]
-      r_real (:,1) = [ie-1, js-2, ks-2]
-      l_ghost(:,1) = [is-2, js-2, ks-2]
-      r_ghost(:,1) = [ie+1, js-2, ks-2]
+      l_real_scalar (:,1) = [is,   js-2, ks-2]
+      r_real_scalar (:,1) = [ie-1, js-2, ks-2]
+      l_ghost_scalar(:,1) = [is-2, js-2, ks-2]
+      r_ghost_scalar(:,1) = [ie+1, js-2, ks-2]
 
       ! --- x-2 direction ---
       subsizes = [ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
@@ -178,10 +179,10 @@ module mpi_domain
       call MPI_Type_commit(subarray_scalar(2), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real (:,2) = [is-2, js,   ks-2]
-      r_real (:,2) = [is-2, je-1, ks-2]
-      l_ghost(:,2) = [is-2, js-2, ks-2]
-      r_ghost(:,2) = [is-2, je+1, ks-2]
+      l_real_scalar (:,2) = [is-2, js,   ks-2]
+      r_real_scalar (:,2) = [is-2, je-1, ks-2]
+      l_ghost_scalar(:,2) = [is-2, js-2, ks-2]
+      r_ghost_scalar(:,2) = [is-2, je+1, ks-2]
 
       ! --- x-3 direction ---
       subsizes = [ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
@@ -190,10 +191,10 @@ module mpi_domain
       call MPI_Type_commit(subarray_scalar(3), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real (:,3) = [is-2, js-2, ks  ]
-      r_real (:,3) = [is-2, js-2, ke-1]
-      l_ghost(:,3) = [is-2, js-2, ks-2]
-      r_ghost(:,3) = [is-2, js-2, ke+1]
+      l_real_scalar (:,3) = [is-2, js-2, ks  ]
+      r_real_scalar (:,3) = [is-2, js-2, ke-1]
+      l_ghost_scalar(:,3) = [is-2, js-2, ks-2]
+      r_ghost_scalar(:,3) = [is-2, js-2, ke+1]
 
 #endif
    end subroutine setup_mpi_exchange
@@ -272,13 +273,13 @@ module mpi_domain
          do i = 1, n
 
          ! Send left real cells to left neighbour's right ghost cells
-         call MPI_Sendrecv(val(l_real (1,d), l_real (2,d), l_real (3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
-                           val(r_ghost(1,d), r_ghost(2,d), r_ghost(3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
+         call MPI_Sendrecv(val(l_real_scalar (1,d), l_real_scalar (2,d), l_real_scalar (3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
+                           val(r_ghost_scalar(1,d), r_ghost_scalar(2,d), r_ghost_scalar(3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
                            cart_comm, MPI_STATUS_IGNORE, ierr)
 
          ! Send right real cells to right neighbour's left ghost cells
-         call MPI_Sendrecv(val(r_real (1,d), r_real (2,d), r_real (3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
-                           val(l_ghost(1,d), l_ghost(2,d), l_ghost(3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
+         call MPI_Sendrecv(val(r_real_scalar (1,d), r_real_scalar (2,d), r_real_scalar (3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
+                           val(l_ghost_scalar(1,d), l_ghost_scalar(2,d), l_ghost_scalar(3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
                            cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
