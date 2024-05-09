@@ -13,6 +13,7 @@ module mpi_domain
    ! Indices for the real and ghost zones involved in the exchange
    ! (2nd index j is for exchange in the j-direction)
    integer :: l_ghost_scalar(3,3), r_ghost_scalar(3,3), l_real_scalar(3,3), r_real_scalar(3,3)
+   integer :: l_ghost_spc   (4,3), r_ghost_spc   (4,3), l_real_spc   (4,3), r_real_spc   (4,3)
 
    ! MPI subarray datatype for exchange
    integer :: subarray_scalar(3)
@@ -129,10 +130,12 @@ module mpi_domain
 
    subroutine setup_mpi_exchange
 #ifdef MPI
+      use settings
       use grid
 
       ! Indices and sizes for MPI subarray datatypes used for exchange in each direction
-      integer :: sizes(3), subsizes(3), starts(3)
+      integer :: sizes3(3), subsizes3(3), starts3(3)
+      integer :: sizes4(4), subsizes4(4), starts4(4)
       integer :: d
       integer :: ierr
 
@@ -157,13 +160,15 @@ module mpi_domain
          call MPI_Cart_shift(cart_comm, d-1, 1, left_rank(d), right_rank(d), ierr)
       enddo
 
+      ! Scalar quantities ---------------------------------------------------------------------------------------------
+
       ! Size of the array on this task
-      sizes = [ie - is + 5, je - js + 5, ke - ks + 5]
+      sizes3 = [ie - is + 5, je - js + 5, ke - ks + 5]
 
       ! --- x-1 direction ---
-      subsizes = [2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
-      starts   = [0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(1), ierr)
+      subsizes3 = [2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
+      starts3   = [0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
+      call MPI_Type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(1), ierr)
       call MPI_Type_commit(subarray_scalar(1), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
@@ -173,9 +178,9 @@ module mpi_domain
       r_ghost_scalar(:,1) = [ie+1, js-2, ks-2]
 
       ! --- x-2 direction ---
-      subsizes = [ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
-      starts   = [2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(2), ierr)
+      subsizes3 = [ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
+      starts3   = [2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
+      call MPI_Type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(2), ierr)
       call MPI_Type_commit(subarray_scalar(2), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
@@ -185,9 +190,9 @@ module mpi_domain
       r_ghost_scalar(:,2) = [is-2, je+1, ks-2]
 
       ! --- x-3 direction ---
-      subsizes = [ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
-      starts   = [2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(3), ierr)
+      subsizes3 = [ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
+      starts3   = [2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
+      call MPI_Type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(3), ierr)
       call MPI_Type_commit(subarray_scalar(3), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
@@ -195,6 +200,49 @@ module mpi_domain
       r_real_scalar (:,3) = [is-2, js-2, ke-1]
       l_ghost_scalar(:,3) = [is-2, js-2, ks-2]
       r_ghost_scalar(:,3) = [is-2, js-2, ke+1]
+
+      ! Species quantities --------------------------------------------------------------------------------------------
+
+      if (spn > 0) then
+         ! Size of the array on this task
+         sizes4 = [spn, ie - is + 5, je - js + 5, ke - ks + 5]
+
+         ! --- x-1 direction ---
+         subsizes4 = [spn, 2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
+         starts4   = [0, 0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
+         call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(1), ierr)
+         call MPI_Type_commit(subarray_spc(1), ierr)
+
+         ! Starting indices of the real and ghost zones involved in the exchange
+         l_real_spc (:,1) = [1, is,   js-2, ks-2]
+         r_real_spc (:,1) = [1, ie-1, js-2, ks-2]
+         l_ghost_spc(:,1) = [1, is-2, js-2, ks-2]
+         r_ghost_spc(:,1) = [1, ie+1, js-2, ks-2]
+
+         ! --- x-2 direction ---
+         subsizes4 = [spn, ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
+         starts4   = [0, 2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
+         call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(2), ierr)
+         call MPI_Type_commit(subarray_spc(2), ierr)
+
+         ! Starting indices of the real and ghost zones involved in the exchange
+         l_real_spc (:,2) = [1, is-2, js,   ks-2]
+         r_real_spc (:,2) = [1, is-2, je-1, ks-2]
+         l_ghost_spc(:,2) = [1, is-2, js-2, ks-2]
+         r_ghost_spc(:,2) = [1, is-2, je+1, ks-2]
+
+         ! --- x-3 direction ---
+         subsizes4 = [spn, ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
+         starts4   = [0, 2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
+         call MPI_Type_create_subarray(3, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(3), ierr)
+         call MPI_Type_commit(subarray_spc(3), ierr)
+
+         ! Starting indices of the real and ghost zones involved in the exchange
+         l_real_spc (:,3) = [1, is-2, js-2, ks  ]
+         r_real_spc (:,3) = [1, is-2, js-2, ke-1]
+         l_ghost_spc(:,3) = [1, is-2, js-2, ks-2]
+         r_ghost_spc(:,3) = [1, is-2, js-2, ke+1]
+      endif
 
 #endif
    end subroutine setup_mpi_exchange
