@@ -85,4 +85,11 @@ module mpi_utils
 
   end subroutine allreduce_mpi_int4
 
+  subroutine barrier_mpi
+#ifdef MPI
+    integer :: ierr
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+#endif
+  end subroutine
+
 end module mpi_utils

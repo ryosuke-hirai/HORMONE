@@ -1114,10 +1114,11 @@ end subroutine write_bpt
 ! PURPOSE: To output wall time for each subroutine
 
 subroutine profiler_output
-
+ 
  use settings
  use profiler_mod
  use omp_lib
+ use mpi_utils, only:myrank
 
  integer:: ui,i,j
  character(len=30)::form1,forml
@@ -1129,20 +1130,25 @@ subroutine profiler_output
   if(clock_on(i))wtime(i) = wtime(i) + omp_get_wtime()
  end do
 
- write(form1,'("(",i2,"X,3a12)")')maxlbl+1
- write(forml,'("(",i2,"a)")')maxlbl+1 + 3*12
+! Reduce clocks across MPI tasks
+ call reduce_clocks_mpi
 
- open(newunit=ui,file='walltime.dat',status='replace')
- write(ui,form1)'wall_time','frac_loop','frac_tot'
+ if (myrank==0) then
+  write(form1,'("(",i2,"X4a12)")')maxlbl+1
+  write(forml,'("(",i2,"a)")')maxlbl+1 + 4*12
 
- do i = 1, n_wt
-  if(get_layer(i)==wttot)write(ui,forml)('-',j=1,maxlbl+1+3*12)
-  call profiler_output1(ui,i)
- end do
- write(ui,forml)('-',j=1,maxlbl+1+3*12)
- call profiler_output1(ui,wttot)
+  open(newunit=ui,file='walltime.dat',status='replace')
+  write(ui,form1)'wall_time','frac_loop','frac_tot','imbalance'
 
- close(ui)
+  do i = 1, n_wt
+    if(get_layer(i)==wttot)write(ui,forml)('-',j=1,maxlbl+1+4*12)
+    call profiler_output1(ui,i)
+  end do
+  write(ui,forml)('-',j=1,maxlbl+1+4*12)
+  call profiler_output1(ui,wttot)
+
+  close(ui)
+ endif
 
 ! Reactivate clocks
  do i = 0, n_wt
