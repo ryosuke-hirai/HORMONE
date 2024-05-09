@@ -238,7 +238,7 @@ contains
      end if
      jump = maxval(ratio(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku),base,floor))
 
-     relerr(i,j,k) = (var(i,j,k)-var0(i,j,k))!/denom*exp(1d0-jump)
+     relerr(i,j,k) = (var(i,j,k)-var0(i,j,k))/denom*exp(1d0-jump)
     end do
    end do
   end do

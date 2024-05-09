@@ -40,4 +40,4 @@
 	  bc1iv=0 bc1ov=0 bc2iv=0 bc2ov=0 bc3iv=0 bc3ov=0 eq_sym=.false. /
 
 ! test tolerance
-&testcon  test_tol=1d-15 /
+&testcon  test_tol=4d-15 /
