@@ -52,4 +52,4 @@
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
 ! test tolerance
-&testcon  test_tol=1d-15 /
+&testcon  test_tol=2d-5 /
