@@ -82,6 +82,7 @@ jobs:
           - orszagtang_xz
           - sedov_default
           - KHinstability
+          - star_sph
           - iotest
         flat:
           - no
