@@ -295,6 +295,7 @@ module iotest_mod
         print*, 'Test failed'
         error stop 1
       else
+        call cleanup_files(tn=123, time=456.d0)
         print*, 'Test passed'
       endif
     endif
@@ -484,5 +485,42 @@ module iotest_mod
     end do
 
   end subroutine iotest_grid
+
+  subroutine cleanup_files(tn, time)
+    use output_mod, only: set_file_name
+    use mpi_utils, only: myrank
+    integer, intent(in) :: tn
+    real(8), intent(in) :: time
+    integer :: fh, stat
+    character(len=60) :: filename
+
+    if (myrank/=0) return
+
+    print*, 'Cleaning up files...'
+
+    open(newunit=fh, iostat=stat, file='data/extgrv.bin', status='old')
+    if (stat == 0) close(fh, status='delete')
+
+    open(newunit=fh, iostat=stat, file='data/gridfile.bin', status='old')
+    if (stat == 0) close(fh, status='delete')
+
+    open(newunit=fh, iostat=stat, file='data/gridfile.dat', status='old')
+    if (stat == 0) close(fh, status='delete')
+
+    open(newunit=fh, iostat=stat, file='data/sinks.dat', status='old')
+    if (stat == 0) close(fh, status='delete')
+
+    call set_file_name('bin', tn, time, filename)
+    open(newunit=fh, iostat=stat, file=trim(filename), status='old')
+    if (stat == 0) close(fh, status='delete')
+
+    call set_file_name('plt', tn, time, filename)
+    open(newunit=fh, iostat=stat, file=trim(filename), status='old')
+    if (stat == 0) close(fh, status='delete')
+
+    open(newunit=fh, iostat=stat, file='walltime.dat', status='old')
+    if (stat == 0) close(fh, status='delete')
+
+  end subroutine cleanup_files
 
 end module iotest_mod
