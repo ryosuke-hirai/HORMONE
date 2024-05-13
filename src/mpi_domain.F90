@@ -203,7 +203,7 @@ module mpi_domain
 
       ! Species quantities --------------------------------------------------------------------------------------------
 
-      if (spn > 0) then
+      if (compswitch >= 2) then
          ! Size of the array on this task
          sizes4 = [spn, ie - is + 5, je - js + 5, ke - ks + 5]
 
@@ -282,7 +282,7 @@ module mpi_domain
       call exchange_scalar(e)
       call exchange_scalar(eint)
 
-      if (spn > 0) call exchange_spc(spc)
+      if (compswitch >= 2) call exchange_spc(spc)
 
       call stop_clock(wtmpi)
 
