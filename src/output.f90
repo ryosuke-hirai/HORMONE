@@ -396,19 +396,13 @@ end subroutine sink_output
 
 ! PURPOSE: To output gridfile.bin and gridfile.dat
 subroutine write_grid
- use mpi_utils, only:myrank,nprocs,barrier_mpi
+ use mpi_utils, only:myrank,barrier_mpi
 
  if (myrank==0) then
   call write_grid_bin
-  if (nprocs==1) then
-    call write_grid_dat
-  else
-    write(*,'(60("*"))')
-    print*, 'WARNING: write_grid_dat not implemented for nprocs>1'
-    write(*,'(60("*"))')
-  end if
  end if
-
+ call barrier_mpi
+ call write_grid_dat
  call barrier_mpi
 
  return
@@ -429,7 +423,6 @@ subroutine write_grid_bin
 end subroutine write_grid_bin
 
 subroutine write_grid_dat
- ! TODO: MPI
  use settings
  use grid
  use mpi_utils, only: myrank
@@ -623,7 +616,7 @@ subroutine write_grid_dat
 
  call close_file(ui)
 
- print*,"Outputted: ",'gridfile.dat'
+ if (myrank==0) print*,"Outputted: ",'gridfile.dat'
 
 !othergrid--------------------------------------------------------------------
 
