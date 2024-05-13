@@ -28,12 +28,12 @@ subroutine gridset
              x2, xi2, dx2, dxi2, idx2, idxi2, &
              x3, xi3, dx3, dxi3, idx3, idxi3 )
   allocate( &
-   x1(gis-2:gie+2), xi1(gis-2:gie+2), dx1(gis-2:gie+2), dxi1(gis-2:gie+2), &
-   idx1(gis-2:gie+2), idxi1(gis-2:gie+2), &
-   x2(gjs-2:gje+2), xi2(gjs-2:gje+2), dx2(gjs-2:gje+2), dxi2(gjs-2:gje+2), &
-   idx2(gjs-2:gje+2), idxi2(gjs-2:gje+2), &
-   x3(gks-2:gke+2), xi3(gks-2:gke+2), dx3(gks-2:gke+2), dxi3(gks-2:gke+2), &
-   idx3(gks-2:gke+2), idxi3(gks-2:gke+2) &
+   x1(gis_global-2:gie_global+2), xi1(gis_global-2:gie_global+2), dx1(gis_global-2:gie_global+2), &
+   dxi1(gis_global-2:gie_global+2), idx1(gis_global-2:gie_global+2), idxi1(gis_global-2:gie_global+2), &
+   x2(gjs_global-2:gje_global+2), xi2(gjs_global-2:gje_global+2), dx2(gjs_global-2:gje_global+2), &
+   dxi2(gjs_global-2:gje_global+2), idx2(gjs_global-2:gje_global+2), idxi2(gjs_global-2:gje_global+2), &
+   x3(gks_global-2:gke_global+2), xi3(gks_global-2:gke_global+2), dx3(gks_global-2:gke_global+2), &
+   dxi3(gks_global-2:gke_global+2), idx3(gks_global-2:gke_global+2), idxi3(gks_global-2:gke_global+2) &
   )
  end if
 

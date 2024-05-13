@@ -140,7 +140,7 @@ subroutine redsupergiant
  end do
 
 ! Remember core mass
- mc(is-1) = mcore
+ if (is==is_global) mc(is-1) = mcore
 
  call write_extgrv
 
