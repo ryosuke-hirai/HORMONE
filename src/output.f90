@@ -427,7 +427,7 @@ subroutine write_grid_dat
  use grid
  use mpi_utils, only: myrank
  use mpi_domain, only: is_my_domain
- use io, only: write_string_master, open_file_write_ascii, close_file, write_string, write_string_master
+ use io, only: write_string_master, open_file_write_ascii, close_file, write_string_master
 
  character(len=50):: formhead,formval,formnum
  character(len=200) :: str
@@ -451,10 +451,7 @@ subroutine write_grid_dat
    call write_string_master(ui,str)
    j=js_global;k=ks_global
    do i = is_global, ie_global
-    if (is_my_domain(i,j,k)) then
-      write(str,formval) i,x1(i),dvol(i,j,k)
-      call write_string(ui, str)
-    end if
+    call write_my_grid_1d(ui,formval,i,x1(i),dvol,i,j,k)
    end do
 
   elseif(je_global>js_global)then
@@ -462,10 +459,7 @@ subroutine write_grid_dat
    call write_string_master(ui,str)
    i=is_global;k=ks_global
    do j = js_global, je_global
-    if (is_my_domain(i,j,k)) then
-      write(str,formval) j,x2(j),dvol(i,j,k)
-      call write_string(ui, str)
-    end if
+    call write_my_grid_1d(ui,formval,j,x2(j),dvol,i,j,k)
    end do
 
   elseif(ke_global>ks_global)then
@@ -473,10 +467,7 @@ subroutine write_grid_dat
    call write_string_master(ui,str)
    i=is_global;j=js_global
    do k = ks_global, ke_global
-    if (is_my_domain(i,j,k)) then
-      write(str,formval) k,x3(k),dvol(i,j,k)
-      call write_string(ui, str)
-    end if
+    call write_my_grid_1d(ui,formval,k,x3(k),dvol,i,j,k)
    end do
 
   end if
@@ -496,20 +487,14 @@ subroutine write_grid_dat
    if(crdnt==1.or.crdnt==2)then
     j=js_global-1
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,j,x1(i),xi2s,dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_2d(ui,formval,i,j,x1(i),xi2s,dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end if
 
    do j = js_global, je_global
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,j,x1(i),x2(j),dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_2d(ui,formval,i,j,x1(i),x2(j),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
@@ -518,10 +503,7 @@ subroutine write_grid_dat
    if(crdnt==1.or.crdnt==2)then
     j=je_global+1
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,j,x1(i),xi2e,dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_2d(ui,formval,i,j,x1(i),xi2e,dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end if
@@ -534,17 +516,11 @@ subroutine write_grid_dat
 
     ! writing inner boundary for polar coordinates
     if(crdnt==1.or.crdnt==2) then
-     if (is_my_domain(is_global,j,k)) then
-      write(str,formval) is_global-1,k,xi1(is_global-1),x3(k),dvol(is_global,j,k)
-      call write_string(ui, str)
-     end if
+     call write_my_grid_2d(ui,formval,is_global-1,k,xi1(is_global-1),x3(k),dvol,is_global,j,k)
     end if
 
     do i = is_global, ie_global, outres
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,k,xi1(i),x3(k),dvol(i,j,k)
-      call write_string(ui, str)
-     end if
+     call write_my_grid_2d(ui,formval,i,k,x1(i),x3(k),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
@@ -556,10 +532,7 @@ subroutine write_grid_dat
    i=is_global
    do k = ks_global, ke_global
     do j = js_global, je_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) j,k,x2(j),x3(k),dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_2d(ui,formval,j,k,x2(j),x3(k),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
@@ -576,10 +549,7 @@ subroutine write_grid_dat
    k=ks_global-1
    do j = je_global, je_global
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_3d(ui,formval,i,j,k,x1(i),x2(j),xi3(k),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
@@ -588,10 +558,7 @@ subroutine write_grid_dat
   do k = ks_global, ke_global
    do j = je_global, je_global
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_3d(ui,formval,i,j,k,x1(i),x2(j),x3(k),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
@@ -601,10 +568,7 @@ subroutine write_grid_dat
    k=ke_global
    do j = je_global, je_global
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_3d(ui,formval,i,j,k,x1(i),x2(j),xi3(k),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
@@ -639,55 +603,37 @@ subroutine write_grid_dat
    k = ks_global
 
    do i = is_global, ie_global
-    if (is_my_domain(i,je_global,k)) then
-     write(str,formval) i,-je_global-1,x1(i),-xi2(je_global),dvol(i,je_global,k)
-     call write_string(ui,str)
-    end if
+    call write_my_grid_2d(ui,formval,i,-je_global-1,x1(i),-xi2(je_global),dvol,i,je_global,k)
    end do
    call write_string_master(ui, '')
 
    do j = je_global, js_global, -1
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,-j,x1(i),-x2(j),dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_2d(ui,formval,i,-j,x1(i),-x2(j),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
 
    do i = is_global, ie_global
-    if (is_my_domain(i,js_global,k)) then
-     write(str,formval) i,0,x1(i),-xi2(js_global-1),dvol(i,js_global,k)
-     call write_string(ui,str)
-    end if
+    call write_my_grid_2d(ui,formval,i,0,x1(i),-xi2(js_global-1),dvol,i,js_global,k)
    end do
    call write_string_master(ui, '')
 
    k = (ks_global+ke_global-1)/2
    do i = is_global, ie_global
-    if (is_my_domain(i,js_global,k)) then
-     write(str,formval) i,0,x1(i),xi2(js_global-1),dvol(i,js_global,k)
-     call write_string(ui,str)
-    end if
+    call write_my_grid_2d(ui,formval,i,0,x1(i),xi2(js_global-1),dvol,i,js_global,k)
    end do
    call write_string_master(ui, '')
 
    do j = js_global, je_global
     do i = is_global, ie_global
-     if (is_my_domain(i,j,k)) then
-      write(str,formval) i,j,x1(i),x2(j),dvol(i,j,k)
-      call write_string(ui,str)
-     end if
+     call write_my_grid_2d(ui,formval,i,j,x1(i),x2(j),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
 
    do i = is_global, ie_global
-    if (is_my_domain(i,je_global,k)) then
-     write(str,formval) i,je_global+1,x1(i),xi2(je_global),dvol(i,je_global,k)
-     call write_string(ui,str)
-    end if
+    call write_my_grid_2d(ui,formval,i,je_global+1,x1(i),xi2(je_global),dvol,i,je_global,k)
    end do
 
   end if
@@ -1521,5 +1467,53 @@ subroutine write_anyval(ui,forme,val)
 
 return
 end subroutine write_anyval
+
+subroutine write_my_grid_1d(ui,form,ii,x1,dvol,i,j,k)
+  use mpi_domain, only:is_my_domain
+  use io, only:write_string
+  integer, intent(in) :: ui,i,j,k,ii
+  character(len=*), intent(in) :: form
+  real(8), intent(in) :: x1
+  real(8), allocatable, intent(in) :: dvol(:,:,:)
+  character(len=100) :: str
+
+  if (is_my_domain(i,j,k)) then
+    write(str,form) ii,x1,dvol(i,j,k)
+    call write_string(ui,str)
+  end if
+
+end subroutine write_my_grid_1d
+
+subroutine write_my_grid_2d(ui,form,ii,jj,x1,x2,dvol,i,j,k)
+  use mpi_domain, only:is_my_domain
+  use io, only:write_string
+  integer, intent(in) :: ui,i,j,k,ii,jj
+  character(len=*), intent(in) :: form
+  real(8), intent(in) :: x1,x2
+  real(8), allocatable, intent(in) :: dvol(:,:,:)
+  character(len=200) :: str
+
+  if (is_my_domain(i,j,k)) then
+    write(str,form) ii,jj,x1,x2,dvol(i,j,k)
+    call write_string(ui,str)
+  end if
+
+end subroutine write_my_grid_2d
+
+subroutine write_my_grid_3d(ui,form,ii,jj,kk,x1,x2,x3,dvol,i,j,k)
+  use mpi_domain, only:is_my_domain
+  use io, only:write_string
+  integer, intent(in) :: ui,i,j,k,ii,jj,kk
+  character(len=*), intent(in) :: form
+  real(8), intent(in) :: x1,x2,x3
+  real(8), allocatable, intent(in) :: dvol(:,:,:)
+  character(len=300) :: str
+
+  if (is_my_domain(i,j,k)) then
+    write(str,form) ii,jj,kk,x1,x2,x3,dvol(i,j,k)
+    call write_string(ui,str)
+  end if
+
+end subroutine write_my_grid_3d
 
 end module output_mod
