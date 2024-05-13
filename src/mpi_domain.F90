@@ -466,4 +466,16 @@ module mpi_domain
 #endif
    end subroutine print_domain_decomposition
 
+   logical function is_my_domain(i,j,k)
+      use grid
+      integer, intent(in) :: i, j, k
+
+      if ( is<=i .and. i<=ie .and. js<=j .and. j<=je .and. ks<=k .and. k<=ke ) then
+         is_my_domain = .true.
+      else
+         is_my_domain = .false.
+      end if
+
+   end function
+
 end module mpi_domain
