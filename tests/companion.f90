@@ -50,7 +50,7 @@ subroutine companion
  deallocate(dum)
 
  do i = 1, lines
-  read(40,*) dat(lines-i+1,1:rows) 
+  read(40,*) dat(lines-i+1,1:rows)
  end do
 
  allocate(m(1:lines),r(1:lines),pres(1:lines))
@@ -65,7 +65,7 @@ subroutine companion
  rstar = r(lines)
  k = ks
  j = js
- mc(is-1) = 0d0
+ if (is==is_global) mc(is-1) = 0d0
  do i = is, ie
   do n = 2, lines-1
    if(xi1(i)>r(n).and.xi1(i)<=r(n+1))then

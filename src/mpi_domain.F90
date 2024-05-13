@@ -26,13 +26,14 @@ module mpi_domain
    subroutine domain_decomp
       use grid
 #ifdef MPI
+      use settings, only:gravswitch
+
       integer :: nx, ny, nz
       integer :: ierr
       integer, allocatable :: factors(:)
       integer :: num_factors, axis
       real(8) :: n_tmp(3)
       integer, dimension(3) :: dims
-      real(8) :: eff
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
@@ -70,7 +71,8 @@ module mpi_domain
          n_tmp(axis) = n_tmp(axis) / real(factors(i))
       enddo
 
-      periods = [.true., .true., .true.] ! Always set to periodic and allow boundary conditions to override
+      ! Always set to periodic and allow boundary conditions to override
+      periods = [.true., .true., .true.]
 
       call MPI_Cart_create(MPI_COMM_WORLD, 3, dims, periods, .false., cart_comm, ierr)
       call MPI_Cart_coords(cart_comm, myrank, 3, mycoords, ierr)
@@ -88,39 +90,39 @@ module mpi_domain
       if (mycoords(2) == dims(2) - 1) je = ny + (js_global - 1)
       if (mycoords(3) == dims(3) - 1) ke = nz + (ks_global - 1)
 
+      ! Copy the hydro grid decomposition to the gravity grid
+      gis = is
+      gie = ie
+      gjs = js
+      gje = je
+      gks = ks
+      gke = ke
+
+      ! Check for gravity grid extension and adjust if necessary
+      if (gravswitch >= 1) then
+         if (mycoords(1) == 0) then
+            if (gis_global /= is_global) gis = gis_global
+         endif
+         if (mycoords(1) == dims(1) - 1) then
+            if (gie_global /= ie_global) gie = gie_global
+         endif
+         if (mycoords(2) == 0) then
+            if (gjs_global /= js_global) gjs = gjs_global
+         endif
+         if (mycoords(2) == dims(2) - 1) then
+            if (gje_global /= je_global) gje = gje_global
+         endif
+         if (mycoords(3) == 0) then
+            if (gks_global /= ks_global) gks = gks_global
+         endif
+         if (mycoords(3) == dims(3) - 1) then
+            if (gke_global /= ke_global) gke = gke_global
+         endif
+      endif
+
       call setup_mpi_exchange
       call setup_mpi_io
-
-      ! Calculate the ratio: (real cells) / (total cells including ghost)
-      eff = 0.d0
-      if (dims(1) > 1) then
-         eff = eff + real(2 * (je - js + 1) * (ke - ks + 1))
-      endif
-      if (dims(2) > 1) then
-         eff = eff + real(2 * (ie - is + 1) * (ke - ks + 1))
-      endif
-      if (dims(3) > 1) then
-         eff = eff + real(2 * (ie - is + 1) * (je - js + 1))
-      endif
-      eff = 1.d0 - (eff / real((ie - is + 5) * (je - js + 5) * (ke - ks + 5)))
-
-      ! Print out the domain decomposition
-      if (myrank == 0) then
-         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
-      endif
-      call MPI_Barrier(cart_comm, ierr)
-
-      do i = 1, nprocs
-         if (myrank == i-1) then
-            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
-         endif
-         call MPI_Barrier(cart_comm, ierr)
-      enddo
-
-      if (myrank == 0) then
-         write(*, *)
-      endif
-      call MPI_Barrier(cart_comm, ierr)
+      call print_domain_decomposition
 
 #endif
 
@@ -204,8 +206,8 @@ module mpi_domain
       use physval
       use profiler_mod
       use mpi_utils
-      
-      integer :: i, ierr
+
+      integer :: i
 
       ! Timing: measure the time spent waiting for other tasks to catch up
       call start_clock(wtwai)
@@ -288,38 +290,64 @@ module mpi_domain
    subroutine setup_mpi_io
 #ifdef MPI
       use mpi
-      use mpi_utils, only: mpitype_array3d_real8, mpitype_array4d_real8
+      use mpi_utils, only: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity, mpi_subarray_extgrtv
       use grid
-      use settings, only: spn, compswitch, include_sinks
+      use settings, only: spn, compswitch, include_sinks, gravswitch, include_extgrv
       integer, dimension(3) :: sizes3, subsizes3, starts3
       integer, dimension(4) :: sizes4, subsizes4, starts4
-      integer :: ierr
+      integer :: ierr, istart, iend, jstart, jend, kstart, kend
 
       ! Set up the subarray which selects only the real cells for I/O
       sizes3 = [ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
       subsizes3 = [ie-is+1,je-js+1,ke-ks+1]
       starts3 = [is-is_global,js-js_global,ks-ks_global]
-      call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array3d_real8, ierr)
-      call mpi_type_commit(mpitype_array3d_real8, ierr)
+      call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_default, ierr)
+      call mpi_type_commit(mpi_subarray_default, ierr)
 
       if (compswitch>=2) then
          ! Set up the subarray for spc
          sizes4 = [spn,ie_global-is_global+1,je_global-js_global+1,ke_global-ks_global+1]
          subsizes4 = [spn,ie-is+1,je-js+1,ke-ks+1]
          starts4 = [0,is-is_global,js-js_global,ks-ks_global]
-         call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, ierr)
-         call mpi_type_commit(mpitype_array4d_real8, ierr)
+         call mpi_type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_spc, ierr)
+         call mpi_type_commit(mpi_subarray_spc, ierr)
       endif
 
       if (include_sinks) then
          call create_sink_type_mpi
       endif
+
+      if (gravswitch>=1) then
+         sizes3 = [gie_global-gis_global+1,gje_global-gjs_global+1,gke_global-gks_global+1]
+         subsizes3 = [gie-gis+1,gje-gjs+1,gke-gks+1]
+         starts3 = [gis-gis_global,gjs-gjs_global,gks-gks_global]
+         call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_gravity, ierr)
+         call mpi_type_commit(mpi_subarray_gravity, ierr)
+      end if
+
+      if (include_extgrv) then
+         istart = gis; iend = gie
+         jstart = gjs; jend = gje
+         kstart = gks; kend = gke
+         if (gis==gis_global) istart = gis-2
+         if (gie==gie_global) iend = gie+2
+         if (gjs==gjs_global) jstart = gjs-2
+         if (gje==gje_global) jend = gje+2
+         if (gks==gks_global) kstart = gks-2
+         if (gke==gke_global) kend = gke+2
+         sizes3 = [(gie_global+2)-(gis_global-2)+1, (gje_global+2)-(gjs_global-2)+1, (gke_global+2)-(gks_global-2)+1]
+         subsizes3 = [iend-istart+1, jend-jstart+1, kend-kstart+1]
+         starts3 = [istart-(gis_global-2), jstart-(gjs_global-2), kstart-(gks_global-2)]
+         call mpi_type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, mpi_subarray_extgrtv, ierr)
+         call mpi_type_commit(mpi_subarray_extgrtv, ierr)
+      endif
+
 #endif
    end subroutine setup_mpi_io
 
    subroutine create_sink_type_mpi
 #ifdef MPI
-      use mpi_utils, only: mpitype_sink_prop
+      use mpi_utils, only: mpi_type_sink_prop
       use sink_mod, only: sink_prop
       type(sink_prop) :: sink
       integer, parameter :: nattr = 12
@@ -353,8 +381,8 @@ module mpi_domain
                 MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION/)
 
       ! Create the custom datatype
-      call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpitype_sink_prop, ierr)
-      call MPI_Type_commit(mpitype_sink_prop, ierr)
+      call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpi_type_sink_prop, ierr)
+      call MPI_Type_commit(mpi_type_sink_prop, ierr)
 #endif
    end subroutine create_sink_type_mpi
 
@@ -392,5 +420,50 @@ module mpi_domain
 
       num_factors = count
    end subroutine prime_factors
+
+   subroutine calculate_decomposition_efficiency(eff)
+      use settings
+      use grid
+      real(8), intent(out) :: eff
+      ! Calculate the ratio: (real cells) / (total cells including ghost)
+      eff = 0.d0
+      if (solve_i) then
+         eff = eff + real(2 * (je - js + 1) * (ke - ks + 1))
+      endif
+      if (solve_j) then
+         eff = eff + real(2 * (ie - is + 1) * (ke - ks + 1))
+      endif
+      if (solve_k) then
+         eff = eff + real(2 * (ie - is + 1) * (je - js + 1))
+      endif
+      eff = 1.d0 - (eff / real((ie - is + 5) * (je - js + 5) * (ke - ks + 5)))
+   end subroutine calculate_decomposition_efficiency
+
+   subroutine print_domain_decomposition
+#ifdef MPI
+      use grid
+      real(8) :: eff
+      integer :: i, ierr
+
+      call calculate_decomposition_efficiency(eff)
+
+      if (myrank == 0) then
+         write(*,'(7(A,I0),A)') 'Global domain (', is_global, ':', ie_global, ', ', js_global, ':', je_global, ', ', ks_global, ':', ke_global, ') split between ', nprocs, ' MPI ranks:'
+      endif
+      call MPI_Barrier(cart_comm, ierr)
+
+      do i = 1, nprocs
+         if (myrank == i-1) then
+            write(*,'(7(A,I0),A,F6.2,A)') '  Rank ', myrank, ' has domain (', is, ':', ie, ', ', js, ':', je, ', ', ks, ':', ke, '), volume efficiency=', eff*100.d0, '%'
+         endif
+         call MPI_Barrier(cart_comm, ierr)
+      enddo
+
+      if (myrank == 0) then
+         write(*, *)
+      endif
+      call MPI_Barrier(cart_comm, ierr)
+#endif
+   end subroutine print_domain_decomposition
 
 end module mpi_domain
