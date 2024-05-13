@@ -73,6 +73,16 @@ subroutine open_file_write(filename, fh)
 #endif
 end subroutine open_file_write
 
+subroutine open_file_write_ascii(filename, fh)
+  character(len=*), intent(in) :: filename
+  integer, intent(out) :: fh
+#ifdef MPI
+  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_RDWR, MPI_INFO_NULL, fh, ierr)
+#else
+  open(newunit=fh, file=filename, status='replace', form='formatted', action='write')
+#endif
+end subroutine open_file_write_ascii
+
 subroutine open_file_read(filename, fh)
   character(len=*), intent(in) :: filename
   integer, intent(out) :: fh
