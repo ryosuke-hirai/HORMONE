@@ -432,12 +432,16 @@ subroutine write_grid_dat
  ! TODO: MPI
  use settings
  use grid
+ use mpi_utils, only: myrank
+ use mpi_domain, only: is_my_domain
+ use io, only: write_string_master, open_file_write_ascii, close_file, write_string, write_string_master
 
  character(len=50):: formhead,formval,formnum
+ character(len=200) :: str
  integer:: i,j,k,ui
 
- open(newunit=ui,file='data/gridfile.dat',status='replace')
- write(ui,'()')
+ call open_file_write_ascii('data/gridfile.dat',ui)
+ call write_string_master(ui, '')
  write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')dim,dim+1,sigfig+8
  write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
      dim,dim+1,sigfig+7,sigfig-1
@@ -446,107 +450,157 @@ subroutine write_grid_dat
 ! 1D outputs
  case(1)
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
-  write(ui,formnum)1,2,3
+  write(str,formnum)1,2,3
+  call write_string_master(ui,str)
 
   if(ie_global>is_global)then
-   write(ui,formhead)'  i','x1','dvol'
+   write(str,formhead)'  i','x1','dvol'
+   call write_string_master(ui,str)
    j=js_global;k=ks_global
    do i = is_global, ie_global
-    write(ui,formval)i,x1(i),dvol(i,j,k)
+    if (is_my_domain(i,j,k)) then
+      write(str,formval) i,x1(i),dvol(i,j,k)
+      call write_string(ui, str)
+    end if
    end do
+
   elseif(je_global>js_global)then
-   write(ui,formhead)'  j','x2','dvol'
+   write(str,formhead)'  j','x2','dvol'
+   call write_string_master(ui,str)
    i=is_global;k=ks_global
    do j = js_global, je_global
-    write(ui,formval)j,x2(j),dvol(i,j,k)
+    if (is_my_domain(i,j,k)) then
+      write(str,formval) j,x2(j),dvol(i,j,k)
+      call write_string(ui, str)
+    end if
    end do
+
   elseif(ke_global>ks_global)then
-   write(ui,formhead)'  k','x3','dvol'
+   write(str,formhead)'  k','x3','dvol'
+   call write_string_master(ui,str)
    i=is_global;j=js_global
    do k = ks_global, ke_global
-    write(ui,formval)k,x3(k),dvol(i,j,k)
+    if (is_my_domain(i,j,k)) then
+      write(str,formval) k,x3(k),dvol(i,j,k)
+      call write_string(ui, str)
+    end if
    end do
+
   end if
 
 ! 2D outputs
  case(2)
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
-  write(ui,formnum)1,2,3,4,5
+  write(str,formnum)1,2,3,4,5
+  call write_string_master(ui,str)
 
   if(ke_global==ks_global)then! For 2D Cartesian, polar or axisymmetrical spherical
-   write(ui,formhead)'  i','j','x1','x2','dvol'
+   write(str,formhead)'  i','j','x1','x2','dvol'
+   call write_string_master(ui,str)
    k=ks_global
-! output coordinate axis if cylindrical or spherical coordinates
+
+   ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
     j=js_global-1
     do i = is_global, ie_global
-     write(ui,formval)i,j,x1(i),xi2s,dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,j,x1(i),xi2s,dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end if
 
    do j = js_global, je_global
     do i = is_global, ie_global
-     write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,j,x1(i),x2(j),dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
 
-! output coordinate axis if cylindrical or spherical coordinates
+   ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
     j=je_global+1
     do i = is_global, ie_global
-     write(ui,formval)i,j,x1(i),xi2e,dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,j,x1(i),xi2e,dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end if
 
   elseif(je_global==js_global)then! mainly for 2D Cartesian or axisymmetrical cylindrical
-   write(ui,formhead)'  i','k','x1','x3','dvol'
+   write(str,formhead)'  i','k','x1','x3','dvol'
+   call write_string_master(ui,str)
    j=js_global
    do k = ks_global, ke_global, outres
-! writing inner boundary for polar coordinates
-    if(crdnt==1.or.crdnt==2)&
-     write(ui,formval)is_global-1,k,xi1(is_global-1),x3(k),dvol(is_global,j,k)
+
+    ! writing inner boundary for polar coordinates
+    if(crdnt==1.or.crdnt==2) then
+     if (is_my_domain(is_global,j,k)) then
+      write(str,formval) is_global-1,k,xi1(is_global-1),x3(k),dvol(is_global,j,k)
+      call write_string(ui, str)
+     end if
+    end if
+
     do i = is_global, ie_global, outres
-     write(ui,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,k,xi1(i),x3(k),dvol(i,j,k)
+      call write_string(ui, str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
 
   elseif(ie_global==is_global)then! For 2D Cartesian
-!CAUTION: Not designed for cylindrical or spherical yet
-   write(ui,formhead)'  j','k','x2','x3','dvol'
+  !CAUTION: Not designed for cylindrical or spherical yet
+   write(str,formhead)'  j','k','x2','x3','dvol'
+   call write_string_master(ui,str)
    i=is_global
    do k = ks_global, ke_global
     do j = js_global, je_global
-     write(ui,formval)j,k,x2(j),x3(k),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) j,k,x2(j),x3(k),dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end if
 
  case(3)
   write(formnum,'("(",a4,"i4,2i5,4i",i2,")")')'"#",',sigfig+8
-  write(ui,formnum)1,2,3,4,5,6,7
+  write(str,formnum)1,2,3,4,5,6,7
+  call write_string_master(ui,str)
 
-  write(ui,formhead)'  i','j','k','x1','x2','x3','dvol'
+  write(str,formhead)'  i','j','k','x1','x2','x3','dvol'
+  call write_string_master(ui,str)
   if(crdnt==2)then
    k=ks_global-1
    do j = je_global, je_global
     do i = is_global, ie_global
-     write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end if
 
   do k = ks_global, ke_global
    do j = je_global, je_global
     do i = is_global, ie_global
-     write(ui,formval)i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end do
 
@@ -554,9 +608,12 @@ subroutine write_grid_dat
    k=ke_global
    do j = je_global, je_global
     do i = is_global, ie_global
-     write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end if
 
@@ -564,7 +621,7 @@ subroutine write_grid_dat
   stop 'Something wrong with dimension'
  end select
 
- close(ui)
+ call close_file(ui)
 
  print*,"Outputted: ",'gridfile.dat'
 
@@ -572,53 +629,79 @@ subroutine write_grid_dat
 
  if(write_other_slice)then
 
-  open(newunit=ui,file='data/othergrid.dat',status='replace')
-  write(ui,'()')
+  call open_file_write_ascii('data/othergrid.dat',ui)
+  call write_string_master(ui, '')
   write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')2,2+1,sigfig+8
   write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
         2,2+1,sigfig+7,sigfig-1
 
   write(formnum,'("(",a4,"i4,i5,4i",i2,")")')'"#",',sigfig+8
-  write(ui,formnum)1,2,3,4,5
+  write(str,formnum)1,2,3,4,5
+  call write_string_master(ui,str)
 
-  write(ui,formhead)'  i','j','x1','x2','dvol'
+  write(str,formhead)'  i','j','x1','x2','dvol'
+  call write_string_master(ui,str)
 
   if(crdnt==2)then
    k = ks_global
+
    do i = is_global, ie_global
-    write(ui,formval)i,-je_global-1,x1(i),-xi2(je_global),dvol(i,je_global,k)
+    if (is_my_domain(i,je_global,k)) then
+     write(str,formval) i,-je_global-1,x1(i),-xi2(je_global),dvol(i,je_global,k)
+     call write_string(ui,str)
+    end if
    end do
-   write(ui,'()')
+   call write_string_master(ui, '')
+
    do j = je_global, js_global, -1
     do i = is_global, ie_global
-     write(ui,formval)i,-j,x1(i),-x2(j),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,-j,x1(i),-x2(j),dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
+
    do i = is_global, ie_global
-    write(ui,formval)i,0,x1(i),-xi2(js_global-1),dvol(i,js_global,k)
+    if (is_my_domain(i,js_global,k)) then
+     write(str,formval) i,0,x1(i),-xi2(js_global-1),dvol(i,js_global,k)
+     call write_string(ui,str)
+    end if
    end do
-   write(ui,'()')
+   call write_string_master(ui, '')
 
    k = (ks_global+ke_global-1)/2
    do i = is_global, ie_global
-    write(ui,formval)i,0,x1(i),xi2(js_global-1),dvol(i,js_global,k)
+    if (is_my_domain(i,js_global,k)) then
+     write(str,formval) i,0,x1(i),xi2(js_global-1),dvol(i,js_global,k)
+     call write_string(ui,str)
+    end if
    end do
-   write(ui,'()')
+   call write_string_master(ui, '')
+
    do j = js_global, je_global
     do i = is_global, ie_global
-     write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
+     if (is_my_domain(i,j,k)) then
+      write(str,formval) i,j,x1(i),x2(j),dvol(i,j,k)
+      call write_string(ui,str)
+     end if
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
+
    do i = is_global, ie_global
-    write(ui,formval)i,je_global+1,x1(i),xi2(je_global),dvol(i,je_global,k)
+    if (is_my_domain(i,je_global,k)) then
+     write(str,formval) i,je_global+1,x1(i),xi2(je_global),dvol(i,je_global,k)
+     call write_string(ui,str)
+    end if
    end do
+
   end if
 
-  close(ui)
+  call close_file(ui)
 
-  print*,"Outputted: ",'othergrid.dat'
+  if (myrank==0) print*,"Outputted: ",'othergrid.dat'
 
  end if
 
