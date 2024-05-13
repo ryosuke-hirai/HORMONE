@@ -154,7 +154,7 @@ subroutine stellarcollision
  end do
 
 ! Remember core mass
- mc(is-1) = mcore
+ if (is==is_global) mc(is-1) = mcore
 
 ! place colliding object
  sink(2)%mass = nsmass

@@ -3,8 +3,8 @@ module output_mod
 
  integer:: ievo,iskf
  public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
-          scaling_output
- private:: write_grid,write_bin,write_plt,get_header,add_column, &
+          scaling_output, write_grid
+ private:: write_bin,write_plt,get_header,add_column, &
            write_val
 
  contains
@@ -188,7 +188,7 @@ subroutine evo_output
    Egtot = sum(d(is:ie,js:je,ks:ke) &
               *(0.5d0*grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
               *dvol(is:ie,js:je,ks:ke))
-   Mtot = Mtot + mc(is-1)
+   if (is==is_global) Mtot = Mtot + mc(is-1)
 
    Mbound=0d0;Ebound=0d0;Jbound=0d0
    do k = ks, ke
@@ -237,7 +237,7 @@ subroutine evo_output
    Ebound = 2d0*Ebound
    Jbound = 2d0*Jbound
   end if
-  if(include_extgrv)Mbound = Mbound+mc(is-1)
+  if (include_extgrv .and. is==is_global) Mbound = Mbound+mc(is-1)
  end if
 
  if(dim>=2.and.crdnt>=1)then
@@ -395,33 +395,46 @@ end subroutine sink_output
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output gridfile.bin and gridfile.dat
-
 subroutine write_grid
+ use mpi_utils, only:myrank,nprocs,barrier_mpi
 
- use settings
+ if (myrank==0) then
+  call write_grid_bin
+  if (nprocs==1) then
+    call write_grid_dat
+  else
+    write(*,'(60("*"))')
+    print*, 'WARNING: write_grid_dat not implemented for nprocs>1'
+    write(*,'(60("*"))')
+  end if
+ end if
+
+ call barrier_mpi
+
+ return
+end subroutine write_grid
+
+subroutine write_grid_bin
  use grid
- use mpi_utils, only:myrank
+ integer :: ui
 
- implicit none
-
- character(len=50):: formhead,formval,formnum
- integer:: i,j,k,ui
-
- if (myrank/=0) return
-
-!-----------------------------------------------------------------------------
-
-!binary gridfile--------------------------------------------------------------
  open(newunit=ui,file='data/gridfile.bin',status='replace',form='unformatted')
 
- write(ui)x1(gis-2:gie+2),xi1(gis-2:gie+2),dx1(gis-2:gie+2),dxi1(gis-2:gie+2),&
-          x2(gjs-2:gje+2),xi2(gjs-2:gje+2),dx2(gjs-2:gje+2),dxi2(gjs-2:gje+2),&
-          x3(gks-2:gke+2),xi3(gks-2:gke+2),dx3(gks-2:gke+2),dxi3(gks-2:gke+2)
+ write(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2),&
+          x2(gjs_global-2:gje_global+2),xi2(gjs_global-2:gje_global+2),dx2(gjs_global-2:gje_global+2),dxi2(gjs_global-2:gje_global+2),&
+          x3(gks_global-2:gke_global+2),xi3(gks_global-2:gke_global+2),dx3(gks_global-2:gke_global+2),dxi3(gks_global-2:gke_global+2)
  close(ui)
 
  print*,"Outputted: ",'gridfile.bin'
+end subroutine write_grid_bin
 
-!gridfile---------------------------------------------------------------------
+subroutine write_grid_dat
+ ! TODO: MPI
+ use settings
+ use grid
+
+ character(len=50):: formhead,formval,formnum
+ integer:: i,j,k,ui
 
  open(newunit=ui,file='data/gridfile.dat',status='replace')
  write(ui,'()')
@@ -435,22 +448,22 @@ subroutine write_grid
   write(formnum,'("(",a4,"i4,2i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3
 
-  if(ie>is)then
+  if(ie_global>is_global)then
    write(ui,formhead)'  i','x1','dvol'
-   j=js;k=ks
-   do i = is, ie
+   j=js_global;k=ks_global
+   do i = is_global, ie_global
     write(ui,formval)i,x1(i),dvol(i,j,k)
    end do
-  elseif(je>js)then
+  elseif(je_global>js_global)then
    write(ui,formhead)'  j','x2','dvol'
-   i=is;k=ks
-   do j = js, je
+   i=is_global;k=ks_global
+   do j = js_global, je_global
     write(ui,formval)j,x2(j),dvol(i,j,k)
    end do
-  elseif(ke>ks)then
+  elseif(ke_global>ks_global)then
    write(ui,formhead)'  k','x3','dvol'
-   i=is;j=js
-   do k = ks, ke
+   i=is_global;j=js_global
+   do k = ks_global, ke_global
     write(ui,formval)k,x3(k),dvol(i,j,k)
    end do
   end if
@@ -460,20 +473,20 @@ subroutine write_grid
   write(formnum,'("(",a4,"i4,i5,3i",i2,")")')'"#",',sigfig+8
   write(ui,formnum)1,2,3,4,5
 
-  if(ke==ks)then! For 2D Cartesian, polar or axisymmetrical spherical
+  if(ke_global==ks_global)then! For 2D Cartesian, polar or axisymmetrical spherical
    write(ui,formhead)'  i','j','x1','x2','dvol'
-   k=ks
+   k=ks_global
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=js-1
-    do i = is, ie
+    j=js_global-1
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),xi2s,dvol(i,j,k)
     end do
     write(ui,'()')
    end if
 
-   do j = js, je
-    do i = is, ie
+   do j = js_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -481,32 +494,32 @@ subroutine write_grid
 
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=je+1
-    do i = is, ie
+    j=je_global+1
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),xi2e,dvol(i,j,k)
     end do
     write(ui,'()')
    end if
 
-  elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
+  elseif(je_global==js_global)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    write(ui,formhead)'  i','k','x1','x3','dvol'
-   j=js
-   do k = ks, ke, outres
+   j=js_global
+   do k = ks_global, ke_global, outres
 ! writing inner boundary for polar coordinates
     if(crdnt==1.or.crdnt==2)&
-     write(ui,formval)is-1,k,xi1(is-1),x3(k),dvol(is,j,k)
-    do i = is, ie, outres
+     write(ui,formval)is_global-1,k,xi1(is_global-1),x3(k),dvol(is_global,j,k)
+    do i = is_global, ie_global, outres
      write(ui,formval)i,k,xi1(i),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
 
-  elseif(ie==is)then! For 2D Cartesian
+  elseif(ie_global==is_global)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
    write(ui,formhead)'  j','k','x2','x3','dvol'
-   i=is
-   do k = ks, ke
-    do j = js, je
+   i=is_global
+   do k = ks_global, ke_global
+    do j = js_global, je_global
      write(ui,formval)j,k,x2(j),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -519,18 +532,18 @@ subroutine write_grid
 
   write(ui,formhead)'  i','j','k','x1','x2','x3','dvol'
   if(crdnt==2)then
-   k=ks-1
-   do j = je, je
-    do i = is, ie
+   k=ks_global-1
+   do j = je_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
   end if
 
-  do k = ks, ke
-   do j = je, je
-    do i = is, ie
+  do k = ks_global, ke_global
+   do j = je_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,k,x1(i),x2(j),x3(k),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -538,9 +551,9 @@ subroutine write_grid
   end do
 
   if(crdnt==2)then
-   k=ke
-   do j = je, je
-    do i = is, ie
+   k=ke_global
+   do j = je_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,k,x1(i),x2(j),xi3(k),dvol(i,j,k)
     end do
     write(ui,'()')
@@ -571,35 +584,35 @@ subroutine write_grid
   write(ui,formhead)'  i','j','x1','x2','dvol'
 
   if(crdnt==2)then
-   k = ks
-   do i = is, ie
-    write(ui,formval)i,-je-1,x1(i),-xi2(je),dvol(i,je,k)
+   k = ks_global
+   do i = is_global, ie_global
+    write(ui,formval)i,-je_global-1,x1(i),-xi2(je_global),dvol(i,je_global,k)
    end do
    write(ui,'()')
-   do j = je, js, -1
-    do i = is, ie
+   do j = je_global, js_global, -1
+    do i = is_global, ie_global
      write(ui,formval)i,-j,x1(i),-x2(j),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
-   do i = is, ie
-    write(ui,formval)i,0,x1(i),-xi2(js-1),dvol(i,js,k)
+   do i = is_global, ie_global
+    write(ui,formval)i,0,x1(i),-xi2(js_global-1),dvol(i,js_global,k)
    end do
    write(ui,'()')
 
-   k = (ks+ke-1)/2
-   do i = is, ie
-    write(ui,formval)i,0,x1(i),xi2(js-1),dvol(i,js,k)
+   k = (ks_global+ke_global-1)/2
+   do i = is_global, ie_global
+    write(ui,formval)i,0,x1(i),xi2(js_global-1),dvol(i,js_global,k)
    end do
    write(ui,'()')
-   do j = js, je
-    do i = is, ie
+   do j = js_global, je_global
+    do i = is_global, ie_global
      write(ui,formval)i,j,x1(i),x2(j),dvol(i,j,k)
     end do
     write(ui,'()')
    end do
-   do i = is, ie
-    write(ui,formval)i,je+1,x1(i),xi2(je),dvol(i,je,k)
+   do i = is_global, ie_global
+    write(ui,formval)i,je_global+1,x1(i),xi2(je_global),dvol(i,je_global,k)
    end do
   end if
 
@@ -610,8 +623,7 @@ subroutine write_grid
  end if
 
  return
-end subroutine write_grid
-
+end subroutine write_grid_dat
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -635,59 +647,58 @@ subroutine write_bin
 
  character(len=50):: binfile
  integer :: un
- logical :: legacy = .true.
 
 !-----------------------------------------------------------------------------
 
  call set_file_name('bin',tn,time,binfile)
  call open_file_write(binfile, un)
 
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
  call write_var(un, tn)
  call write_var(un, time)
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
 
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
  call write_var(un, d, is, ie, js, je, ks, ke)
  call write_var(un, v1, is, ie, js, je, ks, ke)
  call write_var(un, v2, is, ie, js, je, ks, ke)
  call write_var(un, v3, is, ie, js, je, ks, ke)
  call write_var(un, e, is, ie, js, je, ks, ke)
- call write_dummy_recordmarker(un, legacy)
+ call write_dummy_recordmarker(un)
 
  if(gravswitch>=2) then
-   call write_dummy_recordmarker(un, legacy)
-   call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
+   call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke, grav=.true.)
+   call write_dummy_recordmarker(un)
  end if
 
  if(gravswitch==3) then
-   call write_dummy_recordmarker(un, legacy)
-   call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke)
+   call write_dummy_recordmarker(un)
+   call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke, grav=.true.)
    call write_var(un, dt_old)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
  endif
 
  if(compswitch>=2) then
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
    call write_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
    call write_var(un, species, 1, spn)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
  endif
 
  if(mag_on) then
-  call write_dummy_recordmarker(un, legacy)
+  call write_dummy_recordmarker(un)
   call write_var(un, b1, is, ie, js, je, ks, ke)
   call write_var(un, b2, is, ie, js, je, ks, ke)
   call write_var(un, b3, is, ie, js, je, ks, ke)
   call write_var(un, phi, is, ie, js, je, ks, ke)
-  call write_dummy_recordmarker(un, legacy)
+  call write_dummy_recordmarker(un)
  end if
 
  if(include_sinks) then
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
    call write_var(un, sink, 1, nsink)
-   call write_dummy_recordmarker(un, legacy)
+   call write_dummy_recordmarker(un)
  endif
 
  call close_file(un)
@@ -714,12 +725,22 @@ subroutine write_plt
  use grid,only:is,ie,js,je,ks,ke,time,tn,dim
  use utils,only:gravpot1d
  use shockfind_mod,only:shockfind
+ use mpi_utils, only:nprocs,myrank
 
  implicit none
 
  character(len=50):: pltfile
  character(len=20):: header(50)='aaa',forma,forme,formi
  integer:: i,j,k,n,ui,columns
+
+ if (nprocs>1) then
+    if (myrank==0) then
+      write(*,'(60("*"))')
+      print*, 'WARNING: write_plt not implemented for nprocs>1'
+      write(*,'(60("*"))')
+    endif
+    return
+ endif
 
 !-----------------------------------------------------------------------------
 
@@ -936,22 +957,34 @@ end subroutine write_plt
 ! PURPOSE: To write extgrv file
 
 subroutine write_extgrv
-
  use grid
- use gravmod,only:extgrv,mc
+ use gravmod, only:extgrv, mc
+ use mpi_utils, only:myrank, allreduce_mpi
+ use io, only:open_file_write,close_file, write_var, write_extgrv_array, write_dummy_recordmarker
+ integer :: ui
+ real(8) :: mcore
 
- implicit none
+ ! get mcore and ensure each task has the same value
+ if (is==is_global) then
+   mcore = mc(is-1)
+ else
+   mcore = -1.
+ endif
+ call allreduce_mpi('max', mcore)
 
- integer:: ui
+ call open_file_write('data/extgrv.bin', ui)
 
-!-----------------------------------------------------------------------------
- ! TODO: MPI
- open(newunit=ui,file='data/extgrv.bin',status='replace',form='unformatted')
- write(ui)mc(is-1)
- write(ui)extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2)
- close(ui)
+ call write_dummy_recordmarker(ui)
+ call write_var(ui, mcore)
+ call write_dummy_recordmarker(ui)
 
- print*,"Outputted: ",'extgrv.bin'
+ call write_dummy_recordmarker(ui)
+ call write_extgrv_array(ui, extgrv)
+ call write_dummy_recordmarker(ui)
+
+ call close_file(ui)
+
+ if (myrank==0) print*,"Outputted: ",'extgrv.bin'
 
 return
 end subroutine write_extgrv
@@ -1083,7 +1116,7 @@ end subroutine write_bpt
 ! PURPOSE: To output wall time for each subroutine
 
 subroutine profiler_output
- 
+
  use settings
  use profiler_mod
  use omp_lib

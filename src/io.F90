@@ -1,16 +1,19 @@
 module io
 #ifdef MPI
   use mpi
+  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc, mpi_type_sink_prop, mpi_subarray_extgrtv
 #endif
   use sink_mod, only: sink_prop
   implicit none
+
+  logical, public :: legacy = .true.
 
   interface read_var
     module procedure read_int4
     module procedure read_real8
     module procedure read_array_1d_char
     module procedure read_array_3d_real8
-    module procedure read_array_4d_real8
+    module procedure read_array_spc
     module procedure read_array_1d_sink
   end interface read_var
 
@@ -19,12 +22,12 @@ module io
     module procedure write_real8
     module procedure write_array_1d_char
     module procedure write_array_3d_real8
-    module procedure write_array_4d_real8
+    module procedure write_array_spc
     module procedure write_array_1d_sink
   end interface write_var
 
-  public :: read_var, read_dummy_recordmarker
-  public :: write_var, write_dummy_recordmarker
+  public :: read_var, read_dummy_recordmarker, read_extgrv_array
+  public :: write_var, write_dummy_recordmarker, write_extgrv_array
   public :: open_file_read, close_file, open_file_write
   private
 
@@ -38,7 +41,6 @@ contains
 #ifdef MPI
 subroutine get_file_end(fh, end_bytes)
   integer, intent(in) :: fh
-  integer :: ierr
   integer(kind=MPI_OFFSET_KIND), intent(out) :: end_bytes
   integer(kind=MPI_OFFSET_KIND) :: disp
   integer :: method = 1
@@ -65,9 +67,6 @@ subroutine open_file_write(filename, fh)
   use mpi_utils, only: myrank
   character(len=*), intent(in) :: filename
   integer, intent(out) :: fh
-#ifdef MPI
-  integer :: ierr
-#endif
 
   if (myrank == 0) then
     ! Create new file
@@ -186,26 +185,40 @@ subroutine read_array_1d_char(fh, arr, istart, iend)
 
 end subroutine read_array_1d_char
 
-subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
-  use mpi_utils, only: mpitype_array3d_real8
+subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, grav)
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
+  logical, optional, intent(in) :: grav
+  logical :: gravity
 #ifdef MPI
-  integer :: nbuff
+  integer :: nbuff, itype
+#endif
+
+  if (present(grav)) then
+    gravity = grav
+  else
+    gravity = .false.
+  end if
+
+#ifdef MPI
+  if (gravity) then
+    itype = mpi_subarray_gravity
+  else
+    itype = mpi_subarray_default
+  end if
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpitype_array3d_real8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, itype, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, mpitype_array3d_real8)
+  call update_offset(fh, itype)
 #else
   read(fh) arr(istart:iend,jstart:jend,kstart:kend)
 #endif
 
 end subroutine read_array_3d_real8
 
-subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
-  use mpi_utils, only: mpitype_array4d_real8
+subroutine read_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
@@ -213,17 +226,16 @@ subroutine read_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
   integer :: nbuff
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)*(lend-lstart+1)
 
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpitype_array4d_real8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpi_subarray_spc, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_read_all(fh, arr(istart:iend, jstart:jend, kstart:kend, lstart:lend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, mpitype_array4d_real8)
+  call update_offset(fh, mpi_subarray_spc)
 #else
   read(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
 
-end subroutine read_array_4d_real8
+end subroutine read_array_spc
 
 subroutine read_array_1d_sink(fh, arr, istart, iend)
-  use mpi_utils, only: mpitype_sink_prop
   integer, intent(in) :: fh
   type(sink_prop), allocatable, intent(inout) :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
@@ -231,18 +243,48 @@ subroutine read_array_1d_sink(fh, arr, istart, iend)
   integer :: nbuff
   nbuff = (iend-istart+1)
 
-  call mpi_file_set_view(fh, offset, mpitype_sink_prop, mpitype_sink_prop, 'native', MPI_INFO_NULL, ierr)
-  call mpi_file_read_all(fh, arr(istart:iend), nbuff, mpitype_sink_prop, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, mpitype_sink_prop)
+  call mpi_file_set_view(fh, offset, mpi_type_sink_prop, mpi_type_sink_prop, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend), nbuff, mpi_type_sink_prop, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpi_type_sink_prop)
 #else
   read(fh) arr(istart:iend)
 #endif
 
 end subroutine read_array_1d_sink
 
-subroutine read_dummy_recordmarker(fh, legacy)
+subroutine read_extgrv_array(fh, arr)
+  use grid
   integer, intent(in) :: fh
-  logical, intent(in) :: legacy
+  real(8), allocatable, intent(inout) :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer :: istart, iend, jstart, jend, kstart, kend
+#ifdef MPI
+  integer :: nbuff
+#endif
+
+  istart = gis; iend = gie
+  jstart = gjs; jend = gje
+  kstart = gks; kend = gke
+  if (gis==gis_global) istart = gis-2
+  if (gie==gie_global) iend = gie+2
+  if (gjs==gjs_global) jstart = gjs-2
+  if (gje==gje_global) jend = gje+2
+  if (gks==gks_global) kstart = gks-2
+  if (gke==gke_global) kend = gke+2
+
+#ifdef MPI
+  nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
+
+  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpi_subarray_extgrtv, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpi_subarray_extgrtv)
+#else
+  read(fh) arr(istart:iend,jstart:jend,kstart:kend)
+#endif
+
+end subroutine read_extgrv_array
+
+subroutine read_dummy_recordmarker(fh)
+  integer, intent(in) :: fh
   integer :: dummy
 
   if (legacy) then
@@ -251,9 +293,8 @@ subroutine read_dummy_recordmarker(fh, legacy)
 
 end subroutine read_dummy_recordmarker
 
-subroutine write_dummy_recordmarker(fh, legacy)
+subroutine write_dummy_recordmarker(fh)
   integer, intent(in) :: fh
-  logical, intent(in) :: legacy
   integer, parameter :: dummy = -1 ! Assmuing record marker is the size of an integer
 
   if (legacy) then
@@ -267,7 +308,6 @@ subroutine write_int4(fh, var)
   integer, intent(in) :: var
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr
 
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_INTEGER4, MPI_INTEGER4, 'native', MPI_INFO_NULL, ierr)
@@ -283,7 +323,6 @@ subroutine write_real8(fh, var)
   real(8), intent(in) :: var
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr
 
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
@@ -294,19 +333,34 @@ subroutine write_real8(fh, var)
 
 end subroutine write_real8
 
-subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend)
-  use mpi_utils, only: mpitype_array3d_real8
+subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, grav)
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
+  logical, optional, intent(in) :: grav
+  logical :: gravity
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr, nbuff
+  integer :: nbuff, itype
+#endif
+
+  if (present(grav)) then
+    gravity = grav
+  else
+    gravity = .false.
+  end if
+
+#ifdef MPI
+  if (gravity) then
+    itype = mpi_subarray_gravity
+  else
+    itype = mpi_subarray_default
+  end if
 
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
   call get_file_end(fh, end_bytes)
-  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpitype_array3d_real8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, itype, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend,jstart:jend,kstart:kend)
@@ -314,40 +368,38 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
 
 end subroutine write_array_3d_real8
 
-subroutine write_array_4d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
-  use mpi_utils, only: mpitype_array4d_real8
+subroutine write_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lstart, lend)
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend, lstart, lend
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr, nbuff
+  integer :: nbuff
 
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)*(lend-lstart+1)
 
   call get_file_end(fh, end_bytes)
-  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpitype_array4d_real8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpi_subarray_spc, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend, jstart:jend, kstart:kend, lstart:lend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
 
-end subroutine write_array_4d_real8
+end subroutine write_array_spc
 
 subroutine write_array_1d_sink(fh, arr, istart, iend)
-  use mpi_utils, only: mpitype_sink_prop
   integer, intent(in) :: fh
   type(sink_prop), intent(in), allocatable :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: ierr, nbuff
+  integer :: nbuff
 
   nbuff = (iend-istart+1)
 
   call get_file_end(fh, end_bytes)
-  call mpi_file_set_view(fh, end_bytes, mpitype_sink_prop, mpitype_sink_prop, 'native', MPI_INFO_NULL, ierr)
-  call mpi_file_write_all(fh, arr(istart:iend), nbuff, mpitype_sink_prop, MPI_STATUS_IGNORE, ierr)
+  call mpi_file_set_view(fh, end_bytes, mpi_type_sink_prop, mpi_type_sink_prop, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend), nbuff, mpi_type_sink_prop, MPI_STATUS_IGNORE, ierr)
 #else
   write(fh) arr(istart:iend)
 #endif
@@ -372,5 +424,36 @@ subroutine write_array_1d_char(fh, arr, istart, iend)
 #endif
 
 end subroutine write_array_1d_char
+
+subroutine write_extgrv_array(fh, arr)
+  use grid
+  integer, intent(in) :: fh
+  real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
+  integer :: istart, iend, jstart, jend, kstart, kend
+#ifdef MPI
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer :: nbuff
+#endif
+
+  istart = gis; iend = gie
+  jstart = gjs; jend = gje
+  kstart = gks; kend = gke
+  if (gis==gis_global) istart = gis-2
+  if (gie==gie_global) iend = gie+2
+  if (gjs==gjs_global) jstart = gjs-2
+  if (gje==gje_global) jend = gje+2
+  if (gks==gks_global) kstart = gks-2
+  if (gke==gke_global) kend = gke+2
+
+#ifdef MPI
+  nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpi_subarray_extgrtv, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+#else
+  write(fh) arr(istart:iend,jstart:jend,kstart:kend)
+#endif
+
+end subroutine write_extgrv_array
 
 end module io
