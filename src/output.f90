@@ -22,6 +22,7 @@ subroutine output
  use settings,only:is_test
  use grid,only:tn
  use profiler_mod
+ use mpi_utils,only:barrier_mpi
 
  integer:: wtind
 
@@ -52,6 +53,8 @@ subroutine output
  call stop_clock(wtind)
 
  call profiler_output
+
+ call barrier_mpi
 
  return
 end subroutine output
@@ -1025,6 +1028,7 @@ subroutine write_ptc
  use physval,only:d,e
  use particle_mod
  use gravmod,only:grvphi
+ use mpi_utils,only:myrank
 
  character(len=50):: ptcfile
  integer::ui,i,j,k,n
@@ -1034,6 +1038,7 @@ subroutine write_ptc
 !-----------------------------------------------------------------------------
 
  if(.not.include_particles) return
+ if(myrank/=0) return
 
  call set_file_name('ptc',tn,time,ptcfile)
 
@@ -1108,6 +1113,7 @@ subroutine write_bpt
  use settings,only:include_particles
  use grid,only:tn,time
  use particle_mod
+ use mpi_utils,only:myrank
 
  character(len=50):: bptfile
  integer::ui
@@ -1115,6 +1121,7 @@ subroutine write_bpt
 !-----------------------------------------------------------------------------
 
  if(.not.include_particles) return
+ if(myrank/=0) return
 
  call set_file_name('bpt',tn,time,bptfile)
 
