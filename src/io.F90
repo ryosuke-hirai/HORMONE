@@ -28,7 +28,8 @@ module io
 
   public :: read_var, read_dummy_recordmarker, read_extgrv_array
   public :: write_var, write_dummy_recordmarker, write_extgrv_array
-  public :: open_file_read, close_file, open_file_write
+  public :: write_string, write_string_master
+  public :: open_file_read, close_file, open_file_write, open_file_write_ascii
   private
 
 #ifdef MPI
@@ -453,5 +454,29 @@ subroutine write_extgrv_array(fh, arr)
 #endif
 
 end subroutine write_extgrv_array
+
+subroutine write_string(fh, str)
+  integer, intent(in) :: fh
+  character(len=*), intent(in) :: str
+#ifdef MPI
+  call MPI_File_write_shared(fh, str, len_trim(str), MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+  call MPI_File_write_shared(fh, new_line(''), 1, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+#else
+  write(fh, '(a)') trim(str)
+#endif
+end subroutine write_string
+
+subroutine write_string_master(fh, str)
+  use mpi_utils, only: barrier_mpi, myrank
+  integer, intent(in) :: fh
+  character(len=*), intent(in) :: str
+
+  call barrier_mpi
+  if (myrank==0) then
+    call write_string(fh, str)
+  end if
+  call barrier_mpi
+
+end subroutine write_string_master
 
 end module io
