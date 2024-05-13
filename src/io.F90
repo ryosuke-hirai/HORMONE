@@ -64,25 +64,13 @@ end subroutine get_file_end
 #endif
 
 subroutine open_file_write(filename, fh)
-  use mpi_utils, only: myrank
   character(len=*), intent(in) :: filename
   integer, intent(out) :: fh
-
-  if (myrank == 0) then
-    ! Create new file
-    open(newunit=fh, file=filename, status='replace', form='unformatted', action='write', access='stream')
 #ifdef MPI
-    ! Close the file so that other ranks can open it in MPI mode
-    close(fh)
+  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_RDWR, MPI_INFO_NULL, fh, ierr)
+#else
+  open(newunit=fh, file=filename, status='replace', form='unformatted', action='write', access='stream')
 #endif
-  end if
-
-#ifdef MPI
-  call mpi_barrier(MPI_COMM_WORLD, ierr)
-  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_RDWR + MPI_MODE_APPEND, MPI_INFO_NULL, fh, ierr)
-  call mpi_barrier(MPI_COMM_WORLD, ierr)
-#endif
-
 end subroutine open_file_write
 
 subroutine open_file_read(filename, fh)
