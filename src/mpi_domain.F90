@@ -470,8 +470,23 @@ module mpi_domain
       use grid
       use mpi_utils, only: barrier_mpi
       integer, intent(in) :: i, j, k
+      integer :: il, ir, jl, jr, kl, kr
 
-      if ( is<=i .and. i<=ie .and. js<=j .and. j<=je .and. ks<=k .and. k<=ke ) then
+      il = is
+      ir = ie
+      jl = js
+      jr = je
+      kl = ks
+      kr = ke
+
+      if (is==is_global) il = is_global - 2
+      if (ie==ie_global) ir = ie_global + 2
+      if (js==js_global) jl = js_global - 2
+      if (je==je_global) jr = je_global + 2
+      if (ks==ks_global) kl = ks_global - 2
+      if (ke==ke_global) kr = ke_global + 2
+
+      if ( il<=i .and. i<=ir .and. jl<=j .and. j<=jr .and. kl<=k .and. k<=kr ) then
          is_my_domain = .true.
       else
          is_my_domain = .false.
