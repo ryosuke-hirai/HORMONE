@@ -12,10 +12,12 @@ module mpi_domain
 
    ! Indices for the real and ghost zones involved in the exchange
    ! (2nd index j is for exchange in the j-direction)
-   integer :: l_ghost(3,3), r_ghost(3,3), l_real(3,3), r_real(3,3)
+   integer :: l_ghost_scalar(3,3), r_ghost_scalar(3,3), l_real_scalar(3,3), r_real_scalar(3,3)
+   integer :: l_ghost_spc   (4,3), r_ghost_spc   (4,3), l_real_spc   (4,3), r_real_spc   (4,3)
 
    ! MPI subarray datatype for exchange
-   integer :: subarray(3)
+   integer :: subarray_scalar(3)
+   integer :: subarray_spc(3)
 
    ! Left and right neighbours in each direction
    integer :: left_rank(3), right_rank(3)
@@ -130,10 +132,12 @@ module mpi_domain
 
    subroutine setup_mpi_exchange
 #ifdef MPI
+      use settings
       use grid
 
       ! Indices and sizes for MPI subarray datatypes used for exchange in each direction
-      integer :: sizes(3), subsizes(3), starts(3)
+      integer :: sizes3(3), subsizes3(3), starts3(3)
+      integer :: sizes4(4), subsizes4(4), starts4(4)
       integer :: d
       integer :: ierr
 
@@ -158,44 +162,89 @@ module mpi_domain
          call MPI_Cart_shift(cart_comm, d-1, 1, left_rank(d), right_rank(d), ierr)
       enddo
 
+      ! Scalar quantities ---------------------------------------------------------------------------------------------
+
       ! Size of the array on this task
-      sizes = [ie - is + 5, je - js + 5, ke - ks + 5]
+      sizes3 = [ie - is + 5, je - js + 5, ke - ks + 5]
 
       ! --- x-1 direction ---
-      subsizes = [2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
-      starts   = [0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray(1), ierr)
-      call MPI_Type_commit(subarray(1), ierr)
+      subsizes3 = [2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
+      starts3   = [0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
+      call MPI_Type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(1), ierr)
+      call MPI_Type_commit(subarray_scalar(1), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real (:,1) = [is,   js-2, ks-2]
-      r_real (:,1) = [ie-1, js-2, ks-2]
-      l_ghost(:,1) = [is-2, js-2, ks-2]
-      r_ghost(:,1) = [ie+1, js-2, ks-2]
+      l_real_scalar (:,1) = [is,   js-2, ks-2]
+      r_real_scalar (:,1) = [ie-1, js-2, ks-2]
+      l_ghost_scalar(:,1) = [is-2, js-2, ks-2]
+      r_ghost_scalar(:,1) = [ie+1, js-2, ks-2]
 
       ! --- x-2 direction ---
-      subsizes = [ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
-      starts   = [2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray(2), ierr)
-      call MPI_Type_commit(subarray(2), ierr)
+      subsizes3 = [ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
+      starts3   = [2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
+      call MPI_Type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(2), ierr)
+      call MPI_Type_commit(subarray_scalar(2), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real (:,2) = [is-2, js,   ks-2]
-      r_real (:,2) = [is-2, je-1, ks-2]
-      l_ghost(:,2) = [is-2, js-2, ks-2]
-      r_ghost(:,2) = [is-2, je+1, ks-2]
+      l_real_scalar (:,2) = [is-2, js,   ks-2]
+      r_real_scalar (:,2) = [is-2, je-1, ks-2]
+      l_ghost_scalar(:,2) = [is-2, js-2, ks-2]
+      r_ghost_scalar(:,2) = [is-2, je+1, ks-2]
 
       ! --- x-3 direction ---
-      subsizes = [ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
-      starts   = [2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
-      call MPI_Type_create_subarray(3, sizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_REAL8, subarray(3), ierr)
-      call MPI_Type_commit(subarray(3), ierr)
+      subsizes3 = [ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
+      starts3   = [2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
+      call MPI_Type_create_subarray(3, sizes3, subsizes3, starts3, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_scalar(3), ierr)
+      call MPI_Type_commit(subarray_scalar(3), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real (:,3) = [is-2, js-2, ks  ]
-      r_real (:,3) = [is-2, js-2, ke-1]
-      l_ghost(:,3) = [is-2, js-2, ks-2]
-      r_ghost(:,3) = [is-2, js-2, ke+1]
+      l_real_scalar (:,3) = [is-2, js-2, ks  ]
+      r_real_scalar (:,3) = [is-2, js-2, ke-1]
+      l_ghost_scalar(:,3) = [is-2, js-2, ks-2]
+      r_ghost_scalar(:,3) = [is-2, js-2, ke+1]
+
+      ! Species quantities --------------------------------------------------------------------------------------------
+
+      if (compswitch >= 2) then
+         ! Size of the array on this task
+         sizes4 = [spn, ie - is + 5, je - js + 5, ke - ks + 5]
+
+         ! --- x-1 direction ---
+         subsizes4 = [spn, 2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
+         starts4   = [0, 0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
+         call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(1), ierr)
+         call MPI_Type_commit(subarray_spc(1), ierr)
+
+         ! Starting indices of the real and ghost zones involved in the exchange
+         l_real_spc (:,1) = [1, is,   js-2, ks-2]
+         r_real_spc (:,1) = [1, ie-1, js-2, ks-2]
+         l_ghost_spc(:,1) = [1, is-2, js-2, ks-2]
+         r_ghost_spc(:,1) = [1, ie+1, js-2, ks-2]
+
+         ! --- x-2 direction ---
+         subsizes4 = [spn, ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
+         starts4   = [0, 2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
+         call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(2), ierr)
+         call MPI_Type_commit(subarray_spc(2), ierr)
+
+         ! Starting indices of the real and ghost zones involved in the exchange
+         l_real_spc (:,2) = [1, is-2, js,   ks-2]
+         r_real_spc (:,2) = [1, is-2, je-1, ks-2]
+         l_ghost_spc(:,2) = [1, is-2, js-2, ks-2]
+         r_ghost_spc(:,2) = [1, is-2, je+1, ks-2]
+
+         ! --- x-3 direction ---
+         subsizes4 = [spn, ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
+         starts4   = [0, 2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
+         call MPI_Type_create_subarray(3, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(3), ierr)
+         call MPI_Type_commit(subarray_spc(3), ierr)
+
+         ! Starting indices of the real and ghost zones involved in the exchange
+         l_real_spc (:,3) = [1, is-2, js-2, ks  ]
+         r_real_spc (:,3) = [1, is-2, js-2, ke-1]
+         l_ghost_spc(:,3) = [1, is-2, js-2, ks-2]
+         r_ghost_spc(:,3) = [1, is-2, js-2, ke+1]
+      endif
 
 #endif
    end subroutine setup_mpi_exchange
@@ -226,18 +275,16 @@ module mpi_domain
       call exchange_scalar(d)
       call exchange_scalar(p)
       call exchange_scalar(phi)
-      do i = 1, spn
-         call exchange_scalar(spc(i,:,:,:)) ! TODO: This is inefficient, but works for now
-      enddo
       call exchange_scalar(v1)
       call exchange_scalar(v2)
       call exchange_scalar(v3)
       call exchange_scalar(b1)
       call exchange_scalar(b2)
       call exchange_scalar(b3)
-
       call exchange_scalar(e)
       call exchange_scalar(eint)
+
+      if (compswitch >= 2) call exchange_spc(spc)
 
       call stop_clock(wtmpi)
 
@@ -251,41 +298,97 @@ module mpi_domain
 #ifdef MPI
       integer :: d
       integer :: ierr
-      integer :: i, n
+      integer :: i
 
       do d = 1, 3
-         n = 1
-         if (d == 1) then
-            if (is_global == ie_global) cycle
-            if (is==is_global .and. ie==ie_global) cycle
-            if (is == ie) n = 2
-         else if (d == 2) then
-            if (js_global == je_global) cycle
-            if (js==js_global .and. je==je_global) cycle
-            if (js == je) n = 2
-         else if (d == 3) then
-            if (ks_global == ke_global) cycle
-            if (ks==ks_global .and. ke==ke_global) cycle
-            if (ks == ke) n = 2
-         endif
+         do i = 1, n_exchange(d)
+            ! Send left real cells to left neighbour's right ghost cells
+            call MPI_Sendrecv(val(l_real_scalar (1,d), l_real_scalar (2,d), l_real_scalar (3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
+                              val(r_ghost_scalar(1,d), r_ghost_scalar(2,d), r_ghost_scalar(3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
 
-         ! If the domain is only one cell wide in this direction, exchange twice
-         ! so that the ghost cells (two deep) are propagated correctly
-         do i = 1, n
-
-         ! Send left real cells to left neighbour's right ghost cells
-         call MPI_Sendrecv(val(l_real (1,d), l_real (2,d), l_real (3,d)), 1, subarray(d), left_rank (d), 0, &
-                           val(r_ghost(1,d), r_ghost(2,d), r_ghost(3,d)), 1, subarray(d), right_rank(d), 0, &
-                           cart_comm, MPI_STATUS_IGNORE, ierr)
-
-         ! Send right real cells to right neighbour's left ghost cells
-         call MPI_Sendrecv(val(r_real (1,d), r_real (2,d), r_real (3,d)), 1, subarray(d), right_rank(d), 0, &
-                           val(l_ghost(1,d), l_ghost(2,d), l_ghost(3,d)), 1, subarray(d), left_rank (d), 0, &
-                           cart_comm, MPI_STATUS_IGNORE, ierr)
+            ! Send right real cells to right neighbour's left ghost cells
+            call MPI_Sendrecv(val(r_real_scalar (1,d), r_real_scalar (2,d), r_real_scalar (3,d)), 1, subarray_scalar(d), right_rank(d), 0, &
+                              val(l_ghost_scalar(1,d), l_ghost_scalar(2,d), l_ghost_scalar(3,d)), 1, subarray_scalar(d), left_rank (d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
 #endif
    end subroutine exchange_scalar
+
+   subroutine exchange_spc(val)
+      use settings
+      use grid
+
+      real(8), intent(inout) :: val(1:spn,is-2:ie+2,js-2:je+2,ks-2:ke+2)
+
+#ifdef MPI
+      integer :: d
+      integer :: ierr
+      integer :: i
+
+      do d = 1, 3
+         do i = 1, n_exchange(d)
+            ! Send left real cells to left neighbour's right ghost cells
+            call MPI_Sendrecv(val(l_real_spc (1,d), l_real_spc (2,d), l_real_spc (3,d), l_real_spc (4,d)), 1, subarray_spc(d), left_rank (d), 0, &
+                              val(r_ghost_spc(1,d), r_ghost_spc(2,d), r_ghost_spc(3,d), r_ghost_spc(4,d)), 1, subarray_spc(d), right_rank(d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
+
+            ! Send right real cells to right neighbour's left ghost cells
+            call MPI_Sendrecv(val(r_real_spc (1,d), r_real_spc (2,d), r_real_spc (3,d), r_real_spc (4,d)), 1, subarray_spc(d), right_rank(d), 0, &
+                              val(l_ghost_spc(1,d), l_ghost_spc(2,d), l_ghost_spc(3,d), l_ghost_spc(4,d)), 1, subarray_spc(d), left_rank (d), 0, &
+                              cart_comm, MPI_STATUS_IGNORE, ierr)
+         enddo
+      enddo
+#endif
+   end subroutine exchange_spc
+
+   function n_exchange(d) result(n)
+      use settings
+      use grid
+      integer, intent(in) :: d
+      integer :: n
+
+      ! Returns the number of exchanges needed in direction d
+      ! - If the dimension is inactive, return 0
+      ! - If the task owns the entire domain in this direction, return 0
+      ! - If the domain is only one cell wide in this direction, return 2
+      !   so that the ghost cells (two deep) are propagated correctly
+      ! - Otherwise, return 1
+
+      if (d == 1) then
+         if (.not. solve_i) then
+            n = 0
+         elseif (is==is_global .and. ie==ie_global) then
+            n = 0
+         elseif (is == ie) then
+            n = 2
+         else
+            n = 1
+         endif
+      else if (d == 2) then
+         if (.not. solve_j) then
+            n = 0
+         elseif (js==js_global .and. je==je_global) then
+            n = 0
+         elseif (js == je) then
+            n = 2
+         else
+            n = 1
+         endif
+      else if (d == 3) then
+         if (.not. solve_k) then
+            n = 0
+         elseif (ks==ks_global .and. ke==ke_global) then
+            n = 0
+         elseif (ks == ke) then
+            n = 2
+         else
+            n = 1
+         endif
+      endif
+
+   end function n_exchange
 
    subroutine setup_mpi_io
 #ifdef MPI
