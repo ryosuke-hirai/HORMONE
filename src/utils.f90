@@ -235,26 +235,55 @@ end subroutine geometrical_series
 ! PURPOSE: To calculate 1D gravitational potential
 
 subroutine gravpot1d
-
- use grid,only:is,ie,js,je,ks,ke,x1,dxi1,dvol
+ use grid
  use constants,only:pi,G
  use physval,only:d
  use gravmod,only:grvphi,mc
+ use mpi_utils,only:allreduce_mpi
+ real(8) :: num_n, denom_n, ishell
+ integer:: i,n,j,k
 
- integer:: i,n
+ ! Loop over each shell
+ do i = is_global, ie_global-1
 
-!-----------------------------------------------------------------------------
+  ! Add up contributions from all exterior shells
+  ishell = 0d0
+  do n = i+1, ie_global
 
- do i = is, ie-1
-  grvphi(i,js:je,ks:ke) = 0d0
-  do n = i+1, ie
-   grvphi(i,js:je,ks:ke) = grvphi(i,js:je,ks:ke) &
-                         - sum(d(n,js:je,ks:ke)*dvol(n,js:je,ks:ke))&
-                          /sum(dvol(n,js:je,ks:ke))*x1(n)*dxi1(n)
+    num_n = 0d0
+    denom_n = 0d0
+
+    ! Loop over each cell in the shell, adding to counters if the cell is in the current mpi task
+    if (is<=n .and. n<=ie) then
+      do j = js, je
+        do k = ks, ke
+          num_n = num_n + d(n,j,k)*dvol(n,j,k)
+          denom_n = denom_n + dvol(n,j,k)
+        end do
+      end do
+    end if
+
+    ! Add up counters across tasks
+    call allreduce_mpi('sum',num_n)
+    call allreduce_mpi('sum',denom_n)
+
+    ! Add the contribution from shell n
+    ! (This should now be the same value on each MPI task...)
+    ishell = ishell - num_n/denom_n * x1(n)*dxi1(n)
+
   end do
-  grvphi(i,js:je,ks:ke) = G*(-mc(i)/x1(i)+4d0*pi*grvphi(i,js:je,ks:ke))
+
+  ! If the cell(s) is in the current MPI task, update grvphi.
+  if (is<=i .and. i<=ie) then
+    grvphi(i,js:je,ks:ke) = G*(-mc(i)/x1(i)+4d0*pi*ishell)
+  endif
+
  end do
- grvphi(ie,js:je,ks:ke) = -G*mc(ie)/x1(ie)
+
+ ! Outermost shell
+ if (ie==ie_global) then
+    grvphi(ie,js:je,ks:ke) = -G*mc(ie)/x1(ie)
+ end if
 
  return
 end subroutine gravpot1d

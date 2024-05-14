@@ -756,7 +756,7 @@ subroutine write_plt
  integer:: i,j,k,n,ui,columns
 
 ! Calculate gravitational potential here if spherical
- if(gravswitch==1) call gravpot1d    ! TODO: MPI
+ if(gravswitch==1) call gravpot1d
 ! Calculate shock position if required
  if(write_shock)call shockfind
 
