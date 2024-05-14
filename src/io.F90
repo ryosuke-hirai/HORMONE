@@ -455,25 +455,46 @@ subroutine write_extgrv_array(fh, arr)
 
 end subroutine write_extgrv_array
 
-subroutine write_string(fh, str)
+subroutine write_string(fh, str, advance)
   integer, intent(in) :: fh
   character(len=*), intent(in) :: str
+  logical, optional, intent(in) :: advance
+  logical :: adv
+
+  if (present(advance)) then
+    adv = advance
+  else
+    adv = .true.
+  end if
+
 #ifdef MPI
   call MPI_File_write_shared(fh, str, len_trim(str), MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
-  call MPI_File_write_shared(fh, new_line(''), 1, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+  if (adv) call MPI_File_write_shared(fh, new_line(''), 1, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
 #else
-  write(fh, '(a)') trim(str)
+  if (adv) then
+    write(fh, '(a)') trim(str)
+  else
+    write(fh, '(a)', advance='no') trim(str)
+  end if
 #endif
 end subroutine write_string
 
-subroutine write_string_master(fh, str)
+subroutine write_string_master(fh, str, advance)
   use mpi_utils, only: barrier_mpi, myrank
   integer, intent(in) :: fh
   character(len=*), intent(in) :: str
+  logical, optional, intent(in) :: advance
+  logical :: adv
+
+  if (present(advance)) then
+    adv = advance
+  else
+    adv = .true.
+  end if
 
   call barrier_mpi
   if (myrank==0) then
-    call write_string(fh, str)
+    call write_string(fh, str, advance=adv)
   end if
   call barrier_mpi
 
