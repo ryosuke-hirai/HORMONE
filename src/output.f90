@@ -744,33 +744,19 @@ end subroutine write_bin
 ! PURPOSE: To output ascii file for plotting
 
 subroutine write_plt
- ! TODO: MPI
-
  use settings
- use grid,only:is,ie,js,je,ks,ke,time,tn,dim
+ use grid
  use utils,only:gravpot1d
  use shockfind_mod,only:shockfind
- use mpi_utils, only:nprocs,myrank
-
- implicit none
-
+ use mpi_utils, only:myrank
+ use io, only:open_file_write_ascii, write_string, write_string_master, close_file
  character(len=50):: pltfile
  character(len=20):: header(50)='aaa',forma,forme,formi
+ character(len=200):: str
  integer:: i,j,k,n,ui,columns
 
- if (nprocs>1) then
-    if (myrank==0) then
-      write(*,'(60("*"))')
-      print*, 'WARNING: write_plt not implemented for nprocs>1'
-      write(*,'(60("*"))')
-    endif
-    return
- endif
-
-!-----------------------------------------------------------------------------
-
 ! Calculate gravitational potential here if spherical
- if(gravswitch==1) call gravpot1d
+ if(gravswitch==1) call gravpot1d    ! TODO: MPI
 ! Calculate shock position if required
  if(write_shock)call shockfind
 
@@ -781,41 +767,44 @@ subroutine write_plt
 
 ! Open file
  call set_file_name('plt',tn,time,pltfile)
- open(newunit=ui,file = pltfile, status='replace')
+ call open_file_write_ascii(pltfile,ui)
 
 ! Write time and time step
- write(ui,'(a,i7,a,1PE12.4e2,a)')&
+ write(str,'(a,i7,a,1PE12.4e2,a)')&
   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
+ call write_string_master(ui,str)
 
 ! Decide what quantities to write
  call get_header(header,columns)
  do n = 1, columns
-  write(ui,formi,advance='no') n+2*dim+1
+  write(str,formi) n+2*dim+1
+  call write_string_master(ui,str,advance=.false.)
  end do
- write(ui,'()')
+ call write_string_master(ui, '')
  do n = 1, columns
-  write(ui,forma,advance="no") trim(adjustl(header(n)))
+  write(str,forma) trim(adjustl(header(n)))
+  call write_string_master(ui,str,advance=.false.)
  end do
- write(ui,'()')
+ call write_string_master(ui, '')
 
 ! Write file
  select case (dim)
 ! 1D outputs
  case(1)
 
-  if(ie>is)then
-   j=js;k=ks
-   do i = is, ie
+  if(ie_global>is_global)then
+   j=js_global;k=ks_global
+   do i = is_global, ie_global
     call write_val(ui,i,j,k,forme,header)
    end do
-  elseif(je>js)then
-   i=is;k=ks
-   do j = js, je
+  elseif(je_global>js_global)then
+   i=is_global;k=ks_global
+   do j = js_global, je_global
     call write_val(ui,i,j,k,forme,header)
    end do
-  elseif(ke>ks)then
-   i=is;j=js
-   do k = ks, ke
+  elseif(ke_global>ks_global)then
+   i=is_global;j=js_global
+   do k = ks_global, ke_global
     call write_val(ui,i,j,k,forme,header)
    end do
   end if
@@ -823,81 +812,81 @@ subroutine write_plt
 ! 2D outputs
  case(2)
 
-  if(ke==ks)then! For 2D Cartesian, polar or axisymmetrical spherical
-   k=ks
+  if(ke_global==ks_global)then! For 2D Cartesian, polar or axisymmetrical spherical
+   k=ks_global
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=js
-    do i = is, ie
+    j=js_global
+    do i = is_global, ie_global
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end if
 
-   do j = js, je
-    do i = is, ie
+   do j = js_global, je_global
+    do i = is_global, ie_global
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
 
 ! output coordinate axis if cylindrical or spherical coordinates
    if(crdnt==1.or.crdnt==2)then
-    j=je
-    do i = is, ie
+    j=je_global
+    do i = is_global, ie_global
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end if
 
-  elseif(je==js)then! mainly for 2D Cartesian or axisymmetrical cylindrical
-   j=js
-   do k = ks, ke, outres
+  elseif(je_global==js_global)then! mainly for 2D Cartesian or axisymmetrical cylindrical
+   j=js_global
+   do k = ks_global, ke_global, outres
 ! writing inner boundary for polar coordinates
-    if(crdnt==1.or.crdnt==2)call write_val(ui,is,j,k,forme,header)
-    do i = is, ie, outres
+    if(crdnt==1.or.crdnt==2)call write_val(ui,is_global,j,k,forme,header)
+    do i = is_global, ie_global, outres
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
 
-  elseif(ie==is)then! For 2D Cartesian
+  elseif(ie_global==is_global)then! For 2D Cartesian
 !CAUTION: Not designed for cylindrical or spherical yet
-   i=is
-   do k = ks, ke
-    do j = js, je
+   i=is_global
+   do k = ks_global, ke_global
+    do j = js_global, je_global
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end if
 
  case(3)
 
   if(crdnt==2)then
-   do j = je, je
-    do i = is, ie
-     call write_val(ui,i,j,ks,forme,header)
+   do j = je_global, je_global
+    do i = is_global, ie_global
+     call write_val(ui,i,j,ks_global,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end if
 
-  do k = ks, ke
-   do j = je, je
-    do i = is, ie
+  do k = ks_global, ke_global
+   do j = je_global, je_global
+    do i = is_global, ie_global
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end do
 
   if(crdnt==2)then
-   do j = je, je
-    do i = is, ie
-     call write_val(ui,i,j,ke,forme,header)
+   do j = je_global, je_global
+    do i = is_global, ie_global
+     call write_val(ui,i,j,ke_global,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
   end if
 
@@ -905,9 +894,9 @@ subroutine write_plt
   stop 'Something wrong with dimension'
  end select
 
- close(ui)
+ call close_file(ui)
 
- print*,"Outputted: ",trim(pltfile)
+ if (myrank==0) print*,"Outputted: ",trim(pltfile)
 
 !othfile----------------------------------------------------------------------
 
@@ -915,60 +904,63 @@ subroutine write_plt
 
 ! Open file
   call set_file_name('oth',tn,time,pltfile)
-  open(newunit=ui,file = pltfile, status='replace')
+  call open_file_write_ascii(pltfile,ui)
 
 ! Write time and time step
-  write(ui,'(a,i7,a,1PE12.4e2,a)')&
+  write(str,'(a,i7,a,1PE12.4e2,a)')&
    '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
+  call write_string_master(ui,str)
 ! Decide what quantities to write
   call get_header(header,columns)
   do n = 1, columns
-   write(ui,formi,advance='no') n+2*dim+1
+   write(str,formi) n+2*dim+1
+   call write_string_master(ui,str,advance=.false.)
   end do
-  write(ui,'()')
+  call write_string_master(ui, '')
   do n = 1, columns
-   write(ui,forma,advance="no") trim(adjustl(header(n)))
+   write(str,forma) trim(adjustl(header(n)))
+   call write_string_master(ui,str,advance=.false.)
   end do
-  write(ui,'()')
+  call write_string_master(ui, '')
 
   if(crdnt==2)then
 
-   k = ks
-   do i = is, ie
-    call write_val(ui,i,je,k,forme,header)
+   k = ks_global
+   do i = is_global, ie_global
+    call write_val(ui,i,je_global,k,forme,header)
    end do
-   write(ui,'()')
-   do j = je, js, -1
-    do i = is, ie
+   call write_string_master(ui, '')
+   do j = je_global, js_global, -1
+    do i = is_global, ie_global
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
-   do i = is, ie
-    call write_val(ui,i,js,k,forme,header)
+   do i = is_global, ie_global
+    call write_val(ui,i,js_global,k,forme,header)
    end do
-   write(ui,'()')
+   call write_string_master(ui, '')
 
-   k = (ks+ke-1)/2
-   do i = is, ie
-    call write_val(ui,i,js,k,forme,header)
+   k = (ks_global+ke_global-1)/2
+   do i = is_global, ie_global
+    call write_val(ui,i,js_global,k,forme,header)
    end do
-   write(ui,'()')
-   do j = js, je
-    do i = is, ie
+   call write_string_master(ui, '')
+   do j = js_global, je_global
+    do i = is_global, ie_global
      call write_val(ui,i,j,k,forme,header)
     end do
-    write(ui,'()')
+    call write_string_master(ui, '')
    end do
-   do i = is, ie
-    call write_val(ui,i,je,k,forme,header)
+   do i = is_global, ie_global
+    call write_val(ui,i,je_global,k,forme,header)
    end do
 
   end if
 
-  close(ui)
+  call close_file(ui)
 
-  print*,"Outputted: ",trim(pltfile)
+  if (myrank==0) print*,"Outputted: ",trim(pltfile)
 
  end if
 
@@ -1393,18 +1385,19 @@ end subroutine add_column
 ! PURPOSE: To write a single row of values
 
 subroutine write_val(ui,i,j,k,forme,header)
-
  use settings,only:spn
  use physval
  use gravmod,only:grvphi,extgrv,totphi
-
- implicit none
+ use mpi_domain,only:is_my_domain
+ use io,only:write_string
 
  integer,intent(in):: ui,i,j,k
  character(len=*),intent(in):: forme, header(:)
  integer:: n, nn
 
 !-----------------------------------------------------------------------------
+
+ if (.not.is_my_domain(i,j,k)) return
 
  do n = 1, 50
   select case(header(n))
@@ -1439,7 +1432,7 @@ subroutine write_val(ui,i,j,k,forme,header)
   case('shock')!shock position
    call write_anyval(ui,forme,dble(shock(i,j,k)))
   case('aaa')!end of line
-   write(ui,'()')
+   call write_string(ui,'')
    exit
   case default!chemical composition
    do nn = 1, spn
@@ -1460,17 +1453,19 @@ end subroutine write_val
 ! PURPOSE: To write one value
 
 subroutine write_anyval(ui,forme,val)
-
+ use io, only:write_string
  integer,intent(in):: ui
  character(len=*),intent(in):: forme
  real(8),intent(in):: val
+ character(len=30):: str
 !-----------------------------------------------------------------------------
 
  if(abs(val)>=1d-99)then
-  write(ui,forme,advance='no')val
+  write(str,forme)val
  else
-  write(ui,forme,advance='no')0d0
+  write(str,forme)0d0
  end if
+ call write_string(ui,str,advance=.false.)
 
 return
 end subroutine write_anyval
