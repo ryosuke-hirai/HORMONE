@@ -28,7 +28,8 @@ module io
 
   public :: read_var, read_dummy_recordmarker, read_extgrv_array
   public :: write_var, write_dummy_recordmarker, write_extgrv_array
-  public :: open_file_read, close_file, open_file_write
+  public :: write_string, write_string_master
+  public :: open_file_read, close_file, open_file_write, open_file_write_ascii
   private
 
 #ifdef MPI
@@ -64,26 +65,24 @@ end subroutine get_file_end
 #endif
 
 subroutine open_file_write(filename, fh)
-  use mpi_utils, only: myrank
   character(len=*), intent(in) :: filename
   integer, intent(out) :: fh
-
-  if (myrank == 0) then
-    ! Create new file
-    open(newunit=fh, file=filename, status='replace', form='unformatted', action='write', access='stream')
 #ifdef MPI
-    ! Close the file so that other ranks can open it in MPI mode
-    close(fh)
+  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_RDWR, MPI_INFO_NULL, fh, ierr)
+#else
+  open(newunit=fh, file=filename, status='replace', form='unformatted', action='write', access='stream')
 #endif
-  end if
-
-#ifdef MPI
-  call mpi_barrier(MPI_COMM_WORLD, ierr)
-  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_RDWR + MPI_MODE_APPEND, MPI_INFO_NULL, fh, ierr)
-  call mpi_barrier(MPI_COMM_WORLD, ierr)
-#endif
-
 end subroutine open_file_write
+
+subroutine open_file_write_ascii(filename, fh)
+  character(len=*), intent(in) :: filename
+  integer, intent(out) :: fh
+#ifdef MPI
+  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_RDWR, MPI_INFO_NULL, fh, ierr)
+#else
+  open(newunit=fh, file=filename, status='replace', form='formatted', action='write')
+#endif
+end subroutine open_file_write_ascii
 
 subroutine open_file_read(filename, fh)
   character(len=*), intent(in) :: filename
@@ -455,5 +454,50 @@ subroutine write_extgrv_array(fh, arr)
 #endif
 
 end subroutine write_extgrv_array
+
+subroutine write_string(fh, str, advance)
+  integer, intent(in) :: fh
+  character(len=*), intent(in) :: str
+  logical, optional, intent(in) :: advance
+  logical :: adv
+
+  if (present(advance)) then
+    adv = advance
+  else
+    adv = .true.
+  end if
+
+#ifdef MPI
+  call MPI_File_write_shared(fh, str, len_trim(str), MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+  if (adv) call MPI_File_write_shared(fh, new_line(''), 1, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+#else
+  if (adv) then
+    write(fh, '(a)') trim(str)
+  else
+    write(fh, '(a)', advance='no') trim(str)
+  end if
+#endif
+end subroutine write_string
+
+subroutine write_string_master(fh, str, advance)
+  use mpi_utils, only: barrier_mpi, myrank
+  integer, intent(in) :: fh
+  character(len=*), intent(in) :: str
+  logical, optional, intent(in) :: advance
+  logical :: adv
+
+  if (present(advance)) then
+    adv = advance
+  else
+    adv = .true.
+  end if
+
+  call barrier_mpi
+  if (myrank==0) then
+    call write_string(fh, str, advance=adv)
+  end if
+  call barrier_mpi
+
+end subroutine write_string_master
 
 end module io
