@@ -141,6 +141,10 @@ contains
     else
       scale(is:ie,js:je,ks:ke,n) = abs(valorg(is:ie,js:je,ks:ke,n))
     end if
+
+    ! If the value is smaller than epsilon, set the scale to epsilon
+    scale(is:ie,js:je,ks:ke,n) = max(scale(is:ie,js:je,ks:ke,n),epsilon(valorg(is:ie,js:je,ks:ke,n)))
+
   end do
 
 ! Calculate max norm errors
