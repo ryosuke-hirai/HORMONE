@@ -46,9 +46,9 @@ contains
  subroutine test(passed)
 
   use utils,only:isequal
-  use mpi_utils,only:myrank,allreduce_mpi
+  use mpi_utils,only:myrank
   use settings,only:simtype,mag_on,test_tol,compswitch,spn
-  use grid,only:is,ie,js,je,ks,ke,dim,dvol
+  use grid,only:is,ie,js,je,ks,ke,dim
   use physval
   use gravmod
   use readbin_mod,only:readbin
@@ -58,16 +58,14 @@ contains
   integer,parameter:: nn = 10
   character(40):: testfile
   real(8),allocatable:: error(:)
-  real(8),allocatable,dimension(:,:,:,:):: val,valorg
+  real(8),allocatable,dimension(:,:,:,:):: val,valorg,scale
   real(8),allocatable,dimension(:,:,:):: vmag,bmag
-  real(8),allocatable,dimension(:):: scale
-  real(8):: num,den
   character(len=10),allocatable:: label(:)
 
 !-----------------------------------------------------------------------------
 
-  allocate(val(is:ie,js:je,ks:ke,nn+spn),label(1:nn+spn),error(1:nn+spn),scale(1:nn+spn))
-  allocate(valorg,mold=val)
+  allocate(val(is:ie,js:je,ks:ke,nn+spn),label(1:nn+spn),error(1:nn+spn))
+  allocate(valorg,scale,mold=val)
   allocate(vmag(is:ie,js:je,ks:ke),bmag(is:ie,js:je,ks:ke))
   error = 0d0
 
@@ -133,22 +131,16 @@ contains
   vmag(is:ie,js:je,ks:ke) = sqrt(v1(is:ie,js:je,ks:ke)**2+v2(is:ie,js:je,ks:ke)**2+v3(is:ie,js:je,ks:ke)**2)
   bmag(is:ie,js:je,ks:ke) = sqrt(b1(is:ie,js:je,ks:ke)**2+b2(is:ie,js:je,ks:ke)**2+b3(is:ie,js:je,ks:ke)**2)
 
-  ! Typical scale (volumted weighted RMS) of the variable across the whole grid
+  ! Magnitude of this quantity used to normalise the error
   do n = 1, nn+spn
     ! If the variable is a component of velocity or magnetic field, use the magnitude
     if (n>=3.and.n<=5) then
-      num = sum(vmag(is:ie,js:je,ks:ke)**2*dvol(is:ie,js:je,ks:ke))
+      scale(is:ie,js:je,ks:ke,n) = vmag(is:ie,js:je,ks:ke)
     else if (n>=6.and.n<=8) then
-      num = sum(bmag(is:ie,js:je,ks:ke)**2*dvol(is:ie,js:je,ks:ke))
+      scale(is:ie,js:je,ks:ke,n) = bmag(is:ie,js:je,ks:ke)
     else
-      num = sum(valorg(is:ie,js:je,ks:ke,n)**2*dvol(is:ie,js:je,ks:ke))
+      scale(is:ie,js:je,ks:ke,n) = abs(valorg(is:ie,js:je,ks:ke,n))
     end if
-   den = sum(dvol(is:ie,js:je,ks:ke))
-   call allreduce_mpi('sum', num)
-   call allreduce_mpi('sum', den)
-   if(isequal(num, 0d0)) num = epsilon(num)
-   scale(n) = sqrt(num/den)
-   print*, 'scale(',n,') = ', scale(n)
   end do
 
 ! Calculate max norm errors
@@ -191,8 +183,7 @@ contains
  end function testfilename
 
  function max_norm_error(var,var0,scale) result(norm)
-  real(8),dimension(:,:,:),intent(in):: var,var0
-  real(8),intent(in):: scale
+  real(8),dimension(:,:,:),intent(in):: var,var0,scale
   real(8):: norm, pos
 
   pos = maxval(var)*minval(var)
@@ -207,8 +198,7 @@ contains
 
  function L1_norm_error(var,var0,scale) result(norm)
   use grid,only:is,ie,js,je,ks,ke,dvol
-  real(8),dimension(:,:,:),intent(in):: var,var0
-  real(8),intent(in):: scale
+  real(8),dimension(:,:,:),intent(in):: var,var0,scale
   real(8):: norm, pos
   real(8),allocatable:: w(:,:,:)
 
@@ -229,8 +219,7 @@ contains
  function L2_norm_error(var,var0,scale) result(norm)
   use mpi_utils,only:allreduce_mpi
   use grid,only:is,ie,js,je,ks,ke,dvol
-  real(8),dimension(:,:,:),intent(in):: var,var0
-  real(8),intent(in):: scale
+  real(8),dimension(:,:,:),intent(in):: var,var0,scale
   real(8):: norm, pos, jump, base, denom, floor
   real(8),allocatable:: relerr(:,:,:),w(:,:,:)
   integer:: i,j,k,il,jl,kl,iu,ju,ku,disco_range
@@ -259,9 +248,9 @@ contains
      denom = maxval(abs(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku)))
      floor = 0d0
      if(pos<=0d0)then ! Use floor value if variable is allowed to be zero
-      base = max(abs(base),scale)
-      denom = max(denom,scale)
-      floor = scale
+      base = max(abs(base),scale(i,j,k))
+      denom = max(denom,scale(i,j,k))
+      floor = scale(i,j,k)
      end if
      jump = maxval(ratio(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku),base,floor))
 
@@ -298,15 +287,13 @@ contains
 
   interface
    real(8) function f(var,var0,scale_n)
-    real(8),dimension(:,:,:),intent(in):: var,var0
-    real(8),intent(in):: scale_n
+    real(8),dimension(:,:,:),intent(in):: var,var0,scale_n
     real(8):: norm
    end function f
   end interface
   character(len=*),intent(in):: name
   character(len=10),intent(in):: label(:)
-  real(8),allocatable,intent(inout),dimension(:,:,:,:):: val,valorg
-  real(8),intent(in):: scale(:)
+  real(8),allocatable,intent(inout),dimension(:,:,:,:):: val,valorg,scale
   real(8),intent(inout)::error(:)
   integer:: n
 
@@ -315,7 +302,7 @@ contains
   if (myrank == 0) print*,trim(name),' norm errors:'
   do n = 1, size(error)
    if(trim(label(n))=='aaa')cycle
-   error(n) = f(val(:,:,:,n),valorg(:,:,:,n),scale(n))
+   error(n) = f(val(:,:,:,n),valorg(:,:,:,n),scale(:,:,:,n))
    if (myrank == 0) print*,'  ',label(n),' =',error(n)
   end do
 
