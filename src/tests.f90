@@ -45,6 +45,7 @@ contains
 
  subroutine test(passed)
 
+  use utils,only:isequal
   use mpi_utils,only:myrank
   use settings,only:simtype,mag_on,test_tol,compswitch,spn
   use grid,only:is,ie,js,je,ks,ke,dim
@@ -57,13 +58,15 @@ contains
   integer,parameter:: nn = 10
   character(40):: testfile
   real(8),allocatable:: error(:)
-  real(8),allocatable,dimension(:,:,:,:):: val,valorg
+  real(8),allocatable,dimension(:,:,:,:):: val,valorg,scale
+  real(8),allocatable,dimension(:,:,:):: vmag,bmag
   character(len=10),allocatable:: label(:)
 
 !-----------------------------------------------------------------------------
 
   allocate(val(is:ie,js:je,ks:ke,nn+spn),label(1:nn+spn),error(1:nn+spn))
-  allocate(valorg,mold=val)
+  allocate(valorg,scale,mold=val)
+  allocate(vmag(is:ie,js:je,ks:ke),bmag(is:ie,js:je,ks:ke))
   error = 0d0
 
   label( 1) = 'density'
@@ -124,14 +127,34 @@ contains
    end do
   end if
 
+  ! Calculate the magnitude of velocity and magnetic field
+  vmag(is:ie,js:je,ks:ke) = sqrt(v1(is:ie,js:je,ks:ke)**2+v2(is:ie,js:je,ks:ke)**2+v3(is:ie,js:je,ks:ke)**2)
+  bmag(is:ie,js:je,ks:ke) = sqrt(b1(is:ie,js:je,ks:ke)**2+b2(is:ie,js:je,ks:ke)**2+b3(is:ie,js:je,ks:ke)**2)
+
+  ! Magnitude of this quantity used to normalise the error
+  do n = 1, nn+spn
+    ! If the variable is a component of velocity or magnetic field, use the magnitude
+    if (n>=3.and.n<=5) then
+      scale(is:ie,js:je,ks:ke,n) = vmag(is:ie,js:je,ks:ke)
+    else if (n>=6.and.n<=8) then
+      scale(is:ie,js:je,ks:ke,n) = bmag(is:ie,js:je,ks:ke)
+    else
+      scale(is:ie,js:je,ks:ke,n) = abs(valorg(is:ie,js:je,ks:ke,n))
+    end if
+
+    ! If the value is smaller than epsilon, set the scale to epsilon
+    scale(is:ie,js:je,ks:ke,n) = max(scale(is:ie,js:je,ks:ke,n),epsilon(valorg(is:ie,js:je,ks:ke,n)))
+
+  end do
+
 ! Calculate max norm errors
-  call print_errors('max',max_norm_error,label,val,valorg,test_tol,error)
+  call print_errors('max',max_norm_error,label,val,valorg,scale,error)
 
 ! Calculate L1 norm errors
-  call print_errors('L1',L1_norm_error,label,val,valorg,test_tol,error)
+  call print_errors('L1',L1_norm_error,label,val,valorg,scale,error)
 
 ! Calculate L2 norm errors
-  call print_errors('L2',L2_norm_error,label,val,valorg,test_tol,error)
+  call print_errors('L2',L2_norm_error,label,val,valorg,scale,error)
 
 ! Check if maximum L2 norm error is within acceptable bounds
   if (myrank==0) print*, 'Test tolerance (L2) =', test_tol
@@ -163,9 +186,9 @@ contains
 
  end function testfilename
 
- function max_norm_error(var,var0,tol) result(norm)
-  real(8),dimension(:,:,:),intent(in):: var,var0
-  real(8),intent(in):: tol
+ function max_norm_error(var,var0,scale) result(norm)
+  use mpi_utils,only:allreduce_mpi
+  real(8),dimension(:,:,:),intent(in):: var,var0,scale
   real(8):: norm, pos
 
   pos = maxval(var)*minval(var)
@@ -173,16 +196,19 @@ contains
   if(pos>0d0)then ! for strictly positive quantities
    norm = maxval(abs(var/var0-1d0))
   else ! for quantities that can contain zeroes
-   norm = maxval(abs(var-var0)/max(abs(var0),tol))
+   norm = maxval(abs(var-var0)/max(abs(var0),scale))
   end if
+
+  ! Reduce error across MPI tasks
+  call allreduce_mpi('max', norm)
 
  end function max_norm_error
 
- function L1_norm_error(var,var0,tol) result(norm)
+ function L1_norm_error(var,var0,scale) result(norm)
+  use mpi_utils,only:allreduce_mpi
   use grid,only:is,ie,js,je,ks,ke,dvol
-  real(8),dimension(:,:,:),intent(in):: var,var0
-  real(8),intent(in):: tol
-  real(8):: norm, pos
+  real(8),dimension(:,:,:),intent(in):: var,var0,scale
+  real(8):: norm, pos, errsum, wsum
   real(8),allocatable:: w(:,:,:)
 
   pos = maxval(var)*minval(var)
@@ -192,23 +218,27 @@ contains
   w(:,:,:) = dvol(is:ie,js:je,ks:ke)
 
   if(pos>0d0)then ! for strictly positive quantities
-   norm = sum(abs(var/var0-1d0)*w)/sum(w)
+   errsum = sum(abs(var/var0-1d0)*w)
+   wsum = sum(w)
   else ! for quantities that can contain zeroes
-   norm = sum(abs(var-var0)/max(abs(var0),tol)*w)/sum(w)
+   errsum = sum(abs(var-var0)/max(abs(var0),scale)*w)
+   wsum = sum(w)
   end if
+
+  ! Reduce error across MPI tasks
+  call allreduce_mpi('sum', errsum)
+  call allreduce_mpi('sum', wsum)
+  norm = sqrt(errsum)/sqrt(wsum)
 
  end function L1_norm_error
 
- function L2_norm_error(var,var0,tol) result(norm)
+ function L2_norm_error(var,var0,scale) result(norm)
   use mpi_utils,only:allreduce_mpi
   use grid,only:is,ie,js,je,ks,ke,dvol
-  real(8),dimension(:,:,:),intent(in):: var,var0
-  real(8),intent(in):: tol
-  real(8):: norm, pos, jump, base, denom, floor
+  real(8),dimension(:,:,:),intent(in):: var,var0,scale
+  real(8):: norm, pos, jump, base, denom, floor, errsum, wsum
   real(8),allocatable:: relerr(:,:,:),w(:,:,:)
   integer:: i,j,k,il,jl,kl,iu,ju,ku,disco_range
-
-  real(8) :: errsum, wsum
 
   pos = maxval(var)*minval(var)
 
@@ -232,9 +262,9 @@ contains
      denom = maxval(abs(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku)))
      floor = 0d0
      if(pos<=0d0)then ! Use floor value if variable is allowed to be zero
-      base = max(abs(base),tol)
-      denom = max(denom,tol)
-      floor = tol
+      base = max(abs(base),scale(i,j,k))
+      denom = max(denom,scale(i,j,k))
+      floor = scale(i,j,k)
      end if
      jump = maxval(ratio(var0(i-il:i+iu,j-jl:j+ju,k-kl:k+ku),base,floor))
 
@@ -266,20 +296,18 @@ contains
 
 ! PURPOSE: To print errors defined by a given norm
 
- subroutine print_errors(name,f,label,val,valorg,tol,error)
+ subroutine print_errors(name,f,label,val,valorg,scale,error)
   use mpi_utils,only:myrank
 
   interface
-   real(8) function f(var,var0,tol)
-    real(8),dimension(:,:,:),intent(in):: var,var0
-    real(8),intent(in):: tol
+   real(8) function f(var,var0,scale_n)
+    real(8),dimension(:,:,:),intent(in):: var,var0,scale_n
     real(8):: norm
    end function f
   end interface
   character(len=*),intent(in):: name
   character(len=10),intent(in):: label(:)
-  real(8),allocatable,intent(inout),dimension(:,:,:,:):: val,valorg
-  real(8),intent(in):: tol
+  real(8),allocatable,intent(inout),dimension(:,:,:,:):: val,valorg,scale
   real(8),intent(inout)::error(:)
   integer:: n
 
@@ -288,7 +316,7 @@ contains
   if (myrank == 0) print*,trim(name),' norm errors:'
   do n = 1, size(error)
    if(trim(label(n))=='aaa')cycle
-   error(n) = f(val(:,:,:,n),valorg(:,:,:,n),tol)
+   error(n) = f(val(:,:,:,n),valorg(:,:,:,n),scale(:,:,:,n))
    if (myrank == 0) print*,'  ',label(n),' =',error(n)
   end do
 
