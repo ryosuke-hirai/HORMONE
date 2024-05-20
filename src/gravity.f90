@@ -827,7 +827,7 @@ subroutine gravity_relax
 
 !-----------------------------------------------------------------------------
 !TODO: Make a relaxation routine to replace the MICCG initial condition solver
- call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
+
 
 return
 end subroutine gravity_relax
