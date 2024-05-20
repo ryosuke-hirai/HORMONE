@@ -89,7 +89,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use constants,only:G,pi
  use grid
  use physval
- use gravmod,only:gravswitch,grvphi,grvphiold,mc
+ use gravmod,only:gravswitch,grvphi,grvpsi,mc
  use utils,only:intpol
 
  real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
@@ -203,8 +203,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   end do
  end do
 !$omp end parallel do
-
- if(gravswitch==3)grvphiold = grvphi
 
 return
 end subroutine set_star_sph_grid

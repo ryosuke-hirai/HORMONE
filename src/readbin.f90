@@ -52,7 +52,7 @@ subroutine readbin(filename)
 
  if(gravswitch==3) then
    call read_dummy_recordmarker(un)
-   call read_var(un, grvphidot, gis, gie, gjs, gje, gks, gke, grav=.true.)
+   call read_var(un, grvpsi, gis, gie, gjs, gje, gks, gke, grav=.true.)
    call read_var(un, dt_old)
    call read_dummy_recordmarker(un)
  endif

@@ -218,9 +218,9 @@ subroutine allocations
 ! gravity-related variables
  if(gravswitch>=1)then
   allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2))
-  allocate(grvphiold,grvphidot,totphi,mold=grvphi)
+  allocate(totphi,mold=grvphi)
   allocate(hgsrc(gis:gie,gjs:gje,gks:gke))
-  allocate(gsrc(gis:gie,gjs:gje,gks:gke))
+  allocate(grvpsi,gsrc,lapphi,mold=hgsrc)
   allocate(grvphiorg(gis:gie,gjs:gje,gks:gke,1:2))
 ! Parallel first touch for OpenMP optimization on NUMA cores
 !$omp parallel do private(i,j,k) collapse(3) schedule(static)
@@ -228,8 +228,7 @@ subroutine allocations
    do j = gjs, gje
     do i = gis, gie
      grvphi(i,j,k) = 0d0
-     grvphiold(i,j,k) = 0d0
-     grvphidot(i,j,k) = 0d0
+     grvpsi(i,j,k) = 0d0
      grvphiorg(i,j,k,1:2) = 0d0
      hgsrc(i,j,k) = 1d0
     end do

@@ -19,7 +19,7 @@ module iotest_mod
     use readbin_mod
     use settings, only: spn, include_extgrv
     use sink_mod, only: sink, nsink, sink_prop
-    use gravmod, only: grvphi, grvphidot, dt_old
+    use gravmod, only: grvphi, grvpsi, dt_old
     use utils, only: isequal
     use settings, only: include_sinks, compswitch, mag_on, gravswitch
 
@@ -107,7 +107,7 @@ module iotest_mod
       do i = gis,gie
         do j = gjs,gje
           do k = gks,gke
-            grvphidot(i,j,k) = 2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
+            grvpsi(i,j,k) = 2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k
           end do
         end do
       end do
@@ -136,7 +136,7 @@ module iotest_mod
     phi = 0.d0
     e = 0.d0
     grvphi = 0.d0
-    grvphidot = 0.d0
+    grvpsi = 0.d0
     dt_old = 0.d0
 
     spc = 0.d0
@@ -271,9 +271,9 @@ module iotest_mod
         do j = gjs,gje
           do k = gks,gke
             err = 0.d0
-            err = err + abs(grvphidot(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
+            err = err + abs(grvpsi(i,j,k) - (2.d0 + 1.d-2*i + 1.d-4*j + 1.d-6*k))
             if (err > 0.d0) then
-              print*, 'Error in grvphidot values at i=',i,'j=',j,'k=',k,'err=',err
+              print*, 'Error in grvpsi values at i=',i,'j=',j,'k=',k,'err=',err
               numerr = numerr + 1
             endif
           end do

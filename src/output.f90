@@ -665,7 +665,7 @@ subroutine write_bin
  use io, only:open_file_write,close_file, write_var, write_dummy_recordmarker
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
  use physval
- use gravmod,only:grvphi,grvphidot,dt_old
+ use gravmod,only:grvphi,grvpsi,dt_old
  use sink_mod,only:nsink,sink
 
  implicit none
@@ -699,7 +699,7 @@ subroutine write_bin
 
  if(gravswitch==3) then
    call write_dummy_recordmarker(un)
-   call write_var(un, grvphidot, gis, gie, gjs, gje, gks, gke, grav=.true.)
+   call write_var(un, grvpsi, gis, gie, gjs, gje, gks, gke, grav=.true.)
    call write_var(un, dt_old)
    call write_dummy_recordmarker(un)
  endif
