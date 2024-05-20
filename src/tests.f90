@@ -187,6 +187,7 @@ contains
  end function testfilename
 
  function max_norm_error(var,var0,scale) result(norm)
+  use mpi_utils,only:allreduce_mpi
   real(8),dimension(:,:,:),intent(in):: var,var0,scale
   real(8):: norm, pos
 
@@ -198,12 +199,16 @@ contains
    norm = maxval(abs(var-var0)/max(abs(var0),scale))
   end if
 
+  ! Reduce error across MPI tasks
+  call allreduce_mpi('max', norm)
+
  end function max_norm_error
 
  function L1_norm_error(var,var0,scale) result(norm)
+  use mpi_utils,only:allreduce_mpi
   use grid,only:is,ie,js,je,ks,ke,dvol
   real(8),dimension(:,:,:),intent(in):: var,var0,scale
-  real(8):: norm, pos
+  real(8):: norm, pos, errsum, wsum
   real(8),allocatable:: w(:,:,:)
 
   pos = maxval(var)*minval(var)
@@ -213,10 +218,17 @@ contains
   w(:,:,:) = dvol(is:ie,js:je,ks:ke)
 
   if(pos>0d0)then ! for strictly positive quantities
-   norm = sum(abs(var/var0-1d0)*w)/sum(w)
+   errsum = sum(abs(var/var0-1d0)*w)
+   wsum = sum(w)
   else ! for quantities that can contain zeroes
-   norm = sum(abs(var-var0)/max(abs(var0),scale)*w)/sum(w)
+   errsum = sum(abs(var-var0)/max(abs(var0),scale)*w)
+   wsum = sum(w)
   end if
+
+  ! Reduce error across MPI tasks
+  call allreduce_mpi('sum', errsum)
+  call allreduce_mpi('sum', wsum)
+  norm = sqrt(errsum)/sqrt(wsum)
 
  end function L1_norm_error
 
@@ -224,11 +236,9 @@ contains
   use mpi_utils,only:allreduce_mpi
   use grid,only:is,ie,js,je,ks,ke,dvol
   real(8),dimension(:,:,:),intent(in):: var,var0,scale
-  real(8):: norm, pos, jump, base, denom, floor
+  real(8):: norm, pos, jump, base, denom, floor, errsum, wsum
   real(8),allocatable:: relerr(:,:,:),w(:,:,:)
   integer:: i,j,k,il,jl,kl,iu,ju,ku,disco_range
-
-  real(8) :: errsum, wsum
 
   pos = maxval(var)*minval(var)
 
