@@ -29,7 +29,6 @@ subroutine gravity
  integer:: i,j,k,n,l, gin, gjn, gkn, tngrav
  real(8):: phih, h
  real(8),allocatable,dimension(:):: x, cgsrc
- real(8),pointer:: cgrav_old
 
 !-----------------------------------------------------------------------------
 
@@ -176,13 +175,8 @@ subroutine gravity
   end if
 
   if(gravswitch==3)then
-   dt_old = dtgrav
-! Temporarily using dt_old as an alias for cgrav_old. Will unify them eventually
-   if(crdnt==2.and.dim==3)then
-    call timestep
-    cgrav_old => dt_old
-    cgrav_old = cgrav
-   end if
+   call timestep
+   cgrav_old = cgrav
   end if
 
   call stop_clock(wtpoi)
@@ -199,8 +193,6 @@ if(gravswitch==3.and.tn/=0)then
  dtgrav = (time+dt-grvtime)/dble(tngrav)
 
  if(gbtype==0)call gravbound
-
- cgrav_old => dt_old
 
  do l = 1, tngrav
   call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
@@ -299,7 +291,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
 
  use settings,only:grktype,alphagrv
  use grid
- use gravmod
+ use gravmod,only:grvphiorg,grvphi,grvpsi,lapphi,hgsrc,gsrc,hgcfl
  use rungekutta_mod,only:get_runge_coeff
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
@@ -607,7 +599,7 @@ subroutine gravsetup
  if(tn==0 .and. isequal(maxval(grvphi(gis:gie,gjs:gje,gks:gke)), 0d0))&
   grvphi = -1d3
 
- if(tn==0) dt_old = dt
+ if(tn==0) cgrav_old = cgrav
 
  if(gravswitch==2.or.gravswitch==3)then
   call setup_grvcg(gis,gie,gjs,gje,gks,gke,cg_grv)
@@ -703,7 +695,6 @@ subroutine gravsetup
    stop
   end if
 
-  if(tn==0)dt_old = dt / (courant*HGfac) * hgcfl
   hgsrc = 0d0
 
  end if

@@ -2,13 +2,13 @@ module iotest_mod
   implicit none
 
   contains
-  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  !
-  !                           SUBROUTINE IOTEST
-  !
-  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                           SUBROUTINE IOTEST
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-  ! PURPOSE: To test the read and write routines
+! PURPOSE: To test the read and write routines
 
   subroutine iotest
     use mpi_utils
@@ -19,7 +19,7 @@ module iotest_mod
     use readbin_mod
     use settings, only: spn, include_extgrv
     use sink_mod, only: sink, nsink, sink_prop
-    use gravmod, only: grvphi, grvpsi, dt_old
+    use gravmod, only: grvphi, grvpsi, cgrav_old
     use utils, only: isequal
     use settings, only: include_sinks, compswitch, mag_on, gravswitch
 
@@ -111,7 +111,7 @@ module iotest_mod
           end do
         end do
       end do
-      dt_old = 789.d0
+      cgrav_old = 789.d0
     endif
 
     ! Override the profiler time to prevent a divide by zero error during output
@@ -137,7 +137,7 @@ module iotest_mod
     e = 0.d0
     grvphi = 0.d0
     grvpsi = 0.d0
-    dt_old = 0.d0
+    cgrav_old = 0.d0
 
     spc = 0.d0
     species = ''
@@ -279,8 +279,8 @@ module iotest_mod
           end do
         end do
       end do
-      if (.not. isequal(dt_old, 789.d0)) then
-        print*, 'Error in dt_old value, dt_old=', dt_old, 'should be:', 789.d0
+      if (.not. isequal(cgrav_old, 789.d0)) then
+        print*, 'Error in cgrav_old value, cgrav_old=', cgrav_old, 'should be:', 789.d0
         numerr = numerr + 1
       endif
     endif

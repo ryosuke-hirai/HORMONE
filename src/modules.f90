@@ -133,7 +133,7 @@ module gravmod
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc
   real(8),allocatable,dimension(:,:):: phiio, phiii, phi1o, phi3i, phi3o
-  real(8),target:: dt_old, grvtime, dtgrav, cgrav2, cgrav
+  real(8),target:: grvtime, dtgrav, cgrav2, cgrav, cgrav_old
   real(8),allocatable,dimension(:):: mc
   real(8),allocatable,dimension(:,:,:):: orgdis, extgrv, hgsrc, gsrc
   real(8):: coremass
