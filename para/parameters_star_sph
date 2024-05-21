@@ -34,7 +34,7 @@
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
 &simucon  crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
-          flux_limiter='modified_mc'
+          flux_limiter='flat'
 	  include_cooling = .false.
 	  include_extforce = .false. /
 
@@ -47,7 +47,7 @@
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
-&gravcon gravswitch=3 grverr=1d-5 cgerr=1d-5 HGfac=10d0 hgcfl=0.9d0 gbtype=0
+&gravcon gravswitch=3 grverr=1d-5 cgerr=1d-15 HGfac=10d0 hgcfl=0.9d0 gbtype=0
 	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
