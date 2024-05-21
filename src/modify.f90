@@ -37,7 +37,7 @@ subroutine extend2Dto3D
  use readbin_mod,only:readbin,read_extgrv
  use pressure_mod,only:pressure
  use composition_mod,only:meanmolweight
- use gravmod,only:grvphi,grvphiold,extgrv,grvtime
+ use gravmod,only:grvphi,grvpsi,extgrv,grvtime
  use output_mod,only:write_extgrv
 
  integer:: holdke,holdgke
@@ -64,8 +64,8 @@ subroutine extend2Dto3D
   grvphi(gis:gie,gjs:gje,gks:gke) &
                             = spread(grvphi(gis:gie,gjs:gje,gks),3,gke-gks+1)
   if(gravswitch==3)then
-   grvphiold(gis:gie,gjs:gje,gks:gke) &
-                         = spread(grvphiold(gis:gie,gjs:gje,gks),3,gke-gks+1)
+   grvpsi(gis:gie,gjs:gje,gks:gke) &
+                         = spread(grvpsi(gis:gie,gjs:gje,gks),3,gke-gks+1)
   end if
   if(include_extgrv)then
    extgrv(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2) &

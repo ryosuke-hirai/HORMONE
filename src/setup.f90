@@ -165,12 +165,12 @@ subroutine read_parameters(filename)
                     dt_unit, sigfig, outres, write_other_vel, write_shock, &
                     write_evo, write_other_slice, write_temp
  namelist /eos_con/ eostype, gamma, eoserr, compswitch, muconst, spn
- namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, &
+ namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, alpha9wave,&
                     include_cooling, include_extforce, extrasfile
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
  namelist /gravcon/ gravswitch, grvsrctype, grverr, cgerr, HGfac, hgcfl, &
-                    gbtype, grktype, grav_init_other, include_extgrv, &
+                    gbtype, grktype, alphagrv, grav_init_other, include_extgrv,&
                     gis, gie, gjs, gje, gks, gke
  namelist /sinkcon/ include_sinks, nsink
  namelist /rad_con/ radswitch, opacitytype, lambdatype

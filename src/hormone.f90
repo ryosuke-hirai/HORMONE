@@ -151,6 +151,15 @@ program hormone
 
     time = time + dt ; tn = tn + 1
 
+! End sequence ------------------- !
+    select case (endstyle)         !
+    case(1) ! time up              !
+     if(time>=t_end)exit main_loop !
+    case(2) ! timestep up          !
+     if(tn>=tnlim)exit main_loop   !
+    end select                     !
+! -------------------------------- !
+
 ! Output sequence ------------------------- !
     select case(outstyle)                   !
     case(1) ! output by time                !
@@ -171,15 +180,6 @@ program hormone
      call sink_output                       !
     end if                                  !
 ! ----------------------------------------- !
-
-! End sequence ------------------- !
-    select case (endstyle)         !
-    case(1) ! time up              !
-     if(time>=t_end)exit main_loop !
-    case(2) ! timestep up          !
-     if(tn>=tnlim)exit main_loop   !
-    end select                     !
-! -------------------------------- !
 
    end do main_loop
    call stop_clock(wtlop)

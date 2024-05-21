@@ -47,9 +47,9 @@
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
-&gravcon gravswitch=3 grverr=1d-5 cgerr=1d-5 HGfac=10d0 hgcfl=0.9d0 gbtype=0
+&gravcon gravswitch=3 grverr=1d-15 cgerr=1d-15 HGfac=5d0 hgcfl=0.9d0 gbtype=0
 	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
 ! test tolerance
-&testcon  test_tol=1d-6 /
+&testcon  test_tol=3d-13 /

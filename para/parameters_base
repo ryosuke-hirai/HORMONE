@@ -42,11 +42,12 @@
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! mag_on: Whether or not to include magnetic fields
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
+! alpha9wave: ratio between diffusive and advection timescales (td/ta) of divB
 ! include_cooling: switch for cooling
 ! include_extforce: switch for external force provided in externalforce
 ! extrasfile: file containing model parameters
 &simucon  crdnt=0 courant=0.9d0 rktype=3 mag_on=.false.
-          flux_limiter='modified_mc'
+          flux_limiter='modified_mc' alpha9wave=0.1d0
           include_cooling = .false.
   	  include_extforce= .false.
           extrasfile='extras' /
@@ -58,12 +59,15 @@
 	  bc1iv=0 bc1ov=0 bc2iv=0 bc2ov=0 bc3iv=0 bc3ov=0 eq_sym=.false. /
 
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
+! grverr: Tolerance for multipole expansion for boundary condition
+! cgerr: Tolerance for MICCG solver
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
 ! grktype: order of Runge-Kutta for Hyperbolic self-gravity
 ! grvsrctype: What to use for source term in Poisson equation; 0=density, 1="hydrogen"
-&gravcon gravswitch=0 grverr=1d-5 cgerr=1d-5 HGfac=5d0 hgcfl=0.9d0 gbtype=0
-	 grktype=2 grav_init_other=.false. include_extgrv=.false.
+! alphagrv: ratio between advective and diffusive timescales for HG solver
+&gravcon gravswitch=0 grverr=1d-5 cgerr=1d-15 HGfac=5d0 hgcfl=0.9d0 gbtype=0
+	 grktype=2 alphagrv=0.1d0 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1
 	 grvsrctype=0 /
 

@@ -241,17 +241,13 @@ end subroutine get_fieldforce
 
 subroutine phidamp
 
- use settings,only:courant
+ use settings,only:courant,alpha9wave
  use grid
  use physval,only:phi
 
  integer:: i,j,k
- real(8):: alpha9wave
 
 !-----------------------------------------------------------------------------
-
-! ratio between diffusive and advection timescales (td/ta)
- alpha9wave = 0.1d0
 
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke

@@ -18,9 +18,9 @@ module settings
  integer:: gravswitch, compswitch, radswitch
  integer:: eostype, spn, sigfig, outres, gbtype, grktype, maxptc
  integer:: grvsrctype, opacitytype, lambdatype
- real(8):: courant, t_end, dt_out, dt_unit_in_sec
+ real(8):: courant, t_end, dt_out, dt_unit_in_sec, alpha9wave
  character(len=5):: dt_unit
- real(8):: grverr, cgerr, eoserr, HGfac, hgcfl
+ real(8):: grverr, cgerr, eoserr, HGfac, hgcfl, alphagrv
  integer:: imesh, jmesh, kmesh
 ! test tolerance
  real(8):: test_tol
@@ -128,17 +128,15 @@ module gravmod
   implicit none
 
   integer,parameter:: llmax = 1000
-  real(8),allocatable,dimension(:,:,:),target:: grvphi, grvphiold, grvphidot, totphi
-  real(8),allocatable,dimension(:,:,:,:):: grvphiorg
+  real(8),allocatable,dimension(:,:,:):: grvphi,grvpsi, totphi,lapphi
+  real(8),allocatable,dimension(:,:,:,:):: grvphiorg, lap_coeff
   real(8),allocatable,dimension(:,:):: Pl
   real(8),allocatable,dimension(:,:,:):: Plc
   real(8),allocatable,dimension(:,:):: phiio, phiii, phi1o, phi3i, phi3o
-  real(8),target:: dt_old, grvtime, dtgrav, cgrav2, cgrav
-  real(8),allocatable,dimension(:):: hg11,hg12,hg21,hg22,hg31,hg32, mc
-  real(8),allocatable,dimension(:,:):: lag
-  real(8),allocatable,dimension(:,:,:):: hg123,orgdis, extgrv, hgsrc, gsrc
-  real(8),allocatable,dimension(:,:,:,:):: lag11,lag12,lag21,lag22,lag31,lag32
-  real(8):: coremass,hg_dx
+  real(8),target:: grvtime, dtgrav, cgrav2, cgrav, cgrav_old
+  real(8),allocatable,dimension(:):: mc
+  real(8),allocatable,dimension(:,:,:):: orgdis, extgrv, hgsrc, gsrc
+  real(8):: coremass
 
 end module gravmod
 
