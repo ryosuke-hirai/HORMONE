@@ -28,6 +28,7 @@ subroutine initialcondition
  use rad_box_mod
  use star_init_mod
  use redsupergiant_mod
+ use polytrope_mod
  use agndisk_mod
  use modify_mod
  use windtunnel_mod
@@ -66,6 +67,9 @@ subroutine initialcondition
 
   case('rsg_sph')
    call redsupergiant
+
+  case('polytrope')
+    call polytrope
 
   case('agndisk')
    call agndisk
