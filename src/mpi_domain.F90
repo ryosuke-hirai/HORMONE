@@ -253,6 +253,7 @@ module mpi_domain
       use settings
       use grid
       use physval
+      use gravmod
       use profiler_mod
       use mpi_utils
 
@@ -285,6 +286,11 @@ module mpi_domain
       call exchange_scalar(eint)
 
       if (compswitch >= 2) call exchange_spc(spc)
+
+      if (gravswitch == 3) then
+         call exchange_scalar(grvphi)
+         call exchange_scalar(grvpsi)
+      endif
 
       call stop_clock(wtmpi)
 
