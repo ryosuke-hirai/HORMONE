@@ -279,11 +279,14 @@ module mpi_domain
       call exchange_scalar(v1)
       call exchange_scalar(v2)
       call exchange_scalar(v3)
-      call exchange_scalar(b1)
-      call exchange_scalar(b2)
-      call exchange_scalar(b3)
       call exchange_scalar(e)
       call exchange_scalar(eint)
+
+      if (mag_on) then
+         call exchange_scalar(b1)
+         call exchange_scalar(b2)
+         call exchange_scalar(b3)
+      endif
 
       if (compswitch >= 2) call exchange_spc(spc)
 
