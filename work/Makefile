@@ -18,14 +18,9 @@ DBFLAG= -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 -Wall -Wextra -fcheck=a
 PRFLAG= -pg -save-temps
 endif
 
-# for ifort
-ifeq (${FC},ifort)
-override FC := ifx
-endif
-
-ifeq (${FC},ifort)
+ifeq (${FC},ifx)
 ifeq (${MPI},yes)
-$(error "MPI not supported for ifort")
+$(error "MPI not supported for ifx")
 endif
 MODFLAG= -module # trailing space is important
 FCFLAG:= $(CFLAG) -qopenmp -fp-model precise #-heap-arrays
