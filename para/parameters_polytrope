@@ -2,10 +2,10 @@
 ! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
 ! fmr_max   : Maximum levels of fixed mesh refinement (0 means no FMR)
 ! fmr_lvl(i): Number of layers in a given FMR level
-&gridcon  xi1s=0d0 xi1e=3.5d10 xi2s=0d0 xi2e=1d0 xi3s=-3.5d10 xi3e=3.5d10
-	  is=1 ie=300 js=1 je=1 ks=1 ke=600
-	  imesh=1 jmesh=0 kmesh=2
-	  x1min=1.5d7 x2min=0 x3min=0d0
+&gridcon  xi1s=0d0 xi1e=7d11 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
+	  is=1 ie=128 js=1 je=16 ks=1 ke=32
+	  imesh=1 jmesh=0 kmesh=0
+	  x1min=2d8 x2min=0d0 x3min=0d0
 	  fmr_max=0 fmr_lvl(1:20)=0 /
 
 ! outstyle/endstyle : time=1, timestep=2
@@ -19,8 +19,8 @@
 ! write_other_vel : Set to .true. if 2.5D
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
-&out_con  outstyle=2 endstyle=2
-          tnlim=100000 t_end=5d9 dt_out=1.d2 tn_out=100
+&out_con  outstyle=1 endstyle=1
+          tnlim=1 t_end=1d1 dt_out=1d1 tn_out=1
           dt_unit='s' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.true. /
 
@@ -28,13 +28,12 @@
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
-&eos_con eostype = 0 eoserr=1d-15 compswitch=2 muconst=0.62d0 spn=2 /
+&eos_con eostype = 0 eoserr=1d-15 compswitch=0 gamma=1.5d0/
 
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-&simucon  crdnt=1 courant=0.9d0 rktype=3 mag_on=.false.
-          flux_limiter='modified_mc'
+&simucon  crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
 	  include_cooling = .false.
 	  include_extforce = .false. /
 
@@ -42,14 +41,15 @@
 ! Dirichlet:9(provide in dirichlet.f90)
 ! Flux:10(provide in dirichlet.f90)
 ! eq_sym : Set to .true. for equatorial symmetry
-&bouncon  bc1is=1 bc1os=2 bc2is=0 bc2os=0 bc3is=10 bc3os=2
-	  bc1iv=1 bc1ov=2 bc2iv=0 bc2ov=0 bc3iv=10 bc3ov=2 eq_sym=.false. /
+&bouncon  bc1is=1 bc1os=2 bc2is=1 bc2os=1 bc3is=0 bc3os=0
+	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.false. /
 
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
-&gravcon gravswitch=3 grverr=1d-5 cgerr=1d-5 HGfac=10d0 hgcfl=0.9d0 gbtype=0
+&gravcon gravswitch=3 grverr=1d-15 cgerr=1d-15 HGfac=10d0 hgcfl=0.9d0 gbtype=1
 	 grav_init_other=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
-&partcon  /
+! test tolerance
+&testcon  test_tol=1d-8 /

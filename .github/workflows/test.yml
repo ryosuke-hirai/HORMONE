@@ -83,6 +83,7 @@ jobs:
           - sedov_default
           - KHinstability
           - star_sph
+          - polytrope
           - iotest
         flat:
           - no
@@ -90,9 +91,13 @@ jobs:
         exclude:
           - fc: ifort
             mpi: yes
+          - test: polytrope
+            flat: no
           # Temporary: exclude tests that are not yet implemented for MPI
           - mpi: yes
             test: star_sph
+          - mpi: yes
+            test: polytrope
 
     name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }})
 

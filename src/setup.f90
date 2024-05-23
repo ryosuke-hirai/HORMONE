@@ -117,6 +117,8 @@ subroutine read_default
   filename='../para/parameters_star_sph'
  case('rsg_sph')
   filename='../para/parameters_rsg_sph'
+ case('polytrope')
+  filename='../para/parameters_polytrope'
  case('agndisk')
   filename='../para/parameters_agndisk'
  case('windtunnel')
