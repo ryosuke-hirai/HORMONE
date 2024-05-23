@@ -27,7 +27,10 @@ runs:
       shell: bash
       if: ${{ steps.cache-intel.outputs.cache-hit != 'true' }}
       run: |
-        sudo apt-get install -y intel-hpckit
+        sudo apt-get install -y intel-oneapi-common-vars
+        sudo apt-get install -y intel-oneapi-compiler-fortran
+        sudo apt-get install -y intel-oneapi-mpi
+        sudo apt-get install -y intel-oneapi-mpi-devel
 
     - name: Setup Intel oneAPI environment
       shell: bash
