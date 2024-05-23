@@ -20,6 +20,10 @@ endif
 
 # for ifort
 ifeq (${FC},ifort)
+override FC := ifx
+endif
+
+ifeq (${FC},ifort)
 ifeq (${MPI},yes)
 $(error "MPI not supported for ifort")
 endif
