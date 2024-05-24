@@ -139,6 +139,7 @@ jobs:
         else
           sed -i "s/&simucon/\&simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
         fi
+        cat parameters_${{ matrix.test }}
 
     - name: Run test
       working-directory: ./work
