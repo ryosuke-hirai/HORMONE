@@ -134,7 +134,7 @@ jobs:
       working-directory: ./para
       # If flux_limiter is specified, replace it with "flat", otherwise add the option
       run: |
-        if grep -q "flux_limiter" parameters_${{ matrix.test }}; then
+        if grep -q "flux_limiter=" parameters_${{ matrix.test }}; then
           sed -i "s/flux_limiter='[^']*'/flux_limiter='flat'/" parameters_${{ matrix.test }}
         else
           sed -i "s/&simucon/\&simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
