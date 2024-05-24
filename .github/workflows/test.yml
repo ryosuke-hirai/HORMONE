@@ -16,7 +16,7 @@ jobs:
       matrix:
         fc:
           - gfortran
-          - ifort
+          - ifx
         debug:
           - no
           - yes
@@ -24,7 +24,7 @@ jobs:
           - no
           - yes
         exclude:
-          - fc: ifort
+          - fc: ifx
             mpi: yes
 
     name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
@@ -35,7 +35,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - uses: ./.github/actions/setup-intel-oneapi
-      if: matrix.fc == 'ifort'
+      if: matrix.fc == 'ifx'
 
     - name: Set up OpenMPI
       if: matrix.mpi == 'yes'
@@ -63,7 +63,7 @@ jobs:
       matrix:
         fc:
           - gfortran
-          - ifort
+          - ifx
         debug:
           - no
           - yes
@@ -89,7 +89,7 @@ jobs:
           - no
           - yes
         exclude:
-          - fc: ifort
+          - fc: ifx
             mpi: yes
           - test: polytrope
             flat: no
@@ -105,7 +105,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - uses: ./.github/actions/setup-intel-oneapi
-      if: matrix.fc == 'ifort'
+      if: matrix.fc == 'ifx'
 
     - name: Set up OpenMPI
       if: matrix.mpi == 'yes'
@@ -132,7 +132,14 @@ jobs:
     - name: Flat reconstruction switch
       if: matrix.flat == 'yes'
       working-directory: ./para
-      run: sed -i "s/&simucon/\&simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
+      # If flux_limiter is specified, replace it with "flat", otherwise add the option
+      run: |
+        if grep -q "flux_limiter=" parameters_${{ matrix.test }}; then
+          sed -i "s/flux_limiter='[^']*'/flux_limiter='flat'/" parameters_${{ matrix.test }}
+        else
+          sed -i "s/&simucon/\&simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
+        fi
+        cat parameters_${{ matrix.test }}
 
     - name: Run test
       working-directory: ./work
