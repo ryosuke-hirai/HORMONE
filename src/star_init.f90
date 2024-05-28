@@ -62,6 +62,14 @@ subroutine star_init
  radius = r(size(r)-1)
  dbg = rho(size(rho)-1)*1d-0
 
+! Check composition array for negative values
+ do sn = 1, size(comp_list)
+  if(any(comp(sn,1:spn)<0d0))then
+   print*, 'Composition array contains negative values at sn=',sn
+   error stop 1
+  end if
+ end do
+
 ! Use outermost composition as the ambient gas composition
  do nn = 1, spn-1
   do sn = 1, size(comp_list)
