@@ -59,6 +59,7 @@ subroutine star_init
  ! Not all of the species in the list may be in the mesa file
  ! so they need to initialised to zero to avoid errors
  spc = 0d0
+ spc_bg = 0d0
 
  call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 
