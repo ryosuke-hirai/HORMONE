@@ -56,6 +56,10 @@ subroutine star_init
           species(1:spn) )
  species(1:spn) = spc_list(1:spn)
 
+ ! Not all of the species in the list may be in the mesa file
+ ! so they need to initialised to zero to avoid errors
+ spc = 0d0
+
  call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
 
  mass = m(size(m)-1)
