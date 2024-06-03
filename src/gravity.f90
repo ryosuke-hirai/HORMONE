@@ -768,7 +768,7 @@ subroutine get_lapphi_hgsrc(grvphi,gsrc,lapphi,hgsrc)
  real(8),allocatable,dimension(:,:,:),intent(inout):: lapphi,hgsrc
  integer:: i,j,k,jm,jp,km,kp
  real(8):: lap
- 
+
 !-----------------------------------------------------------------------------
 
 !$omp do private(i,j,k,jm,jp,km,kp,lap) collapse(3)
@@ -776,7 +776,7 @@ subroutine get_lapphi_hgsrc(grvphi,gsrc,lapphi,hgsrc)
   do j = gjs,gje
    do i = gis,gie
     lap = lap_coeff(0,i,j,k)*grvphi(i,j,k)
-    
+
     lap = lap + lap_coeff(1,i-1,j,k)*grvphi(i-1,j,k)
     lap = lap + lap_coeff(1,i  ,j,k)*grvphi(i+1,j,k)
     if(je>js)then
@@ -789,7 +789,7 @@ subroutine get_lapphi_hgsrc(grvphi,gsrc,lapphi,hgsrc)
     if(ke>ks)then
      km = k-1 ; kp = k+1
      if(k==gks_global.and.bc3is==0)km=ke_global
-     if(k==gke_global.and.bc3os==0)km=ks_global
+     if(k==gke_global.and.bc3os==0)kp=ks_global
      lap = lap + lap_coeff(3,i,j,k-1)*grvphi(i,j,km)
      lap = lap + lap_coeff(3,i,j,k  )*grvphi(i,j,kp)
     end if
