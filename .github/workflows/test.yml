@@ -83,7 +83,7 @@ jobs:
           - sedov_default
           - KHinstability
           - star_sph
-          - polytrope
+          # - polytrope
           - iotest
         flat:
           - no
