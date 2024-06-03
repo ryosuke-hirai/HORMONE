@@ -62,12 +62,13 @@
 ! grverr: Tolerance for multipole expansion for boundary condition
 ! cgerr: Tolerance for MICCG solver
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
+! grav_init_relax: Start by relaxing the hyperbolic solver. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
 ! grktype: order of Runge-Kutta for Hyperbolic self-gravity
 ! grvsrctype: What to use for source term in Poisson equation; 0=density, 1="hydrogen"
 ! alphagrv: ratio between advective and diffusive timescales for HG solver
 &gravcon gravswitch=0 grverr=1d-5 cgerr=1d-15 HGfac=5d0 hgcfl=0.9d0 gbtype=0
-	 grktype=2 alphagrv=0.1d0 grav_init_other=.false. include_extgrv=.false.
+	 grktype=2 alphagrv=0.1d0 grav_init_other=.false. grav_init_relax=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1
 	 grvsrctype=0 /
 
