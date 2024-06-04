@@ -16,7 +16,7 @@ contains
 
 subroutine gravity
 
- use settings,only:eq_sym
+ use settings,only:eq_sym,grav_init_relax,grav_init_other
  use grid
  use constants
  use physval
@@ -43,7 +43,10 @@ subroutine gravity
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
- if(gravswitch==2.or.(gravswitch==3.and.tn==0))then
+ if(grav_init_relax .and. tn==0) then
+  call gravity_relax
+
+ elseif(gravswitch==2 .or. (gravswitch==3 .and. tn==0))then
   allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
 
   if(grav_init_other.and.gravswitch==3)return
@@ -184,7 +187,7 @@ subroutine gravity
  endif
 
 
-if(gravswitch==3.and.tn/=0)then
+if(gravswitch==3 .and. tn/=0)then
 ! Hyperbolic Self-Gravity $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
  call start_clock(wthyp)
@@ -202,75 +205,7 @@ if(gravswitch==3.and.tn/=0)then
 
  end do
 
-! Boundary conditions for force calculation ==================================
-!$omp parallel
- select case(crdnt)
-! Cylindrical coordinates ++++++++++++++++++++++++++++++++++++++++++++++++++++
- case(1)
-!$omp do private(j,k) collapse(2)
-  do k = ks, ke
-   do j = js, je
-    grvphi(is-1,j,k) = grvphi(is,j,k)
-    if(gbtype==1)grvphi(gie+1,j,k) = grvphi(gie,j,k) &
-                                    *orgdis(gie,j,k)/orgdis(gie+1,j,k)
-   end do
-  end do
-!$omp end do
-  if(je>js)then
-!$omp do private(i,k) collapse(2)
-   do k = ks, ke
-    do i = is, ie
-     grvphi(i,js-1,k) = grvphi(i,je,k)
-     grvphi(i,je+1,k) = grvphi(i,js,k)
-    end do
-   end do
-!$omp end do
-  end if
-!$omp do private(i,j) collapse(2)
-  do j = js, je
-   do i = is, ie
-    if(eq_sym)grvphi(i,j,ks-1) = grvphi(i,j,ks)
-    if(gbtype==1)then
-     grvphi(i,j,ks-1) = grvphi(i,j,ks)*orgdis(i,j,ks)/orgdis(i,j,ks-1)
-     grvphi(i,j,ke+1) = grvphi(i,j,ke)*orgdis(i,j,ke)/orgdis(i,j,ke+1)
-    end if
-   end do
-  end do
-!$omp end do
-
-! Spherical coordinates ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- case(2)
-!$omp do private(j,k) collapse(2)
-  do k = ks, ke
-   do j = js, je
-    grvphi(is-1,j,k) = grvphi(is,j,k)
-    if(gbtype==1)grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
-   end do
-  end do
-!$omp end do
-!$omp do private(i,k) collapse(2)
-  do k = ks, ke
-   do i = is, ie
-    grvphi(i,js-1,k) = grvphi(i,js,k)
-    grvphi(i,je+1,k) = grvphi(i,je,k)
-   end do
-  end do
-!$omp end do
-  if(ke>ks)then
-!$omp do private(i,j) collapse(2)
-   do j = js, je
-    do i = is, ie
-     grvphi(i,j,ks-1) = grvphi(i,j,ke)
-     grvphi(i,j,ke+1) = grvphi(i,j,ks)
-    end do
-   end do
-!$omp end do
-  end if
-
- end select
-! ============================================================================
-
-!$omp end parallel
+ call hg_boundary_conditions
 
  call stop_clock(wthyp)
 
@@ -367,6 +302,90 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
 
 return
 end subroutine hyperbolic_gravity_step
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                   SUBROUTINE HG_BOUNDARY_CONDITIONS
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Boundary conditions for the hyperbolic self-gravity solver
+
+subroutine hg_boundary_conditions
+ use settings
+ use grid
+ use gravmod
+ integer:: i,j,k
+ !$omp parallel
+ select case(crdnt)
+  ! Cylindrical coordinates ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ case(1)
+  !$omp do private(j,k) collapse(2)
+  do k = ks, ke
+   do j = js, je
+    grvphi(is-1,j,k) = grvphi(is,j,k)
+    if(gbtype==1)grvphi(gie+1,j,k) = grvphi(gie,j,k) &
+    *orgdis(gie,j,k)/orgdis(gie+1,j,k)
+   end do
+  end do
+  !$omp end do
+  if(je>js)then
+   !$omp do private(i,k) collapse(2)
+   do k = ks, ke
+    do i = is, ie
+     grvphi(i,js-1,k) = grvphi(i,je,k)
+     grvphi(i,je+1,k) = grvphi(i,js,k)
+    end do
+   end do
+   !$omp end do
+  end if
+  !$omp do private(i,j) collapse(2)
+  do j = js, je
+   do i = is, ie
+    if(eq_sym)grvphi(i,j,ks-1) = grvphi(i,j,ks)
+    if(gbtype==1)then
+     grvphi(i,j,ks-1) = grvphi(i,j,ks)*orgdis(i,j,ks)/orgdis(i,j,ks-1)
+     grvphi(i,j,ke+1) = grvphi(i,j,ke)*orgdis(i,j,ke)/orgdis(i,j,ke+1)
+    end if
+   end do
+  end do
+  !$omp end do
+
+  ! Spherical coordinates ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ case(2)
+  !$omp do private(j,k) collapse(2)
+  do k = ks, ke
+   do j = js, je
+    grvphi(is-1,j,k) = grvphi(is,j,k)
+    if(gbtype==1)grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
+   end do
+  end do
+  !$omp end do
+  !$omp do private(i,k) collapse(2)
+  do k = ks, ke
+   do i = is, ie
+    grvphi(i,js-1,k) = grvphi(i,js,k)
+    grvphi(i,je+1,k) = grvphi(i,je,k)
+   end do
+  end do
+  !$omp end do
+  if(ke>ks)then
+   !$omp do private(i,j) collapse(2)
+   do j = js, je
+    do i = is, ie
+     grvphi(i,j,ks-1) = grvphi(i,j,ke)
+     grvphi(i,j,ke+1) = grvphi(i,j,ks)
+    end do
+   end do
+   !$omp end do
+  end if
+
+ end select
+ ! ============================================================================
+
+ !$omp end parallel
+
+end subroutine hg_boundary_conditions
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -813,12 +832,35 @@ end subroutine get_lapphi_hgsrc
 ! PURPOSE: Use hyperbolic self-gravity as a relaxation method
 
 subroutine gravity_relax
-
+ use settings
+ use grid
+ use timestep_mod
  use gravmod
 
-!-----------------------------------------------------------------------------
-!TODO: Make a relaxation routine to replace the MICCG initial condition solver
+ real(8):: err_grvphi
+ integer :: grktype_org
+ integer, parameter :: maxiter = 1000000
+ real(8), parameter :: itertol = 1d-9
+ integer :: i
 
+ call timestep
+ cgrav_old = cgrav
+
+ grktype_org = grktype
+ grktype = 1
+
+ ! Repeat the damped hyperbolic step until the solution is stationary
+ do i = 1, maxiter
+   call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
+   err_grvphi = maxval(abs( (grvphi(is:ie,js:je,ks:ke)-grvphiorg(is:ie,js:je,ks:ke,1))/grvphi(is:ie,js:je,ks:ke) ))
+   if (i > 2 .and. err_grvphi < itertol) exit
+ enddo
+
+ ! Reset grvpsi
+ grvpsi = 0.d0
+
+ ! Reset grktype
+ grktype = grktype_org
 
 return
 end subroutine gravity_relax
