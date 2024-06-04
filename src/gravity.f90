@@ -849,13 +849,17 @@ subroutine gravity_relax
  grktype_org = grktype
  grktype = 1
 
-! Repeat the damped hyperbolic step until the solution is stationary
+ ! Repeat the damped hyperbolic step until the solution is stationary
  do i = 1, maxiter
    call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
    err_grvphi = maxval(abs( (grvphi(is:ie,js:je,ks:ke)-grvphiorg(is:ie,js:je,ks:ke,1))/grvphi(is:ie,js:je,ks:ke) ))
    if (i > 2 .and. err_grvphi < itertol) exit
  enddo
 
+ ! Reset grvpsi
+ grvpsi = 0.d0
+
+ ! Reset grktype
  grktype = grktype_org
 
 return
