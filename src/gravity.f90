@@ -228,12 +228,16 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
  use grid
  use gravmod,only:grvphiorg,grvphi,grvpsi,lapphi,hgsrc,gsrc,hgcfl
  use rungekutta_mod,only:get_runge_coeff
+ use mpi_domain,only:exchange_gravity_mpi
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
  integer:: i,j,k,n, jb, kb, grungen
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
+
+! Perform MPI neighbour exchange
+ call exchange_gravity_mpi
 
 !$omp parallel
  do grungen = 1, grktype

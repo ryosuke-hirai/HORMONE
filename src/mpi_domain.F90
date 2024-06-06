@@ -290,14 +290,19 @@ module mpi_domain
 
       if (compswitch >= 2) call exchange_spc(spc)
 
+      call stop_clock(wtmpi)
+
+   end subroutine exchange_mpi
+
+   subroutine exchange_gravity_mpi
+      use settings
+      use gravmod
+
       if (gravswitch == 3) then
          call exchange_scalar(grvphi)
          call exchange_scalar(grvpsi)
       endif
-
-      call stop_clock(wtmpi)
-
-   end subroutine exchange_mpi
+   end subroutine exchange_gravity_mpi
 
    subroutine exchange_scalar(val)
       use grid
