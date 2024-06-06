@@ -300,7 +300,6 @@ module mpi_domain
 
       if (gravswitch == 3) then
          call exchange_scalar(grvphi)
-         call exchange_scalar(grvpsi)
       endif
    end subroutine exchange_gravity_mpi
 
