@@ -47,6 +47,9 @@ contains
   end do
 !$omp end parallel do
 
+  call allreduce_mpi('max',cfmax)
+  call allreduce_mpi('max',cgrav)
+
 ! Compute dtgrav if using hyperbolic self-gravity
   if(gravswitch==3)then
    cgrav = HGfac*cgrav
@@ -87,11 +90,9 @@ contains
 
   dt = courant * minval(dti)
 
-  ! Reduce quantities across all MPI tasks
-  call allreduce_mpi('min',dt)
-  call allreduce_mpi('max',cfmax)
-
   if(outstyle==1) dt = min(dt,t_out-time)
+
+  call allreduce_mpi('min',dt)
 
   ch = cfmax
 
@@ -99,6 +100,8 @@ contains
    dtgrav = min(dt,hgcfl*minval(dtg))
    cgrav2 = cgrav**2
   end if
+
+  call allreduce_mpi('min',dtgrav)
 
   call stop_clock(wttim)
 
