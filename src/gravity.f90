@@ -840,6 +840,8 @@ subroutine gravity_relax
  use grid
  use timestep_mod
  use gravmod
+ use mpi_utils,only:allreduce_mpi
+ use mpi_domain,only:myrank
 
  real(8):: err_grvphi
  integer :: grktype_org
@@ -853,12 +855,25 @@ subroutine gravity_relax
  grktype_org = grktype
  grktype = 1
 
+ if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
+
  ! Repeat the damped hyperbolic step until the solution is stationary
  do i = 1, maxiter
    call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
    err_grvphi = maxval(abs( (grvphi(is:ie,js:je,ks:ke)-grvphiorg(is:ie,js:je,ks:ke,1))/grvphi(is:ie,js:je,ks:ke) ))
+
+   ! Get max error across all MPI tasks
+   call allreduce_mpi('max', err_grvphi)
+
+   ! Print error every 1000 steps
+   if (mod(i,1000)==0 .and. myrank==0) then
+    print*, 'iteration=', i, 'error=', err_grvphi
+   endif
+
    if (i > 2 .and. err_grvphi < itertol) exit
  enddo
+
+ if (myrank==0) print*, 'Gravity relaxation converged in ', i, ' iterations, with error', err_grvphi
 
  ! Reset grvpsi
  grvpsi = 0.d0
