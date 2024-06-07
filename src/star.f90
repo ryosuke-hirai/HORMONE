@@ -117,7 +117,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
   gpot(n) = -G*m(n)/(r(n)+1d-99)-4d0*pi*G*mnow
  end do
 
- do i = is, ie
+ do i = max(is_global,is-1), ie
   if(xi1(i)>=radius)then
    mc(i:ie) = mass
    exit
