@@ -327,8 +327,8 @@ subroutine hg_boundary_conditions
   !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
-    grvphi(is-1,j,k) = grvphi(is,j,k)
-    if(gbtype==1)grvphi(gie+1,j,k) = grvphi(gie,j,k) &
+    if(is==is_global) grvphi(is-1,j,k) = grvphi(is,j,k)
+    if(ie==ie_global .and. gbtype==1) grvphi(gie+1,j,k) = grvphi(gie,j,k) &
     *orgdis(gie,j,k)/orgdis(gie+1,j,k)
    end do
   end do
@@ -337,8 +337,8 @@ subroutine hg_boundary_conditions
    !$omp do private(i,k) collapse(2)
    do k = ks, ke
     do i = is, ie
-     grvphi(i,js-1,k) = grvphi(i,je,k)
-     grvphi(i,je+1,k) = grvphi(i,js,k)
+     if(js==js_global) grvphi(i,js-1,k) = grvphi(i,je,k)
+     if(je==je_global) grvphi(i,je+1,k) = grvphi(i,js,k)
     end do
    end do
    !$omp end do
@@ -348,8 +348,8 @@ subroutine hg_boundary_conditions
    do i = is, ie
     if(eq_sym)grvphi(i,j,ks-1) = grvphi(i,j,ks)
     if(gbtype==1)then
-     grvphi(i,j,ks-1) = grvphi(i,j,ks)*orgdis(i,j,ks)/orgdis(i,j,ks-1)
-     grvphi(i,j,ke+1) = grvphi(i,j,ke)*orgdis(i,j,ke)/orgdis(i,j,ke+1)
+     if(ks==ks_global) grvphi(i,j,ks-1) = grvphi(i,j,ks)*orgdis(i,j,ks)/orgdis(i,j,ks-1)
+     if(ke==ke_global) grvphi(i,j,ke+1) = grvphi(i,j,ke)*orgdis(i,j,ke)/orgdis(i,j,ke+1)
     end if
    end do
   end do
@@ -360,16 +360,16 @@ subroutine hg_boundary_conditions
   !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
-    grvphi(is-1,j,k) = grvphi(is,j,k)
-    if(gbtype==1)grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
+    if(is==is_global) grvphi(is-1,j,k) = grvphi(is,j,k)
+    if(ie==ie_global .and. gbtype==1) grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
    end do
   end do
   !$omp end do
   !$omp do private(i,k) collapse(2)
   do k = ks, ke
    do i = is, ie
-    grvphi(i,js-1,k) = grvphi(i,js,k)
-    grvphi(i,je+1,k) = grvphi(i,je,k)
+    if(js==js_global) grvphi(i,js-1,k) = grvphi(i,js,k)
+    if(je==je_global) grvphi(i,je+1,k) = grvphi(i,je,k)
    end do
   end do
   !$omp end do
@@ -377,8 +377,8 @@ subroutine hg_boundary_conditions
    !$omp do private(i,j) collapse(2)
    do j = js, je
     do i = is, ie
-     grvphi(i,j,ks-1) = grvphi(i,j,ke)
-     grvphi(i,j,ke+1) = grvphi(i,j,ks)
+     if(ks==ks_global) grvphi(i,j,ks-1) = grvphi(i,j,ke)
+     if(ke==ke_global) grvphi(i,j,ke+1) = grvphi(i,j,ks)
     end do
    end do
    !$omp end do
