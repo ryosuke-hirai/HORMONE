@@ -91,6 +91,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use physval
  use gravmod,only:gravswitch,grvphi,grvpsi,mc
  use utils,only:intpol
+ use mpi_utils,only:allreduce_mpi
 
  real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
@@ -99,6 +100,8 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  integer::i,j,k,n,lines,nn,sn
  real(8):: mass, radius
  real(8):: mnow,rnow,volfac
+ real(8):: vshell_part
+
 !-----------------------------------------------------------------------------
 
  lines = size(r)-1
@@ -132,9 +135,17 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  end do
 
  allocate(Vshell(is:ie))
- do i = is, ie
-  Vshell(i) = sum(dvol(i,js:je,ks:ke))
- end do
+ do i = is_global, ie_global
+  if (is <= i .and. i <= ie) then
+   vshell_part = sum(dvol(i,js:je,ks:ke))
+  else
+   vshell_part = 0d0
+  end if
+  call allreduce_mpi('sum', vshell_part)
+  if (is <= i .and. i <= ie) then
+   Vshell(i) = vshell_part
+  end if
+ enddo
 
  if(eq_sym)then
   volfac=2d0
