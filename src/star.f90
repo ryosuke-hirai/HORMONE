@@ -528,6 +528,7 @@ subroutine isentropic_star(mass,radius,mcore,rsoft,imu,m,r,rho,p)
  use constants,only:G,pi
  use pressure_mod,only:eostype,entropy_from_dp
  use utils,only:geometrical_series
+ use mpi_utils,only:myrank,allreduce_mpi
 
  real(8),intent(in)::mass,radius,mcore,rsoft
  real(8),intent(inout):: imu
@@ -538,53 +539,69 @@ subroutine isentropic_star(mass,radius,mcore,rsoft,imu,m,r,rho,p)
 
 !-----------------------------------------------------------------------------
 
-! Can only do uniform composition for now
-! This module does not work with non-ideal EoSs
- eostype0 = eostype
- if(eostype>=2) eostype = 1
-
  Nmax = 3000
- allocate( m(0:Nmax),r(0:Nmax),rho(0:Nmax),p(0:Nmax),dm(-1:Nmax+2) )
- m(0) = mcore
- dmmin = (mass-mcore)/dble(Nmax)*1d-3
- call geometrical_series(dm,dmmin,1,Nmax/2,0d0,(mass-mcore)/2d0)
- do i = 1, Nmax/2
-  m(i) = m(i-1) + dm(i)
- end do
- do i = Nmax/2+1, Nmax
-  m(i) = m(i-1) + dm(Nmax-i+1)
- end do
+ allocate( m(0:Nmax),r(0:Nmax),rho(0:Nmax),p(0:Nmax) )
+ m = 0d0
+ r = 0d0
+ rho = 0d0
+ p = 0d0
 
- fac = 0.05d0
- err = 1d-5
- which=0
+ ! Run on master task and copy to other tasks
+ if (myrank==0) then
+ ! Can only do uniform composition for now
+ ! This module does not work with non-ideal EoSs
+  eostype0 = eostype
+  if(eostype>=2) eostype = 1
 
-! Initial guess
- p(0) = G*(mass-mcore)**2/radius**4/(8d0*pi)
- rho(0) = (mass-mcore)/(4d0*pi/3d0*radius**3)
- T = 1d3
- Sc = entropy_from_dp(rho(0),p(0),T,imu)
+  allocate( dm(-1:Nmax+2) )
 
- do
-  r(Nmax) = radius
-  call isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
+  m(0) = mcore
+  dmmin = (mass-mcore)/dble(Nmax)*1d-3
+  call geometrical_series(dm,dmmin,1,Nmax/2,0d0,(mass-mcore)/2d0)
+  do i = 1, Nmax/2
+   m(i) = m(i-1) + dm(i)
+  end do
+  do i = Nmax/2+1, Nmax
+   m(i) = m(i-1) + dm(Nmax-i+1)
+  end do
 
-  if(r(Nmax)/radius-1d0>err)then
-   Sc=Sc*(1d0-fac)
-   if(which>0)fac=fac*0.5d0
-   which=-1
-  elseif(r(Nmax)/radius-1d0<-err)then
-   Sc=Sc*(1d0+fac)
-   if(which<0)fac=fac*0.5d0
-   which=1
-  else
-   exit
-  end if
+  fac = 0.05d0
+  err = 1d-5
+  which=0
 
- end do
+ ! Initial guess
+  p(0) = G*(mass-mcore)**2/radius**4/(8d0*pi)
+  rho(0) = (mass-mcore)/(4d0*pi/3d0*radius**3)
+  T = 1d3
+  Sc = entropy_from_dp(rho(0),p(0),T,imu)
 
- eostype = eostype0 ! set back to original eostype
+  do
+   r(Nmax) = radius
+   call isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
 
+   if(r(Nmax)/radius-1d0>err)then
+    Sc=Sc*(1d0-fac)
+    if(which>0)fac=fac*0.5d0
+    which=-1
+   elseif(r(Nmax)/radius-1d0<-err)then
+    Sc=Sc*(1d0+fac)
+    if(which<0)fac=fac*0.5d0
+    which=1
+   else
+    exit
+   end if
+
+  end do
+
+  eostype = eostype0 ! set back to original eostype
+
+ endif
+
+ ! Broadcast to all tasks using allreduce
+ call allreduce_mpi('sum', m)
+ call allreduce_mpi('sum', r)
+ call allreduce_mpi('sum', rho)
+ call allreduce_mpi('sum', p)
 
 return
 end subroutine isentropic_star
