@@ -804,15 +804,21 @@ subroutine get_lapphi_hgsrc(grvphi,gsrc,lapphi,hgsrc)
     lap = lap + lap_coeff(1,i  ,j,k)*grvphi(i+1,j,k)
     if(je>js)then
      jm = j-1 ; jp = j+1
-     if(j==gjs_global.and.bc2is==0)jm=je_global
-     if(j==gje_global.and.bc2os==0)jp=js_global
+     ! If multiple MPI tasks in this dimension, periodic BCs are already handled
+     if (js==js_global.and.je==je_global) then
+      if(j==gjs_global.and.bc2is==0)jm=je_global
+      if(j==gje_global.and.bc2os==0)jp=js_global
+     endif
      lap = lap + lap_coeff(2,i,j-1,k)*grvphi(i,jm,k)
      lap = lap + lap_coeff(2,i,j  ,k)*grvphi(i,jp,k)
     end if
     if(ke>ks)then
      km = k-1 ; kp = k+1
-     if(k==gks_global.and.bc3is==0)km=ke_global
-     if(k==gke_global.and.bc3os==0)kp=ks_global
+     ! If multiple MPI tasks in this dimension, periodic BCs are already handled
+     if (ks==ks_global.and.ke==ke_global) then
+      if(k==gks_global.and.bc3is==0)km=ke_global
+      if(k==gke_global.and.bc3os==0)kp=ks_global
+     endif
      lap = lap + lap_coeff(3,i,j,k-1)*grvphi(i,j,km)
      lap = lap + lap_coeff(3,i,j,k  )*grvphi(i,j,kp)
     end if
