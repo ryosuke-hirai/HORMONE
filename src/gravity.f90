@@ -26,7 +26,7 @@ subroutine gravity
  use timestep_mod,only:timestep
  use profiler_mod
 
- integer:: i,j,k,n,l, gin, gjn, gkn, tngrav
+ integer:: i,j,k,n,l,tngrav
  real(8):: phih, h
  real(8),allocatable,dimension(:):: x, cgsrc
 
@@ -35,10 +35,6 @@ subroutine gravity
  if(gravswitch==0.or.gravswitch==1)return
 
  call start_clock(wtgrv)
-
- gin = gie - gis + 1
- gjn = gje - gjs + 1
- gkn = gke - gks + 1
 
 ! Set source term for gravity
  call get_gsrc(gsrc)
