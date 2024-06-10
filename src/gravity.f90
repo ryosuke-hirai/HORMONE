@@ -41,6 +41,7 @@ subroutine gravity
 
  if(grav_init_relax .and. tn==0) then
   call gravity_relax
+  call hg_boundary_conditions
 
  elseif(gravswitch==2 .or. (gravswitch==3 .and. tn==0))then
   allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
