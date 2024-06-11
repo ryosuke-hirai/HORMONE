@@ -26,7 +26,7 @@ subroutine gravity
  use timestep_mod,only:timestep
  use profiler_mod
 
- integer:: i,j,k,n,l, gin, gjn, gkn, tngrav
+ integer:: i,j,k,n,l,tngrav
  real(8):: phih, h
  real(8),allocatable,dimension(:):: x, cgsrc
 
@@ -36,15 +36,12 @@ subroutine gravity
 
  call start_clock(wtgrv)
 
- gin = gie - gis + 1
- gjn = gje - gjs + 1
- gkn = gke - gks + 1
-
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
  if(grav_init_relax .and. tn==0) then
   call gravity_relax
+  call hg_boundary_conditions
 
  elseif(gravswitch==2 .or. (gravswitch==3 .and. tn==0))then
   allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
@@ -228,12 +225,16 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
  use grid
  use gravmod,only:grvphiorg,grvphi,grvpsi,lapphi,hgsrc,gsrc,hgcfl
  use rungekutta_mod,only:get_runge_coeff
+ use mpi_domain,only:exchange_gravity_mpi
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
  integer:: i,j,k,n, jb, kb, grungen
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
+
+! Perform MPI neighbour exchange
+ call exchange_gravity_mpi
 
 !$omp parallel
  do grungen = 1, grktype
@@ -323,8 +324,8 @@ subroutine hg_boundary_conditions
   !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
-    grvphi(is-1,j,k) = grvphi(is,j,k)
-    if(gbtype==1)grvphi(gie+1,j,k) = grvphi(gie,j,k) &
+    if(is==is_global) grvphi(is-1,j,k) = grvphi(is,j,k)
+    if(ie==ie_global .and. gbtype==1) grvphi(gie+1,j,k) = grvphi(gie,j,k) &
     *orgdis(gie,j,k)/orgdis(gie+1,j,k)
    end do
   end do
@@ -333,8 +334,8 @@ subroutine hg_boundary_conditions
    !$omp do private(i,k) collapse(2)
    do k = ks, ke
     do i = is, ie
-     grvphi(i,js-1,k) = grvphi(i,je,k)
-     grvphi(i,je+1,k) = grvphi(i,js,k)
+     if(js==js_global) grvphi(i,js-1,k) = grvphi(i,je,k)
+     if(je==je_global) grvphi(i,je+1,k) = grvphi(i,js,k)
     end do
    end do
    !$omp end do
@@ -344,8 +345,8 @@ subroutine hg_boundary_conditions
    do i = is, ie
     if(eq_sym)grvphi(i,j,ks-1) = grvphi(i,j,ks)
     if(gbtype==1)then
-     grvphi(i,j,ks-1) = grvphi(i,j,ks)*orgdis(i,j,ks)/orgdis(i,j,ks-1)
-     grvphi(i,j,ke+1) = grvphi(i,j,ke)*orgdis(i,j,ke)/orgdis(i,j,ke+1)
+     if(ks==ks_global) grvphi(i,j,ks-1) = grvphi(i,j,ks)*orgdis(i,j,ks)/orgdis(i,j,ks-1)
+     if(ke==ke_global) grvphi(i,j,ke+1) = grvphi(i,j,ke)*orgdis(i,j,ke)/orgdis(i,j,ke+1)
     end if
    end do
   end do
@@ -356,16 +357,16 @@ subroutine hg_boundary_conditions
   !$omp do private(j,k) collapse(2)
   do k = ks, ke
    do j = js, je
-    grvphi(is-1,j,k) = grvphi(is,j,k)
-    if(gbtype==1)grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
+    if(is==is_global) grvphi(is-1,j,k) = grvphi(is,j,k)
+    if(ie==ie_global .and. gbtype==1) grvphi(ie+1,j,k) = grvphi(ie,j,k)*x1(ie)/x1(ie+1)
    end do
   end do
   !$omp end do
   !$omp do private(i,k) collapse(2)
   do k = ks, ke
    do i = is, ie
-    grvphi(i,js-1,k) = grvphi(i,js,k)
-    grvphi(i,je+1,k) = grvphi(i,je,k)
+    if(js==js_global) grvphi(i,js-1,k) = grvphi(i,js,k)
+    if(je==je_global) grvphi(i,je+1,k) = grvphi(i,je,k)
    end do
   end do
   !$omp end do
@@ -373,8 +374,8 @@ subroutine hg_boundary_conditions
    !$omp do private(i,j) collapse(2)
    do j = js, je
     do i = is, ie
-     grvphi(i,j,ks-1) = grvphi(i,j,ke)
-     grvphi(i,j,ke+1) = grvphi(i,j,ks)
+     if(ks==ks_global) grvphi(i,j,ks-1) = grvphi(i,j,ke)
+     if(ke==ke_global) grvphi(i,j,ke+1) = grvphi(i,j,ks)
     end do
    end do
    !$omp end do
@@ -800,15 +801,21 @@ subroutine get_lapphi_hgsrc(grvphi,gsrc,lapphi,hgsrc)
     lap = lap + lap_coeff(1,i  ,j,k)*grvphi(i+1,j,k)
     if(je>js)then
      jm = j-1 ; jp = j+1
-     if(j==gjs_global.and.bc2is==0)jm=je_global
-     if(j==gje_global.and.bc2os==0)jp=js_global
+     ! If multiple MPI tasks in this dimension, periodic BCs are already handled
+     if (js==js_global.and.je==je_global) then
+      if(j==gjs_global.and.bc2is==0)jm=je_global
+      if(j==gje_global.and.bc2os==0)jp=js_global
+     endif
      lap = lap + lap_coeff(2,i,j-1,k)*grvphi(i,jm,k)
      lap = lap + lap_coeff(2,i,j  ,k)*grvphi(i,jp,k)
     end if
     if(ke>ks)then
      km = k-1 ; kp = k+1
-     if(k==gks_global.and.bc3is==0)km=ke_global
-     if(k==gke_global.and.bc3os==0)kp=ks_global
+     ! If multiple MPI tasks in this dimension, periodic BCs are already handled
+     if (ks==ks_global.and.ke==ke_global) then
+      if(k==gks_global.and.bc3is==0)km=ke_global
+      if(k==gke_global.and.bc3os==0)kp=ks_global
+     endif
      lap = lap + lap_coeff(3,i,j,k-1)*grvphi(i,j,km)
      lap = lap + lap_coeff(3,i,j,k  )*grvphi(i,j,kp)
     end if
@@ -836,6 +843,8 @@ subroutine gravity_relax
  use grid
  use timestep_mod
  use gravmod
+ use mpi_utils,only:allreduce_mpi
+ use mpi_domain,only:myrank
 
  real(8):: err_grvphi
  integer :: grktype_org
@@ -849,12 +858,25 @@ subroutine gravity_relax
  grktype_org = grktype
  grktype = 1
 
+ if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
+
  ! Repeat the damped hyperbolic step until the solution is stationary
  do i = 1, maxiter
    call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
    err_grvphi = maxval(abs( (grvphi(is:ie,js:je,ks:ke)-grvphiorg(is:ie,js:je,ks:ke,1))/grvphi(is:ie,js:je,ks:ke) ))
+
+   ! Get max error across all MPI tasks
+   call allreduce_mpi('max', err_grvphi)
+
+   ! Print error every 1000 steps
+   if (mod(i,1000)==0 .and. myrank==0) then
+    print*, 'iteration=', i, 'error=', err_grvphi
+   endif
+
    if (i > 2 .and. err_grvphi < itertol) exit
  enddo
+
+ if (myrank==0) print*, 'Gravity relaxation converged in ', i, ' iterations, with error', err_grvphi
 
  ! Reset grvpsi
  grvpsi = 0.d0

@@ -253,6 +253,7 @@ module mpi_domain
       use settings
       use grid
       use physval
+      use gravmod
       use profiler_mod
       use mpi_utils
 
@@ -278,17 +279,29 @@ module mpi_domain
       call exchange_scalar(v1)
       call exchange_scalar(v2)
       call exchange_scalar(v3)
-      call exchange_scalar(b1)
-      call exchange_scalar(b2)
-      call exchange_scalar(b3)
       call exchange_scalar(e)
       call exchange_scalar(eint)
+
+      if (mag_on) then
+         call exchange_scalar(b1)
+         call exchange_scalar(b2)
+         call exchange_scalar(b3)
+      endif
 
       if (compswitch >= 2) call exchange_spc(spc)
 
       call stop_clock(wtmpi)
 
    end subroutine exchange_mpi
+
+   subroutine exchange_gravity_mpi
+      use settings
+      use gravmod
+
+      if (gravswitch == 3) then
+         call exchange_scalar(grvphi)
+      endif
+   end subroutine exchange_gravity_mpi
 
    subroutine exchange_scalar(val)
       use grid
