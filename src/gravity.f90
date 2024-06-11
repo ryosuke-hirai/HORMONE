@@ -846,10 +846,10 @@ subroutine gravity_relax
  use mpi_utils,only:allreduce_mpi
  use mpi_domain,only:myrank
 
- real(8):: err_grvphi
+ real(8):: err_grvphi, prev_err_grvphi
  integer :: grktype_org
  integer, parameter :: maxiter = 1000000
- real(8), parameter :: itertol = 1d-9
+ real(8), parameter :: itertol = 5d-7
  integer :: i
 
  call timestep
@@ -860,10 +860,13 @@ subroutine gravity_relax
 
  if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
 
+ err_grvphi = 0.d0
+
  ! Repeat the damped hyperbolic step until the solution is stationary
  do i = 1, maxiter
+   prev_err_grvphi = err_grvphi
    call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
-   err_grvphi = maxval(abs( (grvphi(is:ie,js:je,ks:ke)-grvphiorg(is:ie,js:je,ks:ke,1))/grvphi(is:ie,js:je,ks:ke) ))
+   err_grvphi = maxval(abs( cgrav*grvpsi(is:ie,js:je,ks:ke)/grvphi(is:ie,js:je,ks:ke) ))
 
    ! Get max error across all MPI tasks
    call allreduce_mpi('max', err_grvphi)
@@ -873,7 +876,8 @@ subroutine gravity_relax
     print*, 'iteration=', i, 'error=', err_grvphi
    endif
 
-   if (i > 2 .and. err_grvphi < itertol) exit
+   ! Converged if below tolerance and error is not increasing
+   if (err_grvphi < prev_err_grvphi .and. err_grvphi < itertol) exit
  enddo
 
  if (myrank==0) print*, 'Gravity relaxation converged in ', i, ' iterations, with error', err_grvphi
