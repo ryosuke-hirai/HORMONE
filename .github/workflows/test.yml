@@ -93,6 +93,9 @@ jobs:
             mpi: yes
           - test: polytrope
             flat: no
+          # star_sph uses MICCG init, which is not compatible with MPI
+          - test: star_sph
+            mpi: yes
 
     name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }})
 
