@@ -97,7 +97,7 @@ module mpi_utils
 #ifdef MPI
     call finalize_mpi
 #endif
-    if (myrank == 0 .and. code /= 0) then
+    if (myrank==0 .and. code/=0) then
       error stop code
     endif
 
