@@ -92,4 +92,16 @@ module mpi_utils
 #endif
   end subroutine
 
+  subroutine stop_mpi(code)
+    integer, intent(in) :: code
+#ifdef MPI
+    call finalize_mpi
+#endif
+    if (myrank==0 .and. code/=0) then
+      error stop code
+    endif
+
+    stop
+  end subroutine
+
 end module mpi_utils

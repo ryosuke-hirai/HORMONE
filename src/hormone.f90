@@ -195,7 +195,7 @@ program hormone
 
   if(is_test) then
     call test(passed)
-    if (.not. passed) error stop 1
+    if (.not. passed) call stop_mpi(1)
   endif
 
   call finalize_mpi
