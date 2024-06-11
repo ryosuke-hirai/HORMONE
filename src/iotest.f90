@@ -293,7 +293,7 @@ module iotest_mod
       if (numerr > 0) then
         print*, 'Number of errors = ',numerr
         print*, 'Test failed'
-        error stop 1
+        call stop_mpi(1)
       else
         call cleanup_files(tn=123, time=456.d0)
         print*, 'Test passed'
