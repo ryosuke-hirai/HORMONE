@@ -43,7 +43,9 @@ jobs:
 
     - name: Compile
       working-directory: ./work
-      run: make ${{ matrix.debug == 'yes' && 'debug' || '' }}
+      run: |
+        set -o pipefail
+        make ${{ matrix.debug == 'yes' && 'debug' || '' }} | tee compile.log
       env:
         FC: ${{ matrix.fc }}
         MPI: ${{ matrix.mpi }}
@@ -53,6 +55,12 @@ jobs:
       with:
         name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
         path: ./work/hormone
+
+    - name: Save compile log as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-compile-log
+        path: ./work/compile.log
 
   test:
     needs: compile
@@ -146,6 +154,39 @@ jobs:
           mpirun -np 2 --oversubscribe ./hormone
         else
           ./hormone
+        fi
+
+  compiler-warnings:
+    needs: compile
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fc:
+          - gfortran
+        debug:
+          - yes
+        mpi:
+          - no
+          - yes
+
+    name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download compile log
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-compile-log
+
+    - name: Check for compiler warnings
+      run: |
+        if grep -q "Warning: " ./work/compile.log; then
+          cat ./work/compile.log
+          exit 1
+        else
+          echo "No compiler warnings found"
         fi
 
   # Gather results into a dummy job that will fail if the previous job fails
