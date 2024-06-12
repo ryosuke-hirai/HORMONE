@@ -182,8 +182,8 @@ jobs:
 
     - name: Check for compiler warnings
       run: |
-        if grep -q "Warning: " ./work/compile.log; then
-          cat ./work/compile.log
+        if grep -q "Warning: " ./compile.log; then
+          cat ./compile.log
           exit 1
         else
           echo "No compiler warnings found"
