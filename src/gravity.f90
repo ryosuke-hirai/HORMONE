@@ -16,7 +16,7 @@ contains
 
 subroutine gravity
 
- use settings,only:eq_sym,grav_init_relax,grav_init_other
+ use settings,only:grav_init_relax,grav_init_other
  use grid
  use constants
  use physval
@@ -26,8 +26,7 @@ subroutine gravity
  use timestep_mod,only:timestep
  use profiler_mod
 
- integer:: i,j,k,n,l,tngrav
- real(8):: phih, h
+ integer:: i,j,k,l,tngrav
  real(8),allocatable,dimension(:):: x, cgsrc
 
 !-----------------------------------------------------------------------------
@@ -400,9 +399,9 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
  use settings,only:crdnt,eq_sym,gbtype
  use grid,only:gis_global,gie_global,&
-               gjs_global,gje_global,&
+               gje_global,&
                gks_global,gke_global,&
-               xi1s,x1,xi1,dx1,idx1,dxi1,dx2,dxi2,idx2,dx3,dxi3,idx3,&
+               xi1s,x1,xi1,dx1,idx1,dxi1,dx2,dxi2,dx3,dxi3,idx3,&
                sini,sinc,rdis
  use miccg_mod,only:cg_set,ijk_from_l,get_preconditioner
 
@@ -603,15 +602,12 @@ end subroutine setup_grvcg
 
 subroutine gravsetup
 
- use settings,only:courant
- use constants,only:huge
  use utils,only:isequal
  use grid
  use gravmod
  use miccg_mod,only:cg_grv
 
  integer:: i,j,k
- real(8):: h
 
 !-----------------------------------------------------------------------------
 
