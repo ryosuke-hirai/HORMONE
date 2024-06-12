@@ -57,6 +57,8 @@ program hormone
 
   logical :: passed
 
+  integer :: testvar
+
 !############################## start program ################################
 
   call init_mpi
