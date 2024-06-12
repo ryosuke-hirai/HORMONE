@@ -20,7 +20,7 @@ subroutine radiation
 
  use grid
  use physval
- use miccg_mod,only:cg=>cg_rad,miccg,ijk_from_l,l_from_ijk
+ use miccg_mod,only:cg=>cg_rad,miccg,ijk_from_l
  use profiler_mod
 
  real(8),allocatable::radK(:,:,:,:)

@@ -129,7 +129,7 @@ subroutine gravity
   do k = gks, gke
    do j = gjs, gje
     do i = gis, gie
-     l = l_from_ijk(i,j,k,gis,gjs,gks,gie-gis+1,gje-gjs+1,gke-gks+1)
+     l = l_from_ijk(i,j,k,gis,gjs,gks,gie-gis+1,gje-gjs+1)
      grvphi(i,j,k) = x(l)
     end do
    end do
