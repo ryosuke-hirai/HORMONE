@@ -203,7 +203,7 @@ subroutine get_radA(radK,cg)
   if(cg%jn==1.and.cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
      + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -220,7 +220,7 @@ subroutine get_radA(radK,cg)
   if(cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
      + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -236,7 +236,7 @@ subroutine get_radA(radK,cg)
   elseif(cg%jn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
      + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -255,7 +255,7 @@ subroutine get_radA(radK,cg)
 
   if(crdnt==2)then
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
     + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -417,7 +417,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
   if(cg%jn==1.and.cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
    end do
@@ -429,7 +429,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
   if(cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
     if(j==cg%je)cg%A(3,l) = 0d0
@@ -438,7 +438,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
   elseif(cg%jn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
     if(k==cg%ke)cg%A(3,l) = 0d0
@@ -450,7 +450,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
 
   if(crdnt==2)then
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
     if(j==cg%je)cg%A(3,l) = 0d0
