@@ -285,7 +285,7 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
   entropy = (S_ion + S_rad) / fac_pgas
 
  case(2) ! ideal gas + radiation + recombination
-  call get_xion(log(d),T,X,Y,xion)
+  call get_xion(log(d),T,Y,xion)
   n_x = d*X/amu
   n_y = d*Y/(4d0*amu)
   n_z = d*(1d0-X-Y)/(12d0*amu)
