@@ -44,10 +44,10 @@ subroutine get_file_end(fh, end_bytes)
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: end_bytes
   integer(kind=MPI_OFFSET_KIND) :: disp
-  integer :: method = 1
+  integer :: method = 2
 
   if (method == 1) then
-    ! This may or may not be better than the method below... idk yet
+    ! MPI_File_sync is very slow on some file systems, e.g. Lustre
     call mpi_file_sync(fh, ierr)
     call MPI_File_get_size(fh, end_bytes, ierr)
   else
