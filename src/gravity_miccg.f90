@@ -46,7 +46,7 @@ subroutine gravity_miccg
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
   do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
@@ -66,7 +66,7 @@ subroutine gravity_miccg
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
   do l=1,cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
@@ -87,7 +87,7 @@ subroutine gravity_miccg
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
   do l=1,cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then
@@ -116,7 +116,7 @@ subroutine gravity_miccg
  do k = gks, gke
   do j = gjs, gje
    do i = gis, gie
-    l = l_from_ijk(i,j,k,gis,gjs,gks,gie-gis+1,gje-gjs+1,gke-gks+1)
+    l = l_from_ijk(i,j,k,gis,gjs,gks,gie-gis+1,gje-gjs+1)
     grvphi(i,j,k) = x(l)
    end do
   end do
@@ -217,7 +217,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
 ! Equation matrix
    do l = 1, lmax
-    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+    call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
     cg%A(1,l) = -( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) )
     cg%A(2,l) = xi1(i)**2/dx1(i+1)
     if(i==gis_global.and.xi1s>0d0)& ! for inner boundary
@@ -249,7 +249,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
 ! Equation matrix
    do l = 1, lmax
-    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+    call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
     cg%A(1,l) = - ( xi1(i)/dx1(i+1) + xi1(i-1)/dx1(i) &
                       + 2d0*x1(i)*dxi1(i) / (dx3(k)*dx3(k+1)) ) &
                     * 0.5d0*sum(dx3(k:k+1))
@@ -278,7 +278,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
 ! Equation matrix
    do l = 1, lmax
-    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+    call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
 
     cg%A(1,l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
                   * sinc(j)*dxi2(j) &
@@ -328,7 +328,7 @@ subroutine setup_grvcg(is,ie,js,je,ks,ke,cg)
 
 ! Equation matrix
    do l = 1, lmax
-    call ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+    call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
     cg%A(1,l) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
                   * sinc(j)*dxi2(j)*dxi3(k) &
                   + ( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i)*dxi3(k) &
