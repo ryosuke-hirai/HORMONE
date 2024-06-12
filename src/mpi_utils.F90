@@ -57,6 +57,14 @@ module mpi_utils
 
     call MPI_ALLREDUCE(value, value_reduced, 1, MPI_REAL8, op, MPI_COMM_WORLD, ierr)
     value = value_reduced
+#else
+    ! Check if operation is valid, but do nothing
+    select case (op_str)
+    case ('sum', 'max', 'min')
+      value = value
+    case default
+      error stop "Invalid operation specified"
+    end select
 #endif
 
   end subroutine allreduce_mpi_real8
