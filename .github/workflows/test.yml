@@ -45,7 +45,7 @@ jobs:
       working-directory: ./work
       run: |
         set -o pipefail
-        make ${{ matrix.debug == 'yes' && 'debug' || '' }} | tee compile.log
+        make ${{ matrix.debug == 'yes' && 'debug' || '' }} |& tee compile.log
       env:
         FC: ${{ matrix.fc }}
         MPI: ${{ matrix.mpi }}
@@ -182,8 +182,9 @@ jobs:
 
     - name: Check for compiler warnings
       run: |
+        cat ./compile.log
         if grep -q "Warning: " ./compile.log; then
-          cat ./compile.log
+          echo "Compiler warnings found"
           exit 1
         else
           echo "No compiler warnings found"
