@@ -89,7 +89,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use constants,only:G,pi
  use grid
  use physval
- use gravmod,only:gravswitch,grvphi,grvpsi,mc
+ use gravmod,only:grvphi,mc
  use utils,only:intpol
  use mpi_utils,only:allreduce_mpi
 
@@ -226,7 +226,7 @@ end subroutine set_star_sph_grid
 
 ! PURPOSE: To place star on a cylindrical coordinate grid
 
-subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
+subroutine set_star_cyl_grid(r,m,pres,comp,comp_list)
 
  use settings,only:compswitch,spn
  use constants,only:G
@@ -234,7 +234,7 @@ subroutine set_star_cyl_grid(r,m,rho,pres,comp,comp_list)
  use physval
  use utils,only:intpol
 
- real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
+ real(8),allocatable,dimension(:),intent(in):: r,m,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
  real(8)::dr,mnow,rnow,mold,shell,shelld,mass,radius
