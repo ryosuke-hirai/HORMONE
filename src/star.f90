@@ -89,7 +89,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use constants,only:G,pi
  use grid
  use physval
- use gravmod,only:gravswitch,grvphi,grvpsi,mc
+ use gravmod,only:grvphi,mc
  use utils,only:intpol
  use mpi_utils,only:allreduce_mpi
 
