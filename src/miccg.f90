@@ -212,11 +212,11 @@ return
 end subroutine cctr
 
 
-pure function l_from_ijk(i,j,k,is,js,ks,in,jn,kn) result(l)
+pure function l_from_ijk(i,j,k,is,js,ks,in,jn) result(l)
 ! PURPOSE: Compute a single index l from i,j,k
 ! is,js,ks: Starting index for i,j,k directions
 ! in,jn,kn: Number of grid points in i,j,k directions
- integer,intent(in)::i,j,k,is,js,ks,in,jn,kn
+ integer,intent(in)::i,j,k,is,js,ks,in,jn
  integer::l
  l = i-is+1 + in*(j-js) + in*jn*(k-ks)
 end function l_from_ijk
@@ -229,9 +229,9 @@ end function l_from_ijk
 ! is,js,ks: Starting index for i,j,k directions
 ! in,jn,kn: Number of grid points in i,j,k directions
 
-pure subroutine ijk_from_l(l,is,js,ks,in,jn,kn,i,j,k)
+pure subroutine ijk_from_l(l,is,js,ks,in,jn,i,j,k)
 
- integer,intent(in)::l,is,js,ks,in,jn,kn
+ integer,intent(in)::l,is,js,ks,in,jn
  integer,intent(out)::i,j,k
 
 !-----------------------------------------------------------------------------

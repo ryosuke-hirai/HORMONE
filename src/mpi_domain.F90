@@ -324,6 +324,9 @@ module mpi_domain
                               cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
+#else
+   ! Do nothing
+   if (.false.) val = val
 #endif
    end subroutine exchange_scalar
 
@@ -351,6 +354,9 @@ module mpi_domain
                               cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
+#else
+   ! Do nothing
+   if (.false.) val = val
 #endif
    end subroutine exchange_spc
 

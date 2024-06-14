@@ -169,6 +169,13 @@ function coolingcondition(i,j,k,t) result(f)
  else
   f = .false.
  end if
+
+ ! TEMPORARY: Supress compiler warnings
+ ! In general, this function can depend on j and k, but currently unused
+ if (.false.) then
+  if (j>0) continue
+  if (k>0) continue
+ end if
 end function coolingcondition
 
 end module cooling_mod
