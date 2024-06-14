@@ -170,7 +170,8 @@ function coolingcondition(i,j,k,t) result(f)
   f = .false.
  end if
 
- ! In general, can depend on j and k, but currently unused
+ ! TEMPORARY: Supress compiler warnings
+ ! In general, this function can depend on j and k, but currently unused
  if (.false.) then
   if (j>0) continue
   if (k>0) continue

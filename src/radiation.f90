@@ -96,7 +96,7 @@ function kappa_r(d,T) result(kappa)
  real(8):: kappa
  kappa = 1d0
 
- !  Suppress warnings for function under construction
+ ! TEMPORARY: Suppress warnings for function under construction
  if (.false.) then
   if (d>0.d0 .and. T>0.d0) continue
  end if
@@ -108,7 +108,7 @@ function kappa_p(d,T) result(kappa)
  real(8):: kappa
  kappa = 1d0
 
- !  Suppress warnings for function under construction
+ ! TEMPORARY: Suppress warnings for function under construction
  if (.false.) then
   if (d>0.d0 .and. T>0.d0) continue
  end if
@@ -419,7 +419,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
  real(8),allocatable,intent(inout):: rsrc(:,:,:)
  integer:: i,j,k,l
 
- !  Suppress warnings for subroutine under construction
+ ! TEMPORARY: Suppress warnings for subroutine under construction
  if (.false.) then
   if (sum(d)>0.d0 .and. sum(T)>0.d0 .and. sum(urad)>0.d0 .and. dt>0.d0) continue
  end if
