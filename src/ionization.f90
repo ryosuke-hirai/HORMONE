@@ -106,9 +106,9 @@ contains
  end function brec1
 ! ***************************************************************************
 
- pure subroutine get_xion(logd,T,X,Y,xion,dxion)
+ pure subroutine get_xion(logd,T,Y,xion,dxion)
 ! PURPOSE: Get ionization fractions (and dxdT) given rho and T
-  real(8),intent(in):: logd,T,X,Y
+  real(8),intent(in):: logd,T,Y
   real(8),intent(out):: xion(1:4)
   real(8),intent(out),optional:: dxion(1:4)
   real(8):: logQ, logT, Yfac
@@ -157,9 +157,9 @@ contains
   e(4) = eion(4)*Y*0.25d0
 
   if(present(derecdT).or.present(dimurecdT))then
-   call get_xion(logd,T,X,Y,xi,zi)
+   call get_xion(logd,T,Y,xi,zi)
   else
-   call get_xion(logd,T,X,Y,xi)
+   call get_xion(logd,T,Y,xi)
   end if
 
   erec = sum(e(1:4)*xi(1:4))
@@ -188,9 +188,9 @@ contains
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
 
   if(present(dimurecdT))then
-   call get_xion(logd,T,X,Y,xi,zi)
+   call get_xion(logd,T,Y,xi,zi)
   else
-   call get_xion(logd,T,X,Y,xi)
+   call get_xion(logd,T,Y,xi)
   end if
 
   imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
@@ -216,7 +216,7 @@ contains
   e(3) = eion(3)*Y*0.25d0
   e(4) = eion(4)*Y*0.25d0
 
-  call get_xion(logd,T,X,Y,xi)
+  call get_xion(logd,T,Y,xi)
 
   get_erec = sum(e(1:4)*xi(1:4))
 

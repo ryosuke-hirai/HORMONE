@@ -48,7 +48,7 @@ subroutine windtunnel
  gamma=gamma0
 
 ! Place the star at the origin
- call set_star_cyl_grid(r,m,rho,pres)
+ call set_star_cyl_grid(r,m,pres)
 
  pwind = (fac_pgas/muconst*dwind + arad*Twind**3/3d0*0d0)*Twind
 ! Embed the star in a uniform wind tunnel

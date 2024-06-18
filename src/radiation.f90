@@ -20,7 +20,7 @@ subroutine radiation
 
  use grid
  use physval
- use miccg_mod,only:cg=>cg_rad,miccg,ijk_from_l,l_from_ijk
+ use miccg_mod,only:cg=>cg_rad,miccg,ijk_from_l
  use profiler_mod
 
  real(8),allocatable::radK(:,:,:,:)
@@ -95,6 +95,11 @@ function kappa_r(d,T) result(kappa)
  real(8),intent(in)::d,T
  real(8):: kappa
  kappa = 1d0
+
+ ! TEMPORARY: Suppress warnings for function under construction
+ if (.false.) then
+  if (d>0.d0 .and. T>0.d0) continue
+ end if
 end function kappa_r
 
 ! Get Planck mean opacity
@@ -102,6 +107,11 @@ function kappa_p(d,T) result(kappa)
  real(8),intent(in)::d,T
  real(8):: kappa
  kappa = 1d0
+
+ ! TEMPORARY: Suppress warnings for function under construction
+ if (.false.) then
+  if (d>0.d0 .and. T>0.d0) continue
+ end if
 end function kappa_p
 
 
@@ -203,7 +213,7 @@ subroutine get_radA(radK,cg)
   if(cg%jn==1.and.cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
      + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -220,7 +230,7 @@ subroutine get_radA(radK,cg)
   if(cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
      + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -236,7 +246,7 @@ subroutine get_radA(radK,cg)
   elseif(cg%jn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
      + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -255,7 +265,7 @@ subroutine get_radA(radK,cg)
 
   if(crdnt==2)then
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
     + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
@@ -409,6 +419,11 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
  real(8),allocatable,intent(inout):: rsrc(:,:,:)
  integer:: i,j,k,l
 
+ ! TEMPORARY: Suppress warnings for subroutine under construction
+ if (.false.) then
+  if (sum(d)>0.d0 .and. sum(T)>0.d0 .and. sum(urad)>0.d0 .and. dt>0.d0) continue
+ end if
+
 !-----------------------------------------------------------------------------
 
  select case(dim)
@@ -417,7 +432,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
   if(cg%jn==1.and.cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
    end do
@@ -429,7 +444,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
   if(cg%kn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
     if(j==cg%je)cg%A(3,l) = 0d0
@@ -438,7 +453,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
   elseif(cg%jn==1)then
 
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
     if(k==cg%ke)cg%A(3,l) = 0d0
@@ -450,7 +465,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
 
   if(crdnt==2)then
    do l = 1, cg%lmax
-    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,cg%kn,i,j,k)
+    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     rsrc(i,j,k) = 0d0
     if(i==cg%ie)cg%A(2,l) = 0d0
     if(j==cg%je)cg%A(3,l) = 0d0
