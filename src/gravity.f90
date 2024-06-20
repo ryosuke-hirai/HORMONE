@@ -179,7 +179,7 @@ subroutine gravity_relax
  err = 1.d0
 
  ! Repeat the damped hyperbolic step until the solution is stationary
- do i = 1, maxiter
+ do i = 0, maxiter
   call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
 
   ! Only calculate error every 1000 iterations because it is expensive
@@ -189,10 +189,9 @@ subroutine gravity_relax
    call allreduce_mpi('sum', err)
    err = sqrt(err)/sqrt(mtot)
    if (myrank==0) print*, 'iteration=', i, 'error=', err
+   ! Converged if below tolerance
+   if (err < itertol) exit
   endif
-
-  ! Converged if below tolerance
-  if (err < itertol) exit
  enddo
 
  if (myrank==0) print*, 'Gravity relaxation converged in ', i, ' iterations, with error', err
