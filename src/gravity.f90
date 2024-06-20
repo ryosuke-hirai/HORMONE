@@ -146,17 +146,23 @@ subroutine gravity_relax
 
  use settings
  use grid
+ use physval
  use timestep_mod
  use gravmod
  use mpi_utils,only:allreduce_mpi
  use mpi_domain,only:myrank
  use gravity_hyperbolic_mod,only:hyperbolic_gravity_step
 
- real(8):: err_grvphi, prev_err_grvphi
+ real(8):: err
  integer :: grktype_org
- integer, parameter :: maxiter = 1000000
- real(8), parameter :: itertol = 5d-7
+ integer, parameter :: maxiter = 10000 ! TEMPORARY: May not be enough to fully converge, but set low for speed
+ real(8), parameter :: itertol = 1d-3
  integer :: i
+
+ real(8), allocatable :: mass(:,:,:)
+ real(8) :: mtot
+
+ if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
 
  call timestep
  cgrav_old = cgrav
@@ -164,29 +170,32 @@ subroutine gravity_relax
  grktype_org = grktype
  grktype = 1
 
- if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
+ ! Mass of cells
+ allocate(mass(is:ie,js:je,ks:ke))
+ mass = d(is:ie,js:je,ks:ke)*dvol(is:ie,js:je,ks:ke)
+ mtot = sum(mass)
+ call allreduce_mpi('sum', mtot)
 
- err_grvphi = 0.d0
+ err = 1.d0
 
  ! Repeat the damped hyperbolic step until the solution is stationary
  do i = 1, maxiter
-   prev_err_grvphi = err_grvphi
-   call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
-   err_grvphi = maxval(abs( cgrav*grvpsi(is:ie,js:je,ks:ke)/grvphi(is:ie,js:je,ks:ke) ))
+  call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
 
-   ! Get max error across all MPI tasks
-   call allreduce_mpi('max', err_grvphi)
+  ! Only calculate error every 1000 iterations because it is expensive
+  if (mod(i,1000)==0) then
+   ! Error in Poisson equation, weighted by mass
+   err = sum( ((lapphi(is:ie,js:je,ks:ke) - hgsrc(is:ie,js:je,ks:ke))/hgsrc(is:ie,js:je,ks:ke))**2 * mass )
+   call allreduce_mpi('sum', err)
+   err = sqrt(err)/sqrt(mtot)
+   if (myrank==0) print*, 'iteration=', i, 'error=', err
+  endif
 
-   ! Print error every 1000 steps
-   if (mod(i,1000)==0 .and. myrank==0) then
-    print*, 'iteration=', i, 'error=', err_grvphi
-   endif
-
-   ! Converged if below tolerance and error is not increasing
-   if (err_grvphi < prev_err_grvphi .and. err_grvphi < itertol) exit
+  ! Converged if below tolerance
+  if (err < itertol) exit
  enddo
 
- if (myrank==0) print*, 'Gravity relaxation converged in ', i, ' iterations, with error', err_grvphi
+ if (myrank==0) print*, 'Gravity relaxation converged in ', i, ' iterations, with error', err
 
  ! Reset grvpsi
  grvpsi = 0.d0
