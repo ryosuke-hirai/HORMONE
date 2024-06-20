@@ -156,7 +156,7 @@ subroutine gravity_relax
  real(8):: err
  integer :: grktype_org
  integer, parameter :: maxiter = 10000 ! TEMPORARY: May not be enough to fully converge, but set low for speed
- real(8), parameter :: itertol = 1d-3
+ real(8), parameter :: itertol = 1d-2
  integer :: i
 
  real(8), allocatable :: mass(:,:,:)
