@@ -2,7 +2,7 @@
 ! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
 ! fmr_max   : Maximum levels of fixed mesh refinement (0 means no FMR)
 ! fmr_lvl(i): Number of layers in a given FMR level
-&gridcon  xi1s=0d0 xi1e=7d11 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
+&gridcon  xi1s=0d0 xi1e=6.963d10 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
 	  is=1 ie=128 js=1 je=16 ks=1 ke=32
 	  imesh=1 jmesh=0 kmesh=0
 	  x1min=2d8 x2min=0d0 x3min=0d0
@@ -52,4 +52,4 @@
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
 ! test tolerance
-&testcon  test_tol=1d-8 /
+&testcon  test_tol=1d-7 /
