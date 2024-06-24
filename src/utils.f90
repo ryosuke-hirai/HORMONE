@@ -297,9 +297,10 @@ end subroutine gravpot1d
 subroutine masscoordinate
 
  use settings,only:eq_sym
- use grid,only:is,ie,js,je,ks,ke,dvol
+ use grid,only:is_global,ie_global,is,ie,js,je,ks,ke,dvol
  use physval,only:d
  use gravmod,only:mc
+ use mpi_utils,only:allreduce_mpi
 
  implicit none
 
@@ -315,15 +316,18 @@ subroutine masscoordinate
  end if
 
 !$omp parallel
- do i = is, ie
+ do i = is_global, ie_global
   shellmass = 0d0
+  if (is_global <= i .and. i <= ie_global) then
 !$omp do private(j,k) reduction(+:shellmass)
-  do k = ks, ke
-   do j = js, je
-    shellmass = shellmass + d(i,j,k)*dvol(i,j,k)
+   do k = ks, ke
+    do j = js, je
+     shellmass = shellmass + d(i,j,k)*dvol(i,j,k)
+    end do
    end do
-  end do
+  endif
 !$omp end do
+  call allreduce_mpi('sum',shellmass)
 !$omp single
   mc(i) = mc(i-1) + fac*shellmass
 !$omp end single
