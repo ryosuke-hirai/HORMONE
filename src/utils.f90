@@ -327,8 +327,8 @@ subroutine masscoordinate
    end do
   endif
 !$omp end do
-  call allreduce_mpi('sum',shellmass)
 !$omp single
+  call allreduce_mpi('sum',shellmass)
   mc(i) = mc(i-1) + fac*shellmass
 !$omp end single
  end do
