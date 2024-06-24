@@ -325,8 +325,8 @@ subroutine masscoordinate
      shellmass = shellmass + d(i,j,k)*dvol(i,j,k)
     end do
    end do
-  endif
 !$omp end do
+  end if
 !$omp single
   call allreduce_mpi('sum',shellmass)
   mc(i) = mc(i-1) + fac*shellmass
