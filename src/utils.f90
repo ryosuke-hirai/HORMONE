@@ -318,7 +318,7 @@ subroutine masscoordinate
 !$omp parallel
  do i = is_global, ie_global
   shellmass = 0d0
-  if (is_global <= i .and. i <= ie_global) then
+  if (is<=i .and. i<=ie) then
 !$omp do private(j,k) reduction(+:shellmass)
    do k = ks, ke
     do j = js, je
