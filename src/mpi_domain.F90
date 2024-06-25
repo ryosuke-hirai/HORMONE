@@ -616,15 +616,15 @@ module mpi_domain
 
    end function
 
-   function sum_global_array(array, is_, ie_, js_, je_, ks_, ke_, weight) result(arr_sum)
+   function sum_global_array(array, is_, ie_, js_, je_, ks_, ke_, weight, weight2) result(arr_sum)
       use mpi_utils, only: allreduce_mpi
       ! Given some indices is_, ie_, js_, je_, ks_, ke_ that can be applied to the full domain,
       ! return the sum of those elements across all tasks
       use grid, only:is,ie,js,je,ks,ke
       integer, intent(in) :: is_, ie_, js_, je_, ks_, ke_
       real(8), intent(in) :: array(:,:,:)
-      real(8), intent(in), optional :: weight(:,:,:)
-      integer :: io, jo, ko, iow, jow, kow
+      real(8), intent(in), optional :: weight(:,:,:), weight2(:,:,:)
+      integer :: io, jo, ko, iow, jow, kow, iow2, jow2, kow2
       real(8) :: arr_sum
 
       ! `array` could be passed in with 0, 1, or 2 ghost cells
@@ -636,8 +636,15 @@ module mpi_domain
       if (present(weight)) then
          ! The weight array may have a different number of ghosts to the data array
          call calculate_offsets(weight, is, ie, js, je, ks, ke, iow, jow, kow)
-         arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) &
-                    * weight(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) )
+         if (present(weight2)) then
+            call calculate_offsets(weight2, is, ie, js, je, ks, ke, iow2, jow2, kow2)
+            arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) &
+                         * weight(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) &
+                        * weight2(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) )
+         else
+            arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) &
+                         * weight(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) )
+         endif
       else
          arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) )
       endif

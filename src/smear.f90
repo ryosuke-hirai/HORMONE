@@ -13,7 +13,8 @@ contains
 
 subroutine smear
 
- use grid,only:is,js,je,ks,ke,fmr_max,fmr_lvl,dim,crdnt
+ use grid,only:is_global,js_global,je_global,ks_global,ke_global,&
+               fmr_max,fmr_lvl,dim,crdnt
  use physval
  use composition_mod
 
@@ -31,25 +32,21 @@ subroutine smear
 
  if(crdnt==2)then
 
-!$omp parallel
   do n = 1, fmr_max
    if(fmr_lvl(n)==0)cycle
    if(n==1)then
-    jb=je;kb=ke
+    jb=je_global;kb=ke_global
    else
-    jb=min(2**(fmr_max-n+1),je) ; kb=min(2**(fmr_max-n+1),ke)
+    jb=min(2**(fmr_max-n+1),je_global) ; kb=min(2**(fmr_max-n+1),ke_global)
    end if
-!$omp do private(i,j,k) collapse(3)
-   do k = ks, ke, kb
-    do j = js, je, jb
-     do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
+   do k = ks_global, ke_global, kb
+    do j = js_global, je_global, jb
+     do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
       call angular_smear(i,j,j+jb-1,k,k+kb-1)
      end do
     end do
    end do
-!$omp end do
   end do
-!$omp end parallel
 
  end if
 
@@ -65,31 +62,32 @@ end subroutine smear
 
 ! PURPOSE: Average out quantities over several cells in the angular direction
 
- subroutine angular_smear(i,js,je,ks,ke)
+ subroutine angular_smear(i,js_,je_,ks_,ke_)
 
   use settings,only:spn,compswitch
-  use grid,only:x1,x2,x3,dvol
+  use grid,only:x1,x2,x3,dvol,is,ie,js,je,ks,ke
   use physval,only:u,spc,v1,v2,v3,icnt,iene,imo1,imo2,imo3
   use utils
   use gravmod,only:totphi,gravswitch
+  use mpi_utils,only:allreduce_mpi
+  use mpi_domain,only:sum_global_array
 
   implicit none
 
-  integer,intent(in)::i,js,je,ks,ke
+  integer,intent(in)::i,js_,je_,ks_,ke_
   integer:: n,j,k
   real(8):: mtot, etot, vol
   real(8),dimension(1:3):: vcar, xcar, momtot, vave
 
 !-----------------------------------------------------------------------------
 
-  vol = sum(dvol(i,js:je,ks:ke))
-  mtot = sum( u(i,js:je,ks:ke,icnt)*dvol(i,js:je,ks:ke) )
+  vol = sum_global_array(dvol,i,i,js_,je_,ks_,ke_)
+  mtot = sum_global_array(u(:,:,:,icnt),i,i,js_,je_,ks_,ke_,weight=dvol)
 
   if(compswitch>=2)then
    do n = 1, spn
-    spc(n,i,js:je,ks:ke) = sum( u(i,js:je,ks:ke,icnt)*spc(n,i,js:je,ks:ke) &
-                               *dvol(i,js:je,ks:ke) ) &
-                         / mtot
+    spc(n,max(i,is):min(i,ie),max(js_,js):min(je_,je),max(ks_,ks):min(ke_,ke)) = &
+    sum_global_array( u(:,:,:,icnt),i,i,js,je,ks,ke, weight=spc(n,:,:,:), weight2=dvol ) / mtot
    end do
   end if
 
@@ -99,34 +97,39 @@ end subroutine smear
 !!$  return
 
   momtot=0d0;etot=0d0
-  do j = js, je
-   do k = ks, ke
-    xcar = polcar([x1(i),x2(j),x3(k)])
-    call get_vcar(xcar,x3(k),u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
-    momtot = momtot + vcar*dvol(i,j,k)! add up momenta
-    etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
-    if(gravswitch>0)then
-     etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)! and gravitational ene
-    end if
+  if (is<=i .and. i<=ie) then
+   do j = max(js_,js), min(je_,je)
+    do k = max(ks_,ks), min(ke_,ke)
+     xcar = polcar([x1(i),x2(j),x3(k)])
+     call get_vcar(xcar,x3(k),u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
+     momtot = momtot + vcar*dvol(i,j,k)! add up momenta
+     etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
+     if(gravswitch>0)then
+      etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)! and gravitational ene
+     end if
+    end do
    end do
-  end do
+  endif
+  call allreduce_mpi('sum',momtot)
   vave = momtot/mtot ! get average cartesian velocity
-  u(i,js:je,ks:ke,icnt) = mtot/vol ! density
+  if (is<=i .and. i<=ie) u(i,max(js_,js):min(je_,je),max(ks_,ks):min(ke_,ke),icnt) = mtot/vol ! density
 
-  do j = js, je
-   do k = ks, ke
-    xcar = polcar([x1(i),x2(j),x3(k)])
-    call get_vpol(xcar,x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
-    u(i,j,k,2) = v1(i,j,k)*u(i,j,k,icnt)
-    u(i,j,k,3) = v2(i,j,k)*u(i,j,k,icnt)
-    u(i,j,k,4) = v3(i,j,k)*u(i,j,k,icnt)
-    if(gravswitch>0)then
-     etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
-    end if
+  if (is<=i .and. i<=ie) then
+   do j = max(js_,js), min(je_,je)
+    do k = max(ks_,ks), min(ke_,ke)
+     xcar = polcar([x1(i),x2(j),x3(k)])
+     call get_vpol(xcar,x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
+     u(i,j,k,2) = v1(i,j,k)*u(i,j,k,icnt)
+     u(i,j,k,3) = v2(i,j,k)*u(i,j,k,icnt)
+     u(i,j,k,4) = v3(i,j,k)*u(i,j,k,icnt)
+     if(gravswitch>0)then
+      etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+     end if
+    end do
    end do
-  end do
-
-  u(i,js:je,ks:ke,iene) = etot / sum( dvol(i,js:je,ks:ke) )
+  endif
+  call allreduce_mpi('sum',etot)
+  if (is<=i .and. i<=ie) u(i,max(js_,js):min(je_,je),max(ks_,ks):min(ke_,ke),iene) = etot / vol
 !  u(i,js:je,ks:ke,8) = sum( u(i,js:je,ks:ke,8)*dvol(i,js:je,ks:ke) )&
 !                      / sum( dvol(i,js:je,ks:ke) )
 
