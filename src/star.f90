@@ -92,6 +92,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use gravmod,only:grvphi,mc
  use utils,only:intpol
  use mpi_utils,only:allreduce_mpi
+ use mpi_domain,only:sum_global_array
 
  real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
@@ -136,12 +137,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
 
  allocate(Vshell(is:ie))
  do i = is_global, ie_global
-  if (is <= i .and. i <= ie) then
-   vshell_part = sum(dvol(i,js:je,ks:ke))
-  else
-   vshell_part = 0d0
-  end if
-  call allreduce_mpi('sum', vshell_part)
+  vshell_part = sum_global_array(dvol, i, i, js_global, je_global, ks_global, ke_global)
   if (is <= i .and. i <= ie) then
    Vshell(i) = vshell_part
   end if

@@ -18,7 +18,7 @@ subroutine sedov
  use physval
  use pressure_mod,only:eos_p
  use input_mod,only:error_extras,error_nml
- use mpi_utils
+ use mpi_domain,only:sum_global_array
 
  real(8):: damb, Eexp, ein, pin, pamb, Tin, imuconst
  real(8):: vol_inj, vol_tot
@@ -43,16 +43,7 @@ subroutine sedov
  i_inj = 10
 
  ! Volume of the injection region
- if (is <= i_inj) then
-  if (ie < i_inj) then
-    vol_inj = sum(dvol(is:ie,js:je,ks:ke))
-  else
-    vol_inj = sum(dvol(is:i_inj,js:je,ks:ke))
-  end if
- else
-    vol_inj = 0d0
- endif
- call allreduce_mpi('sum', vol_inj)
+ vol_inj = sum_global_array(dvol, is_global, i_inj, js_global, je_global, ks_global, ke_global)
 
  ein = Eexp/vol_inj
  Tin = 1d3
@@ -60,8 +51,7 @@ subroutine sedov
  pin = eos_p(damb,ein,Tin,imuconst)
 
  ! Total volume
- vol_tot = sum(dvol(is:ie,js:je,ks:ke))
- call allreduce_mpi('sum', vol_tot)
+ vol_tot = sum_global_array(dvol, is_global, ie_global, js_global, je_global, ks_global, ke_global)
 
  pamb = 1d-3*Eexp/vol_tot ! Low energy
 
