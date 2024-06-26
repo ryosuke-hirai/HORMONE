@@ -68,7 +68,8 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
  use mpi_domain,only:exchange_gravity_mpi,sum_global_array
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
- integer:: i,j,k,n, jb, kb, grungen
+ integer:: i,j,k,n,jb,kb,grungen
+ integer:: il,ir,jl,jr,kl,kr
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
@@ -115,9 +116,14 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
      do j = js_global, je_global, jb+1
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
        vol = sum(dvol(i,j:j+jb,k:k+kb))
-       grvphi(max(i,is):min(i,ie),max(j,js):min(j+jb,je),max(k,ks):min(k+kb,ke)) = &
+
+       il = max(i,is); ir = min(i,ie)
+       jl = max(j,js); jr = min(j+jb,je)
+       kl = max(k,ks); kr = min(k+kb,ke)
+
+       grvphi(il:ir,jl:jr,kl:kr) = &
         sum_global_array(grvphi, i, i, j, j+jb, k, k+kb, weight=dvol) / vol
-       grvpsi(max(i,is):min(i,ie),max(j,js):min(j+jb,je),max(k,ks):min(k+kb,ke)) = &
+       grvpsi(il:ir,jl:jr,kl:kr) = &
         sum_global_array(grvpsi, i, i, j, j+jb, k, k+kb, weight=dvol) / vol
       end do
      end do
