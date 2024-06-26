@@ -43,7 +43,7 @@ subroutine sedov
  i_inj = 10
 
  ! Volume of the injection region
- vol_inj = sum_global_array(dvol, is_global, i_inj, js_global, je_global, ks_global, ke_global)
+ vol_inj = sum(dvol(is_global:i_inj,js_global:je_global,ks_global:ke_global))
 
  ein = Eexp/vol_inj
  Tin = 1d3
@@ -51,7 +51,7 @@ subroutine sedov
  pin = eos_p(damb,ein,Tin,imuconst)
 
  ! Total volume
- vol_tot = sum_global_array(dvol, is_global, ie_global, js_global, je_global, ks_global, ke_global)
+ vol_tot = sum(dvol(is_global:ie_global,js_global:je_global,ks_global:ke_global))
 
  pamb = 1d-3*Eexp/vol_tot ! Low energy
 

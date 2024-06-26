@@ -101,7 +101,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  integer::i,j,k,n,lines,nn,sn
  real(8):: mass, radius
  real(8):: mnow,rnow,volfac
- real(8):: vshell_part
 
 !-----------------------------------------------------------------------------
 
@@ -137,9 +136,8 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
 
  allocate(Vshell(is:ie))
  do i = is_global, ie_global
-  vshell_part = sum_global_array(dvol, i, i, js_global, je_global, ks_global, ke_global)
   if (is <= i .and. i <= ie) then
-   Vshell(i) = vshell_part
+   Vshell(i) = sum(dvol(i,js_global:je_global,ks_global:ke_global))
   end if
  enddo
 

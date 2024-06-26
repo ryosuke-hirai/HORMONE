@@ -81,7 +81,7 @@ end subroutine smear
 
 !-----------------------------------------------------------------------------
 
-  vol = sum_global_array(dvol,i,i,js_,je_,ks_,ke_)
+  vol = sum(dvol(i,js_:je_,ks_:ke_))
   mtot = sum_global_array(u(:,:,:,icnt),i,i,js_,je_,ks_,ke_,weight=dvol)
 
   if(compswitch>=2)then

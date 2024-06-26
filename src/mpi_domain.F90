@@ -631,13 +631,13 @@ module mpi_domain
       ! Slicing the array before passing it in to the function can cause an array temporary to be created,
       ! so instead we pass the whole array in (resetting indices to start at 1), detect the size here
       ! and calculate the offsets accordingly
-      call calculate_offsets(array, is, ie, js, je, ks, ke, io, jo, ko)
+      call calculate_offsets(array, io, jo, ko)
 
       if (present(weight)) then
          ! The weight array may have a different number of ghosts to the data array
-         call calculate_offsets(weight, is, ie, js, je, ks, ke, iow, jow, kow)
+         call calculate_offsets(weight, iow, jow, kow)
          if (present(weight2)) then
-            call calculate_offsets(weight2, is, ie, js, je, ks, ke, iow2, jow2, kow2)
+            call calculate_offsets(weight2, iow2, jow2, kow2)
             arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) &
                          * weight(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) &
                         * weight2(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) )
@@ -652,31 +652,46 @@ module mpi_domain
 
     end function sum_global_array
 
-   subroutine calculate_offsets(array, is, ie, js, je, ks, ke, io, jo, ko)
-     implicit none
-     real(8), dimension(:,:,:), intent(in) :: array
-     integer, intent(in) :: is, ie, js, je, ks, ke
-     integer, intent(out) :: io, jo, ko
+   subroutine calculate_offsets(array, io, jo, ko)
+      use grid, only:is,ie,js,je,ks,ke,is_global,ie_global,js_global,je_global,ks_global,ke_global
+      real(8), dimension(:,:,:), intent(in) :: array
+      integer, intent(out) :: io, jo, ko
 
-     if (size(array,1)==ie-is+1 .and. size(array,2)==je-js+1 .and. size(array,3)==ke-ks+1) then
-        ! No ghost cells
-        io = -is + 1
-        jo = -js + 1
-        ko = -ks + 1
-     else if (size(array,1)==ie-is+2 .and. size(array,2)==je-js+3 .and. size(array,3)==ke-ks+3) then
-        ! 1 ghost cell
-        io = -is + 2
-        jo = -js + 2
-        ko = -ks + 2
-     else if (size(array,1)==ie-is+5 .and. size(array,2)==je-js+5 .and. size(array,3)==ke-ks+5) then
-        ! 2 ghost cells
-        io = -is + 3
-        jo = -js + 3
-        ko = -ks + 3
+      if (size(array,1)==ie-is+1 .and. size(array,2)==je-js+1 .and. size(array,3)==ke-ks+1) then
+         ! No ghost cells
+         io = -is + 1
+         jo = -js + 1
+         ko = -ks + 1
+      else if (size(array,1)==ie-is+3 .and. size(array,2)==je-js+3 .and. size(array,3)==ke-ks+3) then
+         ! 1 ghost cell
+         io = -is + 2
+         jo = -js + 2
+         ko = -ks + 2
+      else if (size(array,1)==ie-is+5 .and. size(array,2)==je-js+5 .and. size(array,3)==ke-ks+5) then
+         ! 2 ghost cells
+         io = -is + 3
+         jo = -js + 3
+         ko = -ks + 3
+      else if (size(array,1)==ie_global-is_global+1 .and. size(array,2)==je_global-js_global+1 .and. size(array,3)==ke_global-ks_global+1) then
+         ! Full domain, no ghost cells
+         io = 0
+         jo = 0
+         ko = 0
+      else if (size(array,1)==ie_global-is_global+3 .and. size(array,2)==je_global-js_global+3 .and. size(array,3)==ke_global-ks_global+3) then
+         ! Full domain, 1 ghost cell
+         io = 1
+         jo = 1
+         ko = 1
+      else if (size(array,1)==ie_global-is_global+5 .and. size(array,2)==je_global-js_global+5 .and. size(array,3)==ke_global-ks_global+5) then
+         ! Full domain, 2 ghost cells
+         io = 2
+         jo = 2
+         ko = 2
      else
         print*, 'Error: calculate_offsets: array size does not match domain size'
         print*, 'Array size:', size(array,1), size(array,2), size(array,3)
         print*, 'Domain size:', ie-is+1, je-js+1, ke-ks+1
+        print*, 'Full grid size:', ie_global-is_global+1, je_global-js_global+1, ke_global-ks_global+1
         stop
      endif
    end subroutine calculate_offsets
