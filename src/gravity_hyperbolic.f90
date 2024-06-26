@@ -114,7 +114,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
     do k = ks_global, ke_global, kb+1
      do j = js_global, je_global, jb+1
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-       vol = sum(dvol(i:i,j:j+jb,k:k+kb))
+       vol = sum(dvol(i,j:j+jb,k:k+kb))
        grvphi(max(i,is):min(i,ie),max(j,js):min(j+jb,je),max(k,ks):min(k+kb,ke)) = &
         sum_global_array(grvphi, i, i, j, j+jb, k, k+kb, weight=dvol) / vol
        grvpsi(max(i,is):min(i,ie),max(j,js):min(j+jb,je),max(k,ks):min(k+kb,ke)) = &
