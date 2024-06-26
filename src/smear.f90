@@ -35,14 +35,14 @@ subroutine smear
   do n = 1, fmr_max
    if(fmr_lvl(n)==0)cycle
    if(n==1)then
-    jb=je_global;kb=ke_global
+    jb=je_global-js_global; kb=ke_global-ks_global
    else
-    jb=min(2**(fmr_max-n+1),je_global) ; kb=min(2**(fmr_max-n+1),ke_global)
+    jb=min(2**(fmr_max-n+1),je_global)-1 ; kb=min(2**(fmr_max-n+1),ke_global)-1
    end if
-   do k = ks_global, ke_global, kb
-    do j = js_global, je_global, jb
+   do k = ks_global, ke_global, kb+1
+    do j = js_global, je_global, jb+1
      do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-      call angular_smear(i,j,j+jb-1,k,k+kb-1)
+      call angular_smear(i,j,j+jb,k,k+kb)
      end do
     end do
    end do
