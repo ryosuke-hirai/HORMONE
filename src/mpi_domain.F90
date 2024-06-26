@@ -7,6 +7,11 @@ module mpi_domain
 
    implicit none
 
+   interface sum_global_array
+      module procedure sum_global_array_scalar
+      module procedure sum_global_array_spc
+   end interface sum_global_array
+
 #ifdef MPI
    integer :: cart_comm
 
@@ -616,84 +621,67 @@ module mpi_domain
 
    end function
 
-   function sum_global_array(array, is_, ie_, js_, je_, ks_, ke_, weight, weight2) result(arr_sum)
+   function sum_global_array_scalar(array, is_, ie_, js_, je_, ks_, ke_, weight) result(arr_sum)
       use mpi_utils, only: allreduce_mpi
       ! Given some indices is_, ie_, js_, je_, ks_, ke_ that can be applied to the full domain,
       ! return the sum of those elements across all tasks
       use grid, only:is,ie,js,je,ks,ke
       integer, intent(in) :: is_, ie_, js_, je_, ks_, ke_
-      real(8), intent(in) :: array(:,:,:)
-      real(8), intent(in), optional :: weight(:,:,:), weight2(:,:,:)
-      integer :: io, jo, ko, iow, jow, kow, iow2, jow2, kow2
+      real(8), intent(in), allocatable :: array(:,:,:)
+      real(8), intent(in), allocatable, optional :: weight(:,:,:)
       real(8) :: arr_sum
+      integer :: il,ir,jl,jr,kl,kr
 
-      ! `array` could be passed in with 0, 1, or 2 ghost cells
-      ! Slicing the array before passing it in to the function can cause an array temporary to be created,
-      ! so instead we pass the whole array in (resetting indices to start at 1), detect the size here
-      ! and calculate the offsets accordingly
-      call calculate_offsets(array, io, jo, ko)
+      il = max(is_,is)
+      ir = min(ie_,ie)
+      jl = max(js_,js)
+      jr = min(je_,je)
+      kl = max(ks_,ks)
+      kr = min(ke_,ke)
 
       if (present(weight)) then
-         ! The weight array may have a different number of ghosts to the data array
-         call calculate_offsets(weight, iow, jow, kow)
-         if (present(weight2)) then
-            call calculate_offsets(weight2, iow2, jow2, kow2)
-            arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) &
-                         * weight(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) &
-                        * weight2(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) )
-         else
-            arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) &
-                         * weight(iow+max(is_,is):iow+min(ie_,ie), jow+max(js_,js):jow+min(je_,je), kow+max(ks_,ks):kow+min(ke_,ke)) )
-         endif
+         arr_sum = sum(array(il:ir, jl:jr, kl:kr) &
+                     * weight(il:ir, jl:jr, kl:kr) )
       else
-         arr_sum = sum( array(io+max(is_,is):io+min(ie_,ie), jo+max(js_,js):jo+min(je_,je), ko+max(ks_,ks):ko+min(ke_,ke)) )
+         arr_sum = sum(array(il:ir, jl:jr, kl:kr))
       endif
       call allreduce_mpi('sum', arr_sum)
 
-    end function sum_global_array
+    end function sum_global_array_scalar
 
-   subroutine calculate_offsets(array, io, jo, ko)
-      use grid, only:is,ie,js,je,ks,ke,is_global,ie_global,js_global,je_global,ks_global,ke_global
-      real(8), dimension(:,:,:), intent(in) :: array
-      integer, intent(out) :: io, jo, ko
+    function sum_global_array_spc(array, is_, ie_, js_, je_, ks_, ke_, l_array, l_weight2, weight, weight2) result(arr_sum)
+      use mpi_utils, only: allreduce_mpi
+      ! Given some indices is_, ie_, js_, je_, ks_, ke_ that can be applied to the full domain,
+      ! return the sum of those elements across all tasks
+      use grid, only:is,ie,js,je,ks,ke
+      integer, intent(in) :: is_, ie_, js_, je_, ks_, ke_, l_array
+      integer, intent(in), optional :: l_weight2
+      real(8), intent(in), allocatable :: array(:,:,:,:)
+      real(8), intent(in), allocatable, optional :: weight(:,:,:), weight2(:,:,:,:)
+      real(8) :: arr_sum
+      integer :: il,ir,jl,jr,kl,kr
 
-      if (size(array,1)==ie-is+1 .and. size(array,2)==je-js+1 .and. size(array,3)==ke-ks+1) then
-         ! No ghost cells
-         io = -is + 1
-         jo = -js + 1
-         ko = -ks + 1
-      else if (size(array,1)==ie-is+3 .and. size(array,2)==je-js+3 .and. size(array,3)==ke-ks+3) then
-         ! 1 ghost cell
-         io = -is + 2
-         jo = -js + 2
-         ko = -ks + 2
-      else if (size(array,1)==ie-is+5 .and. size(array,2)==je-js+5 .and. size(array,3)==ke-ks+5) then
-         ! 2 ghost cells
-         io = -is + 3
-         jo = -js + 3
-         ko = -ks + 3
-      else if (size(array,1)==ie_global-is_global+1 .and. size(array,2)==je_global-js_global+1 .and. size(array,3)==ke_global-ks_global+1) then
-         ! Full domain, no ghost cells
-         io = 0
-         jo = 0
-         ko = 0
-      else if (size(array,1)==ie_global-is_global+3 .and. size(array,2)==je_global-js_global+3 .and. size(array,3)==ke_global-ks_global+3) then
-         ! Full domain, 1 ghost cell
-         io = 1
-         jo = 1
-         ko = 1
-      else if (size(array,1)==ie_global-is_global+5 .and. size(array,2)==je_global-js_global+5 .and. size(array,3)==ke_global-ks_global+5) then
-         ! Full domain, 2 ghost cells
-         io = 2
-         jo = 2
-         ko = 2
-     else
-        print*, 'Error: calculate_offsets: array size does not match domain size'
-        print*, 'Array size:', size(array,1), size(array,2), size(array,3)
-        print*, 'Domain size:', ie-is+1, je-js+1, ke-ks+1
-        print*, 'Full grid size:', ie_global-is_global+1, je_global-js_global+1, ke_global-ks_global+1
-        stop
-     endif
-   end subroutine calculate_offsets
+      il = max(is_,is)
+      ir = min(ie_,ie)
+      jl = max(js_,js)
+      jr = min(je_,je)
+      kl = max(ks_,ks)
+      kr = min(ke_,ke)
+
+      if (present(weight)) then
+         if (present(weight2)) then
+         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
+                     * weight(il:ir, jl:jr, kl:kr) &
+         * weight2(l_weight2, il:ir, jl:jr, kl:kr) )
+         else
+         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
+                     * weight(il:ir, jl:jr, kl:kr) )
+         endif
+      else
+         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) )
+      endif
+      call allreduce_mpi('sum', arr_sum)
+
+    end function sum_global_array_spc
 
 end module mpi_domain

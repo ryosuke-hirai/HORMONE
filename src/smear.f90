@@ -82,12 +82,12 @@ end subroutine smear
 !-----------------------------------------------------------------------------
 
   vol = sum(dvol(i,js_:je_,ks_:ke_))
-  mtot = sum_global_array(u(:,:,:,icnt),i,i,js_,je_,ks_,ke_,weight=dvol)
+  mtot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt,weight=dvol)
 
   if(compswitch>=2)then
    do n = 1, spn
     spc(n,max(i,is):min(i,ie),max(js_,js):min(je_,je),max(ks_,ks):min(ke_,ke)) = &
-    sum_global_array( u(:,:,:,icnt),i,i,js,je,ks,ke, weight=spc(n,:,:,:), weight2=dvol ) / mtot
+    sum_global_array(u,i,i,js,je,ks,ke,icnt, l_weight2=n, weight=dvol, weight2=spc ) / mtot
    end do
   end if
 
