@@ -15,6 +15,7 @@ contains
  subroutine timestep
 
   use mpi_utils,only:allreduce_mpi
+  use mpi_domain,only:is_my_domain
   use constants,only:tiny
   use settings,only:courant,outstyle,HGfac,hgcfl
   use grid
@@ -78,7 +79,7 @@ contains
     do k = ks_global, ke_global, kb
      do j = js_global, je_global, jb
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-       if (is<=i.and.i<=ie.and.js<=j.and.j<=je.and.ks<=k.and.k<=ke) then
+       if (is_my_domain(i,j,k)) then
         call dti_cell(i,j,k,dti,jb=jb,kb=kb)
         if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
        endif
