@@ -76,6 +76,7 @@ end subroutine smear
 
   integer,intent(in)::i,js_,je_,ks_,ke_
   integer:: n,j,k
+  integer:: jl,jr,kl,kr
   real(8):: mtot, etot, vol
   real(8),dimension(1:3):: vcar, xcar, momtot, vave
 
@@ -96,10 +97,13 @@ end subroutine smear
 !!$  end do
 !!$  return
 
+  jl = max(js_,js); jr = min(je_,je)
+  kl = max(ks_,ks); kr = min(ke_,ke)
+
   momtot=0d0;etot=0d0
   if (is<=i .and. i<=ie) then
-   do j = max(js_,js), min(je_,je)
-    do k = max(ks_,ks), min(ke_,ke)
+   do j = jl, jr
+    do k = kl, kr
      xcar = polcar([x1(i),x2(j),x3(k)])
      call get_vcar(xcar,x3(k),u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
      momtot = momtot + vcar*dvol(i,j,k)! add up momenta
@@ -112,11 +116,11 @@ end subroutine smear
   endif
   call allreduce_mpi('sum',momtot)
   vave = momtot/mtot ! get average cartesian velocity
-  if (is<=i .and. i<=ie) u(i,max(js_,js):min(je_,je),max(ks_,ks):min(ke_,ke),icnt) = mtot/vol ! density
+  if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,icnt) = mtot/vol ! density
 
   if (is<=i .and. i<=ie) then
-   do j = max(js_,js), min(je_,je)
-    do k = max(ks_,ks), min(ke_,ke)
+   do j = jl, jr
+    do k = kl, kr
      xcar = polcar([x1(i),x2(j),x3(k)])
      call get_vpol(xcar,x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
      u(i,j,k,2) = v1(i,j,k)*u(i,j,k,icnt)
@@ -129,7 +133,7 @@ end subroutine smear
    end do
   endif
   call allreduce_mpi('sum',etot)
-  if (is<=i .and. i<=ie) u(i,max(js_,js):min(je_,je),max(ks_,ks):min(ke_,ke),iene) = etot / vol
+  if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,iene) = etot / vol
 !  u(i,js:je,ks:ke,8) = sum( u(i,js:je,ks:ke,8)*dvol(i,js:je,ks:ke) )&
 !                      / sum( dvol(i,js:je,ks:ke) )
 
