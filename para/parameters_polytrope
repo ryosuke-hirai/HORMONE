@@ -6,7 +6,7 @@
 	  is=1 ie=128 js=1 je=16 ks=1 ke=32
 	  imesh=1 jmesh=0 kmesh=0
 	  x1min=2d8 x2min=0d0 x3min=0d0
-	  fmr_max=0 fmr_lvl(1:20)=0 /
+	  fmr_max=2 fmr_lvl(1)=10 fmr_lvl(2)=20 /
 
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
