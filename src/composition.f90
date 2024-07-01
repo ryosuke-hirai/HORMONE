@@ -54,15 +54,17 @@ subroutine meanmolweight
 
  case(2) composition_type ! for composition advection
 !$omp parallel
+  if(eostype<=1)then
 !$omp do private(i,j,k) collapse(3)
-  do k = ks, ke
-   do j = js, je
-    do i = is, ie
-     imu(i,j,k) = get_imu(spc(1:2,i,j,k))
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      imu(i,j,k) = get_imu(spc(1:2,i,j,k))
+     end do
     end do
    end do
-  end do
 !$omp end do
+  end if
 !$omp do private(i,j,k)
   do k = ks, ke
    do j = js-2, js-1

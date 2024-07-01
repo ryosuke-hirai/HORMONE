@@ -19,7 +19,7 @@ subroutine eruption
  use physval
  use input_mod
  use star_mod
- use pressure_mod,only:eos_e,eos_p
+ use pressure_mod,only:eos_e,pressure
  use composition_mod,only:meanmolweight
  use gravmod,only:mc
 
@@ -77,6 +77,7 @@ subroutine eruption
  mass = m(size(m)-1)
  radius = r(size(r)-1)
  dbg = rho(size(rho)-1)*1d-3
+ musize = size(m)-1
 
 ! Compute binding energy
  Ebind = 0d0
@@ -129,7 +130,13 @@ subroutine eruption
   do j = js, je
    do i = ie, is, -1
     p(i,j,k) = p(i+1,j,k)+G*mc(i)*d(i,j,k)/xi1(i)**2*dx1(i)
-    eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
+    select case (eostype)
+    case(0,1)
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
+    case(2)
+     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
+                         spc(1,i,j,k),spc(2,i,j,k))
+    end select
    end do
   end do
  end do
@@ -152,18 +159,12 @@ subroutine eruption
   do j = js, je
    do i = i_inj_in, i_inj_out
     eint(i,j,k) = eint(i,j,k) + ecell*d(i,j,k)
-    select case(eostype)
-    case(0,1)
-     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))
-    case(2)
-     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
-                      spc(1,i,j,k),spc(2,i,j,k))
-    case default
-     stop 'Error in eruption.f90; eostype is wrong'
-    end select
    end do
   end do
  end do
+ e = eint
+
+ call pressure
 
 return
 end subroutine eruption

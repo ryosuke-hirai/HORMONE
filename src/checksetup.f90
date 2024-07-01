@@ -182,7 +182,7 @@ subroutine checksetup
   t_end = t_end*dt_unit_in_sec
 
 ! Spherical composition only for spherical coordinates
-  if(compswitch==1.and.crdnt/=2)then
+  if(compswitch==1.and.(crdnt/=2.or.max(je-js,ke-ks)>0))then
    print *,"compswitch is not consistent with coordinate", compswitch
    stop
   end if
