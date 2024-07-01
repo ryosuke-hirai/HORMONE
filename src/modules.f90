@@ -28,8 +28,9 @@ module settings
  logical:: solve_i, solve_j, solve_k
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, include_sinks, is_test
- logical:: write_other_vel, write_shock, grav_init_other, grav_init_relax, write_evo
- logical:: write_other_slice, write_temp
+ logical:: write_other_vel, write_shock, write_evo, write_other_slice
+ logical:: write_temp, write_mc
+ logical:: grav_init_other, grav_init_relax
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
 

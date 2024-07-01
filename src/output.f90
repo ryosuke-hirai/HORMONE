@@ -1353,6 +1353,9 @@ subroutine get_header(header,columns)
 ! Output shock position if write_shock=.true.
  if(write_shock)call add_column('shock',columns,header)
 
+! Output mass coordinate if write_mc=.true.
+ if(write_mc)call add_column('mc',columns,header)
+
 return
 end subroutine get_header
 
@@ -1387,7 +1390,7 @@ end subroutine add_column
 subroutine write_val(ui,i,j,k,forme,header)
  use settings,only:spn
  use physval
- use gravmod,only:grvphi,extgrv,totphi
+ use gravmod,only:grvphi,extgrv,totphi,mc
  use mpi_domain,only:is_my_domain
  use io,only:write_string
 
@@ -1431,6 +1434,8 @@ subroutine write_val(ui,i,j,k,forme,header)
    call write_anyval(ui,forme,1d0/imu(i,j,k))
   case('shock')!shock position
    call write_anyval(ui,forme,dble(shock(i,j,k)))
+  case('mc')!mass coordinate
+   call write_anyval(ui,forme,mc(i))
   case('aaa')!end of line
    call write_string(ui,'')
    exit

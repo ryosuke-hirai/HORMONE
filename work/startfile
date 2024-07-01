@@ -26,6 +26,7 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'iotest': Test the read/write routines
 ** Test files NOT available **
 'sedov_other': Sedov blast wave. Set model parameters in extras file.
+'eruption': 1D eruption of stars (Owocki+2019)
 'other_shocktube_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 'agndisk': Explosions in AGN disks (Grishin+2021)

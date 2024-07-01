@@ -109,6 +109,8 @@ subroutine read_default
   filename='../para/parameters_othershock_z'
  case('sedov_default','sedov_other')
   filename='../para/parameters_sedov_default'
+ case('eruption')
+  filename='../para/parameters_eruption'
  case('KHinstability')
   filename='../para/parameters_KHinstability'
  case('rad_box')
@@ -165,7 +167,7 @@ subroutine read_parameters(filename)
                     fmr_max, fmr_lvl
  namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, tn_evo,&
                     dt_unit, sigfig, outres, write_other_vel, write_shock, &
-                    write_evo, write_other_slice, write_temp
+                    write_evo, write_other_slice, write_temp, write_mc
  namelist /eos_con/ eostype, gamma, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, alpha9wave,&
                     include_cooling, include_extforce, extrasfile
