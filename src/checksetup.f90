@@ -36,6 +36,7 @@ subroutine checksetup
   end if
   if(dim/=2) write_other_vel = .false.
   if(dim/=3) write_other_slice = .false.
+  if(crdnt/=2) write_mc = .false.
 
 ! Count number of equations
   ufnmax = 0
@@ -162,6 +163,8 @@ subroutine checksetup
    dt_unit_in_sec = 3600*24d0
   case('hr')
    dt_unit_in_sec = 3600d0
+  case('ks')
+   dt_unit_in_sec = 1000d0
   case('min')
    dt_unit_in_sec = 60d0
   case('s')

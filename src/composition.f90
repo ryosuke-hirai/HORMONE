@@ -58,7 +58,7 @@ subroutine meanmolweight
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     imu(i,j,k) = get_imu(spc(1:2,i,j,k))!0.25d0*(6d0*spc(1,i,j,k)+spc(2,i,j,k)+2d0)
+     imu(i,j,k) = get_imu(spc(1:2,i,j,k))
     end do
    end do
   end do
