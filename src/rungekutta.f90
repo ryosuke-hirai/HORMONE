@@ -7,7 +7,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                     　  SUBROUTINE RUNGEKUTTA
+!                         SUBROUTINE RUNGEKUTTA
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -217,6 +217,7 @@ end subroutine get_runge_coeff
      b1(i,j,k) = u(i,j,k,img1)
      b2(i,j,k) = u(i,j,k,img2)
      b3(i,j,k) = u(i,j,k,img3)
+     if(dim==1)cycle
      ! for 9 wave method
      phi(i,j,k)= u(i,j,k,i9wv)
     end do

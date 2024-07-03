@@ -13,7 +13,7 @@ contains
 subroutine conserve
 
   use settings,only:mag_on
-  use grid,only:is,ie,js,je,ks,ke
+  use grid,only:is,ie,js,je,ks,ke,dim
   use physval,only:u,d,e,v1,v2,v3,b1,b2,b3,phi,&
                    icnt,imo1,imo2,imo3,iene,img1,img2,img3,i9wv
 
@@ -35,6 +35,7 @@ subroutine conserve
      u(i,j,k,img1) = b1(i,j,k)
      u(i,j,k,img2) = b2(i,j,k)
      u(i,j,k,img3) = b3(i,j,k)
+     if(dim==1)cycle
      u(i,j,k,i9wv) = phi(i,j,k)
     end do
    end do

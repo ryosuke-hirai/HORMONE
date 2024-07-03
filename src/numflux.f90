@@ -327,16 +327,16 @@ contains
 !!$      end if
 !!$     end if
 
-      flux2(i,j,k,1) = tmpflux(1)
-      flux2(i,j,k,2) = tmpflux(4)
-      flux2(i,j,k,3) = tmpflux(2)
-      flux2(i,j,k,4) = tmpflux(3)
-      flux2(i,j,k,5) = tmpflux(5)
+      flux2(i,j,k,icnt) = tmpflux(icnt)
+      flux2(i,j,k,imo1) = tmpflux(imo3)
+      flux2(i,j,k,imo2) = tmpflux(imo1)
+      flux2(i,j,k,imo3) = tmpflux(imo2)
+      flux2(i,j,k,iene) = tmpflux(iene)
       if(mag_on)then
-       flux2(i,j,k,6) = tmpflux(8)
-       flux2(i,j,k,7) = tmpflux(6)
-       flux2(i,j,k,8) = tmpflux(7)
-       flux2(i,j,k,9) = tmpflux(9)
+       flux2(i,j,k,img1) = tmpflux(img3)
+       flux2(i,j,k,img2) = tmpflux(img1)
+       flux2(i,j,k,img3) = tmpflux(img2)
+       if(dim>1)flux2(i,j,k,i9wv) = tmpflux(i9wv)
       end if
 
       if(compswitch>=2)then
@@ -488,16 +488,16 @@ contains
 !!$      end if
 !!$     end if
 
-      flux3(i,j,k,1) = tmpflux(1)
-      flux3(i,j,k,2) = tmpflux(3)
-      flux3(i,j,k,3) = tmpflux(4)
-      flux3(i,j,k,4) = tmpflux(2)
-      flux3(i,j,k,5) = tmpflux(5)
+      flux3(i,j,k,icnt) = tmpflux(icnt)
+      flux3(i,j,k,imo1) = tmpflux(imo2)
+      flux3(i,j,k,imo2) = tmpflux(imo3)
+      flux3(i,j,k,imo3) = tmpflux(imo1)
+      flux3(i,j,k,iene) = tmpflux(iene)
       if(mag_on)then
-       flux3(i,j,k,6) = tmpflux(7)
-       flux3(i,j,k,7) = tmpflux(8)
-       flux3(i,j,k,8) = tmpflux(6)
-       flux3(i,j,k,9) = tmpflux(9)
+       flux3(i,j,k,img1) = tmpflux(img2)
+       flux3(i,j,k,img2) = tmpflux(img3)
+       flux3(i,j,k,img3) = tmpflux(img1)
+       if(dim>1)flux3(i,j,k,i9wv) = tmpflux(i9wv)
       end if
 
       if(compswitch>=2)then
