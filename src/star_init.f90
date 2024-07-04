@@ -61,7 +61,7 @@ subroutine star_init
  spc = 0d0
  spc_bg = 0d0
 
- call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
+ call read_mesa(mesafile,r,m,rho,pres,comp=comp,comp_list=comp_list)
 
  mass = m(size(m)-1)
  radius = r(size(r)-1)

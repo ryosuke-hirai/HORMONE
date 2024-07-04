@@ -62,7 +62,7 @@ subroutine redsupergiant
  species(1:spn) = spc_list(1:spn)
 
 ! Read MESA file
- call read_mesa(mesafile,r,m,rho,pres,comp,comp_list)
+ call read_mesa(mesafile,r,m,rho,pres,comp=comp,comp_list=comp_list)
 
  mass = m(size(m)-1)
  dbg = rho(size(rho)-1)*1d-5
