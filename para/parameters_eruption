@@ -1,0 +1,21 @@
+----------------------------- parameters --------------------------------
+
+&gridcon  xi1s=0d0 xi1e=2.4d13 
+	  is=1 ie=3000 js=1 je=1 ks=1 ke=1
+	  imesh=1 jmesh=0 kmesh=0
+	  x1min=2d9 x2min=0 x3min=0d0 /
+
+&out_con  outstyle=1 endstyle=1
+          tnlim=500000 t_end=1d6 dt_out=1.d3 tn_out=10000000
+          dt_unit='s' sigfig=7 outres=1
+	  write_mc=.true. /
+
+&eos_con eostype = 1 eoserr=1d-15 compswitch=1 muconst=0.62d0 spn=8 /
+
+&simucon  crdnt=2 /
+
+&bouncon  bc1is=1 bc1os=2 bc2is=1 bc2os=1 bc3is=0 bc3os=0
+	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.false. /
+
+&gravcon gravswitch=1
+	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /

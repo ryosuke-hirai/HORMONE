@@ -23,6 +23,7 @@ subroutine initialcondition
  use eostest_mod
  use shocktube_mod
  use sedov_mod
+ use eruption_mod
  use orszagtang_mod
  use KHinstability_mod
  use rad_box_mod
@@ -52,6 +53,9 @@ subroutine initialcondition
 
   case('sedov_default','sedov_other')
    call sedov
+
+  case('eruption')
+   call eruption
 
   case('orszagtang_xy','orszagtang_yz','orszagtang_xz')
    call orszagtang

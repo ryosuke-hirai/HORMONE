@@ -1,0 +1,16 @@
+! Model parameters for eruption
+
+! mesafile: Name of MESA profile file to be read.
+! spc_list: List of all elements to be tracked in the simulation.
+! Eexp: Explosion energy in units of stellar binding energy
+! inj_in: Inner edge of energy injection region (Rsun)
+! inj_out: Outer edge of energy injection region (Rsun)
+
+&erupcon
+ mesafile='../tests/100Msunprofile.data'
+ spc_list = ''
+ Eexp = 0.5d0
+ inj_in = 0d0
+ inj_out = 5.5d0
+/
+! Do not delete this blank line

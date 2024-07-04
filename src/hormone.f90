@@ -143,7 +143,7 @@ program hormone
 
     call stop_clock(wthyd)
 
-    if(mag_on)           call phidamp
+    if(mag_on.and.dim>1) call phidamp
     if(radswitch>0)      call radiation
     if(include_cooling)  call cooling
     if(include_particles)call particles
