@@ -99,8 +99,9 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  real(8),allocatable,dimension(:)::gpot,Vshell
  integer::i,j,k,n,lines,nn,sn
  real(8):: mass, radius
- real(8):: mnow,rnow,volfac
+ real(8):: mnow,volfac
  real(8):: vshell_part
+ real(8):: term1, term2, term3, term4
 
 !-----------------------------------------------------------------------------
 
@@ -111,12 +112,18 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
 ! calculate gravitational potential
  allocate(gpot(0:lines))
  do n = 0, lines-1
-  rnow = 0d0;mnow = 0d0
-  do i = n+1, lines
-   mnow = mnow &
-        + (rho(i-1)*r(i)-rho(i)*r(i-1))/(r(i)-r(i-1))*0.5d0*(r(i)**2-r(i-1)**2)&
-        + (rho(i)-rho(i-1))*(r(i)**2+r(i)*r(i-1)+r(i-1)**2)/3d0
+  ! To reduce roundoff error
+  !   1) split summation into 4 terms
+  term1 = 0d0; term2 = 0d0; term3 = 0d0; term4 = 0d0
+  !   2) sum in reverse, since outer shells have less mass,
+  !      so we want to add those together first
+  do i = lines, n+1, -1
+   term1 = term1 + rho(i-1)*r(i)  *(r(i)+r(i-1))
+   term2 = term2 + rho(i)  *r(i-1)*(r(i)+r(i-1))
+   term3 = term3 + rho(i)  *(r(i)**2+r(i)*r(i-1)+r(i-1)**2)
+   term4 = term4 + rho(i-1)*(r(i)**2+r(i)*r(i-1)+r(i-1)**2)
   end do
+  mnow = 0.5d0*(term1-term2)+(term3-term4)/3d0
   gpot(n) = -G*m(n)/(r(n)+1d-99)-4d0*pi*G*mnow
  end do
 
