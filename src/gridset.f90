@@ -381,11 +381,19 @@ subroutine gridset
    end do
    xi2e = xi2(je_global)
 
+  allocate( sinc, sini, cosc, cosi, mold=x2 )
+  do j = js_global-2, je_global+2
+   sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)
+   sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)
+   cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)
+   cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)
+  end do
+
 ! for volumetric centre
    do j = js_global-1, je_global+2
-    x2(j) = ( xi2(j-1)*cos(xi2(j-1))-xi2(j)*cos(xi2(j)) &
-             +sin(xi2(j))-sin(xi2(j-1)) ) &
-          / (cos(xi2(j-1))-cos(xi2(j)))
+    x2(j) = ( xi2(j-1)*cosi(j-1)-xi2(j)*cosi(j) &
+             +sini(j)-sini(j-1) ) &
+          / (cosi(j-1)-cosi(j))
     if(j==js_global)x2(j-1)=-x2(j)
     dx2(j) = x2(j) - x2(j-1)
     idx2(j) = 1d0 / dx2(j)
