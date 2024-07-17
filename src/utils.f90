@@ -67,9 +67,6 @@ contains
 ! PURPOSE: To calculate the Cartesian vector components from polar coordinates
 
 subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
-
- use constants,only:pi
-
  implicit none
 
  real(8),intent(in):: xcar(1:3),x3,v1,v2,v3
@@ -79,14 +76,13 @@ subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
 !-----------------------------------------------------------------------------
 
  uvec1 = xcar/norm2(xcar)
- uvec2 = rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
+ uvec2 = get_uvec2(uvec1, x3)
  uvec3 = cross(uvec1,uvec2)
 
  vcar = v1*uvec1 + v2*uvec2 + v3*uvec3
 
 return
 end subroutine get_vcar
-
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE GET_VPOL
@@ -95,9 +91,6 @@ end subroutine get_vcar
 ! PURPOSE: To calculate the Polar vector components from Cartesian coordinates
 
 subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
-
- use constants,only:pi
-
  implicit none
 
  real(8),intent(in):: xcar(1:3),x3,vcar(1:3)
@@ -107,7 +100,7 @@ subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
 !-----------------------------------------------------------------------------
 
  uvec1 = xcar/norm2(xcar)
- uvec2 = rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
+ uvec2 = get_uvec2(uvec1, x3)
  uvec3 = cross(uvec1,uvec2)
 
  v1 = dot_product(vcar,uvec1)
@@ -116,6 +109,17 @@ subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
 
 return
 end subroutine get_vpol
+
+! This function is equivalent to rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
+! but expanded out, to reduce roundoff error
+ pure function get_uvec2(x,theta) result(xp)
+  implicit none
+  real(8),intent(in):: x(1:3), theta
+  real(8):: xp(1:3)
+  xp(1) = sin(theta)**2*x(1) - 0.5d0*sin(2d0*theta)*x(2) + cos(theta)*x(3)
+  xp(2) = -0.5d0*sin(2d0*theta)*x(1) + cos(theta)**2*x(2) + sin(theta)*x(3)
+  xp(3) = -cos(theta)*x(1) - sin(theta)*x(2)
+ end function get_uvec2
 
 ! rotate about the x axis
  pure function rotx(x,theta) result(xp)
