@@ -93,14 +93,6 @@ subroutine metric
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(2)
 
-  allocate( sinc, sini, cosc, cosi, mold=x2 )
-  do j = js_global-2, je_global+2
-   sinc(j)=sin(x2 (j))
-   sini(j)=sin(xi2(j))
-   cosc(j)=cos(x2 (j))
-   cosi(j)=cos(xi2(j))
-  end do
-
   do i = is_global-1, ie_global+1
    detg1(i) = xi1(i)**2
    idetg1(i) = 3d0 &

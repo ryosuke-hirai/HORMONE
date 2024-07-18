@@ -14,7 +14,7 @@ FPPFLAG += -DMPI
 endif
 MODFLAG= -J
 FCFLAG:= $(CFLAG) -fopenmp -ffree-line-length-512 #-fmax-stack-var-size=32768
-DBFLAG= -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 -Wall -Wextra -fcheck=all
+DBFLAG= -g -ffpe-trap=invalid,zero,overflow -fbacktrace -O0 -Wall -Wextra -fcheck=all
 PRFLAG= -pg -save-temps
 endif
 
