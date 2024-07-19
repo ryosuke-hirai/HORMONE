@@ -73,12 +73,11 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
 
 !-----------------------------------------------------------------------------
 
-! Perform MPI neighbour exchange
- call exchange_gravity_mpi
-
 !$omp parallel
  do grungen = 1, grktype
 !$omp single
+  ! Perform MPI neighbour exchange
+  call exchange_gravity_mpi
   call get_runge_coeff(grungen,grktype,faco,fact,facn)
 !$omp end single
 
