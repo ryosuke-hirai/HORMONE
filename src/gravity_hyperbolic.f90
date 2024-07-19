@@ -157,10 +157,13 @@ subroutine hg_boundary_conditions
  use settings
  use grid
  use gravmod
+ use mpi_domain,only:exchange_gravity_mpi
 
  integer:: i,j,k
 
 !-----------------------------------------------------------------------------
+
+ call exchange_gravity_mpi
 
  !$omp parallel
  select case(crdnt)
