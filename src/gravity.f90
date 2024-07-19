@@ -183,14 +183,14 @@ subroutine gravity_relax
   call hyperbolic_gravity_step(cgrav,cgrav_old,dtgrav)
 
   ! Only calculate error every 1000 iterations because it is expensive
-  if (mod(i,1000)==0) then
+  if (mod(i,1000)==0 .or. i==1) then
    ! Error in Poisson equation, weighted by mass
    err = sum( ((lapphi(is:ie,js:je,ks:ke) - hgsrc(is:ie,js:je,ks:ke))/hgsrc(is:ie,js:je,ks:ke))**2 * mass )
    call allreduce_mpi('sum', err)
    err = sqrt(err)/sqrt(mtot)
    if (myrank==0) print*, 'iteration=', i, 'error=', err
    ! Converged if below tolerance
-   if (err < itertol) exit
+   if (err < itertol .and. i>0) exit
   endif
  enddo
 
