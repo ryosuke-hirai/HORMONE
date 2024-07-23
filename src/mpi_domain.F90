@@ -588,7 +588,6 @@ module mpi_domain
 
    logical function is_my_domain(i,j,k)
       use grid
-      use mpi_utils, only: barrier_mpi
       integer, intent(in) :: i, j, k
       integer :: il, ir, jl, jr, kl, kr
 
@@ -611,8 +610,6 @@ module mpi_domain
       else
          is_my_domain = .false.
       end if
-
-      call barrier_mpi
 
    end function
 

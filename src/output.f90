@@ -1392,6 +1392,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  use physval
  use gravmod,only:grvphi,extgrv,totphi,mc
  use mpi_domain,only:is_my_domain
+ use mpi_utils,only:barrier_mpi
  use io,only:write_string
 
  integer,intent(in):: ui,i,j,k
@@ -1400,6 +1401,7 @@ subroutine write_val(ui,i,j,k,forme,header)
 
 !-----------------------------------------------------------------------------
 
+ call barrier_mpi
  if (.not.is_my_domain(i,j,k)) return
 
  do n = 1, 50
@@ -1477,6 +1479,7 @@ end subroutine write_anyval
 
 subroutine write_my_grid_1d(ui,form,ii,x1,dvol,i,j,k)
   use mpi_domain, only:is_my_domain
+  use mpi_utils, only:barrier_mpi
   use io, only:write_string
   integer, intent(in) :: ui,i,j,k,ii
   character(len=*), intent(in) :: form
@@ -1489,10 +1492,13 @@ subroutine write_my_grid_1d(ui,form,ii,x1,dvol,i,j,k)
     call write_string(ui,str)
   end if
 
+  call barrier_mpi
+
 end subroutine write_my_grid_1d
 
 subroutine write_my_grid_2d(ui,form,ii,jj,x1,x2,dvol,i,j,k)
   use mpi_domain, only:is_my_domain
+  use mpi_utils, only:barrier_mpi
   use io, only:write_string
   integer, intent(in) :: ui,i,j,k,ii,jj
   character(len=*), intent(in) :: form
@@ -1505,10 +1511,13 @@ subroutine write_my_grid_2d(ui,form,ii,jj,x1,x2,dvol,i,j,k)
     call write_string(ui,str)
   end if
 
+  call barrier_mpi
+
 end subroutine write_my_grid_2d
 
 subroutine write_my_grid_3d(ui,form,ii,jj,kk,x1,x2,x3,dvol,i,j,k)
   use mpi_domain, only:is_my_domain
+  use mpi_utils, only:barrier_mpi
   use io, only:write_string
   integer, intent(in) :: ui,i,j,k,ii,jj,kk
   character(len=*), intent(in) :: form
@@ -1520,6 +1529,8 @@ subroutine write_my_grid_3d(ui,form,ii,jj,kk,x1,x2,x3,dvol,i,j,k)
     write(str,form) ii,jj,kk,x1,x2,x3,dvol(i,j,k)
     call write_string(ui,str)
   end if
+
+  call barrier_mpi
 
 end subroutine write_my_grid_3d
 
