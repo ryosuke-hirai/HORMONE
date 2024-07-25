@@ -371,7 +371,7 @@ subroutine setup_grv_hyperbolic
       lap_coeff(0,i,j,k) = -( ( xi1(i)**2/dx1(i+1) + xi1(i-1)**2/dx1(i) ) &
                   * sinc(j)*dxi2(j)*dxi3(k) &
                   + ( sini(j)/dx2(j+1) + sini(j-1)/dx2(j)) * dxi1(i)*dxi3(k) &
-                  + ( idx3(k)+idx3(k-1) )*dxi1(i)*dxi2(j) )
+                  + ( idx3(k)+idx3(k+1) )*dxi1(i)*dxi2(j) )
       lap_coeff(1,i,j,k) = xi1(i)**2 *sinc(j)*dxi2(j)*dxi3(k)/dx1(i+1)
       lap_coeff(2,i,j,k) = sini(j)*dxi1(i)*dxi3(k)/dx2(j+1)
       lap_coeff(3,i,j,k) = dxi1(i)*dxi2(j)/dx3(k+1)
