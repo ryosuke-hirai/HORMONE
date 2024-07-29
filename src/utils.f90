@@ -8,9 +8,17 @@ contains
   implicit none
   real(8),intent(in):: xp(1:3)
   real(8):: x(1:3)
-  x(1) = xp(1)*sin(xp(2))*cos(xp(3))
-  x(2) = xp(1)*sin(xp(2))*sin(xp(3))
-  x(3) = xp(1)*cos(xp(2))
+  real(16) :: xp1,xp2,xp3
+
+  ! Convert to quad precision
+  xp1 = real(xp(1),kind=16)
+  xp2 = real(xp(2),kind=16)
+  xp3 = real(xp(3),kind=16)
+
+  x(1) = xp(1)*real(sin(xp2)*cos(xp3),kind=8)
+  x(2) = xp(1)*real(sin(xp2)*sin(xp3),kind=8)
+  x(3) = xp(1)*real(cos(xp2),kind=8)
+
  end function polcar
 
 ! convert cartesian to polar coordinates
