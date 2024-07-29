@@ -73,12 +73,11 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
 
 !-----------------------------------------------------------------------------
 
-! Perform MPI neighbour exchange
- call exchange_gravity_mpi
-
 !$omp parallel
  do grungen = 1, grktype
 !$omp single
+  ! Perform MPI neighbour exchange
+  call exchange_gravity_mpi
   call get_runge_coeff(grungen,grktype,faco,fact,facn)
 !$omp end single
 
@@ -157,10 +156,13 @@ subroutine hg_boundary_conditions
  use settings
  use grid
  use gravmod
+ use mpi_domain,only:exchange_gravity_mpi
 
  integer:: i,j,k
 
 !-----------------------------------------------------------------------------
+
+ call exchange_gravity_mpi
 
  !$omp parallel
  select case(crdnt)
@@ -219,8 +221,11 @@ subroutine hg_boundary_conditions
    !$omp do private(i,j) collapse(2)
    do j = js, je
     do i = is, ie
-     if(ks==ks_global) grvphi(i,j,ks-1) = grvphi(i,j,ke)
-     if(ke==ke_global) grvphi(i,j,ke+1) = grvphi(i,j,ks)
+     ! Note: in MPI mode, cell exchange already implements periodic BCs
+     if(ks==ks_global .and. ke==ke_global) then
+      grvphi(i,j,ks-1) = grvphi(i,j,ke)
+      grvphi(i,j,ke+1) = grvphi(i,j,ks)
+     end if
     end do
    end do
    !$omp end do
