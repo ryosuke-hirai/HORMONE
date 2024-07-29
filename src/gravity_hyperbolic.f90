@@ -221,6 +221,7 @@ subroutine hg_boundary_conditions
    !$omp do private(i,j) collapse(2)
    do j = js, je
     do i = is, ie
+     ! Note: in MPI mode, cell exchange already implements periodic BCs
      if(ks==ks_global .and. ke==ke_global) then
       grvphi(i,j,ks-1) = grvphi(i,j,ke)
       grvphi(i,j,ke+1) = grvphi(i,j,ks)
