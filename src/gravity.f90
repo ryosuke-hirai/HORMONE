@@ -36,6 +36,8 @@ subroutine gravity
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
+ if (tn==0) grvtime = 0.d0
+
  if(grav_init_relax .and. tn==0) then
   call gravity_relax
   call hg_boundary_conditions
