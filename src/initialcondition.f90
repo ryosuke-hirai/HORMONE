@@ -34,6 +34,7 @@ subroutine initialcondition
  use modify_mod
  use windtunnel_mod
  use stellarcollision_mod
+ use smearingtest_mod
  use iotest_mod
 
  integer:: i,j,k
@@ -86,6 +87,9 @@ subroutine initialcondition
 
   case('modify')
    call modify
+
+  case('smearing')
+   call smearingtest
 
   case('iotest')
     call iotest

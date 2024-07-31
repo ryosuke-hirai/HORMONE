@@ -92,6 +92,7 @@ jobs:
           - KHinstability
           - star_sph
           - polytrope
+          - smearing
           - iotest
         flat:
           - no
