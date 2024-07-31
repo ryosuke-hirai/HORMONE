@@ -101,6 +101,10 @@ jobs:
             mpi: yes
           - test: polytrope
             flat: no
+          # The star setup routine is susceptible to roundoff error
+          # which gives very different results with the intel compiler
+          - test: polytrope
+            fc: ifx
           # star_sph uses MICCG init, which is not compatible with MPI
           - test: star_sph
             mpi: yes
