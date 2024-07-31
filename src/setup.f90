@@ -129,6 +129,8 @@ subroutine read_default
   filename='../para/parameters_stellarcollision'
  case('modify')
   filename='../para/parameters_rsg_sph'!temporary
+ case('smearing')
+  filename='../para/parameters_smearing'
  case('iotest')
   filename='../para/parameters_iotest'
  case default
