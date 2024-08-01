@@ -25,7 +25,7 @@ contains
 
   real(8),allocatable,dimension(:,:,:):: dti,dtg
   real(8):: cfmax0,cfmax
-  integer:: i,j,k,n,jb,kb
+  integer:: i,j,k,n,jb,kb,il,ir
 
 !-------------------------------------------------------------------------
 
@@ -75,10 +75,14 @@ contains
     else
      jb=min(2**(fmr_max-n+1),je) ; kb=min(2**(fmr_max-n+1),ke)
     end if
+    ! These need to be computed before the loop,
+    ! or else ifort+omp will give incorrect results
+    il = sum(fmr_lvl(0:n-1))
+    ir = sum(fmr_lvl(0:n))-1
 !$omp do private(i,j,k) collapse(3)
     do k = ks_global, ke_global, kb
      do j = js_global, je_global, jb
-      do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
+      do i = is_global+il, is_global+ir
        if (is_my_domain(i,j,k)) then
         call dti_cell(i,j,k,dti,jb=jb,kb=kb)
         if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
