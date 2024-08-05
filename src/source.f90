@@ -209,12 +209,12 @@ subroutine get_fieldforce(phi,coeff,frc1,frc2,frc3)
                     + (dx3(k+1)-dx3(k))*idx3(k)*idx3(k+1)*phi(i,j,k) ) &
                   * coeff(i,j,k)
      if(fmr_max==0)cycle
-     if(i<=is+sum(fmr_lvl(1:fmr_max))-1)then
-      if(i<=is+fmr_lvl(1)-1)then
+     if(i<=is_global+sum(fmr_lvl(1:fmr_max))-1)then
+      if(i<=is_global+fmr_lvl(1)-1)then
        frc2(i,j,k) = 0d0;frc3(i,j,k) = 0d0
       else
        fmr_loop: do n = 2, fmr_max
-        if(i<=is+sum(fmr_lvl(1:n))-1)then
+        if(i<=is_global+sum(fmr_lvl(1:n))-1)then
          frc2(i,j,k) = frc2(i,j,k)/dble(2**(fmr_max-n+1))
          exit fmr_loop
         end if

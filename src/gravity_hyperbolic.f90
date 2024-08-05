@@ -65,10 +65,11 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
  use grid
  use gravmod,only:grvphiorg,grvphi,grvpsi,lapphi,hgsrc,gsrc,hgcfl
  use rungekutta_mod,only:get_runge_coeff
- use mpi_domain,only:exchange_gravity_mpi
+ use mpi_domain,only:exchange_gravity_mpi,sum_global_array
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
- integer:: i,j,k,n, jb, kb, grungen
+ integer:: i,j,k,n,jb,kb,grungen
+ integer:: il,ir,jl,jr,kl,kr
  real(8):: faco, facn, fact, vol
 
 !-----------------------------------------------------------------------------
@@ -102,28 +103,34 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
 !$omp end do
 
 ! Smear gravity in central regions -----------------------------------
+!$omp single
   if(fmr_max>0)then
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
-    jb=min(2**(fmr_max-n+1),je)-1 ; kb=min(2**(fmr_max-n+1),ke)-1
+    jb=min(2**(fmr_max-n+1),je_global)-1 ; kb=min(2**(fmr_max-n+1),ke_global)-1
     if(n==1)then
-     jb=je-js; kb=ke-ks
+     jb=je_global-js_global; kb=ke_global-ks_global
     end if
-!$omp do private(i,j,k,vol) collapse(3)
-    do k = ks, ke, kb+1
-     do j = js, je, jb+1
-      do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
+    do k = ks_global, ke_global, kb+1
+     do j = js_global, je_global, jb+1
+      do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
        vol = sum(dvol(i,j:j+jb,k:k+kb))
-       grvphi(i,j:j+jb,k:k+kb) = sum(grvphi(i,j:j+jb,k:k+kb) &
-                                      *dvol(i,j:j+jb,k:k+kb)) / vol
-       grvpsi(i,j:j+jb,k:k+kb) = sum(grvpsi(i,j:j+jb,k:k+kb) &
-                                      *dvol(i,j:j+jb,k:k+kb)) / vol
+
+       ! When il>ir, no cells are selected, so no operation is performed
+       il = max(i,is); ir = min(i,ie)
+       jl = max(j,js); jr = min(j+jb,je)
+       kl = max(k,ks); kr = min(k+kb,ke)
+
+       grvphi(il:ir,jl:jr,kl:kr) = &
+        sum_global_array(grvphi, i, i, j, j+jb, k, k+kb, weight=dvol) / vol
+       grvpsi(il:ir,jl:jr,kl:kr) = &
+        sum_global_array(grvpsi, i, i, j, j+jb, k, k+kb, weight=dvol) / vol
       end do
      end do
     end do
-!$omp end do
    end do
   end if
+!$omp end single
 ! --------------------------------------------------------------------
 
  end do

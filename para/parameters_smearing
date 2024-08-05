@@ -2,11 +2,11 @@
 ! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
 ! fmr_max   : Maximum levels of fixed mesh refinement (0 means no FMR)
 ! fmr_lvl(i): Number of layers in a given FMR level
-&gridcon  xi1s=0d0 xi1e=6.963d10 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
-	  is=1 ie=128 js=1 je=16 ks=1 ke=32
+&gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
+	  is=1 ie=32 js=1 je=8 ks=1 ke=16
 	  imesh=1 jmesh=0 kmesh=0
-	  x1min=2d8 x2min=0d0 x3min=0d0
-	  fmr_max=2 fmr_lvl(1)=10 fmr_lvl(2)=20 /
+	  x1min=2d-2 x2min=0d0 x3min=0d0
+	  fmr_max=2 fmr_lvl(1)=2 fmr_lvl(2)=4 /
 
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
@@ -19,8 +19,8 @@
 ! write_other_vel : Set to .true. if 2.5D
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
-&out_con  outstyle=1 endstyle=1
-          tnlim=1 t_end=1d1 dt_out=1d1 tn_out=1
+&out_con  outstyle=2 endstyle=2
+          tnlim=2 t_end=1d1 dt_out=1d1 tn_out=2
           dt_unit='s' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.true. /
 
@@ -33,7 +33,7 @@
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-&simucon flux_limiter='flat' crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
+&simucon crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
 	  include_cooling = .false.
 	  include_extforce = .false. /
 
@@ -47,9 +47,9 @@
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
-&gravcon gravswitch=3 grverr=1d-15 cgerr=1d-15 HGfac=10d0 hgcfl=0.9d0 gbtype=1 alphagrv=0.1d0
+&gravcon gravswitch=3 grverr=1d-15 cgerr=1d-15 HGfac=10d0 hgcfl=0.9d0 gbtype=1 alphagrv=0.3d0
 	 grav_init_other=.false. grav_init_relax=.true. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
 ! test tolerance
-&testcon  test_tol=1d-11 /
+&testcon  test_tol=1d-15 /

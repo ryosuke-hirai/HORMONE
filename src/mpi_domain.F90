@@ -7,6 +7,11 @@ module mpi_domain
 
    implicit none
 
+   interface sum_global_array
+      module procedure sum_global_array_scalar
+      module procedure sum_global_array_spc
+   end interface sum_global_array
+
 #ifdef MPI
    integer :: cart_comm
 
@@ -612,5 +617,68 @@ module mpi_domain
       end if
 
    end function
+
+   function sum_global_array_scalar(array, is_, ie_, js_, je_, ks_, ke_, weight) result(arr_sum)
+      use mpi_utils, only: allreduce_mpi
+      ! Given some indices is_, ie_, js_, je_, ks_, ke_ that can be applied to the full domain,
+      ! return the sum of those elements across all tasks
+      use grid, only:is,ie,js,je,ks,ke
+      integer, intent(in) :: is_, ie_, js_, je_, ks_, ke_
+      real(8), intent(in), allocatable :: array(:,:,:)
+      real(8), intent(in), allocatable, optional :: weight(:,:,:)
+      real(8) :: arr_sum
+      integer :: il,ir,jl,jr,kl,kr
+
+      il = max(is_,is)
+      ir = min(ie_,ie)
+      jl = max(js_,js)
+      jr = min(je_,je)
+      kl = max(ks_,ks)
+      kr = min(ke_,ke)
+
+      if (present(weight)) then
+         arr_sum = sum(array(il:ir, jl:jr, kl:kr) &
+                     * weight(il:ir, jl:jr, kl:kr) )
+      else
+         arr_sum = sum(array(il:ir, jl:jr, kl:kr))
+      endif
+      call allreduce_mpi('sum', arr_sum)
+
+    end function sum_global_array_scalar
+
+    function sum_global_array_spc(array, is_, ie_, js_, je_, ks_, ke_, l_array, l_weight2, weight, weight2) result(arr_sum)
+      use mpi_utils, only: allreduce_mpi
+      ! Given some indices is_, ie_, js_, je_, ks_, ke_ that can be applied to the full domain,
+      ! return the sum of those elements across all tasks
+      use grid, only:is,ie,js,je,ks,ke
+      integer, intent(in) :: is_, ie_, js_, je_, ks_, ke_, l_array
+      integer, intent(in), optional :: l_weight2
+      real(8), intent(in), allocatable :: array(:,:,:,:)
+      real(8), intent(in), allocatable, optional :: weight(:,:,:), weight2(:,:,:,:)
+      real(8) :: arr_sum
+      integer :: il,ir,jl,jr,kl,kr
+
+      il = max(is_,is)
+      ir = min(ie_,ie)
+      jl = max(js_,js)
+      jr = min(je_,je)
+      kl = max(ks_,ks)
+      kr = min(ke_,ke)
+
+      if (present(weight)) then
+         if (present(weight2)) then
+         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
+                     * weight(il:ir, jl:jr, kl:kr) &
+         * weight2(l_weight2, il:ir, jl:jr, kl:kr) )
+         else
+         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
+                     * weight(il:ir, jl:jr, kl:kr) )
+         endif
+      else
+         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) )
+      endif
+      call allreduce_mpi('sum', arr_sum)
+
+    end function sum_global_array_spc
 
 end module mpi_domain

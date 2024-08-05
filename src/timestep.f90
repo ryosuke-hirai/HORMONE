@@ -15,6 +15,7 @@ contains
  subroutine timestep
 
   use mpi_utils,only:allreduce_mpi
+  use mpi_domain,only:is_my_domain
   use constants,only:tiny
   use settings,only:courant,outstyle,HGfac,hgcfl
   use grid
@@ -24,7 +25,7 @@ contains
 
   real(8),allocatable,dimension(:,:,:):: dti,dtg
   real(8):: cfmax0,cfmax
-  integer:: i,j,k,n,jb,kb
+  integer:: i,j,k,n,jb,kb,il,ir
 
 !-------------------------------------------------------------------------
 
@@ -70,16 +71,22 @@ contains
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
     if(n==1)then
-     jb=je;kb=ke
+     jb=je_global;kb=ke_global
     else
      jb=min(2**(fmr_max-n+1),je) ; kb=min(2**(fmr_max-n+1),ke)
     end if
+    ! These need to be computed before the loop,
+    ! or else ifort+omp will give incorrect results
+    il = sum(fmr_lvl(0:n-1))
+    ir = sum(fmr_lvl(0:n))-1
 !$omp do private(i,j,k) collapse(3)
-    do k = ks, ke, kb
-     do j = js, je, jb
-      do i = is+sum(fmr_lvl(0:n-1)), is+sum(fmr_lvl(0:n))-1
-       call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-       if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
+    do k = ks_global, ke_global, kb
+     do j = js_global, je_global, jb
+      do i = is_global+il, is_global+ir
+       if (is_my_domain(i,j,k)) then
+        call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+        if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
+       endif
       end do
      end do
     end do
@@ -129,7 +136,7 @@ contains
 subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
 
  use settings,only:mag_on,eostype
- use grid,only:is,ie,js,je,ks,ke,sa1,sa2,sa3,dvol
+ use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global,sa1,sa2,sa3,dvol
  use physval,only:d,eint,T,imu,p,cs,v1,v2,v3,b1,b2,b3,spc
  use pressure_mod,only:eos_p_cs,get_cf
 
@@ -142,8 +149,8 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
 !-----------------------------------------------------------------------------
 
  jn=0;kn=0
- if(present(jb)) jn = min(jb-1,je-js)
- if(present(kb)) kn = min(kb-1,ke-ks)
+ if(present(jb)) jn = min(jb-1,je_global-js_global)
+ if(present(kb)) kn = min(kb-1,ke_global-ks_global)
 
  select case(eostype)
  case(0:1)
@@ -165,9 +172,9 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
  end if
 
  dti(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) / &
-                      ( cf1*off(is,ie) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
-                      + cf2*off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
-                      + cf3*off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
+                      ( cf1*off(is_global,ie_global) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
+                      + cf2*off(js_global,je_global) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
+                      + cf3*off(ks_global,ke_global) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
 
  if(present(cfmax))cfmax = max(cf1,cf2,cf3)
 

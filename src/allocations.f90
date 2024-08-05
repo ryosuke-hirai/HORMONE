@@ -36,16 +36,16 @@ subroutine allocations
  allocate(xi3,dx3,dxi3,idx3,idxi3,mold=x3)
 
 !  metric-related variables
- allocate(detg1(is-2:ie+2))
+ allocate(detg1(is_global-2:ie_global+2))
  allocate(idetg1,sx1,g22,mold=detg1)
 
  allocate(scot(js-2:je+2))
  allocate(sisin,mold=scot)
 
- allocate(detg2(is-2:ie+2,js-2:je+2))
+ allocate(detg2(is_global-2:ie_global+2,js_global-2:je_global+2))
  allocate(idetg2,g33,mold=detg2)
 
- allocate(dvol(is-2:ie+2,js-2:je+2,ks-2:ke+2))
+ allocate(dvol(is_global-2:ie_global+2,js_global-2:je_global+2,ks_global-2:ke_global+2))
  allocate(idetg3,sa1,sa2,sa3,Imom,mold=dvol)
  allocate(car_x(1:3,is:ie,js:je,ks:ke))
 
