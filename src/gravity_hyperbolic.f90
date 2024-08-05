@@ -116,6 +116,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
        vol = sum(dvol(i,j:j+jb,k:k+kb))
 
+       ! When il>ir, no cells are selected, so no operation is performed
        il = max(i,is); ir = min(i,ie)
        jl = max(j,js); jr = min(j+jb,je)
        kl = max(k,ks); kr = min(k+kb,ke)
