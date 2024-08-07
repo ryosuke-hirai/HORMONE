@@ -466,59 +466,46 @@ end subroutine gridset
 
 subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
 
+ use utils,only:geometrical_series
+
  real(8),intent(in):: xi1s,xi1e
  real(8),intent(inout),allocatable:: dxi1(:)
  integer,intent(in):: is,ie
 
 !-----------------------------------------------------------------------------
 
- integer:: i
+ integer:: i, istar, iflat
  real(8):: xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx, xmin
- real(8):: radstar
+ real(8):: radstar, dxmin
+ real(8),allocatable:: dx_inner(:),dx_outer(:)
 
 !-----------------------------------------------------------------------------
 
- xrmax = 1.015d0
- maxerr = 1d-10
- radstar = 5.6d13
+!!$ dx_inner = 1d9
+!!$ radstar = 2.5d11
+!!$ istar = int(radstar/dx_inner)
+!!$ radstar = dx_inner*dble(istar)
+!!$
+!!$ allocate(dx_outer(is+istar-2:ie+2))
+!!$
+!!$ call geometrical_series(dx_outer,dx_inner,is+istar,ie,radstar,xi1e)
+!!$
+!!$ dxi1(is-2:is+istar-1) = dx_inner
+!!$ dxi1(is+istar:ie+2) = dx_outer(is+istar:ie+2)
+!!$
+!!$ deallocate(dx_outer)
 
- xr = 1.01d0
- xrng = radstar - xi1s ; irng = dble(400 - is + 1)
- xmin = 9d10
+ istar = 290
+ iflat = 5
+ radstar = 1.75d11
+ dxmin=2d8
+ allocate(dx_inner(is-2:istar+2),dx_outer(is+istar+iflat-2:ie+2))
+ call geometrical_series(dx_inner,dxmin,is,is+istar-1,xi1s,radstar)
+ call geometrical_series(dx_outer,dxmin,is+istar+iflat,ie,radstar+dxmin*dble(iflat),xi1e)
 
- if(xrng/irng<xmin)then
-  print *,"Error from geometrical_series ;"
-  print *,"xmin should be smaller or uniform mesh should be chosen",xmin
-  stop
- end if
-
- do i = 1, 10000000
-  fx = (xr-1d0)*xrng - xmin * (xr**irng-1d0)
-  dfx = xrng - irng * xmin * xr**(irng-1d0)
-
-  xrnew = xr - fx/dfx
-
-  if(abs((xrnew-xr)/xr)<maxerr)then
-   xr = xrnew ; exit
-  end if
-  if(xrnew<1d0)xrnew = 2d0
-
-  xr = xrnew
- end do
-
- if(xr>xrmax)then
-  print *,"xmin too small", xmin, xr
-  stop
- end if
-
- dxi1(is) = xmin
- do i = is+1, 400
-  dxi1(i) = dxi1(i-1) * xr
- end do
- dxi1(is-1) = dxi1(is) ; dxi1(is-2) = dxi1(is+1)
- dxi1(401:ie+2) = (xi1e-radstar)/dble(ie-400)
-
- if(xr-1d0<maxerr) dxi1 = (xi1e-xi1s) / irng
+ dxi1(is-2:is+istar-1) = dx_inner(is+istar+1:is:-1)
+ dxi1(is+istar:is+istar+iflat-1) = dxmin
+ dxi1(is+istar+iflat:ie+2)   = dx_outer(is+istar+iflat:ie+2)
 
 
 return

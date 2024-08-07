@@ -127,6 +127,8 @@ subroutine read_default
   filename='../para/parameters_windtunnel'
  case('stellarcollision')
   filename='../para/parameters_stellarcollision'
+ case('sn2022jli')
+  filename='../para/parameters_sn2022jli'
  case('modify')
   filename='../para/parameters_rsg_sph'!temporary
  case('smearing')

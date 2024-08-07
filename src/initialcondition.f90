@@ -34,6 +34,7 @@ subroutine initialcondition
  use modify_mod
  use windtunnel_mod
  use stellarcollision_mod
+ use sn2022jli_mod
  use smearingtest_mod
  use iotest_mod
 
@@ -84,6 +85,9 @@ subroutine initialcondition
 
   case('stellarcollision')
    call stellarcollision
+
+  case('sn2022jli')
+   call sn2022jli
 
   case('modify')
    call modify
