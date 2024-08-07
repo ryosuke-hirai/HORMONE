@@ -16,7 +16,6 @@ subroutine externalforce
  use grid
  use physval
  use utils,only:polcar,cylcar,get_vpol,get_vcyl
- use sink_mod,only:sink
 
  integer:: i,j,k
  real(8),dimension(1:3):: atot,ftot,xcar
