@@ -474,8 +474,7 @@ subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
 
 !-----------------------------------------------------------------------------
 
- integer:: i, istar, iflat
- real(8):: xrng, irng, xr, xrnew, xrmax, maxerr, fx, dfx, xmin
+ integer:: istar, iflat
  real(8):: radstar, dxmin
  real(8),allocatable:: dx_inner(:),dx_outer(:)
 
