@@ -150,9 +150,9 @@ end subroutine get_vpol
 
 ! PURPOSE: To calculate Cylindrical vector components from Cartesian coordinates
 
-subroutine get_vcyl(xcar,x3,vcar,v1,v2,v3)
+subroutine get_vcyl(xcar,vcar,v1,v2,v3)
 
- real(8),intent(in):: xcar(1:3),x3,vcar(1:3)
+ real(8),intent(in):: xcar(1:3),vcar(1:3)
  real(8),intent(out)::v1,v2,v3
  real(8),dimension(1:3)::uvec1,uvec2,uvec3
  real(8):: r
