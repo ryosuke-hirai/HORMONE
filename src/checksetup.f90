@@ -224,6 +224,12 @@ subroutine checksetup
 ! Output temperature if eostype>=1
   if(eostype>=1)write_temp = .true.
 
+! Enable external force if using noninertial frame
+  if(frame>0)then
+   include_extforce = .true.
+   include_sinks = .true.
+  end if
+
   return
  end subroutine checksetup
 

@@ -15,7 +15,7 @@ module settings
  logical:: eq_sym, dirichlet_on, fluxbound_on
 ! numerical setups
  integer:: rktype, crdnt, tnlim, start, tn_out, tn_evo, outstyle, endstyle
- integer:: gravswitch, compswitch, radswitch
+ integer:: gravswitch, compswitch, radswitch, frame
  integer:: eostype, spn, sigfig, outres, gbtype, grktype, maxptc
  integer:: grvsrctype, opacitytype, lambdatype
  real(8):: courant, t_end, dt_out, dt_unit_in_sec, alpha9wave
@@ -68,6 +68,7 @@ module grid
   real(8),allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real(8),allocatable,dimension(:,:,:,:):: car_x
   real(8),allocatable,dimension(:):: spinc_r,spinc_t
+  real(8):: frame_acc(1:3)
 
 end module grid
 

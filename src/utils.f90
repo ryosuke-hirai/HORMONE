@@ -32,6 +32,32 @@ contains
   xp(3) = atan2(x(2),x(1))
  end function carpol
 
+! convert cylindrical to cartesian coordinates
+ pure function cylcar(xp) result(x)
+  implicit none
+  real(8),intent(in):: xp(1:3)
+  real(8):: x(1:3)
+  real(16) :: xp2
+
+  ! Convert to quad precision
+  xp2 = real(xp(2),kind=16)
+
+  x(1) = xp(1)*real(cos(xp2),kind=8)
+  x(2) = xp(1)*real(sin(xp2),kind=8)
+  x(3) = xp(3)
+
+ end function cylcar
+
+! convert cartesian to cylindrical coordinates
+ pure function carcyl(x) result(xp)
+  implicit none
+  real(8),intent(in):: x(1:3)
+  real(8):: xp(1:3)
+  real(8),parameter:: tiny=1d-99
+  xp(1) = norm2(x(1:2))
+  xp(2) = atan2(x(2),x(1))
+  xp(3) = x(3)
+ end function carcyl
 
  pure function softened_pot(r,hsoft) result(phi)
 ! Softened potential from Price & Monaghan 2007 Appendix A
@@ -117,6 +143,33 @@ subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
 
 return
 end subroutine get_vpol
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE GET_VCYL
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To calculate Cylindrical vector components from Cartesian coordinates
+
+subroutine get_vcyl(xcar,x3,vcar,v1,v2,v3)
+
+ real(8),intent(in):: xcar(1:3),x3,vcar(1:3)
+ real(8),intent(out)::v1,v2,v3
+ real(8),dimension(1:3)::uvec1,uvec2,uvec3
+ real(8):: r
+
+!-----------------------------------------------------------------------------
+
+ r = norm2(xcar(1:2))
+ uvec1 = [ xcar(1)/r,xcar(2)/r,0d0]
+ uvec2 = [-xcar(2)/r,xcar(1)/r,0d0]
+ uvec3 = [0d0,0d0,1d0]
+
+ v1 = dot_product(vcar,uvec1)
+ v2 = dot_product(vcar,uvec2)
+ v3 = vcar(3)
+
+return
+end subroutine get_vcyl
 
 ! This function is equivalent to rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
 ! but expanded out, to reduce roundoff error

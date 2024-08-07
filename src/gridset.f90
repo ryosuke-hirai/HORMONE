@@ -13,15 +13,17 @@ contains
 
 subroutine gridset
 
-  use settings,only:imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
-  use grid
-  use constants,only:pi
-  use utils,only:geometrical_series
-  use readbin_mod,only:readgrid
+ use settings,only:imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
+ use grid
+ use constants,only:pi
+ use utils,only:geometrical_series
+ use readbin_mod,only:readgrid
 
-  integer::i,j,k,jetmp,ketmp
+ integer::i,j,k,jetmp,ketmp
 
 !-------------------------------------------------------------------------
+
+ frame_acc = 0d0
 
  if(gravswitch/=0)then
   deallocate(x1, xi1, dx1, dxi1, idx1, idxi1, &
