@@ -53,7 +53,6 @@ contains
   implicit none
   real(8),intent(in):: x(1:3)
   real(8):: xp(1:3)
-  real(8),parameter:: tiny=1d-99
   xp(1) = norm2(x(1:2))
   xp(2) = atan2(x(2),x(1))
   xp(3) = x(3)
