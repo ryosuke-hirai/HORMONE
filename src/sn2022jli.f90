@@ -38,7 +38,7 @@ subroutine sn2022jli
  real(8)::nsmass,nssoft,asep,dis,Porb,mprog,orbv,ecc,xcar(1:3)
  real(8),allocatable:: comptmp(:)
  logical::isentropic
- real(8):: Eexp,Ebind,Ebind0,Eexcess,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT
+ real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT
  real(8),parameter:: err=1d-8
 
 !-----------------------------------------------------------------------------
@@ -58,7 +58,6 @@ subroutine sn2022jli
  nsmass = nsmass*msun
  mprog  = mprog *msun
  nssoft = nssoft*rsun
- asep   = asep*rsun
 
 ! Re-count spn based on spc_list and reallocate relevant arrays
  if(compswitch==2)then

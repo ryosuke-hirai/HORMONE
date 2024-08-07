@@ -14,8 +14,8 @@ contains
 
 subroutine stellarcollision
 
- use settings,only:compswitch,spn,extrasfile,eostype,eq_sym
- use constants,only:G,msun,rsun,pi
+ use settings,only:compswitch,spn,extrasfile
+ use constants,only:G,msun,rsun
  use grid
  use physval
  use input_mod
@@ -33,7 +33,7 @@ subroutine stellarcollision
  character(len=10)::spc_list(1:1000)
  integer:: i,j,k,istat,nn,sn,ih1,ihe4
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const,gradphi
- real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv,ecc,xcar(1:3)
+ real(8)::nsmass,kickvel,kicktheta,kickphi,nssoft,asep,mprog,orbv
  real(8),allocatable:: comptmp(:)
  logical::isentropic
 
