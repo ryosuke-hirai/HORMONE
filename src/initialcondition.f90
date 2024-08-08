@@ -96,7 +96,7 @@ subroutine initialcondition
    call smearingtest
 
   case('iotest')
-    call iotest
+   call iotest
 
   case default
    print*,'Chosen simtype not available, simtype = ',simtype
