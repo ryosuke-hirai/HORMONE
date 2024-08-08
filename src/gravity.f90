@@ -17,7 +17,7 @@ contains
 
 subroutine gravity
 
- use settings,only:grav_init_relax
+ use settings,only:grav_init_relax,grav_init_other
  use grid
  use constants
  use physval
@@ -36,19 +36,25 @@ subroutine gravity
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
- if (tn==0) grvtime = 0.d0
+ if (tn==0)then
 
- if(grav_init_relax .and. tn==0) then
-  call gravity_relax
-  call hg_boundary_conditions
+  grvtime = 0.d0
 
- elseif(gravswitch==2 .or. (gravswitch==3 .and. tn==0))then
+  if(grav_init_relax)then
+   call gravity_relax
+   call hg_boundary_conditions
+
+  elseif(gravswitch==3.and..not.grav_init_other)then
+   call gravity_miccg
+  endif
+
+ end if
+
+ if(gravswitch==2)then
   call gravity_miccg
- endif
-
-if(gravswitch==3 .and. tn/=0)then
- call gravity_hyperbolic
-end if
+ elseif(gravswitch==3 .and. tn/=0)then
+  call gravity_hyperbolic
+ end if
 
 call stop_clock(wtgrv)
 

@@ -749,7 +749,7 @@ subroutine write_plt
  use utils,only:gravpot1d
  use shockfind_mod,only:shockfind
  use mpi_utils, only:myrank
- use io, only:open_file_write_ascii, write_string, write_string_master, close_file
+ use io, only:open_file_write_ascii, write_string_master, close_file
  character(len=50):: pltfile
  character(len=20):: header(50)='aaa',forma,forme,formi
  character(len=200):: str
@@ -901,71 +901,108 @@ subroutine write_plt
 !othfile----------------------------------------------------------------------
 
  if(write_other_slice)then
-
-! Open file
-  call set_file_name('oth',tn,time,pltfile)
-  call open_file_write_ascii(pltfile,ui)
-
-! Write time and time step
-  write(str,'(a,i7,a,1PE12.4e2,a)')&
-   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
-  call write_string_master(ui,str)
-! Decide what quantities to write
-  call get_header(header,columns)
-  do n = 1, columns
-   write(str,formi) n+2*dim+1
-   call write_string_master(ui,str,advance=.false.)
-  end do
-  call write_string_master(ui, '')
-  do n = 1, columns
-   write(str,forma) trim(adjustl(header(n)))
-   call write_string_master(ui,str,advance=.false.)
-  end do
-  call write_string_master(ui, '')
-
-  if(crdnt==2)then
-
-   k = ks_global
-   do i = is_global, ie_global
-    call write_val(ui,i,je_global,k,forme,header)
-   end do
-   call write_string_master(ui, '')
-   do j = je_global, js_global, -1
-    do i = is_global, ie_global
-     call write_val(ui,i,j,k,forme,header)
-    end do
-    call write_string_master(ui, '')
-   end do
-   do i = is_global, ie_global
-    call write_val(ui,i,js_global,k,forme,header)
-   end do
-   call write_string_master(ui, '')
-
-   k = (ks_global+ke_global-1)/2
-   do i = is_global, ie_global
-    call write_val(ui,i,js_global,k,forme,header)
-   end do
-   call write_string_master(ui, '')
-   do j = js_global, je_global
-    do i = is_global, ie_global
-     call write_val(ui,i,j,k,forme,header)
-    end do
-    call write_string_master(ui, '')
-   end do
-   do i = is_global, ie_global
-    call write_val(ui,i,je_global,k,forme,header)
-   end do
-
-  end if
-
-  call close_file(ui)
-
-  if (myrank==0) print*,"Outputted: ",trim(pltfile)
-
+  call write_vertical_slice(ks            ,'data/oth')
+  call write_vertical_slice(ks+(ke-ks+1)/4,'data/ver')
  end if
 
  return
 end subroutine write_plt
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                      SUBROUTINE WRITE_VERTICAL_SLICE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To output ascii file for vertical slices in 3D
+
+subroutine write_vertical_slice(slice,prefix)
+
+ use physval
+ use settings
+ use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global,&
+               time,tn,dim
+ use shockfind_mod,only:shockfind
+ use io, only:open_file_write_ascii, write_string_master, close_file
+ use mpi_utils, only:myrank
+
+ integer,intent(in):: slice
+ character(len=*),intent(in):: prefix
+ character(len=50):: verfile
+ character(len=20):: header(50)='aaa',forma,forme,formi
+ character(len=200):: str
+ integer:: i,j,k,n,ui,columns,kn
+
+!-----------------------------------------------------------------------------
+
+! Set format
+ write(forma,'("(a",i2,")")')sigfig+8 ! for strings
+ write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
+ write(formi,'("(i",i2,")")')sigfig+8 ! for integers
+
+! Open file
+ call set_file_name(prefix,tn,time,verfile)
+ call open_file_write_ascii(verfile,ui)
+
+! Write time and time step
+ write(ui,'(a,i7,a,1PE12.4e2,a)')&
+   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
+! Decide what quantities to write
+ call get_header(header,columns)
+ do n = 1, columns
+  write(str,formi) n+2*dim+1
+  call write_string_master(ui,str,advance=.false.)
+ end do
+ call write_string_master(ui, '')
+ do n = 1, columns
+  write(str,forma) trim(adjustl(header(n)))
+  call write_string_master(ui,str,advance=.false.)
+ end do
+ call write_string_master(ui, '')
+
+ if(crdnt==2)then
+
+  kn = ke_global-ks_global+1
+  k = slice
+  do i = is_global, ie_global
+   call write_val(ui,i,je_global,k,forme,header)
+  end do
+  call write_string_master(ui, '')
+  do j = je_global, js_global, -1
+   do i = is_global, ie_global
+    call write_val(ui,i,j,k,forme,header)
+   end do
+   call write_string_master(ui, '')
+  end do
+  do i = is_global, ie_global
+   call write_val(ui,i,js_global,k,forme,header)
+  end do
+  call write_string_master(ui, '')
+
+  k = mod(slice+kn/2,kn)
+  do i = is_global, ie_global
+   call write_val(ui,i,js_global,k,forme,header)
+  end do
+  call write_string_master(ui, '')
+  do j = js_global, je_global
+   do i = is_global, ie_global
+    call write_val(ui,i,j,k,forme,header)
+   end do
+   call write_string_master(ui, '')
+  end do
+  do i = is_global, ie_global
+   call write_val(ui,i,je_global,k,forme,header)
+  end do
+
+ end if
+
+ call close_file(ui)
+
+ if (myrank==0) print*,"Outputted: ",trim(verfile)
+
+return
+end subroutine write_vertical_slice
+
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                         SUBROUTINE WRITE_EXTGRV
