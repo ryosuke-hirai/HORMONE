@@ -33,7 +33,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE CENTRE_ON_SINK
+!                       SUBROUTINE CENTRE_ON_SINK
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -42,15 +42,11 @@ contains
 subroutine centre_on_sink(n)
 
  use grid,only:frame_acc
- use sink_mod,only:sink,get_sink_loc,get_sinkgas_acc,get_sinksink_acc
+ use sink_mod,only:sink
 
  integer,intent(in):: n
 
 !-----------------------------------------------------------------------------
-
- call get_sink_loc(sink(n))
- call get_sinkgas_acc(sink(n))
- call get_sinksink_acc(sink)
 
  frame_acc = -sink(n)%a
 
