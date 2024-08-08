@@ -11,8 +11,8 @@ module sink_mod
  type(sink_prop),allocatable,public:: sink(:)
  real(8),allocatable,public:: snkphi(:,:,:)
 
- public:: sink_motion,sinkfield,get_sink_acc
- private:: get_sink_loc,get_sinkgas_acc,get_sinksink_acc
+ public:: sink_motion,sinkfield,get_sink_acc,get_sink_loc,get_sinkgas_acc,&
+          get_sinksink_acc
 
 contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -25,7 +25,7 @@ contains
 
 subroutine sink_motion
 
- use grid,only:dt
+ use grid,only:dt,frame_acc
  use profiler_mod
 
  integer:: n
@@ -34,9 +34,8 @@ subroutine sink_motion
 
  call start_clock(wtsnk)
 
- call get_sink_acc(sink)
-
  do n = 1, nsink
+  sink(n)%a = sink(n)%a + frame_acc
   sink(n)%v = sink(n)%v + sink(n)%a*dt
   sink(n)%x = sink(n)%x + sink(n)%v*dt
  end do
@@ -100,12 +99,15 @@ subroutine get_sink_acc(sink)
 
  use constants,only:huge
  use grid,only:dt
+ use profiler_mod
 
  type(sink_prop),allocatable,intent(inout):: sink(:)
  integer:: n
  real(8):: dtsink
 
 !-----------------------------------------------------------------------------
+
+ call start_clock(wtsnk)
 
  dtsink = huge
  do n = 1, nsink
@@ -117,6 +119,8 @@ subroutine get_sink_acc(sink)
  call get_sinksink_acc(sink)
 
  dt = min(dtsink,dt) ! update dt
+
+ call stop_clock(wtsnk)
 
  return
 end subroutine get_sink_acc

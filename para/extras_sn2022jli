@@ -1,0 +1,25 @@
+! Model parameters for sn2022jli
+
+! mesafile: Name of MESA profile file to be read.
+! spc_list: List of all elements to be tracked in the simulation.
+! rcore: Size of core to be removed from the computation in Rsun
+! isentropic: Make an isentropic star
+! nsmass: Mass of colliding object in Msun
+! nssoft: Softening length of neutron star in Rsun
+! dis: Pre-SN separation between colliding object and star in Rsun
+! mprog: Pre-SN mass of colliding object in Msun
+! Porb: Orbital period of post-SN orbit in days
+! Eexp: Explosion energy of SN (used for energy injection by ECI) in erg
+
+&jli_con
+ mesafile='5Msun_earlyMS.data'
+ spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
+ rcore=0d0
+ isentropic=.false.
+ nsmass=1.4d0
+ nssoft=1d0
+ dis=20d0
+ mprog=5d0
+ Porb=12.5d0
+ Eexp=1d51
+/

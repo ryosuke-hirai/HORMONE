@@ -10,7 +10,7 @@ If start==0, it will set the initial condition based on the choice of simtype.
           Tests should be run with compiler optimization switched off
 
 
-&startcon start=0 simtype='sn2022jli' parafile=''/
+&startcon start=0 simtype='sodshock_x test' parafile='' /
 
 
 ++++++ SIMTYPE OPTIONS ++++++
@@ -32,4 +32,5 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'agndisk': Explosions in AGN disks (Grishin+2021)
 'windtunnel': Wind tunnel simulations
 'stellarcollision': Stellar collision simulation (Hirai & Podsiadlowski 2022)
+'sn2022jli': Stellar collision in companion frame + SN heating
 'modify': Modify and restart from an existing binfile

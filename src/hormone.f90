@@ -47,6 +47,7 @@ program hormone
   use radiation_mod
   use particle_mod
   use cooling_mod
+  use frame_mod
   use dirichlet_mod
   use shockfind_mod
   use tests_mod
@@ -124,7 +125,8 @@ program hormone
     call timestep
 
     call gravity
-    if(include_sinks)call get_sink_acc(sink)
+    if(include_sinks)call get_sink_acc(sink) ! updates dt
+    call set_frame_acc
 
     call terminal_output
 
