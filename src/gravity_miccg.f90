@@ -16,7 +16,7 @@ module gravity_miccg_mod
 ! PURPOSE: To compute gravitational forces using the MICCG method
 
 subroutine gravity_miccg
- use settings,only:grav_init_other
+
  use grid
  use constants
  use physval
@@ -33,7 +33,6 @@ subroutine gravity_miccg
 
  allocate( x(1:cg%lmax), cgsrc(1:cg%lmax) )
 
- if(grav_init_other.and.gravswitch==3)return
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
  if(gbtype==0)call gravbound
