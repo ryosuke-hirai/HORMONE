@@ -16,8 +16,6 @@ subroutine checksetup
   use grid
   use physval
   use tests_mod
-  use mpi_domain,only:is_my_domain
-  use mpi_utils,only:in_my_domain
 
 !-----------------------------------------------------------------------------
 
@@ -60,9 +58,6 @@ subroutine checksetup
   if(.not.solve_j)jmesh=0
   if(.not.solve_k)kmesh=0
 
-! Alias in_my_domain to is_my_domain. This is needed for dependency reasons.
-  in_my_domain => is_my_domain
-  
 ! To warn the periodic boundary condition
   if(bc1is*bc1os==0.and.bc1is+bc1os/=0)then
    print *,"Error from boundary condition 'bc1is,bc1os'"

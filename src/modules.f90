@@ -157,3 +157,15 @@ module ejectamod
 end module ejectamod
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+module derived_types
+
+ implicit none
+
+ type sink_prop
+  sequence
+  integer:: i,j,k
+  real(8):: mass, softfac, lsoft, locres, dt
+  real(8),dimension(1:3):: x,v,a,xpol
+ end type sink_prop
+
+end module derived_types

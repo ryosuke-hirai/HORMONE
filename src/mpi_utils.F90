@@ -15,15 +15,6 @@ module mpi_utils
   integer :: myrank, nprocs
   integer :: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity, mpi_type_sink_prop, mpi_subarray_extgrtv
 
-  interface
-   function is_my_domain(i,j,k)
-    integer,intent(in):: i,j,k
-    logical:: is_my_domain
-   end function is_my_domain
-  end interface
-  
-  procedure(is_my_domain), pointer :: in_my_domain
-
   contains
 
   subroutine init_mpi()
