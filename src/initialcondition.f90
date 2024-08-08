@@ -75,7 +75,7 @@ subroutine initialcondition
    call redsupergiant
 
   case('polytrope')
-    call polytrope
+   call polytrope
 
   case('agndisk')
    call agndisk
