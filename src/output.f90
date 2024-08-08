@@ -901,8 +901,8 @@ subroutine write_plt
 !othfile----------------------------------------------------------------------
 
  if(write_other_slice)then
-  call write_vertical_slice(ks            ,'data/oth')
-  call write_vertical_slice(ks+(ke-ks+1)/4,'data/ver')
+  call write_vertical_slice(ks_global                          ,'oth')
+  call write_vertical_slice(ks_global+(ke_global-ks_global+1)/4,'ver')
  end if
 
  return
