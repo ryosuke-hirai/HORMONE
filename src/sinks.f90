@@ -135,8 +135,7 @@ end subroutine get_sink_acc
 
 subroutine get_sinkgas_acc(sink)
 
- use mpi_utils,only:allreduce_mpi
- use mpi_domain,only:is_my_domain
+ use mpi_utils,only:allreduce_mpi,in_my_domain
  use constants,only:tiny
  use settings,only:crdnt,eq_sym,courant
  use utils,only:carpol
@@ -155,7 +154,7 @@ subroutine get_sinkgas_acc(sink)
  xpol = sink%xpol
 
 ! Only calculate for MPI thread that contains the sink
- if(is_my_domain(i,j,k))then
+ if(in_my_domain(i,j,k))then
   select case(crdnt)
   case(2) ! for spherical coordinates
 
