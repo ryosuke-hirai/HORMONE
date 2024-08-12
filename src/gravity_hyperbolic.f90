@@ -101,7 +101,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
   end do
 !$omp end do
 
-! Smear gravity in central regions -----------------------------------
+! Smear gravity in central regions --------------------------------------------
 !$omp single
   if(fmr_max>0)then
    do n = 1, fmr_max
@@ -131,7 +131,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
    end do
   end if
 !$omp end single
-! --------------------------------------------------------------------
+! -----------------------------------------------------------------------------
 
  end do
 

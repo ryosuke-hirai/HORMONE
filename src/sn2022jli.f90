@@ -23,10 +23,11 @@ subroutine sn2022jli
  use input_mod
  use star_mod,only:isentropic_star,replace_core,set_star_sph_grid
  use gravmod,only:mc ,grvphi,totphi
- use sink_mod,only:sink!,sinkfield
- use utils,only:softened_pot,polcar,get_vpol
+ use sink_mod,only:sink,sinkfield
+ use utils,only:softened_pot,polcar,get_vpol,gravpot1d
  use composition_mod,only:get_imu
  use pressure_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
+ use mpi_utils,only:allreduce_mpi
 
  character(len=100):: mesafile
  real(8),allocatable,dimension(:):: r,m,rho,pres
@@ -36,9 +37,9 @@ subroutine sn2022jli
  integer:: i,j,k,istat,nn,sn,ih1,ihe4,which
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const,gradphi
  real(8)::nsmass,nssoft,asep,dis,Porb,mprog,orbv,ecc,xcar(1:3)
- real(8),allocatable:: comptmp(:)
+ real(8),allocatable:: comptmp(:),p1d(:)
  logical::isentropic
- real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT
+ real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT,dnow,phinow(3),newphi
  real(8),parameter:: err=1d-8
 
 !-----------------------------------------------------------------------------
@@ -146,17 +147,27 @@ subroutine sn2022jli
  end do
 
 ! Re-solve hydrostatic equilibrium
-!!$ totphi = grvphi
-!!$! call sinkfield
-!!$ j = js_global
-!!$ k = ks_global
-!!$ p(ie+1,js_global:je_global,ks_global:ke_global) = G*mass/x1(ie+1)*d(ie,j,k)
-!!$ p(ie+2,js_global:je_global,ks_global:ke_global) = G*mass/x1(ie+2)*d(ie,j,k)
-!!$ do i = ie, is, -1
-!!$  gradphi = dx1(i+1)**2*totphi(i+2,j,k)-dx1(i+2)**2*totphi(i,j,k)+(dx1(i+2)**2-dx1(i+1)**2)*totphi(i+1,j,k)
-!!$  p(i,j,k) = (d(i+1,j,k)*gradphi+dx1(i+1)**2*p(i+2,j,k)+(dx1(i+2)**2-dx1(i+1)**2)*p(i+1,j,k))/dx1(i+2)**2
-!!$  p(i,js_global:je_global,ks_global:ke_global) = p(i,j,k)
-!!$ end do
+ call gravpot1d
+ totphi = grvphi
+ call sinkfield
+ allocate(p1d(is_global-1:ie_global+2))
+ p1d(ie_global+1) = G*mc(ie_global)/x1(ie_global+1)*dbg*(radius/x1(ie_global+1))**2
+ p1d(ie_global) = G*mc(ie_global)/x1(ie_global)*dbg*(radius/x1(ie_global))**2
+ if(ie==ie_global)phinow(1:3) = totphi(ie:ie+2,js,ks)
+
+ do i = ie_global-1, is_global, -1
+  phinow(2:3) = phinow(1:2)
+  dnow = 0d0 ; newphi = 0d0
+  if(i  >=is.and.i  <=ie)newphi = grvphi(i,js,ks)
+  if(i+1>=is.and.i+1<=ie)dnow   = d(i+1,js,ks)
+
+  call allreduce_mpi('max',dnow)
+  call allreduce_mpi('min',newphi)
+  phinow(1) = newphi
+  gradphi = dx1(i+1)**2*phinow(3)-dx1(i+2)**2*phinow(1)+(dx1(i+2)**2-dx1(i+1)**2)*phinow(2)
+  p1d(i) = (dnow*gradphi+dx1(i+1)**2*p1d(i+2)+(dx1(i+2)**2-dx1(i+1)**2)*p1d(i+1))/dx1(i+2)**2
+  p(i,js:je,ks:ke) = p1d(i)
+ end do
 
 ! Remember core mass
  if (is==is_global) mc(is-1) = mcore
@@ -182,6 +193,7 @@ subroutine sn2022jli
  sink(2)%v = sink(2)%v - sink(1)%v
  sink(1)%v = 0d0
 
+! Try to make NS atmosphere hydrostatic
 !$omp parallel do private(i,j,k,xcar) collapse(3)
  do k = ks, ke
   do j = js, je
@@ -224,12 +236,13 @@ subroutine sn2022jli
   end do
  end do
 !$omp end parallel do
+ call allreduce_mpi('sum',Ebind0)
 
  Omega = (1d0-sqrt(1d0-(radius/(asep*(1d0-ecc)))**2))/2d0
  mheat = 3d0*msun*Omega/2d0
  Eheat = Eexp*Omega/12d0
 
- entr0 = 4.d0
+ entr0 = 5d0
  dfac = 0.2d0
  which=0
 
@@ -261,6 +274,7 @@ subroutine sn2022jli
    end do
   end do
 !$omp end parallel do
+  call allreduce_mpi('sum',Ebind)
 
 ! bisection method
   if((Ebind-Ebind0-Eheat)/abs(Ebind0)>err)then
