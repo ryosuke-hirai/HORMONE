@@ -46,7 +46,9 @@ subroutine gravity
 
  if (tn==0) grvtime = 0.d0
 
- if(grav_init_relax .and. tn==0) then
+ if(grav_init_other)then
+  ! do nothing
+ elseif(grav_init_relax .and. tn==0) then
   call gravity_relax
   call hg_boundary_conditions
 
