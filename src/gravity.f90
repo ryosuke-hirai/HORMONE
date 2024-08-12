@@ -44,26 +44,20 @@ subroutine gravity
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
- if (tn==0)then
+ if (tn==0) grvtime = 0.d0
 
-  grvtime = 0.d0
+ if(grav_init_relax .and. tn==0) then
+  call gravity_relax
+  call hg_boundary_conditions
 
-  if(grav_init_relax)then
-   call gravity_relax
-   call hg_boundary_conditions
-
-  elseif(gravswitch==3.and..not.grav_init_other)then
-   call gravity_miccg
-  endif
-
- end if
-
- if(gravswitch==2)then
+ elseif(gravswitch==2 .or. (gravswitch==3 .and. tn==0))then
   call gravity_miccg
- elseif(gravswitch==3 .and. in_loop)then
+ endif
+
+ if(gravswitch==3 .and. tn/=0)then
   call gravity_hyperbolic
  end if
-
+ 
 call stop_clock(wtind)
 
 end subroutine gravity
