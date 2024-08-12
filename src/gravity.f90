@@ -44,7 +44,7 @@ subroutine gravity
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
- if (tn==0)then
+ if (tn==0.and..not.in_loop)then
 
   grvtime = 0.d0
 
