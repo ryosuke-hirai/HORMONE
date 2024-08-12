@@ -173,15 +173,13 @@ subroutine gravity_relax
  integer :: grktype_org
  integer, parameter :: maxiter = 10000 ! TEMPORARY: May not be enough to fully converge, but set low for speed
  real(8), parameter :: itertol = 1d-2
- integer :: i, fmr_max_org
+ integer :: i
 
  real(8), allocatable :: mass(:,:,:)
  real(8) :: mtot
 
  if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
 
- fmr_max_org = fmr_max
- fmr_max = 0
  call timestep
  cgrav_old = cgrav
 
@@ -223,7 +221,6 @@ subroutine gravity_relax
 
  ! Reset grktype
  grktype = grktype_org
- fmr_max = fmr_max_org
 
 return
 end subroutine gravity_relax
