@@ -11,7 +11,7 @@
           fmr_lvl(2)=5
 	  fmr_lvl(3)=6
   	  fmr_lvl(4)=12
-	  fmr_lvl(5)=310  /
+	  fmr_lvl(5)=10  /
 
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
