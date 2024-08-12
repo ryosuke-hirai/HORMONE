@@ -31,6 +31,7 @@ module settings
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
  logical:: write_temp, write_mc
  logical:: grav_init_other, grav_init_relax
+ logical:: in_loop
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
 

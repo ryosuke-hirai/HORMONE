@@ -17,7 +17,7 @@ contains
 
 subroutine gravity
 
- use settings,only:grav_init_relax,grav_init_other
+ use settings,only:grav_init_relax,grav_init_other,in_loop
  use grid
  use constants
  use physval
@@ -29,14 +29,22 @@ subroutine gravity
  use timestep_mod,only:timestep
  use profiler_mod
 
+ integer:: wtind
+
  if(gravswitch==0.or.gravswitch==1)return
 
- call start_clock(wtgrv)
+ if(in_loop)then
+  wtind = wtgrv
+ else
+  wtind = wtgri
+ end if
+
+ call start_clock(wtind)
 
 ! Set source term for gravity
  call get_gsrc(gsrc)
 
- if (tn==0)then
+ if (tn==0.and..not.in_loop)then
 
   grvtime = 0.d0
 
@@ -52,11 +60,11 @@ subroutine gravity
 
  if(gravswitch==2)then
   call gravity_miccg
- elseif(gravswitch==3 .and. tn/=0)then
+ elseif(gravswitch==3 .and. in_loop)then
   call gravity_hyperbolic
  end if
 
-call stop_clock(wtgrv)
+call stop_clock(wtind)
 
 end subroutine gravity
 
@@ -165,13 +173,15 @@ subroutine gravity_relax
  integer :: grktype_org
  integer, parameter :: maxiter = 10000 ! TEMPORARY: May not be enough to fully converge, but set low for speed
  real(8), parameter :: itertol = 1d-2
- integer :: i
+ integer :: i, fmr_max_org
 
  real(8), allocatable :: mass(:,:,:)
  real(8) :: mtot
 
  if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
 
+ fmr_max_org = fmr_max
+ fmr_max = 0
  call timestep
  cgrav_old = cgrav
 
@@ -193,22 +203,27 @@ subroutine gravity_relax
   ! Only calculate error every 1000 iterations because it is expensive
   if (mod(i,1000)==0 .or. i==1) then
    ! Error in Poisson equation, weighted by mass
-   err = sum( ((lapphi(is:ie,js:je,ks:ke) - hgsrc(is:ie,js:je,ks:ke))/hgsrc(is:ie,js:je,ks:ke))**2 * mass )
+   err = sum( ((lapphi(is:ie,js:je,ks:ke) - hgsrc(is:ie,js:je,ks:ke)) &
+             / hgsrc(is:ie,js:je,ks:ke))**2 * mass )
    call allreduce_mpi('sum', err)
    err = sqrt(err)/sqrt(mtot)
    if (myrank==0) print*, 'iteration=', i, 'error=', err
+
    ! Converged if below tolerance
    if (err < itertol .and. i>0) exit
-  endif
- enddo
 
- if (myrank==0) print*, 'Gravity relaxation converged in ', i, ' iterations, with error', err
+  endif
+ end do
+
+ if (myrank==0) print*, 'Gravity relaxation converged in ', &
+                        i, ' iterations, with error', err
 
  ! Reset grvpsi
  grvpsi = 0.d0
 
  ! Reset grktype
  grktype = grktype_org
+ fmr_max = fmr_max_org
 
 return
 end subroutine gravity_relax

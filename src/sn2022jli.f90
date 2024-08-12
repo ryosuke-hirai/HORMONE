@@ -17,13 +17,13 @@ contains
 subroutine sn2022jli
 
  use settings,only:compswitch,spn,extrasfile,eostype,eq_sym
- use constants,only:G,msun,rsun,pi
+ use constants,only:G,msun,rsun,pi,tiny
  use grid
  use physval
  use input_mod
  use star_mod,only:isentropic_star,replace_core,set_star_sph_grid
  use gravmod,only:mc ,grvphi,totphi
- use sink_mod,only:sink,sinkfield
+ use sink_mod,only:sink!,sinkfield
  use utils,only:softened_pot,polcar,get_vpol
  use composition_mod,only:get_imu
  use pressure_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
@@ -79,7 +79,7 @@ subroutine sn2022jli
  call read_mesa(mesafile,r,m,rho,pres,comp=comp,comp_list=comp_list)
 
  mass = m(size(m)-1)
- dbg = rho(size(rho)-1)*1d-5
+ dbg = rho(size(rho)-1)*1d0
 ! Use outermost composition as the ambient gas composition
  if(compswitch==2)then
   do nn = 1, spn-1
@@ -146,14 +146,17 @@ subroutine sn2022jli
  end do
 
 ! Re-solve hydrostatic equilibrium
- totphi = grvphi
- call sinkfield
- p(ie+1:ie+2,js:je,ks:ke) = G*mass/x1(ie+1)*d(ie,js,ks)
- do i = ie, is, -1
-  gradphi = dx1(i+1)**2*totphi(i+2,js,ks)-dx1(i+2)**2*totphi(i,js,ks)+(dx1(i+2)**2-dx1(i+1)**2)*totphi(i+1,js,ks)
-  p(i,js,ks) = (d(i+1,js,ks)*gradphi+dx1(i+1)**2*p(i+2,js,ks)+(dx1(i+2)**2-dx1(i+1)**2)*p(i+1,js,ks))/dx1(i+2)**2
-  p(i,js:je,ks:ke) = p(i,js,ks)
- end do
+!!$ totphi = grvphi
+!!$! call sinkfield
+!!$ j = js_global
+!!$ k = ks_global
+!!$ p(ie+1,js_global:je_global,ks_global:ke_global) = G*mass/x1(ie+1)*d(ie,j,k)
+!!$ p(ie+2,js_global:je_global,ks_global:ke_global) = G*mass/x1(ie+2)*d(ie,j,k)
+!!$ do i = ie, is, -1
+!!$  gradphi = dx1(i+1)**2*totphi(i+2,j,k)-dx1(i+2)**2*totphi(i,j,k)+(dx1(i+2)**2-dx1(i+1)**2)*totphi(i+1,j,k)
+!!$  p(i,j,k) = (d(i+1,j,k)*gradphi+dx1(i+1)**2*p(i+2,j,k)+(dx1(i+2)**2-dx1(i+1)**2)*p(i+1,j,k))/dx1(i+2)**2
+!!$  p(i,js_global:je_global,ks_global:ke_global) = p(i,j,k)
+!!$ end do
 
 ! Remember core mass
  if (is==is_global) mc(is-1) = mcore
@@ -178,7 +181,7 @@ subroutine sn2022jli
 
  sink(2)%v = sink(2)%v - sink(1)%v
  sink(1)%v = 0d0
- 
+
 !$omp parallel do private(i,j,k,xcar) collapse(3)
  do k = ks, ke
   do j = js, je
@@ -229,6 +232,7 @@ subroutine sn2022jli
  entr0 = 4.d0
  dfac = 0.2d0
  which=0
+
 ! Find the right entropy normalization through the bisection method
  do
 
@@ -238,8 +242,10 @@ subroutine sn2022jli
    do j = js, je
     do i = is, ie
      if(x1(i)<=radius)then
+
       entr = entropy_from_dT(d(i,j,k),T(i,j,k),imu(i,j,k),spc(1,i,j,k),spc(2,i,j,k))
-      entr = entr + entr0*min(1d0,mheat/(mass-mc(i)))
+
+      entr = entr + entr0*min(1d0,mheat/((mass-mc(i))+tiny))
       eint(i,j,k) = get_e_from_ds(d(i,j,k),entr,imu(i,j,k),spc(1,i,j,k),spc(2,i,j,k))
       TT = T(i,j,k)
       select case(eostype)
@@ -270,7 +276,6 @@ subroutine sn2022jli
   end if
 
  end do
-
 
 return
 end subroutine sn2022jli

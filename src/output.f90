@@ -19,7 +19,7 @@ module output_mod
 
 subroutine output
 
- use settings,only:is_test
+ use settings,only:is_test,in_loop
  use grid,only:tn
  use profiler_mod
  use mpi_utils,only:barrier_mpi
@@ -30,7 +30,7 @@ subroutine output
 
  if(is_test) return ! do not bother outputting anything if it is a test
 
- if(tn==0)then
+ if(.not.in_loop)then
   wtind = wtou1 ! Record time of initial output separately
  else
   wtind = wtout

@@ -60,6 +60,8 @@ program hormone
 
 !############################## start program ################################
 
+  in_loop = .false.
+
   call init_mpi
 
 ! Start profiling
@@ -116,10 +118,10 @@ program hormone
 ! Start integration ----------------------------------------------------------
   if(tnlim/=0)then ! tnlim=0 to just output initial condition
 
-   wtime(wtgri) = wtime(wtgrv)
    call reset_clock(wtlop)
    call start_clock(wtlop)
 
+   in_loop = .true.
    main_loop:do
 
     call timestep
@@ -185,6 +187,7 @@ program hormone
 
    end do main_loop
    call stop_clock(wtlop)
+   in_loop = .false.
 
   end if
 ! End integration ------------------------------------------------------------
