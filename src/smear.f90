@@ -91,7 +91,7 @@ end subroutine smear
   if(compswitch>=2)then
    do n = 1, spn
     if (is<=i .and. i<=ie) spc(n,i,jl:jr,kl:kr) = &
-          sum_global_array(u,i,i,js,je,ks,ke,icnt, &
+          sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt, &
                            l_weight2=n, weight=dvol, weight2=spc ) / mtot
    end do
   end if

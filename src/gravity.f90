@@ -59,7 +59,7 @@ subroutine gravity
  if(gravswitch==3 .and. tn/=0)then
   call gravity_hyperbolic
  end if
- 
+
 call stop_clock(wtind)
 
 end subroutine gravity
