@@ -80,9 +80,9 @@ subroutine init_profiler
 
 ! Make sure to keep routine name short
  routine_name(wtini) = 'Setup'       ! initial conditions
- routine_name(wtgri) = '1st_Gravity' ! initial gravity
- routine_name(wtou1) = '1st_Output'  ! initial output
- routine_name(wtlop) = 'Main_loop'   ! main loop
+ routine_name(wtgri) = '1st Gravity' ! initial gravity
+ routine_name(wtou1) = '1st Output'  ! initial output
+ routine_name(wtlop) = 'Main loop'   ! main loop
  routine_name(wthyd) = 'Hydro'       ! hydrodynamics
  routine_name(wtflx) = 'Numflux'     ! numerical flux
  routine_name(wtrng) = 'RungeKutta'  ! Runge-Kutta
@@ -99,7 +99,7 @@ subroutine init_profiler
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
  routine_name(wtopc) = 'Opacity'     ! opacity
- routine_name(wtrfl) = 'Rad_flux'    ! radiative flux
+ routine_name(wtrfl) = 'Rad flux'    ! radiative flux
  routine_name(wtsnk) = 'Sinks'       ! sink particles
  routine_name(wtmpi) = 'MPI exchange'! MPI exchange
  routine_name(wtwai) = 'MPI wait'    ! MPI wait
