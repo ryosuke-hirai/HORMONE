@@ -241,7 +241,7 @@ module mpi_domain
          ! --- x-3 direction ---
          subsizes4 = [spn, ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
          starts4   = [0, 2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
-         call MPI_Type_create_subarray(3, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(3), ierr)
+         call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_spc(3), ierr)
          call MPI_Type_commit(subarray_spc(3), ierr)
 
          ! Starting indices of the real and ghost zones involved in the exchange
