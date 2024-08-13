@@ -14,7 +14,7 @@ contains
 
 subroutine interpolation
 
- use settings,only:compswitch,spn,mag_on,flux_limiter, &
+ use settings,only:compswitch,spn,mag_on,flux_limiter,solve_i,solve_j,solve_k,&
                    bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
 !  use settings, only:eostype
  use grid
@@ -48,7 +48,7 @@ subroutine interpolation
 !$omp parallel
 
 ! slope1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-if(ie/=is)then
+if(solve_i)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
 !$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
@@ -175,7 +175,7 @@ end if
 
 
 ! slope2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-if(je/=js)then
+if(solve_j)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
 !$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
@@ -300,7 +300,7 @@ end if
 
 
 ! slope3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-if(ke/=ks)then
+if(solve_k)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
 !$omp Xl,Xr,Yl,Yr,Tini) collapse(3)

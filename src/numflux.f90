@@ -27,11 +27,11 @@ contains
 
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
-           v2l, v2r, v3l, v3r, eil, eir, csl, csr, fix
+           v2l, v2r, v3l, v3r, eil, eir, csl, csr
   real(8),dimension(1:9)::tmpflux
   real(8),dimension(1:2):: dx
   real(8),dimension(1:spn):: spcl,spcr
-  real(8):: signdflx,ul,ur,fl,fr,rinji
+  real(8):: signdflx,fix,ul,ur,fl,fr,rinji
   integer:: i,j,k,n,ierr
 
 !------------------------------------------------------------------------------
@@ -184,8 +184,8 @@ contains
         spcr(n) = spc(n,i+1,j,k) - dx(2) * dspc(n,i+1,j,k,1)
        end do
        signdflx = sign(0.5d0,flux1(i,j,k,icnt))
-       fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) + &
-                   sum(spcr(1:spn))*(0.5d0-signdflx) )
+       fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) &
+                 + sum(spcr(1:spn))*(0.5d0-signdflx) )
        do n = 1, spn
         spcflx(n,i,j,k,1) = fix * flux1(i,j,k,icnt) &
                  * ( spcl(n)*(0.5d0+signdflx) + spcr(n)*(0.5d0-signdflx) )
@@ -202,7 +202,8 @@ contains
   if(solve_j)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
-!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ierr) collapse(3)
+!$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
+!$omp collapse(3)
    do k = ks,ke
     do j = js-1,je
      do i = is,ie
@@ -345,8 +346,8 @@ contains
         spcr(n) = spc(n,i,j+1,k) - dx(2) * dspc(n,i,j+1,k,2)
        end do
        signdflx = sign(0.5d0,flux2(i,j,k,icnt))
-       fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) + &
-                   sum(spcr(1:spn))*(0.5d0-signdflx) )
+       fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) &
+                 + sum(spcr(1:spn))*(0.5d0-signdflx) )
        do n = 1, spn
         spcflx(n,i,j,k,2) = fix * flux2(i,j,k,icnt) &
                * ( spcl(n)*(0.5d0+signdflx) + spcr(n)*(0.5d0-signdflx) )
@@ -506,8 +507,8 @@ contains
         spcr(n) = spc(n,i,j,k+1) - dx(2) * dspc(n,i,j,k+1,3)
        end do
        signdflx = sign(0.5d0,flux3(i,j,k,icnt))
-       fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) + &
-                   sum(spcr(1:spn))*(0.5d0-signdflx) )
+       fix = 1d0/( sum(spcl(1:spn))*(0.5d0+signdflx) &
+                 + sum(spcr(1:spn))*(0.5d0-signdflx) )
        do n = 1, spn
         spcflx(n,i,j,k,3) = fix * flux3(i,j,k,icnt) &
                * ( spcl(n)*(0.5d0+signdflx) + spcr(n)*(0.5d0-signdflx) )
