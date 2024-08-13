@@ -115,13 +115,13 @@ contains
  return
  end subroutine timestep
 
- pure function off(is,ie)
-  integer,intent(in)::is,ie
+ pure function off(solve)
+  logical,intent(in)::solve
   real(8):: off
-  if(ie==is)then
-   off = 0d0
-  else
+  if(solve)then
    off = 1d0
+  else
+   off = 0d0
   end if
  end function off
 
@@ -135,8 +135,9 @@ contains
 
 subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
 
- use settings,only:mag_on,eostype
- use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global,sa1,sa2,sa3,dvol
+ use settings,only:mag_on,eostype,solve_i,solve_j,solve_k
+ use grid,only:js,je,ks,ke,js_global,je_global,ks_global,ke_global,&
+               sa1,sa2,sa3,dvol
  use physval,only:d,eint,T,imu,p,cs,v1,v2,v3,b1,b2,b3,spc
  use pressure_mod,only:eos_p_cs,get_cf
 
@@ -144,13 +145,17 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
  real(8),allocatable,intent(inout)::dti(:,:,:)
  integer,intent(in),optional:: jb,kb
  real(8),intent(out),optional:: cfmax
- integer:: jn,kn,ierr
+ integer:: jn,kn,ierr,jl,jr,kl,kr
  real(8):: cf1,cf2,cf3
+
 !-----------------------------------------------------------------------------
 
  jn=0;kn=0
  if(present(jb)) jn = min(jb-1,je_global-js_global)
  if(present(kb)) kn = min(kb-1,ke_global-ks_global)
+
+ jl = max(j,js); jr = min(j+jn,je)
+ kl = max(k,ks); kr = min(k+kn,ke)
 
  select case(eostype)
  case(0:1)
@@ -171,10 +176,10 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
   cf3 = cs(i,j,k)+abs(v3(i,j,k))
  end if
 
- dti(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) / &
-                      ( cf1*off(is_global,ie_global) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
-                      + cf2*off(js_global,je_global) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
-                      + cf3*off(ks_global,ke_global) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
+ dti(i,jl:jr,kl:kr) = sum(dvol(i,j:j+jn,k:k+kn)) &
+                    / ( cf1*off(solve_i) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
+                      + cf2*off(solve_j) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
+                      + cf3*off(solve_k) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) )
 
  if(present(cfmax))cfmax = max(cf1,cf2,cf3)
 
@@ -191,25 +196,30 @@ end subroutine dti_cell
 
 subroutine dtgrav_cell(i,j,k,dtg,cgrav,jb,kb)
 
- use grid,only:is,ie,js,je,ks,ke,sa1,sa2,sa3,dvol
+ use settings,only:solve_i,solve_j,solve_k
+ use grid,only:js,je,ks,ke,js_global,je_global,ks_global,ke_global,&
+               sa1,sa2,sa3,dvol
 
  integer,intent(in):: i,j,k
  real(8),allocatable,intent(inout)::dtg(:,:,:)
  real(8),intent(in):: cgrav
  integer,intent(in),optional:: jb,kb
- integer:: jn,kn
+ integer:: jn,kn,jl,jr,kl,kr
 
 !-----------------------------------------------------------------------------
 
  jn=0;kn=0
- if(present(jb)) jn = min(jb-1,je-js)
- if(present(kb)) kn = min(kb-1,ke-ks)
+ if(present(jb)) jn = min(jb-1,je_global-js_global)
+ if(present(kb)) kn = min(kb-1,ke_global-ks_global)
 
- dtg(i,j:j+jn,k:k+kn) = sum(dvol(i,j:j+jn,k:k+kn)) &
+ jl = max(j,js); jr = min(j+jn,je)
+ kl = max(k,ks); kr = min(k+kn,ke)
+
+ dtg(i,jl:jr,kl:kr) = sum(dvol(i,j:j+jn,k:k+kn)) &
                       / ( cgrav * &
-                         ( off(is,ie) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
-                         + off(js,je) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
-                         + off(ks,ke) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) ) )
+                         ( off(solve_i) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
+                         + off(solve_j) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &
+                         + off(solve_k) * sum(sa3(i,j:j+jn,k-1:k+kn:kn+1)) ) )
 
 return
 end subroutine dtgrav_cell

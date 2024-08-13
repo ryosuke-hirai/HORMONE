@@ -166,7 +166,7 @@ subroutine sn2022jli
   phinow(1) = newphi
   gradphi = dx1(i+1)**2*phinow(3)-dx1(i+2)**2*phinow(1)+(dx1(i+2)**2-dx1(i+1)**2)*phinow(2)
   p1d(i) = (dnow*gradphi+dx1(i+1)**2*p1d(i+2)+(dx1(i+2)**2-dx1(i+1)**2)*p1d(i+1))/dx1(i+2)**2
-  p(i,js:je,ks:ke) = p1d(i)
+  if(i>=is.and.i<=ie)p(i,js:je,ks:ke) = p1d(i)
  end do
 
 ! Remember core mass

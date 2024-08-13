@@ -5,7 +5,7 @@ module output_mod
  public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
           scaling_output, write_grid
  private:: write_bin,write_plt,get_header,add_column, &
-           write_val
+           write_val,write_vertical_slice
 
  contains
 

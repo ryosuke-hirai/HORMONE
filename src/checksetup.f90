@@ -19,6 +19,23 @@ subroutine checksetup
 
 !-----------------------------------------------------------------------------
 
+! Grid indices have to go from small to large
+  if(ie<is)then
+   print*,"Error in grid indices. Set indices so that ie>is"
+   print*,'is=',is,'ie=',ie
+   stop
+  end if
+  if(je<js)then
+   print*,"Error in grid indices. Set indices so that je>js"
+   print*,'js=',js,'je=',je
+   stop
+  end if
+  if(ke<ks)then
+   print*,"Error in grid indices. Set indices so that ke>ks"
+   print*,'ks=',ks,'ke=',ke
+   stop
+  end if
+
 ! Select which directions to solve
   solve_i=.false.;solve_j=.false.;solve_k=.false.
   if(ie>is)solve_i=.true.
