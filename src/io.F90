@@ -294,7 +294,7 @@ end subroutine read_dummy_recordmarker
 
 subroutine write_dummy_recordmarker(fh)
   integer, intent(in) :: fh
-  integer, parameter :: dummy = -1 ! Assmuing record marker is the size of an integer
+  integer, parameter :: dummy = -1 ! Assuming record marker is the size of an integer
 
   if (legacy) then
     call write_int4(fh, dummy)

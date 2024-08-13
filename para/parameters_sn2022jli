@@ -11,7 +11,7 @@
           fmr_lvl(2)=5
 	  fmr_lvl(3)=6
   	  fmr_lvl(4)=12
-	  fmr_lvl(5)=310  /
+	  fmr_lvl(5)=10  /
 
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
@@ -55,7 +55,7 @@
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
 &gravcon gravswitch=3 grverr=1d-5 cgerr=1d-5 HGfac=3d0 hgcfl=0.9d0 gbtype=1
-	 grav_init_other=.false. include_extgrv=.true.
+	 grav_init_relax=.false. grav_init_other=.true. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
 ! include_sinks: switch for sink particles

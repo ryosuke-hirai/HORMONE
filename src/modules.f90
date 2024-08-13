@@ -31,6 +31,7 @@ module settings
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
  logical:: write_temp, write_mc
  logical:: grav_init_other, grav_init_relax
+ logical:: in_loop
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile
 
@@ -157,3 +158,15 @@ module ejectamod
 end module ejectamod
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+module derived_types
+
+ implicit none
+
+ type sink_prop
+  sequence
+  integer:: i,j,k
+  real(8):: mass, softfac, lsoft, locres, dt
+  real(8),dimension(1:3):: x,v,a,xpol
+ end type sink_prop
+
+end module derived_types

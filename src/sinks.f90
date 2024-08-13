@@ -1,12 +1,9 @@
 module sink_mod
+
+ use derived_types,only:sink_prop
+
  implicit none
 
- type sink_prop
-  sequence
-  integer:: i,j,k
-  real(8):: mass, softfac, lsoft, locres, dt
-  real(8),dimension(1:3):: x,v,a,xpol
- end type sink_prop
  integer,public:: nsink
  type(sink_prop),allocatable,public:: sink(:)
  real(8),allocatable,public:: snkphi(:,:,:)
@@ -135,6 +132,8 @@ end subroutine get_sink_acc
 
 subroutine get_sinkgas_acc(sink)
 
+ use mpi_utils,only:allreduce_mpi
+ use mpi_domain,only:is_my_domain
  use constants,only:tiny
  use settings,only:crdnt,eq_sym,courant
  use utils,only:carpol
@@ -152,33 +151,41 @@ subroutine get_sinkgas_acc(sink)
  k = sink%k
  xpol = sink%xpol
 
- select case(crdnt)
- case(2) ! for spherical coordinates
+! Only calculate for MPI thread that contains the sink
+ if(is_my_domain(i,j,k))then
+  select case(crdnt)
+  case(2) ! for spherical coordinates
 
-  if(eq_sym)then ! for equatorial symmetry
+   if(eq_sym)then ! for equatorial symmetry
 
-   acc(1) = (-(gphi(i+1,j,k  )-gphi(i,j,k  ))*idx1(i+1)*(x3(k+1)-xpol(3))&
-             -(gphi(i+1,j,k+1)-gphi(i,j,k+1))*idx1(i+1)*(xpol(3)-x3(k)))&
-          *idx3(k+1)
-   acc(2) = 0d0
-   acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))*idx3(k)/x1(i)*(x1(i+1)-xpol(1))&
-             -(gphi(i+1,j,k+1)-gphi(i+1,j,k))*idx3(k)/x1(i+1)*(xpol(1)-x1(i)))&
-          *idx1(i+1)
-
-   sink%a(1) = acc(1)*cos(xpol(3)) - acc(3)*sin(xpol(3))
-   sink%a(2) = acc(1)*sin(xpol(3)) + acc(3)*cos(xpol(3))
-   sink%a(3) = 0d0
-
-  else
+    acc(1) = (-(gphi(i+1,j,k  )-gphi(i,j,k  ))*idx1(i+1)*(x3(k+1)-xpol(3))&
+              -(gphi(i+1,j,k+1)-gphi(i,j,k+1))*idx1(i+1)*(xpol(3)-x3(k)))&
+           *idx3(k+1)
+    acc(2) = 0d0
+    acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))*idx3(k)/x1(i)*(x1(i+1)-xpol(1))&
+              -(gphi(i+1,j,k+1)-gphi(i+1,j,k))*idx3(k)/x1(i+1)*(xpol(1)-x1(i)))&
+           *idx1(i+1)
+  
+    sink%a(1) = acc(1)*cos(xpol(3)) - acc(3)*sin(xpol(3))
+    sink%a(2) = acc(1)*sin(xpol(3)) + acc(3)*cos(xpol(3))
+    sink%a(3) = 0d0
+  
+   else
+    print*,'Error in sinks.f90: get_sinkgas_acc'
+    stop 'Sink particles currently only implemented for eq_sym=.true.'
+   end if
+  
+  case default
    print*,'Error in sinks.f90: get_sinkgas_acc'
-   stop 'Sink particles currently only implemented for eq_sym=.true.'
-  end if
+   stop 'Sink particles currently only implemented for spherical coordinates'
+  
+  end select
 
- case default
-  print*,'Error in sinks.f90: get_sinkgas_acc'
-  stop 'Sink particles currently only implemented for spherical coordinates'
+ else
+  sink%a = 0d0
+ end if
 
- end select
+ call allreduce_mpi('sum',sink%a)
 
  sink%dt = min(dxi1(i),g22(i)*dxi2(j),g22(i)*dxi3(k)) &
          / max(norm2(sink%v),tiny)*courant
@@ -235,7 +242,7 @@ end subroutine get_sinksink_acc
 subroutine get_sink_loc(sink)
 
  use settings,only:crdnt
- use grid,only:is,ie,js,je,ks,ke,x1,x2,x3,dxi1,dxi2,dxi3,g22
+ use grid
  use utils,only:carpol
 
  type(sink_prop),intent(inout):: sink
@@ -247,49 +254,55 @@ subroutine get_sink_loc(sink)
  case(0) ! Cartesian coordinates
 
   sink%xpol = sink%x
-  if(ie/=is)then
-   do i = is-1, ie
+  if(ie_global/=is_global)then
+   do i = is_global-1, ie_global
     if(sink%x(1)>=x1(i).and.sink%x(1)<x1(i+1))exit
    end do
    sink%i = i
+  else
+   sink%i = is_global
   end if
-  if(je/=js)then
-   do j = js-1, je
+  if(je_global/=js_global)then
+   do j = js_global-1, je_global
     if(sink%x(2)>=x2(j).and.sink%x(2)<x2(j+1))exit
    end do
    sink%j = j
+  else
+   sink%j = js_global
   end if
-  if(ke/=ks)then
-   do k = ks-1, ke
+  if(ke_global/=ks_global)then
+   do k = ks_global-1, ke_global
     if(sink%x(3)>=x3(k).and.sink%x(3)<x3(k+1))exit
    end do
    sink%k = k
+  else
+   sink%k = ks_global
   end if
 
  case(2) ! Spherical coordinates
 
   sink%xpol = carpol(sink%x)
-  do i = is-1, ie
+  do i = is_global-1, ie_global
    if(sink%xpol(1)>=x1(i).and.sink%xpol(1)<x1(i+1))exit
   end do
   sink%i = i
 
-  if(je/=js)then
-   do j = js-1, je
+  if(je_global/=js_global)then
+   do j = js_global-1, je_global
     if(sink%xpol(2)>=x2(j).and.sink%xpol(2)<x2(j+1))exit
    end do
    sink%j = j
   else
-   sink%j = js
+   sink%j = js_global
   end if
 
-  if(ke/=ks)then
-   do k = ks-1, ke
+  if(ke_global/=ks_global)then
+   do k = ks_global-1, ke_global
     if(sink%xpol(3)>=x3(k).and.sink%xpol(3)<x3(k+1))exit
    end do
    sink%k = k
   else
-   sink%k = ks
+   sink%k = ks_global
   end if
 
  case default

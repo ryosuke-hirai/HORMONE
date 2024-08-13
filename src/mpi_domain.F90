@@ -473,7 +473,7 @@ module mpi_domain
    subroutine create_sink_type_mpi
 #ifdef MPI
       use mpi_utils, only: mpi_type_sink_prop
-      use sink_mod, only: sink_prop
+      use derived_types, only: sink_prop
       type(sink_prop) :: sink
       integer, parameter :: nattr = 12
       integer, dimension(nattr) :: types, blocklengths

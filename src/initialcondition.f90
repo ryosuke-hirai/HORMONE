@@ -75,7 +75,7 @@ subroutine initialcondition
    call redsupergiant
 
   case('polytrope')
-    call polytrope
+   call polytrope
 
   case('agndisk')
    call agndisk
@@ -96,7 +96,7 @@ subroutine initialcondition
    call smearingtest
 
   case('iotest')
-    call iotest
+   call iotest
 
   case default
    print*,'Chosen simtype not available, simtype = ',simtype
@@ -123,7 +123,7 @@ subroutine initialcondition
   +          0.5d0*( b1(i,j,k)**2 + b2(i,j,k)**2 + b3(i,j,k)**2 )   !
    end do; end do ; end do                                          !
   end select                                                        !
-! ----------------------------------------------------------------- !
+! ------------------------------------------------------------------!
 
  else
 

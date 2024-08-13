@@ -20,7 +20,6 @@ subroutine gravity_hyperbolic
 
  use grid
  use gravmod
- use miccg_mod,only:miccg,l_from_ijk,ijk_from_l
  use timestep_mod,only:timestep
  use profiler_mod
  use gravbound_mod,only:gravbound
@@ -102,7 +101,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
   end do
 !$omp end do
 
-! Smear gravity in central regions -----------------------------------
+! Smear gravity in central regions --------------------------------------------
 !$omp single
   if(fmr_max>0)then
    do n = 1, fmr_max
@@ -114,24 +113,25 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
     do k = ks_global, ke_global, kb+1
      do j = js_global, je_global, jb+1
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-       vol = sum(dvol(i,j:j+jb,k:k+kb))
+! When il>ir, no cells are selected, so no operation is performed
 
-       ! When il>ir, no cells are selected, so no operation is performed
        il = max(i,is); ir = min(i,ie)
        jl = max(j,js); jr = min(j+jb,je)
        kl = max(k,ks); kr = min(k+kb,ke)
+       vol = sum_global_array(dvol,i,i,j,j+jb,k,k+kb)
 
        grvphi(il:ir,jl:jr,kl:kr) = &
-        sum_global_array(grvphi, i, i, j, j+jb, k, k+kb, weight=dvol) / vol
+                  sum_global_array(grvphi,i,i,j,j+jb,k,k+kb, weight=dvol) / vol
        grvpsi(il:ir,jl:jr,kl:kr) = &
-        sum_global_array(grvpsi, i, i, j, j+jb, k, k+kb, weight=dvol) / vol
+                  sum_global_array(grvpsi,i,i,j,j+jb,k,k+kb, weight=dvol) / vol
+
       end do
      end do
     end do
    end do
   end if
 !$omp end single
-! --------------------------------------------------------------------
+! -----------------------------------------------------------------------------
 
  end do
 
@@ -145,6 +145,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
   end do
  end do
 !$omp end do
+
 !$omp end parallel
 
 end subroutine hyperbolic_gravity_step
@@ -246,7 +247,7 @@ end subroutine hg_boundary_conditions
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                          SUBROUTINE GET_LAPPHI
+!                        SUBROUTINE GET_LAPPHI_HGSRC
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -307,7 +308,7 @@ end subroutine get_lapphi_hgsrc
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                          SUBROUTINE SETUP_GRV_HYPERBOLIC
+!                       SUBROUTINE SETUP_GRV_HYPERBOLIC
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

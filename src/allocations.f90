@@ -239,7 +239,7 @@ subroutine allocations
 !  for gravbound
   allocate(phiio(gie+1:gie+2,gjs-2:gje+2), phiii(gis-2:gis-1,gjs-2:gje+2), &
            phi1o(gie+1:gie+2,gks-2:gke+2), phi3i(gis-2:gie+2,gks-2:gks-1), &
-           phi3o(gis-2:gie+2,gke+1:gke+2), mc(is-1:ie+2) )
+           phi3o(gis-2:gie+2,gke+1:gke+2), mc(is_global-1:ie_global+2) )
  end if
 
 ! allocate Dirichlet variables if Dirichlet boundary is applied
