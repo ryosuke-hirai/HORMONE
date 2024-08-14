@@ -616,7 +616,22 @@ module mpi_domain
          is_my_domain = .false.
       end if
 
-   end function
+   end function is_my_domain
+
+   logical function partially_my_domain(i,j,k,ib,jb,kb)
+      integer, intent(in) :: i, j, k, ib, jb, kb
+
+      partially_my_domain = &
+          is_my_domain(i     ,j     ,k     ).or.&
+          is_my_domain(i     ,j+jb-1,k     ).or.&
+          is_my_domain(i     ,j     ,k+kb-1).or.&
+          is_my_domain(i     ,j+jb-1,k+kb-1).or.&
+          is_my_domain(i+ib-1,j     ,k     ).or.&
+          is_my_domain(i+ib-1,j+jb-1,k     ).or.&
+          is_my_domain(i+ib-1,j     ,k+kb-1).or.&
+          is_my_domain(i+ib-1,j+jb-1,k+kb-1)
+
+   end function partially_my_domain
 
    function sum_global_array_scalar(array, is_, ie_, js_, je_, ks_, ke_, weight) result(arr_sum)
       use mpi_utils, only: allreduce_mpi
