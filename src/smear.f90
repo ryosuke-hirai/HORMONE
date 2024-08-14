@@ -17,6 +17,7 @@ subroutine smear
                fmr_max,fmr_lvl,dim,crdnt
  use physval
  use composition_mod
+ use profiler_mod
 
  implicit none
 
@@ -29,6 +30,7 @@ subroutine smear
 ! Average out central cells in spherical coordinates
 ! -> This avoids severe Courant conditions at the centre.
 
+ call start_clock(wtsmr)
 
  if(crdnt==2)then
 
@@ -49,6 +51,8 @@ subroutine smear
   end do
 
  end if
+
+ call stop_clock(wtsmr)
 
  return
 end subroutine smear
@@ -77,7 +81,7 @@ end subroutine smear
   integer,intent(in)::i,js_,je_,ks_,ke_
   integer:: n,j,k
   integer:: jl,jr,kl,kr
-  real(8):: mtot, etot, vol
+  real(8):: mtot, etot, spctot, vol
   real(8),dimension(1:3):: vcar, xcar, momtot, vave
 
 !-----------------------------------------------------------------------------
@@ -90,16 +94,11 @@ end subroutine smear
 
   if(compswitch>=2)then
    do n = 1, spn
-    if (is<=i .and. i<=ie) spc(n,i,jl:jr,kl:kr) = &
-          sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt, &
-                           l_weight2=n, weight=dvol, weight2=spc ) / mtot
+    spctot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt, &
+                              l_weight2=n, weight=dvol, weight2=spc )
+    if (is<=i .and. i<=ie) spc(n,i,jl:jr,kl:kr) = spctot / mtot
    end do
   end if
-
-!!$  do n = 1, ufnmax
-!!$   u(i,js:je,ks:ke,n) = sum(u(i,js:je,ks:ke,n)*dvol(i,js:je,ks:ke))/vol
-!!$  end do
-!!$  return
 
   momtot=0d0;etot=0d0
   if (is<=i .and. i<=ie) then
@@ -114,9 +113,11 @@ end subroutine smear
      end if
     end do
    end do
-  endif
+  end if
+
   call allreduce_mpi('sum',momtot)
   vave = momtot/mtot ! get average cartesian velocity
+
   if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,icnt) = mtot/vol ! density
 
   if (is<=i .and. i<=ie) then
