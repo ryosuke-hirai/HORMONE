@@ -81,7 +81,7 @@ end subroutine smear
   integer,intent(in)::i,js_,je_,ks_,ke_
   integer:: n,j,k
   integer:: jl,jr,kl,kr
-  real(8):: mtot, etot, etotfix, spctot, vol
+  real(8):: mtot, etot, spctot, vol
   real(8),dimension(1:3):: vcar, xcar, momtot, vave
 
 !-----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ end subroutine smear
 
   momtot=0d0;etot=0d0
   if (is<=i .and. i<=ie) then
-!$omp parallel do private(j,k,xcar) reduction(+:momtot,etot) collapse(2)
+!$omp parallel do private(j,k,xcar,vcar) reduction(+:momtot,etot) collapse(2)
    do j = jl, jr
     do k = kl, kr
      xcar = polcar([x1(i),x2(j),x3(k)])
@@ -122,9 +122,8 @@ end subroutine smear
 
   if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,icnt) = mtot/vol ! density
 
-  etotfix = 0d0
   if (is<=i .and. i<=ie) then
-!$omp parallel do private(j,k,xcar) reduction(+:etotfix) collapse(2)
+!$omp parallel do private(j,k,xcar) reduction(+:etot) collapse(2)
    do j = jl, jr
     do k = kl, kr
      xcar = polcar([x1(i),x2(j),x3(k)])
@@ -133,14 +132,14 @@ end subroutine smear
      u(i,j,k,3) = v2(i,j,k)*u(i,j,k,icnt)
      u(i,j,k,4) = v3(i,j,k)*u(i,j,k,icnt)
      if(gravswitch>0)then
-      etotfix = etotfix - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+      etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
      end if
     end do
    end do
 !$omp end parallel do
   endif
-  call allreduce_mpi('sum',etotfix)
-  if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,iene) = (etot+etotfix) / vol
+  call allreduce_mpi('sum',etot)
+  if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,iene) = etot / vol
 !  u(i,js:je,ks:ke,8) = sum( u(i,js:je,ks:ke,8)*dvol(i,js:je,ks:ke) )&
 !                      / sum( dvol(i,js:je,ks:ke) )
 
