@@ -77,7 +77,7 @@ module mpi_utils
     real(8), allocatable :: value_reduced(:)
     integer :: op, ierr
 
-    allocate(value_reduced(size(value)))
+    allocate(value_reduced,mold=value)
 
     select case (op_str)
     case ('sum')
