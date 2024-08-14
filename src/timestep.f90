@@ -71,7 +71,7 @@ contains
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
     if(n==1)then
-     jb=je_global;kb=ke_global
+     jb=je_global-js_global+1;kb=ke_global-ks_global+1
     else
      jb=min(2**(fmr_max-n+1),je_global) ; kb=min(2**(fmr_max-n+1),ke_global)
     end if
