@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=24 ! number of profiling categories
+ integer,parameter:: n_wt=25 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -16,19 +16,20 @@ module profiler_mod
   wtsrc=9 ,& ! source terms
   wtint=10,& ! MUSCL interpolation
   wteos=11,& ! equation of state
-  wttim=12,& ! time stepping
-  wtgrv=13,& ! gravity
-  wtgbn=14,& ! gravbound
-  wtpoi=15,& ! Poisson solver
-  wthyp=16,& ! hyperbolic self-gravity
-  wtsho=17,& ! shockfind
-  wtrad=18,& ! radiation
-  wtopc=19,& ! opacity
-  wtrfl=20,& ! radiative flux
-  wtsnk=21,& ! sink particles
-  wtout=22,& ! output
-  wtmpi=23,& ! mpi exchange
-  wtwai=24,& ! mpi wait
+  wtsmr=12,& ! smearing
+  wttim=13,& ! time stepping
+  wtgrv=14,& ! gravity
+  wtgbn=15,& ! gravbound
+  wtpoi=16,& ! Poisson solver
+  wthyp=17,& ! hyperbolic self-gravity
+  wtsho=18,& ! shockfind
+  wtrad=19,& ! radiation
+  wtopc=20,& ! opacity
+  wtrfl=21,& ! radiative flux
+  wtsnk=22,& ! sink particles
+  wtout=23,& ! output
+  wtmpi=24,& ! mpi exchange
+  wtwai=25,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -63,6 +64,7 @@ subroutine init_profiler
  parent(wtsrc) = wthyd ! source terms
  parent(wtint) = wthyd ! MUSCL interpolation
  parent(wteos) = wthyd ! equation of state
+ parent(wtsmr) = wthyd ! smearing
  parent(wttim) = wtlop ! time stepping
  parent(wtgrv) = wtlop ! gravity
  parent(wtgbn) = wtgrv ! gravbound
@@ -90,6 +92,7 @@ subroutine init_profiler
  routine_name(wtsrc) = 'Source'      ! source terms
  routine_name(wtint) = 'Interpolate' ! MUSCL interpolation
  routine_name(wteos) = 'EoS'         ! equation of state
+ routine_name(wtsmr) = 'Smearing'    ! smearing
  routine_name(wttim) = 'Timestep'    ! time stepping
  routine_name(wtgrv) = 'Gravity'     ! gravity
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
