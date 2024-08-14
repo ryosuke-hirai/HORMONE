@@ -255,6 +255,7 @@ module mpi_domain
    end subroutine setup_mpi_exchange
 
    subroutine exchange_mpi
+#ifdef MPI
       use settings
       use grid
       use physval
@@ -294,6 +295,7 @@ module mpi_domain
       if (compswitch >= 2) call exchange_spc(spc)
 
       call stop_clock(wtmpi)
+#endif
 
    end subroutine exchange_mpi
 
