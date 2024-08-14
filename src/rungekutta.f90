@@ -88,11 +88,9 @@ contains
 
   call stop_clock(wtrng)
 
-
-  call start_clock(wteos)
-
   call smear
 
+  call start_clock(wteos)
   call primitive
   call stop_clock(wteos)
 
