@@ -945,8 +945,10 @@ subroutine write_vertical_slice(slice,prefix)
  call open_file_write_ascii(verfile,ui)
 
 ! Write time and time step
- write(ui,'(a,i7,a,1PE12.4e2,a)')&
-   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
+ write(str,'(a,i7,a,1PE12.4e2,a)')&
+      '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
+ call write_string_master(ui,str)
+
 ! Decide what quantities to write
  call get_header(header,columns)
  do n = 1, columns
