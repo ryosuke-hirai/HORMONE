@@ -69,12 +69,12 @@ end subroutine smear
  subroutine angular_smear(i,js_,je_,ks_,ke_)
 
   use settings,only:spn,compswitch
-  use grid,only:x1,x2,x3,dvol,is,ie,js,je,ks,ke
+  use grid,only:x1,x2,x3,dvol,is,ie,js,je,ks,ke,car_x
   use physval,only:u,spc,v1,v2,v3,icnt,iene,imo1,imo2,imo3
   use utils
   use gravmod,only:totphi,gravswitch
   use mpi_utils,only:allreduce_mpi
-  use mpi_domain,only:sum_global_array
+  use mpi_domain,only:sum_global_array,partially_my_domain
 
   implicit none
 
@@ -82,12 +82,14 @@ end subroutine smear
   integer:: n,j,k
   integer:: jl,jr,kl,kr
   real(8):: mtot, etot, spctot, vol
-  real(8),dimension(1:3):: vcar, xcar, momtot, vave
+  real(8),dimension(1:3)::  momtot, compen, tempsum, element, vave, vcar
+  logical:: overlap
 
 !-----------------------------------------------------------------------------
 
   jl = max(js_,js); jr = min(je_,je)
   kl = max(ks_,ks); kr = min(ke_,ke)
+  overlap = partially_my_domain(i,js_,ks_,0,je_-js_+1,ke_-ks_+1)
 
   vol = sum(dvol(i,js_:je_,ks_:ke_))
   mtot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt,weight=dvol)
@@ -96,50 +98,51 @@ end subroutine smear
    do n = 1, spn
     spctot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt, &
                               l_weight2=n, weight=dvol, weight2=spc )
-    if (is<=i .and. i<=ie) spc(n,i,jl:jr,kl:kr) = spctot / mtot
+    if (overlap) spc(n,i,jl:jr,kl:kr) = spctot / mtot
    end do
   end if
 
-  momtot=0d0;etot=0d0
-  if (is<=i .and. i<=ie) then
-!$omp parallel do private(j,k,xcar,vcar) reduction(+:momtot,etot) collapse(2)
-   do j = jl, jr
-    do k = kl, kr
-     xcar = polcar([x1(i),x2(j),x3(k)])
-     call get_vcar(xcar,x3(k),u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
-     momtot = momtot + vcar*dvol(i,j,k)! add up momenta
+  momtot=0d0;etot=0d0;compen=0d0
+  if (overlap) then
+!$omp parallel do private(j,k,vcar,tempsum,element) firstprivate(compen) &
+!$omp reduction(+:momtot,etot) collapse(2)
+   do k = kl, kr
+    do j = jl, jr
+     call get_vcar(car_x(:,i,j,k),x3(k),&
+                   u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
+     element = real(vcar*dvol(i,j,k),kind=8)-compen
+     tempsum = momtot + element
+     compen = get_compensation(element,tempsum,momtot)
+     momtot = tempsum ! add up momenta using the Kahan method
+
      etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
-     if(gravswitch>0)then
-      etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)! and gravitational ene
-     end if
+     if(gravswitch>0)& ! and gravitational energy
+      etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
    end do
 !$omp end parallel do
   end if
-
   call allreduce_mpi('sum',momtot)
-  vave = momtot/mtot ! get average cartesian velocity
+  vave = real(momtot,kind=8)/mtot ! get average cartesian velocity
 
-  if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,icnt) = mtot/vol ! density
+  if (overlap) u(i,jl:jr,kl:kr,icnt) = mtot/vol ! density
 
-  if (is<=i .and. i<=ie) then
-!$omp parallel do private(j,k,xcar) reduction(+:etot) collapse(2)
-   do j = jl, jr
-    do k = kl, kr
-     xcar = polcar([x1(i),x2(j),x3(k)])
-     call get_vpol(xcar,x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
+  if (overlap) then
+!$omp parallel do private(j,k) collapse(2) reduction(+:etot)
+   do k = kl, kr
+    do j = jl, jr
+     call get_vpol(car_x(:,i,j,k),x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
      u(i,j,k,2) = v1(i,j,k)*u(i,j,k,icnt)
      u(i,j,k,3) = v2(i,j,k)*u(i,j,k,icnt)
      u(i,j,k,4) = v3(i,j,k)*u(i,j,k,icnt)
-     if(gravswitch>0)then
+     if(gravswitch>0)&
       etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
-     end if
     end do
    end do
 !$omp end parallel do
   endif
   call allreduce_mpi('sum',etot)
-  if (is<=i .and. i<=ie) u(i,jl:jr,kl:kr,iene) = etot / vol
+  if (overlap) u(i,jl:jr,kl:kr,iene) = etot / vol
 !  u(i,js:je,ks:ke,8) = sum( u(i,js:je,ks:ke,8)*dvol(i,js:je,ks:ke) )&
 !                      / sum( dvol(i,js:je,ks:ke) )
 
@@ -209,5 +212,17 @@ end subroutine smear
  return
 end subroutine angular_smear
 
+pure elemental function get_compensation(y,t,s) result(c)
+! Get compensation term for the Kahan-Babuska-Neumaier method
+ real(8),intent(in):: y,t,s
+ real(8):: c
+
+ if(abs(s)>=abs(y))then
+  c = (s-t)+y
+ else
+  c = (y-t)+s
+ end if
+
+end function get_compensation
 
 end module smear_mod
