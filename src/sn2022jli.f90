@@ -158,7 +158,7 @@ subroutine sn2022jli
  do i = ie_global-1, is_global, -1
   phinow(2:3) = phinow(1:2)
   dnow = 0d0 ; newphi = 0d0
-  if(i  >=is.and.i  <=ie)newphi = grvphi(i,js,ks)
+  if(i  >=is.and.i  <=ie)newphi = totphi(i,js,ks)
   if(i+1>=is.and.i+1<=ie)dnow   = d(i+1,js,ks)
 
   call allreduce_mpi('max',dnow)
