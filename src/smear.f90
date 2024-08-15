@@ -69,7 +69,7 @@ end subroutine smear
  subroutine angular_smear(i,js_,je_,ks_,ke_)
 
   use settings,only:spn,compswitch
-  use grid,only:x1,x2,x3,dvol,is,ie,js,je,ks,ke,car_x
+  use grid,only:x3,dvol,js,je,ks,ke,car_x
   use physval,only:u,spc,v1,v2,v3,icnt,iene,imo1,imo2,imo3
   use utils
   use gravmod,only:totphi,gravswitch
@@ -79,12 +79,10 @@ end subroutine smear
   implicit none
 
   integer,intent(in)::i,js_,je_,ks_,ke_
-  integer:: n,j,k
-  integer:: jl,jr,kl,kr
+  integer:: n,j,k,jl,jr,kl,kr
   real(8):: mtot, etot, spctot, vol
-  real(8),dimension(1:3)::  vave
+  real(8),dimension(1:3):: momtot, compen, tempsum, element, vcar, vave
   logical:: overlap
-  real(8),dimension(1:3):: momtot, compen, tempsum, element, vcar, momtotlocal, compenglobal
 
 !-----------------------------------------------------------------------------
 
@@ -103,42 +101,31 @@ end subroutine smear
    end do
   end if
 
-  momtot=0d0;etot=0d0;compen=0d0;momtotlocal=0d0;compenglobal=0d0
+  momtot=0d0;etot=0d0;compen=0d0
   if (overlap) then
-!!$omp parallel firstprivate(compen,momtotlocal)
-!!$omp do private(j,k,vcar,tempsum,element) &
-!!$omp reduction(+:etot) collapse(2)
    do k = kl, kr
     do j = jl, jr
      call get_vcar(car_x(:,i,j,k),x3(k),&
                    u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
-     element = real(vcar*dvol(i,j,k),kind=8)-compen
-     tempsum = momtotlocal + element
-     compen = get_compensation(element,tempsum,momtotlocal)
-     momtotlocal = tempsum ! add up momenta using the Kahan method
-!!$     momtot = momtot + real(vcar*dvol(i,j,k),kind=8)
+! Use Kahan summation algorithm to minimize roundoff error
+     element = vcar*dvol(i,j,k)-compen
+     tempsum = momtot + element
+     compen = get_compensation(element,tempsum,momtot)
+     momtot = tempsum ! add up momenta using the Kahan algorithm
+
      etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
      if(gravswitch>0)& ! and gravitational energy
       etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
    end do
-!!$omp end do
-!!$omp critical
-   tempsum = momtot
-   element = momtotlocal - compenglobal
-   momtot = tempsum + element
-   compenglobal = get_compensation(element,momtot,tempsum)
-!!$omp end critical
-!!$omp end parallel
   end if
 
   call allreduce_mpi('sum',momtot)
-  vave = real(momtot,kind=8)/mtot ! get average cartesian velocity
+  vave = momtot/mtot ! get average cartesian velocity
 
   if (overlap) u(i,jl:jr,kl:kr,icnt) = mtot/vol ! density
 
   if (overlap) then
-!!$omp parallel do private(j,k) collapse(2) reduction(+:etot)
    do k = kl, kr
     do j = jl, jr
      call get_vpol(car_x(:,i,j,k),x3(k),vave,v1(i,j,k),v2(i,j,k),v3(i,j,k))
@@ -149,12 +136,9 @@ end subroutine smear
       etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
    end do
-!!$omp end parallel do
   endif
   call allreduce_mpi('sum',etot)
   if (overlap) u(i,jl:jr,kl:kr,iene) = etot / vol
-!  u(i,js:je,ks:ke,8) = sum( u(i,js:je,ks:ke,8)*dvol(i,js:je,ks:ke) )&
-!                      / sum( dvol(i,js:je,ks:ke) )
 
 !!$  Jtot = 0d0; Itot=0d0; momtot=0d0; vol = sum(dvol(i,js:je,ks:ke))
 !!$  do k = ks, ke
