@@ -112,7 +112,7 @@ subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
  uvec2 = get_uvec2(uvec1, x3)
  uvec3 = cross(uvec1,uvec2)
 
- vcar = v1*uvec1 + v2*uvec2 + v3*uvec3
+ vcar = real(v1*uvec1 + v2*uvec2 + v3*uvec3,kind=8)
 
 return
 end subroutine get_vcar
