@@ -47,7 +47,7 @@ subroutine allocations
 
  allocate(dvol(is_global-2:ie_global+2,js_global-2:je_global+2,ks_global-2:ke_global+2))
  allocate(idetg3,sa1,sa2,sa3,Imom,mold=dvol)
- allocate(car_x(1:3,is:ie,js:je,ks:ke))
+ allocate(car_x(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1))
 
 ! 3 dimensional arrays =======================================================
 ! physical variables
