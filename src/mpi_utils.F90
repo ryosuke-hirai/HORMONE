@@ -7,15 +7,13 @@ module mpi_utils
   interface allreduce_mpi
     module procedure allreduce_mpi_real8
     module procedure allreduce_mpi_real8_array
-    module procedure allreduce_mpi_real16
-    module procedure allreduce_mpi_real16_array
     module procedure allreduce_mpi_int4
   end interface allreduce_mpi
 
   public :: allreduce_mpi
 
   integer :: myrank, nprocs
-  integer :: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity, mpi_type_sink_prop, mpi_subarray_extgrtv, mpi_type_real16
+  integer :: mpi_subarray_default, mpi_subarray_spc, mpi_subarray_gravity, mpi_type_sink_prop, mpi_subarray_extgrtv
 
   contains
 
@@ -25,9 +23,6 @@ module mpi_utils
     call MPI_INIT(ierr)
     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ierr)
     call MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierr)
-
-!!$    call MPI_Type_create_f90_real(33,4931,mpi_type_real16,ierr)
-!!$    call MPI_Type_commit(mpi_type_real16,ierr)
 #else
     myrank = 0
     nprocs = 1
@@ -110,76 +105,6 @@ module mpi_utils
 #endif
 
   end subroutine allreduce_mpi_real8_array
-
-  subroutine allreduce_mpi_real16(op_str, value)
-    character(len=*), intent(in) :: op_str
-    real(16), intent(inout) :: value
-
-#ifdef MPI
-    real(16) :: value_reduced
-    integer :: op, ierr
-
-    select case (op_str)
-    case ('sum')
-      op = MPI_SUM
-    case ('max')
-      op = MPI_MAX
-    case ('min')
-      op = MPI_MIN
-    case default
-      error stop "Invalid operation specified"
-    end select
-
-    call MPI_ALLREDUCE(value, value_reduced, 1, mpi_type_real16, op, MPI_COMM_WORLD, ierr)
-    value = value_reduced
-#else
-    ! Check if operation is valid, but do nothing
-    select case (op_str)
-    case ('sum', 'max', 'min')
-      value = value
-    case default
-      error stop "Invalid operation specified"
-    end select
-#endif
-
-  end subroutine allreduce_mpi_real16
- 
-  subroutine allreduce_mpi_real16_array(op_str, value)
-    character(len=*), intent(in) :: op_str
-    real(16), intent(inout) :: value(:)
-
-#ifdef MPI
-    real(16), allocatable :: value_reduced(:)
-    integer :: op, ierr
-
-    allocate(value_reduced,mold=value)
-
-    select case (op_str)
-    case ('sum')
-      op = MPI_SUM
-    case ('max')
-      op = MPI_MAX
-    case ('min')
-      op = MPI_MIN
-    case default
-      error stop "Invalid operation specified"
-    end select
-
-    call MPI_ALLREDUCE(value, value_reduced, size(value), mpi_type_real16, op, MPI_COMM_WORLD, ierr)
-    value = value_reduced
-
-    deallocate(value_reduced)
-#else
-    ! Check if operation is valid, but do nothing
-    select case (op_str)
-    case ('sum', 'max', 'min')
-      value = value
-    case default
-      error stop "Invalid operation specified"
-    end select
-#endif
-
-   end subroutine allreduce_mpi_real16_array
 
   subroutine allreduce_mpi_int4(op_str, value)
     character(len=*), intent(in) :: op_str
