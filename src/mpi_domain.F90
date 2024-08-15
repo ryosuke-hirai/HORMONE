@@ -1,4 +1,3 @@
-
 module mpi_domain
 #ifdef MPI
    use mpi
@@ -634,6 +633,21 @@ module mpi_domain
           is_my_domain(i+ib-1,j+jb-1,k+kb-1)
 
    end function partially_my_domain
+
+   logical function fully_my_domain(i,j,k,ib,jb,kb)
+      integer, intent(in) :: i, j, k, ib, jb, kb
+
+      fully_my_domain = &
+          is_my_domain(i     ,j     ,k     ).and.&
+          is_my_domain(i     ,j+jb-1,k     ).and.&
+          is_my_domain(i     ,j     ,k+kb-1).and.&
+          is_my_domain(i     ,j+jb-1,k+kb-1).and.&
+          is_my_domain(i+ib-1,j     ,k     ).and.&
+          is_my_domain(i+ib-1,j+jb-1,k     ).and.&
+          is_my_domain(i+ib-1,j     ,k+kb-1).and.&
+          is_my_domain(i+ib-1,j+jb-1,k+kb-1)
+
+   end function fully_my_domain
 
    function sum_global_array_scalar(array, is_, ie_, js_, je_, ks_, ke_, weight) result(arr_sum)
       use mpi_utils, only: allreduce_mpi
