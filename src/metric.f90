@@ -129,9 +129,9 @@ subroutine metric
    end do
   end do
 
-  do k = ks, ke
-   do j = js, je
-    do i = is, ie
+  do k = ks-1, ke+1
+   do j = js-1, je+1
+    do i = is-1, ie+1
      car_x(1:3,i,j,k) = polcar([x1(i),x2(j),x3(k)])
     end do
    end do
