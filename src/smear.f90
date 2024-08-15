@@ -74,23 +74,25 @@ subroutine smear
   call allreduce_mpi('sum',smeared)
 
 ! Second sweep (for effective cells that span over multiple MPI ranks)
-  do n = 1, fmr_max
-   if(fmr_lvl(n)==0)cycle
-   if(n==1)then
-    jb=je_global-js_global+1; kb=ke_global-ks_global+1
-   else
-    jb=min(2**(fmr_max-n+1),je_global) ; kb=min(2**(fmr_max-n+1),ke_global)
-   end if
-   do k = ks_global, ke_global, kb
-    do j = js_global, je_global, jb
-     do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-      if(smeared(get_id(i,j,k))==0)then
-       call angular_smear_global(i,j,j+jb-1,k,k+kb-1)
-      end if
+  if(minval(smeared)==0)then
+   do n = 1, fmr_max
+    if(fmr_lvl(n)==0)cycle
+    if(n==1)then
+     jb=je_global-js_global+1; kb=ke_global-ks_global+1
+    else
+     jb=min(2**(fmr_max-n+1),je_global) ; kb=min(2**(fmr_max-n+1),ke_global)
+    end if
+    do k = ks_global, ke_global, kb
+     do j = js_global, je_global, jb
+      do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
+       if(smeared(get_id(i,j,k))==0)then
+        call angular_smear_global(i,j,j+jb-1,k,k+kb-1)
+       end if
+      end do
      end do
     end do
    end do
-  end do
+  end if
 
  end if
 
@@ -102,7 +104,7 @@ end subroutine smear
 ! Get smeared cell id from i,j,k \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 function get_id(i,j,k) result(id)
 
- use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global,&
+ use grid,only:is_global,js_global,je_global,ks_global,ke_global,&
                fmr_max,fmr_lvl
 
  integer,intent(in):: i,j,k
@@ -144,7 +146,7 @@ end function get_id
  subroutine angular_smear(i,js_,je_,ks_,ke_)
 
   use settings,only:spn,compswitch
-  use grid,only:x3,dvol,js,je,ks,ke,car_x
+  use grid,only:x3,dvol,car_x
   use physval,only:u,spc,v1,v2,v3,icnt,iene,imo1,imo2,imo3
   use utils
   use gravmod,only:totphi,gravswitch
