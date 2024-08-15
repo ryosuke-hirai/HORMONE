@@ -26,8 +26,8 @@ module mpi_utils
     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ierr)
     call MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierr)
 
-    call MPI_Type_create_f90_real(33,4931,mpi_type_real16,ierr)
-    call MPI_Type_commit(mpi_type_real16,ierr)
+!!$    call MPI_Type_create_f90_real(33,4931,mpi_type_real16,ierr)
+!!$    call MPI_Type_commit(mpi_type_real16,ierr)
 #else
     myrank = 0
     nprocs = 1
