@@ -15,7 +15,7 @@ contains
  subroutine timestep
 
   use mpi_utils,only:allreduce_mpi
-  use mpi_domain,only:is_my_domain
+  use mpi_domain,only:partially_my_domain
   use constants,only:tiny
   use settings,only:courant,outstyle,HGfac,hgcfl
   use grid
@@ -71,9 +71,9 @@ contains
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
     if(n==1)then
-     jb=je_global;kb=ke_global
+     jb=je_global-js_global+1;kb=ke_global-ks_global+1
     else
-     jb=min(2**(fmr_max-n+1),je) ; kb=min(2**(fmr_max-n+1),ke)
+     jb=min(2**(fmr_max-n+1),je_global) ; kb=min(2**(fmr_max-n+1),ke_global)
     end if
     ! These need to be computed before the loop,
     ! or else ifort+omp will give incorrect results
@@ -83,7 +83,8 @@ contains
     do k = ks_global, ke_global, kb
      do j = js_global, je_global, jb
       do i = is_global+il, is_global+ir
-       if (is_my_domain(i,j,k)) then
+! update dti if any of the four corners of the block is in the domain
+       if(partially_my_domain(i,j,k,0,jb,kb))then
         call dti_cell(i,j,k,dti,jb=jb,kb=kb)
         if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
        endif
@@ -133,7 +134,7 @@ contains
 
 ! PURPOSE: To compute time step for a cell smeared over j-k coordinates
 
-subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
+subroutine dti_cell(i,j_,k_,dti,jb,kb,cfmax)
 
  use settings,only:mag_on,eostype,solve_i,solve_j,solve_k
  use grid,only:js,je,ks,ke,js_global,je_global,ks_global,ke_global,&
@@ -141,11 +142,11 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
  use physval,only:d,eint,T,imu,p,cs,v1,v2,v3,b1,b2,b3,spc
  use pressure_mod,only:eos_p_cs,get_cf
 
- integer,intent(in):: i,j,k
+ integer,intent(in):: i,j_,k_
  real(8),allocatable,intent(inout)::dti(:,:,:)
  integer,intent(in),optional:: jb,kb
  real(8),intent(out),optional:: cfmax
- integer:: jn,kn,ierr,jl,jr,kl,kr
+ integer:: j,k,jn,kn,ierr,jl,jr,kl,kr
  real(8):: cf1,cf2,cf3
 
 !-----------------------------------------------------------------------------
@@ -154,8 +155,9 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
  if(present(jb)) jn = min(jb-1,je_global-js_global)
  if(present(kb)) kn = min(kb-1,ke_global-ks_global)
 
- jl = max(j,js); jr = min(j+jn,je)
- kl = max(k,ks); kr = min(k+kn,ke)
+ jl = max(j_,js); jr = min(j_+jn,je)
+ kl = max(k_,ks); kr = min(k_+kn,ke)
+ j = jl ; k = kl
 
  select case(eostype)
  case(0:1)
@@ -176,6 +178,7 @@ subroutine dti_cell(i,j,k,dti,jb,kb,cfmax)
   cf3 = cs(i,j,k)+abs(v3(i,j,k))
  end if
 
+ j=j_;k=k_
  dti(i,jl:jr,kl:kr) = sum(dvol(i,j:j+jn,k:k+kn)) &
                     / ( cf1*off(solve_i) * sum(sa1(i-1:i   ,j:j+jn,k:k+kn)) &
                       + cf2*off(solve_j) * sum(sa2(i,j-1:j+jn:jn+1,k:k+kn)) &

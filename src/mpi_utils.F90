@@ -1,6 +1,6 @@
 module mpi_utils
 #ifdef MPI
-  use mpi
+ use mpi
 #endif
   implicit none
 

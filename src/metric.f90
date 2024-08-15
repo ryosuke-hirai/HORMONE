@@ -15,6 +15,7 @@ subroutine metric
 
  use settings,only:include_extforce
  use grid
+ use utils,only:polcar
 
  integer:: i,j,k
  real(8):: x3_mid,fac_j,fac_k
@@ -124,6 +125,14 @@ subroutine metric
      sa2(i,j,k)    = 0.5d0*sini(j) &
                    * (xi1(i)**2-xi1(i-1)**2) * dxi3(k) * fac_k
      sa3(i,j,k)    = 0.5d0 * (xi1(i)**2-xi1(i-1)**2) * dxi2(j) * fac_j
+    end do
+   end do
+  end do
+
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     car_x(1:3,i,j,k) = polcar([x1(i),x2(j),x3(k)])
     end do
    end do
   end do

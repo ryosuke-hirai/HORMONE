@@ -59,18 +59,17 @@ subroutine sinkfield
  use gravmod,only:totphi
 
  integer:: n, i,j,k
- real(8):: dis, xcar(1:3)
+ real(8):: dis
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private(i,j,k,n,dis,xcar) collapse(3)
+!$omp parallel do private(i,j,k,n,dis) collapse(3)
  do k = gks-1, gke+1
   do j = gjs-1, gje+1
    do i = gis-1, gie+1
-    xcar = polcar([x1(i),x2(j),x3(k)])
     snkphi(i,j,k) = 0d0
     do n = 1, nsink
-     dis = norm2(xcar-sink(n)%x)
+     dis = norm2(car_x(:,i,j,k)-sink(n)%x)
      snkphi(i,j,k) = snkphi(i,j,k) &
                    + G*sink(n)%mass &
                      *softened_pot(dis,max(sink(n)%lsoft,sink(n)%locres))
@@ -136,7 +135,6 @@ subroutine get_sinkgas_acc(sink)
  use mpi_domain,only:is_my_domain
  use constants,only:tiny
  use settings,only:crdnt,eq_sym,courant
- use utils,only:carpol
  use grid,only:idx1,idx3,x1,g22,dxi1,dxi2,dxi3,x1,x3
  use gravmod,only:gphi=>grvphi
 
@@ -165,7 +163,7 @@ subroutine get_sinkgas_acc(sink)
     acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))*idx3(k)/x1(i)*(x1(i+1)-xpol(1))&
               -(gphi(i+1,j,k+1)-gphi(i+1,j,k))*idx3(k)/x1(i+1)*(xpol(1)-x1(i)))&
            *idx1(i+1)
-  
+
     sink%a(1) = acc(1)*cos(xpol(3)) - acc(3)*sin(xpol(3))
     sink%a(2) = acc(1)*sin(xpol(3)) + acc(3)*cos(xpol(3))
     sink%a(3) = 0d0

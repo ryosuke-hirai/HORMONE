@@ -33,7 +33,7 @@
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-&simucon flux_limiter='flat' crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
+&simucon flux_limiter='modified_mc' crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
 	  include_cooling = .false.
 	  include_extforce = .false. /
 
