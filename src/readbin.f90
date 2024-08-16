@@ -44,6 +44,12 @@ subroutine readbin(filename)
  call read_var(un, e, is, ie, js, je, ks, ke)
  call read_dummy_recordmarker(un)
 
+ if(eostype>=1)then
+  call read_dummy_recordmarker(un)
+  call read_var(un, T, is, ie, js, je, ks, ke)
+  call read_dummy_recordmarker(un)
+ end if
+
  if(gravswitch>=2) then
    call read_dummy_recordmarker(un)
    call read_var(un, grvphi, gis, gie, gjs, gje, gks, gke, grav=.true.)

@@ -693,6 +693,12 @@ subroutine write_bin
  call write_var(un, e, is, ie, js, je, ks, ke)
  call write_dummy_recordmarker(un)
 
+ if(eostype>=1)then
+  call write_dummy_recordmarker(un)
+  call write_var(un, T, is, ie, js, je, ks, ke)
+  call write_dummy_recordmarker(un)
+ end if
+
  if(gravswitch>=2) then
    call write_dummy_recordmarker(un)
    call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke, grav=.true.)
