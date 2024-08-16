@@ -279,17 +279,17 @@ subroutine evo_output
 
  if (myrank==0) then
    write(ievo,'(i10)',advance='no')tn
-   call write_anyval(ievo,forme,time)
-   call write_anyval(ievo,forme,Mtot)
-   call write_anyval(ievo,forme,Etot)
-   call write_anyval(ievo,forme,Eitot)
-   call write_anyval(ievo,forme,Ektot)
-   if(gravswitch>=1)call write_anyval(ievo,forme,Egtot)
-   if(gravswitch>=1)call write_anyval(ievo,forme,Mbound)
-   if(gravswitch>=1)call write_anyval(ievo,forme,Ebound)
-   if(gravswitch>=1)call write_anyval(ievo,forme,Jbound)
-   if(mag_on)call write_anyval(ievo,forme,Ebtot)
-   if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot)
+   call write_anyval(ievo,forme,time,1)
+   call write_anyval(ievo,forme,Mtot,1)
+   call write_anyval(ievo,forme,Etot,1)
+   call write_anyval(ievo,forme,Eitot,1)
+   call write_anyval(ievo,forme,Ektot,1)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Egtot ,1)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Mbound,1)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Ebound,1)
+   if(gravswitch>=1)call write_anyval(ievo,forme,Jbound,1)
+   if(mag_on)call write_anyval(ievo,forme,Ebtot,1)
+   if(dim>=2.and.crdnt>=1)call write_anyval(ievo,forme,Jtot,1)
    write(ievo,'()')
    flush(ievo)
  end if
@@ -326,7 +326,7 @@ subroutine open_sinkfile
  if(start/=0)then
   open(newunit=iskf,file='data/sinks.dat',status='old',&
        position='append',iostat=ierr)
-  if(ierr==0)return ! Return if evofile already exists.
+  if(ierr==0)return ! Return if sinks file already exists.
  end if
 
 ! Write headers if it needs to be freshly made.
@@ -379,16 +379,17 @@ subroutine sink_output
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
 
  write(iskf,'(i10)',advance='no')tn
- call write_anyval(iskf,forme,time)
+ call write_anyval(iskf,forme,time,1)
  do n = 1, nsink
-  call write_anyval(iskf,forme,sink(n)%x(1))
-  call write_anyval(iskf,forme,sink(n)%x(2))
-  call write_anyval(iskf,forme,sink(n)%x(3))
-  call write_anyval(iskf,forme,sink(n)%v(1))
-  call write_anyval(iskf,forme,sink(n)%v(2))
-  call write_anyval(iskf,forme,sink(n)%v(3))
+  call write_anyval(iskf,forme,sink(n)%x(1),1)
+  call write_anyval(iskf,forme,sink(n)%x(2),1)
+  call write_anyval(iskf,forme,sink(n)%x(3),1)
+  call write_anyval(iskf,forme,sink(n)%v(1),1)
+  call write_anyval(iskf,forme,sink(n)%v(2),1)
+  call write_anyval(iskf,forme,sink(n)%v(3),1)
  end do
  write(iskf,'()')
+ flush(iskf)
 
 return
 end subroutine sink_output
@@ -401,9 +402,8 @@ end subroutine sink_output
 subroutine write_grid
  use mpi_utils, only:myrank,barrier_mpi
 
- if (myrank==0) then
+ if (myrank==0) &
   call write_grid_bin
- end if
  call barrier_mpi
  call write_grid_dat
  call barrier_mpi
@@ -420,9 +420,11 @@ subroutine write_grid_bin
  write(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2),&
           x2(gjs_global-2:gje_global+2),xi2(gjs_global-2:gje_global+2),dx2(gjs_global-2:gje_global+2),dxi2(gjs_global-2:gje_global+2),&
           x3(gks_global-2:gke_global+2),xi3(gks_global-2:gke_global+2),dx3(gks_global-2:gke_global+2),dxi3(gks_global-2:gke_global+2)
+
  close(ui)
 
  print*,"Outputted: ",'gridfile.bin'
+
 end subroutine write_grid_bin
 
 subroutine write_grid_dat
@@ -430,7 +432,7 @@ subroutine write_grid_dat
  use grid
  use mpi_utils, only: myrank
  use mpi_domain, only: is_my_domain
- use io, only: write_string_master, open_file_write_ascii, close_file, write_string_master
+ use io, only: write_string_master, open_file_write_ascii, close_file
 
  character(len=50):: formhead,formval,formnum
  character(len=200) :: str
@@ -691,6 +693,12 @@ subroutine write_bin
  call write_var(un, e, is, ie, js, je, ks, ke)
  call write_dummy_recordmarker(un)
 
+ if(eostype>=1)then
+  call write_dummy_recordmarker(un)
+  call write_var(un, T, is, ie, js, je, ks, ke)
+  call write_dummy_recordmarker(un)
+ end if
+
  if(gravswitch>=2) then
    call write_dummy_recordmarker(un)
    call write_var(un, grvphi, gis, gie, gjs, gje, gks, gke, grav=.true.)
@@ -728,9 +736,7 @@ subroutine write_bin
 
  call close_file(un)
 
- if (myrank==0) then
-   print*,"Outputted: ",trim(binfile)
- end if
+ if (myrank==0) print*,"Outputted: ",trim(binfile)
 
 return
 end subroutine write_bin
@@ -1498,9 +1504,10 @@ end subroutine write_val
 
 ! PURPOSE: To write one value
 
-subroutine write_anyval(ui,forme,val)
+subroutine write_anyval(ui,forme,val,direct)
  use io, only:write_string
  integer,intent(in):: ui
+ integer,intent(in),optional:: direct
  character(len=*),intent(in):: forme
  real(8),intent(in):: val
  character(len=30):: str
@@ -1511,7 +1518,11 @@ subroutine write_anyval(ui,forme,val)
  else
   write(str,forme)0d0
  end if
- call write_string(ui,str,advance=.false.)
+ if(present(direct))then
+  write(ui,'(a)',advance='no') trim(str)
+ else
+  call write_string(ui,str,advance=.false.)
+ end if
 
 return
 end subroutine write_anyval
