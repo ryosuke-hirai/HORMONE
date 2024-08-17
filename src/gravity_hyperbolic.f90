@@ -68,9 +68,8 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
  use mpi_domain,only:exchange_gravity_mpi,sum_global_array
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
- integer:: i,j,k,n,jb,kb,grungen
- integer:: il,ir,jl,jr,kl,kr
- real(8):: faco, facn, fact, vol
+ integer:: i,j,k,grungen
+ real(8):: faco, facn, fact
 
 !-----------------------------------------------------------------------------
 
