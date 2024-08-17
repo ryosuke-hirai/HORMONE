@@ -64,22 +64,23 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
  use grid
  use gravmod,only:grvphiorg,grvphi,grvpsi,lapphi,hgsrc,gsrc,hgcfl
  use rungekutta_mod,only:get_runge_coeff
+ use smear_mod,only:smear
  use mpi_domain,only:exchange_gravity_mpi,sum_global_array
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
- integer:: i,j,k,n,jb,kb,grungen
- integer:: il,ir,jl,jr,kl,kr
- real(8):: faco, facn, fact, vol
+ integer:: i,j,k,grungen
+ real(8):: faco, facn, fact
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel
+
  do grungen = 1, grktype
-!$omp single
-  ! Perform MPI neighbour exchange
+
+! Perform MPI neighbour exchange
   call exchange_gravity_mpi
   call get_runge_coeff(grungen,grktype,faco,fact,facn)
-!$omp end single
+
+!$omp parallel
 
 ! First set flux and source term
   call get_lapphi_hgsrc(grvphi,gsrc,lapphi,hgsrc)
@@ -100,43 +101,18 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
    end do
   end do
 !$omp end do
+!$omp end parallel
 
 ! Smear gravity in central regions --------------------------------------------
-!$omp single
-  if(fmr_max>0)then
-   do n = 1, fmr_max
-    if(fmr_lvl(n)==0)cycle
-    jb=min(2**(fmr_max-n+1),je_global)-1 ; kb=min(2**(fmr_max-n+1),ke_global)-1
-    if(n==1)then
-     jb=je_global-js_global; kb=ke_global-ks_global
-    end if
-    do k = ks_global, ke_global, kb+1
-     do j = js_global, je_global, jb+1
-      do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-! When il>ir, no cells are selected, so no operation is performed
 
-       il = max(i,is); ir = min(i,ie)
-       jl = max(j,js); jr = min(j+jb,je)
-       kl = max(k,ks); kr = min(k+kb,ke)
-       vol = sum(dvol(i,j:j+jb,k:k+kb))
+  if(fmr_max>0)call smear('grav')
 
-       grvphi(il:ir,jl:jr,kl:kr) = &
-                  sum_global_array(grvphi,i,i,j,j+jb,k,k+kb, weight=dvol) / vol
-       grvpsi(il:ir,jl:jr,kl:kr) = &
-                  sum_global_array(grvpsi,i,i,j,j+jb,k,k+kb, weight=dvol) / vol
-
-      end do
-     end do
-    end do
-   end do
-  end if
-!$omp end single
 ! -----------------------------------------------------------------------------
 
  end do
 
 ! Damping of grvpsi by separation of variables
-!$omp do private(i,j,k) collapse(3)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
@@ -144,9 +120,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
    end do
   end do
  end do
-!$omp end do
-
-!$omp end parallel
+!$omp end parallel do
 
 end subroutine hyperbolic_gravity_step
 

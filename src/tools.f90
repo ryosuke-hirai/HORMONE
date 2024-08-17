@@ -14,7 +14,7 @@ contains
 subroutine tools
 
  use settings,only:crdnt,gravswitch,radswitch,include_cooling,eostype
- use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_lvl
+ use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_max
  use physval,only:gamma,imu,muconst
  use gravmod,only:llmax,Plc,Pl
  use constants,only:fac_egas,fac_pgas,kbol,amu
@@ -22,6 +22,7 @@ subroutine tools
  use cooling_mod,only:cooling_setup
  use gravity_mod,only:gravsetup
  use radiation_mod,only:radiation_setup
+ use smear_mod,only:smear_setup
 
  integer:: i,j,k,ll
 
@@ -137,15 +138,15 @@ subroutine tools
 ! Set cooling parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if(include_cooling) call cooling_setup
 
-! Set Fixed Mesh Refinement parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- fmr_lvl(0) = 0
-
 ! Set gravity parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if(gravswitch>0) call gravsetup
 
 ! Set radiation parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if(radswitch>0) call radiation_setup
 
+! Set smearing parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ if(fmr_max>0) call smear_setup
+ 
 return
 end subroutine tools
 
