@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=25 ! number of profiling categories
+ integer,parameter:: n_wt=26 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -22,14 +22,15 @@ module profiler_mod
   wtgbn=15,& ! gravbound
   wtpoi=16,& ! Poisson solver
   wthyp=17,& ! hyperbolic self-gravity
-  wtsho=18,& ! shockfind
-  wtrad=19,& ! radiation
-  wtopc=20,& ! opacity
-  wtrfl=21,& ! radiative flux
-  wtsnk=22,& ! sink particles
-  wtout=23,& ! output
-  wtmpi=24,& ! mpi exchange
-  wtwai=25,& ! mpi wait
+  wtgsm=18,& ! gravity smearing
+  wtsho=19,& ! shockfind
+  wtrad=20,& ! radiation
+  wtopc=21,& ! opacity
+  wtrfl=22,& ! radiative flux
+  wtsnk=23,& ! sink particles
+  wtout=24,& ! output
+  wtmpi=25,& ! mpi exchange
+  wtwai=26,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -70,6 +71,7 @@ subroutine init_profiler
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtpoi) = wtgrv ! Poisson solver
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
+ parent(wtgsm) = wtgrv ! gravity smearing
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
@@ -98,6 +100,7 @@ subroutine init_profiler
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
  routine_name(wtpoi) = 'MICCG'       ! Poisson solver
  routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
+ routine_name(wtgsm) = 'Grav smear'  ! gravity smearing
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation

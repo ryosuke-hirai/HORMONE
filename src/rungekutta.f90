@@ -88,7 +88,7 @@ contains
 
   call stop_clock(wtrng)
 
-  call smear
+  call smear('hydro')
 
   call start_clock(wteos)
   call primitive
