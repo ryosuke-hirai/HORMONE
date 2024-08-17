@@ -465,7 +465,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE ANGULAR_SMEAR_GRAV
+!                   SUBROUTINE ANGULAR_SMEAR_GRAV_GLOBAL
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -481,21 +481,21 @@ contains
 
   integer,intent(in)::i,js_,je_,ks_,ke_
   integer:: jl,jr,kl,kr
-  real(8):: vol
-  logical:: overlap
+  real(8):: vol, phiave, psiave
 
 !-----------------------------------------------------------------------------
 
-  jl = max(js_,js); jr = min(je_,je)
-  kl = max(ks_,ks); kr = min(ke_,ke)
-  overlap = partially_my_domain(i,js_,ks_,0,je_-js_+1,ke_-ks_+1)
-
   vol = dvol_block(get_id(i,js_,ks_))
 
-  grvphi(i,jl:jr,kl:kr) = &
-             sum_global_array(grvphi,i,i,js_,je_,ks_,ke_,weight=dvol) / vol
-  grvpsi(i,jl:jr,kl:kr) = &
-             sum_global_array(grvpsi,i,i,js_,je_,ks_,ke_,weight=dvol) / vol
+  phiave = sum_global_array(grvphi,i,i,js_,je_,ks_,ke_,weight=dvol) / vol
+  psiave = sum_global_array(grvpsi,i,i,js_,je_,ks_,ke_,weight=dvol) / vol
+
+  if(partially_my_domain(i,js_,ks_,0,je_-js_+1,ke_-ks_+1))then
+   jl = max(js_,js); jr = min(je_,je)
+   kl = max(ks_,ks); kr = min(ke_,ke)
+   grvphi(i,jl:jr,kl:kr) = phiave
+   grvpsi(i,jl:jr,kl:kr) = psiave
+  end if
 
  end subroutine angular_smear_grav_global
 
