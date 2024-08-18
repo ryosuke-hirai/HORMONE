@@ -180,7 +180,7 @@ subroutine read_parameters(filename)
  namelist /gravcon/ gravswitch, grvsrctype, grverr, cgerr, HGfac, hgcfl, &
                     gbtype, grktype, alphagrv, grav_init_other, grav_init_relax, include_extgrv,&
                     gis, gie, gjs, gje, gks, gke
- namelist /sinkcon/ include_sinks, nsink
+ namelist /sinkcon/ include_sinks, nsink, include_accretion
  namelist /rad_con/ radswitch, opacitytype, lambdatype
  namelist /partcon/ include_particles, maxptc
  namelist /testcon/ test_tol

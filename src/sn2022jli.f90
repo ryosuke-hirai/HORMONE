@@ -100,9 +100,13 @@ subroutine sn2022jli
 ! Set external gravity
  sink(1)%mass = m(0)
  sink(1)%lsoft = rcore
+ sink(1)%laccr = 0d0
  sink(1)%softfac = 3d0
  sink(1)%x(1:3) = 0d0
  sink(1)%v(1:3) = 0d0
+ sink(1)%mdot = 0d0
+ sink(1)%jdot = 0d0
+ sink(1)%Jspin = 0d0
 
  mcore = m(0)
  mass  = m(size(m)-1)
@@ -176,6 +180,10 @@ subroutine sn2022jli
  sink(2)%mass = nsmass
  sink(2)%lsoft = nssoft
  sink(2)%softfac = 3d0
+ sink(2)%laccr = nssoft
+ sink(2)%mdot = 0d0
+ sink(2)%jdot = 0d0
+ sink(2)%Jspin = 0d0
 
 ! For SN2022jli
  asep = (G*(mass+nsmass)*(Porb*3600d0*24d0/2d0/pi)**2)**(1d0/3d0)

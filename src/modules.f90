@@ -27,7 +27,7 @@ module settings
 ! switches
  logical:: solve_i, solve_j, solve_k
  logical:: include_extgrv, include_particles, include_cooling, mag_on
- logical:: include_extforce, include_sinks, is_test
+ logical:: include_extforce, include_sinks, include_accretion, is_test
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
  logical:: write_temp, write_mc
  logical:: grav_init_other, grav_init_relax
@@ -87,8 +87,8 @@ module constants
   real(8),parameter:: kbol = 1.38064852d-16, amu = 1.6605402d-24
   real(8),parameter:: arad = 7.5646d-15, sigma = 5.67051d-5
   real(8),parameter:: hplanck = 6.6260755d-27, m_p = 1.6726231d-24
-  real(8),parameter:: m_n = 1.6749286e-24, m_e = 9.1093897e-28
-  real(8),parameter:: N_A = 6.0221367e23
+  real(8),parameter:: m_n = 1.6749286d-24, m_e = 9.1093897d-28
+  real(8),parameter:: N_A = 6.0221367d23
   real(8),parameter:: year = 3600d0*24d0*365.25d0
   real(8),parameter:: huge = 1d99, tiny = 1d-99
   real(8):: fac_pgas, fac_egas
@@ -165,8 +165,8 @@ module derived_types
  type sink_prop
   sequence
   integer:: i,j,k
-  real(8):: mass, softfac, lsoft, locres, dt
-  real(8),dimension(1:3):: x,v,a,xpol
+  real(8):: mass, softfac, lsoft, laccr, locres, dt, mdot
+  real(8),dimension(1:3):: x,v,a,xpol,Jspin,jdot
  end type sink_prop
 
 end module derived_types

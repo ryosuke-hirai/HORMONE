@@ -152,6 +152,7 @@ program hormone
     if(include_cooling)  call cooling
     if(include_particles)call particles
     if(include_sinks)    call sink_motion
+    if(include_accretion)call sink_accretion
 
     time = time + dt ; tn = tn + 1
 
