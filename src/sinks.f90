@@ -8,8 +8,8 @@ module sink_mod
  type(sink_prop),allocatable,public:: sink(:)
  real(8),allocatable,public:: snkphi(:,:,:)
 
- public:: sink_motion,sinkfield,get_sink_acc,get_sink_loc,get_sinkgas_acc,&
-          get_sinksink_acc
+ public:: sink_motion,sinkfield,get_sink_acc
+ private:: get_sinksink_acc,get_sink_loc,get_sinkgas_acc
 
 contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -44,6 +44,97 @@ end subroutine sink_motion
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
+!                       SUBROUTINE SINK_ACCRETION
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To apply mass accretion onto a sink particle
+
+subroutine sink_accretion
+
+ use settings,only:eostype
+ use constants,only:G
+ use utils,only:softened_pot,get_vcar,cross
+ use grid,only:is,ie,js,je,ks,ke,dt,dvol,car_x,x3
+ use physval
+ use pressure_mod,only:entropy_from_dT,get_e_from_ds,eos_p_cs
+ use mpi_utils,only:allreduce_mpi
+ use profiler_mod
+
+ integer:: n,i,j,k,ierr
+ real(8):: dis, philoc, tauacc, newd, newe, ent, accmass, XX, YY, dm
+ real(8),dimension(1:3):: accmom, totmom, vcell, accang
+
+!-----------------------------------------------------------------------------
+
+ call start_clock(wtacc)
+
+ accmass = 0d0
+ accmom  = 0d0
+ accang = 0d0
+
+ do n = 1, nsink
+  if(sink(n)%mass<=0d0)cycle
+!$omp parallel do private(i,j,k,dis,philoc,XX,YY,tauacc,ent,newd,newe,vcell) &
+!$omp reduction(+:accmass,accmom,accang) collapse(3)
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     dis = norm2(car_x(:,i,j,k)-sink(n)%x)
+     if(dis>sink(n)%laccr)cycle
+     philoc = G*sink(n)%mass &
+                     *softened_pot(dis,max(sink(n)%lsoft,sink(n)%locres))
+     tauacc = dis/sqrt(-philoc)
+     select case(eostype)
+     case(0:1)
+      XX = 0d0 ; YY = 0d0
+     case(2)
+      XX = spc(1,i,j,k); YY = spc(2,i,j,k)
+     end select
+     ent = entropy_from_dT(d(i,j,k),T(i,j,k),imu(i,j,k),XX,YY)
+     call get_vcar(car_x(:,i,j,k),x3(k),v1(i,j,k),v2(i,j,k),v3(i,j,k),vcell)
+     newd = d(i,j,k)*exp(-dt/tauacc)
+     newe = get_e_from_ds(newd,ent,imu(i,j,k),XX,YY)
+     dm = (d(i,j,k) - newd)*dvol(i,j,k)
+     accmass  = accmass + dm
+     accmom = accmom + vcell*dm
+     accang = accang + cross(car_x(:,i,j,k)-sink(n)%x,vcell-sink(n)%v)*dm
+     d(i,j,k) = newd
+     eint(i,j,k) = newe
+     e(i,j,k) = newe + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
+     call eos_p_cs(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k), &
+                   p(i,j,k),cs(i,j,k),XX,YY,ierr)
+     u(i,j,k,icnt) = newd
+     u(i,j,k,imo1) = newd*v1(i,j,k)
+     u(i,j,k,imo2) = newd*v2(i,j,k)
+     u(i,j,k,imo3) = newd*v3(i,j,k)
+     u(i,j,k,iene) = e(i,j,k)
+    end do
+   end do
+  end do
+!$omp end parallel do
+
+  call allreduce_mpi('sum',accmass)
+  call allreduce_mpi('sum',accmom)
+  call allreduce_mpi('sum',accang)
+
+  totmom = sink(n)%mass*sink(n)%v + accmom
+  sink(n)%mdot = accmass/dt
+  sink(n)%mass = sink(n)%mass + accmass
+  sink(n)%v = totmom / sink(n)%mass
+  sink(n)%jdot = accang/dt
+  sink(n)%Jspin = sink(n)%Jspin + accang
+
+ end do
+
+ call stop_clock(wtacc)
+
+return
+end subroutine sink_accretion
+
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
 !                          SUBROUTINE SINKFIELD
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -55,7 +146,7 @@ subroutine sinkfield
  use constants,only:G
  use grid
  use physval
- use utils,only:polcar,softened_pot
+ use utils,only:softened_pot
  use gravmod,only:totphi
 
  integer:: n, i,j,k

@@ -307,7 +307,7 @@ end subroutine evo_output
 
 subroutine open_sinkfile
 
- use settings,only:include_sinks,sigfig,start
+ use settings,only:include_sinks,sigfig,start,include_accretion
  use constants,only:msun
  use sink_mod,only:nsink,sink
  use mpi_utils, only:myrank
@@ -348,6 +348,12 @@ subroutine open_sinkfile
   write(iskf,forma,advance="no")trim(header)//'_v1'
   write(iskf,forma,advance="no")trim(header)//'_v2'
   write(iskf,forma,advance="no")trim(header)//'_v3'
+  if(include_accretion.and.sink(n)%laccr>0d0)then
+   write(iskf,forma,advance="no")trim(header)//'_mass'
+   write(iskf,forma,advance="no")trim(header)//'_mdot'
+   write(iskf,forma,advance="no")trim(header)//'_Jspin'
+   write(iskf,forma,advance="no")trim(header)//'_jdot'
+  end if
  end do
  write(iskf,'()')
  flush(iskf)
@@ -363,7 +369,8 @@ end subroutine open_sinkfile
 
 subroutine sink_output
 
- use settings,  only: sigfig,include_sinks
+ use constants, only: msun,year
+ use settings,  only: sigfig,include_sinks,include_accretion
  use grid,      only: tn,time
  use sink_mod,  only: nsink,sink
  use mpi_utils, only: myrank
@@ -387,6 +394,12 @@ subroutine sink_output
   call write_anyval(iskf,forme,sink(n)%v(1),1)
   call write_anyval(iskf,forme,sink(n)%v(2),1)
   call write_anyval(iskf,forme,sink(n)%v(3),1)
+  if(include_accretion.and.sink(n)%laccr>0d0)then
+   call write_anyval(iskf,forme,sink(n)%mass/msun,1)
+   call write_anyval(iskf,forme,sink(n)%mdot/msun*year,1)
+   call write_anyval(iskf,forme,sink(n)%Jspin(3),1)
+   call write_anyval(iskf,forme,sink(n)%jdot(3),1)
+  end if
  end do
  write(iskf,'()')
  flush(iskf)

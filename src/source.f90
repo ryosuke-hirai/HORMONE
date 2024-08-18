@@ -149,7 +149,6 @@ subroutine source
       src(i,j,k,imo3) = src(i,j,k,imo3) + grv3(i,j,k)*sx1(i)*sisin(j)
       src(i,j,k,iene) = grv1(i,j,k)*v1(i,j,k) + grv2(i,j,k)*v2(i,j,k)*sx1(i) &
                       + grv3(i,j,k)*v3(i,j,k) * sx1(i)*sisin(j)
-
      end if
     end do
    end do
