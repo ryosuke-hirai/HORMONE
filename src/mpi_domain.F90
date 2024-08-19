@@ -476,7 +476,7 @@ module mpi_domain
       use mpi_utils, only: mpi_type_sink_prop
       use derived_types, only: sink_prop
       type(sink_prop) :: sink
-      integer, parameter :: nattr = 12
+      integer, parameter :: nattr = 16
       integer, dimension(nattr) :: types, blocklengths
       integer(kind=MPI_ADDRESS_KIND), dimension(nattr) :: offsets
       integer :: ierr
@@ -503,7 +503,7 @@ module mpi_domain
       offsets = offsets - offsets(1)
 
       ! Set the blocklengths (number of elements in each block)
-      blocklengths = (/1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3/)
+      blocklengths = (/1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3/)
 
       ! Set the types (type of each block)
       types = (/MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, \
