@@ -61,7 +61,7 @@ subroutine sink_accretion
  use mpi_utils,only:allreduce_mpi
  use profiler_mod
 
- integer:: n,i,j,k,ierr
+ integer:: n,i,j,k
  real(8):: dis, philoc, tauacc, newd, newe, newp, accmass, dm
  real(8),dimension(1:3):: accmom, accang, totmom, vcell
 
