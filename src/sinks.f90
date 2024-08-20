@@ -52,18 +52,18 @@ end subroutine sink_motion
 
 subroutine sink_accretion
 
- use settings,only:eostype
+ use settings,only:eostype,eq_sym,mag_on
  use constants,only:G
  use utils,only:softened_pot,get_vcar,cross
  use grid,only:is,ie,js,je,ks,ke,dt,dvol,car_x,x3
  use physval
- use pressure_mod,only:entropy_from_dT,get_e_from_ds,eos_p_cs
+ use pressure_mod,only:eos_p_cs,eos_e
  use mpi_utils,only:allreduce_mpi
  use profiler_mod
 
  integer:: n,i,j,k,ierr
- real(8):: dis, philoc, tauacc, newd, newe, ent, accmass, XX, YY, dm
- real(8),dimension(1:3):: accmom, totmom, vcell, accang
+ real(8):: dis, philoc, tauacc, newd, newe, newp, accmass, dm
+ real(8),dimension(1:3):: accmom, accang, totmom, vcell
 
 !-----------------------------------------------------------------------------
 
@@ -75,35 +75,43 @@ subroutine sink_accretion
 
  do n = 1, nsink
   if(sink(n)%mass<=0d0)cycle
-!$omp parallel do private(i,j,k,dis,philoc,XX,YY,tauacc,ent,newd,newe,vcell) &
+!$omp parallel do private(i,j,k,dis,philoc,tauacc,newd,newe,newp,vcell,dm) &
 !$omp reduction(+:accmass,accmom,accang) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
      dis = norm2(car_x(:,i,j,k)-sink(n)%x)
+
      if(dis>sink(n)%laccr)cycle
+
+! Suck out mass in the accretion radius on the dynamical timescale
      philoc = G*sink(n)%mass &
                      *softened_pot(dis,max(sink(n)%lsoft,sink(n)%locres))
-     tauacc = dis/sqrt(-philoc)
+     tauacc = sink(n)%laccr/sqrt(-philoc)
+     newd = d(i,j,k)*exp(-dt/tauacc)
+     newp = newd/d(i,j,k)*p(i,j,k)
      select case(eostype)
      case(0:1)
-      XX = 0d0 ; YY = 0d0
+      newe = eos_e(newd,newp,T(i,j,k),imu(i,j,k))
      case(2)
-      XX = spc(1,i,j,k); YY = spc(2,i,j,k)
+      newe = eos_e(newd,newp,T(i,j,k),imu(i,j,k),spc(1,i,j,k),spc(2,i,j,k))
      end select
-     ent = entropy_from_dT(d(i,j,k),T(i,j,k),imu(i,j,k),XX,YY)
-     call get_vcar(car_x(:,i,j,k),x3(k),v1(i,j,k),v2(i,j,k),v3(i,j,k),vcell)
-     newd = d(i,j,k)*exp(-dt/tauacc)
-     newe = get_e_from_ds(newd,ent,imu(i,j,k),XX,YY)
+
+! Add up mass/momentum/AM lost from each cell
      dm = (d(i,j,k) - newd)*dvol(i,j,k)
-     accmass  = accmass + dm
+     call get_vcar(car_x(:,i,j,k),x3(k),v1(i,j,k),v2(i,j,k),v3(i,j,k),vcell)
+     accmass = accmass + dm
      accmom = accmom + vcell*dm
      accang = accang + cross(car_x(:,i,j,k)-sink(n)%x,vcell-sink(n)%v)*dm
+
+! Update primitive variables
      d(i,j,k) = newd
+     p(i,j,k) = newp
      eint(i,j,k) = newe
      e(i,j,k) = newe + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
-     call eos_p_cs(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k), &
-                   p(i,j,k),cs(i,j,k),XX,YY,ierr)
+     if(mag_on) &
+      e(i,j,k) = e(i,j,k) + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2)
+! Update conservative variables
      u(i,j,k,icnt) = newd
      u(i,j,k,imo1) = newd*v1(i,j,k)
      u(i,j,k,imo2) = newd*v2(i,j,k)
@@ -118,6 +126,15 @@ subroutine sink_accretion
   call allreduce_mpi('sum',accmom)
   call allreduce_mpi('sum',accang)
 
+  if(eq_sym)then
+   accmass = 2d0*accmass
+   accmom(1:2) = 2d0*accmom(1:2)
+   accmom(3) = 0d0
+   accang(1:2) = 0d0
+   accang(3) = 2d0*accang(3)
+  end if
+
+! Update sink properties in response to accretion
   totmom = sink(n)%mass*sink(n)%v + accmom
   sink(n)%mdot = accmass/dt
   sink(n)%mass = sink(n)%mass + accmass
@@ -155,9 +172,9 @@ subroutine sinkfield
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,n,dis) collapse(3)
- do k = gks-1, gke+1
-  do j = gjs-1, gje+1
-   do i = gis-1, gie+1
+ do k = ks-1, ke+1
+  do j = js-1, je+1
+   do i = is-1, ie+1
     snkphi(i,j,k) = 0d0
     do n = 1, nsink
      dis = norm2(car_x(:,i,j,k)-sink(n)%x)
@@ -230,7 +247,7 @@ subroutine get_sinkgas_acc(sink)
  use gravmod,only:gphi=>grvphi
 
  type(sink_prop),intent(inout):: sink
- real(8):: xpol(1:3),acc(1:3)
+ real(8),dimension(1:3):: xpol,acc,acar
  integer:: i,j,k
 
 !-----------------------------------------------------------------------------
@@ -240,25 +257,33 @@ subroutine get_sinkgas_acc(sink)
  k = sink%k
  xpol = sink%xpol
 
+
+ acar(1:3) = 0d0
+
 ! Only calculate for MPI thread that contains the sink
  if(is_my_domain(i,j,k))then
   select case(crdnt)
   case(2) ! for spherical coordinates
 
-   if(eq_sym)then ! for equatorial symmetry
+   if(i==0)then
+    ! Do nothing if sink is interior to the innermost cell centre
 
-    acc(1) = (-(gphi(i+1,j,k  )-gphi(i,j,k  ))*idx1(i+1)*(x3(k+1)-xpol(3))&
-              -(gphi(i+1,j,k+1)-gphi(i,j,k+1))*idx1(i+1)*(xpol(3)-x3(k)))&
-           *idx3(k+1)
+   elseif(eq_sym)then ! for equatorial symmetry
+
+! acc is in polar coordinates
+    acc(1) = (-(gphi(i+1,j,k  )-gphi(i,j,k  ))*(x3(k+1)-xpol(3))&
+              -(gphi(i+1,j,k+1)-gphi(i,j,k+1))*(xpol(3)-x3(k  )))&
+           *idx3(k+1)*idx1(i+1)
     acc(2) = 0d0
-    acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))*idx3(k)/x1(i)*(x1(i+1)-xpol(1))&
-              -(gphi(i+1,j,k+1)-gphi(i+1,j,k))*idx3(k)/x1(i+1)*(xpol(1)-x1(i)))&
-           *idx1(i+1)
+    acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))/abs(x1(i  ))*(x1(i+1)-xpol(1))&
+              -(gphi(i+1,j,k+1)-gphi(i+1,j,k))/abs(x1(i+1))*(xpol(1)-x1(i  )))&
+           *idx1(i+1)*idx3(k+1)
 
-    sink%a(1) = acc(1)*cos(xpol(3)) - acc(3)*sin(xpol(3))
-    sink%a(2) = acc(1)*sin(xpol(3)) + acc(3)*cos(xpol(3))
-    sink%a(3) = 0d0
-  
+! sink%a is in cartesian coordinates
+    acar(1) = acc(1)*cos(xpol(3)) - acc(3)*sin(xpol(3))
+    acar(2) = acc(1)*sin(xpol(3)) + acc(3)*cos(xpol(3))
+    acar(3) = 0d0
+
    else
     print*,'Error in sinks.f90: get_sinkgas_acc'
     stop 'Sink particles currently only implemented for eq_sym=.true.'
@@ -270,12 +295,11 @@ subroutine get_sinkgas_acc(sink)
   
   end select
 
- else
-  sink%a = 0d0
  end if
 
- call allreduce_mpi('sum',sink%a)
+ call allreduce_mpi('sum',acar)
 
+ sink%a = acar
  sink%dt = min(dxi1(i),g22(i)*dxi2(j),g22(i)*dxi3(k)) &
          / max(norm2(sink%v),tiny)*courant
 
