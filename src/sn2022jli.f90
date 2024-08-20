@@ -36,7 +36,7 @@ subroutine sn2022jli
  character(len=10)::spc_list(1:1000)
  integer:: i,j,k,istat,nn,sn,ih1,ihe4,which
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const,gradphi
- real(8)::nsmass,nssoft,asep,dis,Porb,mprog,orbv,ecc,xcar(1:3)
+ real(8)::nsmass,nssoft,asep,dis,Porb,mprog,orbv,ecc
  real(8),allocatable:: comptmp(:),p1d(:)
  logical::isentropic
  real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT,dnow,phinow(3),newphi
