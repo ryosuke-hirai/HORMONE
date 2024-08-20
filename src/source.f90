@@ -215,6 +215,7 @@ subroutine get_fieldforce(phi,coeff,frc1,frc2,frc3)
        fmr_loop: do n = 2, fmr_max
         if(i<=is_global+sum(fmr_lvl(1:n))-1)then
          frc2(i,j,k) = frc2(i,j,k)/dble(2**(fmr_max-n+1))
+         frc3(i,j,k) = frc3(i,j,k)/dble(2**(fmr_max-n+1))
          exit fmr_loop
         end if
        end do fmr_loop
