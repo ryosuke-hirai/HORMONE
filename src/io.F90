@@ -3,7 +3,7 @@ module io
   use mpi
   use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc, mpi_type_sink_prop, mpi_subarray_extgrtv
 #endif
-  use sink_mod, only: sink_prop
+  use derived_types, only: sink_prop
   implicit none
 
   logical, public :: legacy = .true.
