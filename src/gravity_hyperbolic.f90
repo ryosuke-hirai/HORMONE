@@ -193,7 +193,7 @@ subroutine hg_boundary_conditions
   !$omp end do
   !$omp do private(i,k) collapse(2)
   do k = ks, ke
-   do i = is, ie
+   do i = is-1, ie+1
     if(js==js_global) grvphi(i,js-1,k) = grvphi(i,js,k)
     if(je==je_global) grvphi(i,je+1,k) = grvphi(i,je,k)
    end do
@@ -201,8 +201,8 @@ subroutine hg_boundary_conditions
   !$omp end do
   if(ke>ks)then
    !$omp do private(i,j) collapse(2)
-   do j = js, je
-    do i = is, ie
+   do j = js-1, je+1
+    do i = is-1, ie+1
      ! Note: in MPI mode, cell exchange already implements periodic BCs
      if(ks==ks_global .and. ke==ke_global) then
       grvphi(i,j,ks-1) = grvphi(i,j,ke)
