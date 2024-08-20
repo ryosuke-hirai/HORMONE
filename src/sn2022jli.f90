@@ -202,13 +202,10 @@ subroutine sn2022jli
  sink(1)%v = 0d0
 
 ! Try to make NS atmosphere hydrostatic
-!$omp parallel do private(i,j,k,xcar) collapse(3)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    xcar = polcar([x1(i),x2(j),x3(k)])
-    if(x1(i)<radius)&
-     call get_vpol(xcar,x3(k),sink(1)%v,v1(i,j,k),v2(i,j,k),v3(i,j,k))
     select case(eostype)
     case(0,1)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
@@ -218,7 +215,7 @@ subroutine sn2022jli
     end select
     eint(i,j,k) = eint(i,j,k) &
                 - G*nsmass*d(i,j,k)&
-                  *softened_pot(norm2(xcar-sink(2)%x),sink(2)%lsoft)
+                  *softened_pot(norm2(car_x(:,i,j,k)-sink(2)%x),sink(2)%lsoft)
     select case(eostype)
     case(0,1)
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))

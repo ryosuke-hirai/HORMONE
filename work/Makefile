@@ -36,7 +36,7 @@ BIN_DIR = $(HORMONE_DIR)/bin
 TARGET = hormone
 
 # compile modules that are being depended on first
-MOD = mpi_utils.F90 modules.f90  profiler.f90 mpi_domain.F90 utils.f90 conserve.f90 ionization.f90 eos.f90 miccg.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 radiation.f90 cooling.f90 sinks.f90 composition.f90 star.f90 shockfind.f90 io.F90 output.f90 smear.f90 input.f90 setup.f90 readbin.f90 tests.f90 restart.f90 fluxboundary.f90 rungekutta.f90 timestep.f90 gridset.f90 gravbound.f90 gravity_hyperbolic.f90 gravity_miccg.f90
+MOD = mpi_utils.F90 modules.f90  profiler.f90 mpi_domain.F90 io.F90 utils.f90 conserve.f90 ionization.f90 eos.f90 miccg.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 radiation.f90 cooling.f90 sinks.f90 composition.f90 star.f90 shockfind.f90  output.f90 smear.f90 input.f90 setup.f90 readbin.f90 tests.f90 restart.f90 fluxboundary.f90 rungekutta.f90 timestep.f90 gridset.f90 gravbound.f90 gravity_hyperbolic.f90 gravity_miccg.f90
 
 # Initial condition routines should be compiled before initialcondition.f90
 INI = eostest.f90 shocktube.f90 orszagtang.f90 sedov.f90 eruption.f90 KHtests.f90 star_init.f90 rsg.f90 polytrope.f90 agndisk.f90 windtunnel.f90 rad_box.f90 stellarcollision.f90 sn2022jli.f90 modify.f90 smearingtest.f90 iotest.f90
