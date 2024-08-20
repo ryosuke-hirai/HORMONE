@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=26 ! number of profiling categories
+ integer,parameter:: n_wt=27 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -27,10 +27,11 @@ module profiler_mod
   wtrad=20,& ! radiation
   wtopc=21,& ! opacity
   wtrfl=22,& ! radiative flux
-  wtsnk=23,& ! sink particles
-  wtout=24,& ! output
-  wtmpi=25,& ! mpi exchange
-  wtwai=26,& ! mpi wait
+  wtsnk=23,& ! sink motion
+  wtacc=24,& ! sink accretion
+  wtout=25,& ! output
+  wtmpi=26,& ! mpi exchange
+  wtwai=27,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -77,7 +78,8 @@ subroutine init_profiler
  parent(wtrad) = wtlop ! radiation
  parent(wtopc) = wtrad ! opacity
  parent(wtrfl) = wtrad ! radiative flux
- parent(wtsnk) = wtlop ! sink particles
+ parent(wtsnk) = wtlop ! sink motion
+ parent(wtacc) = wtlop ! sink accretion
  parent(wtmpi) = wtlop ! mpi exchange
  parent(wtwai) = wtlop ! mpi wait
  parent(wttot) =-1     ! Total
@@ -106,7 +108,8 @@ subroutine init_profiler
  routine_name(wtrad) = 'Radiation'   ! radiation
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad flux'    ! radiative flux
- routine_name(wtsnk) = 'Sinks'       ! sink particles
+ routine_name(wtsnk) = 'Sink motion' ! sink motion
+ routine_name(wtacc) = 'Accretion'   ! sink motion
  routine_name(wtmpi) = 'MPI exchange'! MPI exchange
  routine_name(wtwai) = 'MPI wait'    ! MPI wait
  routine_name(wttot) = 'Total'       ! total

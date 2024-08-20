@@ -36,7 +36,7 @@ subroutine sn2022jli
  character(len=10)::spc_list(1:1000)
  integer:: i,j,k,istat,nn,sn,ih1,ihe4,which
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const,gradphi
- real(8)::nsmass,nssoft,asep,dis,Porb,mprog,orbv,ecc,xcar(1:3)
+ real(8)::nsmass,nssoft,asep,dis,Porb,mprog,orbv,ecc
  real(8),allocatable:: comptmp(:),p1d(:)
  logical::isentropic
  real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT,dnow,phinow(3),newphi
@@ -100,9 +100,13 @@ subroutine sn2022jli
 ! Set external gravity
  sink(1)%mass = m(0)
  sink(1)%lsoft = rcore
+ sink(1)%laccr = 0d0
  sink(1)%softfac = 3d0
  sink(1)%x(1:3) = 0d0
  sink(1)%v(1:3) = 0d0
+ sink(1)%mdot = 0d0
+ sink(1)%jdot = 0d0
+ sink(1)%Jspin = 0d0
 
  mcore = m(0)
  mass  = m(size(m)-1)
@@ -176,6 +180,10 @@ subroutine sn2022jli
  sink(2)%mass = nsmass
  sink(2)%lsoft = nssoft
  sink(2)%softfac = 3d0
+ sink(2)%laccr = nssoft
+ sink(2)%mdot = 0d0
+ sink(2)%jdot = 0d0
+ sink(2)%Jspin = 0d0
 
 ! For SN2022jli
  asep = (G*(mass+nsmass)*(Porb*3600d0*24d0/2d0/pi)**2)**(1d0/3d0)
@@ -194,13 +202,10 @@ subroutine sn2022jli
  sink(1)%v = 0d0
 
 ! Try to make NS atmosphere hydrostatic
-!$omp parallel do private(i,j,k,xcar) collapse(3)
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    xcar = polcar([x1(i),x2(j),x3(k)])
-    if(x1(i)<radius)&
-     call get_vpol(xcar,x3(k),sink(1)%v,v1(i,j,k),v2(i,j,k),v3(i,j,k))
     select case(eostype)
     case(0,1)
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
@@ -210,7 +215,7 @@ subroutine sn2022jli
     end select
     eint(i,j,k) = eint(i,j,k) &
                 - G*nsmass*d(i,j,k)&
-                  *softened_pot(norm2(xcar-sink(2)%x),sink(2)%lsoft)
+                  *softened_pot(norm2(car_x(:,i,j,k)-sink(2)%x),sink(2)%lsoft)
     select case(eostype)
     case(0,1)
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))

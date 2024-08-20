@@ -247,6 +247,9 @@ subroutine checksetup
    include_sinks = .true.
   end if
 
+! Only do accretion when sinks are enabled
+  if(.not.include_sinks) include_accretion = .false.
+
   return
  end subroutine checksetup
 

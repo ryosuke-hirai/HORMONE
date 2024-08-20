@@ -476,7 +476,7 @@ module mpi_domain
       use mpi_utils, only: mpi_type_sink_prop
       use derived_types, only: sink_prop
       type(sink_prop) :: sink
-      integer, parameter :: nattr = 12
+      integer, parameter :: nattr = 16
       integer, dimension(nattr) :: types, blocklengths
       integer(kind=MPI_ADDRESS_KIND), dimension(nattr) :: offsets
       integer :: ierr
@@ -488,23 +488,27 @@ module mpi_domain
       call MPI_Get_address(sink%mass, offsets(4), ierr)
       call MPI_Get_address(sink%softfac, offsets(5), ierr)
       call MPI_Get_address(sink%lsoft, offsets(6), ierr)
-      call MPI_Get_address(sink%locres, offsets(7), ierr)
-      call MPI_Get_address(sink%dt, offsets(8), ierr)
-      call MPI_Get_address(sink%x, offsets(9), ierr)
-      call MPI_Get_address(sink%v, offsets(10), ierr)
-      call MPI_Get_address(sink%a, offsets(11), ierr)
-      call MPI_Get_address(sink%xpol, offsets(12), ierr)
+      call MPI_Get_address(sink%laccr, offsets(7), ierr)
+      call MPI_Get_address(sink%locres, offsets(8), ierr)
+      call MPI_Get_address(sink%dt, offsets(9), ierr)
+      call MPI_Get_address(sink%mdot, offsets(10), ierr)
+      call MPI_Get_address(sink%x, offsets(11), ierr)
+      call MPI_Get_address(sink%v, offsets(12), ierr)
+      call MPI_Get_address(sink%a, offsets(13), ierr)
+      call MPI_Get_address(sink%xpol, offsets(14), ierr)
+      call MPI_Get_address(sink%Jspin, offsets(15), ierr)
+      call MPI_Get_address(sink%jdot, offsets(16), ierr)
 
       ! Compute offsets as relative to the start of sink
       offsets = offsets - offsets(1)
 
       ! Set the blocklengths (number of elements in each block)
-      blocklengths = (/1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3/)
+      blocklengths = (/1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3/)
 
       ! Set the types (type of each block)
       types = (/MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION/)
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION/)
 
       ! Create the custom datatype
       call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpi_type_sink_prop, ierr)

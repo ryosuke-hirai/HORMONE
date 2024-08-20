@@ -61,12 +61,11 @@ subroutine externalforce
 !$omp end parallel do
 
  case(2) ! spherical coordinates
-!$omp parallel do private(i,j,k,xcar,atot,ftot) collapse(3)
+!$omp parallel do private(i,j,k,atot,ftot) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     xcar = polcar([x1(i),x2(j),x3(k)])
-     call get_vpol(xcar,x3(k),frame_acc,atot(1),atot(2),atot(3))
+     call get_vpol(car_x(:,i,j,k),x3(k),frame_acc,atot(1),atot(2),atot(3))
      ftot = d(i,j,k) * atot
      src(i,j,k,imo1) = src(i,j,k,imo1) + ftot(1)
      src(i,j,k,imo2) = src(i,j,k,imo2) + ftot(2)

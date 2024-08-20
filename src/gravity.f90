@@ -46,17 +46,17 @@ subroutine gravity
 
  if (tn==0) grvtime = 0.d0
 
- if(grav_init_other)then
-  ! do nothing
+ if(grav_init_other.and.tn==0)then
+  call hg_boundary_conditions
+
  elseif(grav_init_relax .and. tn==0) then
   call gravity_relax
   call hg_boundary_conditions
 
  elseif(gravswitch==2 .or. (gravswitch==3 .and. tn==0))then
   call gravity_miccg
- endif
 
- if(gravswitch==3 .and. tn/=0)then
+ elseif(gravswitch==3 .and. tn/=0)then
   call gravity_hyperbolic
  end if
 
