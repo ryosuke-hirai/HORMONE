@@ -179,6 +179,7 @@ end subroutine source
 subroutine get_fieldforce(phi,coeff,frc1,frc2,frc3)
 
  use grid
+ use smear_mod,only:block_j,block_k
 
  real(8),allocatable,dimension(:,:,:),intent(in):: phi, coeff
  real(8),allocatable,dimension(:,:,:),intent(inout):: frc1,frc2,frc3
@@ -208,19 +209,17 @@ subroutine get_fieldforce(phi,coeff,frc1,frc2,frc3)
                     + (dx3(k+1)-dx3(k))*idx3(k)*idx3(k+1)*phi(i,j,k) ) &
                   * coeff(i,j,k)
      if(fmr_max==0)cycle
-     if(i<=is_global+sum(fmr_lvl(1:fmr_max))-1)then
-      if(i<=is_global+fmr_lvl(1)-1)then
-       frc2(i,j,k) = 0d0;frc3(i,j,k) = 0d0
-      else
-       fmr_loop: do n = 2, fmr_max
-        if(i<=is_global+sum(fmr_lvl(1:n))-1)then
-         frc2(i,j,k) = frc2(i,j,k)/dble(2**(fmr_max-n+1))
-         frc3(i,j,k) = frc3(i,j,k)/dble(2**(fmr_max-n+1))
-         exit fmr_loop
-        end if
-       end do fmr_loop
+! The gradients are artificially enhanced at the interface of effective cells
+! Soften the gradients pretending the values are evaluated at the cell centre
+! of effective cells
+     if(i>is_global+sum(fmr_lvl(1:fmr_max))-1)cycle
+     fmr_loop: do n = 1, fmr_max
+      if(i<=is_global+sum(fmr_lvl(1:n))-1)then
+       frc2(i,j,k) = frc2(i,j,k)/dble(block_j(n))
+       frc3(i,j,k) = frc3(i,j,k)/dble(block_k(n))
+       exit fmr_loop
       end if
-     end if
+     end do fmr_loop
 
     end do
    end do
