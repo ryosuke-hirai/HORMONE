@@ -360,7 +360,7 @@ subroutine gridset
     if    (je_global==js_global)then
      jetmp=1
     elseif(je_global>=js_global+1)then
-     jetmp=je_global
+     jetmp=je_global-js_global+1
     endif
     dxi2(js_global-2:je_global+2) = xi2e / dble(jetmp)
    case(2) mesh_sph2 ! user specified mesh
@@ -450,6 +450,16 @@ subroutine gridset
 
   xi1e = xi1(ie)
   xi1s = xi1(is-1)
+
+  if(crdnt==2)then
+   allocate( sinc, sini, cosc, cosi, mold=x2 )
+   do j = js_global-2, je_global+2
+    sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)
+    sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)
+    cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)
+    cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)
+   end do
+  end if
 
  end if
 

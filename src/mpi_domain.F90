@@ -503,12 +503,17 @@ module mpi_domain
       offsets = offsets - offsets(1)
 
       ! Set the blocklengths (number of elements in each block)
-      blocklengths = (/1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3/)
+      blocklengths = [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3 ]
 
       ! Set the types (type of each block)
-      types = (/MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION/)
+      types = [ MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION ]
 
       ! Create the custom datatype
       call MPI_Type_create_struct(nattr, blocklengths, offsets, types, mpi_type_sink_prop, ierr)
