@@ -1,10 +1,10 @@
 module sink_mod
 
+ use settings,only:nsink
  use derived_types,only:sink_prop
 
  implicit none
 
- integer,public:: nsink
  type(sink_prop),allocatable,public:: sink(:)
  real(8),allocatable,public:: snkphi(:,:,:)
 

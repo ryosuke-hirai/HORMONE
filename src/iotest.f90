@@ -12,6 +12,7 @@ module iotest_mod
 
   subroutine iotest
     use mpi_utils
+    use derived_types,only:null_sink
     use grid
     use physval
     use output_mod
@@ -83,12 +84,16 @@ module iotest_mod
         sink(i)%mass = 1.d0*i
         sink(i)%softfac = 10.d0*i
         sink(i)%lsoft = 100.d0*i
-        sink(i)%locres = 1000.d0*i
-        sink(i)%dt = 10000.d0*i
+        sink(i)%laccr = 1000.d0*i
+        sink(i)%locres = 10000.d0*i
+        sink(i)%dt = 100000.d0*i
+        sink(i)%mdot = 1000000.d0*i
         sink(i)%x = (/1.d0*i,10.d0*i,100.d0*i/)
         sink(i)%v = (/2.d0*i,20.d0*i,200.d0*i/)
         sink(i)%a = (/3.d0*i,30.d0*i,300.d0*i/)
         sink(i)%xpol = (/4.d0*i,40.d0*i,400.d0*i/)
+        sink(i)%Jspin = (/5.d0*i,50.d0*i,500.d0*i/)
+        sink(i)%jdot = (/6.d0*i,60.d0*i,600.d0*i/)
       end do
       call open_sinkfile
     endif
@@ -143,18 +148,7 @@ module iotest_mod
     species = ''
 
     do i = 1, size(sink)
-      sink(i)%i = 0
-      sink(i)%j = 0
-      sink(i)%k = 0
-      sink(i)%mass = 0.d0
-      sink(i)%softfac = 0.d0
-      sink(i)%lsoft = 0.d0
-      sink(i)%locres = 0.d0
-      sink(i)%dt = 0.d0
-      sink(i)%x = 0.d0
-      sink(i)%v = 0.d0
-      sink(i)%a = 0.d0
-      sink(i)%xpol = 0.d0
+     call null_sink(sink(i))
     end do
 
     ! Read the arrays from file
@@ -238,12 +232,16 @@ module iotest_mod
         err = err + abs(sink(i)%mass - 1.d0*i)
         err = err + abs(sink(i)%softfac - 10.d0*i)
         err = err + abs(sink(i)%lsoft - 100.d0*i)
-        err = err + abs(sink(i)%locres - 1000.d0*i)
-        err = err + abs(sink(i)%dt - 10000.d0*i)
+        err = err + abs(sink(i)%laccr - 1000.d0*i)
+        err = err + abs(sink(i)%locres - 10000.d0*i)
+        err = err + abs(sink(i)%dt - 100000.d0*i)
+        err = err + abs(sink(i)%mdot - 1000000.d0*i)
         err = err + sum(abs(sink(i)%x - (/1.d0*i, 10.d0*i, 100.d0*i/)))
         err = err + sum(abs(sink(i)%v - (/2.d0*i, 20.d0*i, 200.d0*i/)))
         err = err + sum(abs(sink(i)%a - (/3.d0*i, 30.d0*i, 300.d0*i/)))
         err = err + sum(abs(sink(i)%xpol - (/4.d0*i, 40.d0*i, 400.d0*i/)))
+        err = err + sum(abs(sink(i)%Jspin - (/5.d0*i, 50.d0*i, 500.d0*i/)))
+        err = err + sum(abs(sink(i)%jdot - (/6.d0*i, 60.d0*i, 600.d0*i/)))
         if (err > 0.d0) then
           print*, 'Error in sink array values at i=', i, 'err=', err
           numerr = numerr + 1
