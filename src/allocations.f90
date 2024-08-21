@@ -39,7 +39,7 @@ subroutine allocations
  allocate(detg1(is_global-2:ie_global+2))
  allocate(idetg1,sx1,g22,mold=detg1)
 
- allocate(scot(js-2:je+2))
+ allocate(scot(js_global-2:je_global+2))
  allocate(sisin,mold=scot)
 
  allocate(detg2(is_global-2:ie_global+2,js_global-2:je_global+2))
