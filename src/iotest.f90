@@ -12,6 +12,7 @@ module iotest_mod
 
   subroutine iotest
     use mpi_utils
+    use derived_types,only:null_sink
     use grid
     use physval
     use output_mod
@@ -147,22 +148,7 @@ module iotest_mod
     species = ''
 
     do i = 1, size(sink)
-      sink(i)%i = 0
-      sink(i)%j = 0
-      sink(i)%k = 0
-      sink(i)%mass = 0.d0
-      sink(i)%softfac = 0.d0
-      sink(i)%lsoft = 0.d0
-      sink(i)%laccr = 0.d0
-      sink(i)%locres = 0.d0
-      sink(i)%dt = 0.d0
-      sink(i)%mdot = 0.d0
-      sink(i)%x = 0.d0
-      sink(i)%v = 0.d0
-      sink(i)%a = 0.d0
-      sink(i)%xpol = 0.d0
-      sink(i)%Jspin = 0.d0
-      sink(i)%jdot = 0.d0
+     call null_sink(sink(i))
     end do
 
     ! Read the arrays from file
