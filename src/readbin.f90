@@ -22,7 +22,8 @@ subroutine readbin(filename)
  use pressure_mod
  use composition_mod
  use gravmod
- use sink_mod,only:nsink,sink
+ use sink_mod,only:sink
+ use mpi_utils,only:myrank
 
  character(len=*),intent(in):: filename
  integer:: un
@@ -37,11 +38,11 @@ subroutine readbin(filename)
  call read_dummy_recordmarker(un)
 
  call read_dummy_recordmarker(un)
- call read_var(un, d, is, ie, js, je, ks, ke)
+ call read_var(un,  d, is, ie, js, je, ks, ke)
  call read_var(un, v1, is, ie, js, je, ks, ke)
  call read_var(un, v2, is, ie, js, je, ks, ke)
  call read_var(un, v3, is, ie, js, je, ks, ke)
- call read_var(un, e, is, ie, js, je, ks, ke)
+ call read_var(un,  e, is, ie, js, je, ks, ke)
  call read_dummy_recordmarker(un)
 
  if(eostype>=1)then
@@ -72,9 +73,9 @@ subroutine readbin(filename)
 
  if(mag_on)then
   call read_dummy_recordmarker(un)
-  call read_var(un, b1, is, ie, js, je, ks, ke)
-  call read_var(un, b2, is, ie, js, je, ks, ke)
-  call read_var(un, b3, is, ie, js, je, ks, ke)
+  call read_var(un, b1 , is, ie, js, je, ks, ke)
+  call read_var(un, b2 , is, ie, js, je, ks, ke)
+  call read_var(un, b3 , is, ie, js, je, ks, ke)
   call read_var(un, phi, is, ie, js, je, ks, ke)
   call read_dummy_recordmarker(un)
  end if
