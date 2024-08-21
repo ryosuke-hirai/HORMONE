@@ -1,7 +1,7 @@
 module io
 #ifdef MPI
   use mpi
-  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc, mpi_type_sink_prop, mpi_subarray_extgrtv
+  use mpi_utils, only: mpi_subarray_default, mpi_subarray_gravity, mpi_subarray_spc, mpi_type_sink_prop, mpi_subarray_extgrtv, mpi_type_sink_prop_array
 #endif
   use derived_types, only: sink_prop
   implicit none
@@ -50,6 +50,9 @@ subroutine get_file_end(fh, end_bytes)
     ! MPI_File_sync is very slow on some file systems, e.g. Lustre
     call mpi_file_sync(fh, ierr)
     call MPI_File_get_size(fh, end_bytes, ierr)
+  elseif(method == 2) then
+    end_bytes = offset
+
   else
 ! --- Alternative method------------------------------------
     ! Reset view to default ("absolute" view in bytes)
@@ -68,7 +71,8 @@ subroutine open_file_write(filename, fh)
   character(len=*), intent(in) :: filename
   integer, intent(out) :: fh
 #ifdef MPI
-  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_RDWR, MPI_INFO_NULL, fh, ierr)
+  offset = 0 ! reset the offset counter
+  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_WRONLY, MPI_INFO_NULL, fh, ierr)
 #else
   open(newunit=fh, file=filename, status='replace', form='unformatted', action='write', access='stream')
 #endif
@@ -78,7 +82,7 @@ subroutine open_file_write_ascii(filename, fh)
   character(len=*), intent(in) :: filename
   integer, intent(out) :: fh
 #ifdef MPI
-  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_RDWR, MPI_INFO_NULL, fh, ierr)
+  call mpi_file_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE + MPI_MODE_WRONLY, MPI_INFO_NULL, fh, ierr)
 #else
   open(newunit=fh, file=filename, status='replace', form='formatted', action='write')
 #endif
@@ -242,9 +246,10 @@ subroutine read_array_1d_sink(fh, arr, istart, iend)
   integer :: nbuff
   nbuff = (iend-istart+1)
 
-  call mpi_file_set_view(fh, offset, mpi_type_sink_prop, mpi_type_sink_prop, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, offset, mpi_type_sink_prop, mpi_type_sink_prop_array, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_read_all(fh, arr(istart:iend), nbuff, mpi_type_sink_prop, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, mpi_type_sink_prop)
+  call update_offset(fh, mpi_type_sink_prop_array)
+
 #else
   read(fh) arr(istart:iend)
 #endif
@@ -311,6 +316,7 @@ subroutine write_int4(fh, var)
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_INTEGER4, MPI_INTEGER4, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, var, 1, MPI_INTEGER4, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, MPI_INTEGER4)
 #else
   write(fh) var
 #endif
@@ -326,6 +332,7 @@ subroutine write_real8(fh, var)
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, var, 1, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, MPI_REAL8)
 #else
   write(fh) var
 #endif
@@ -361,6 +368,7 @@ subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, ken
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_REAL8, itype, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, itype)
 #else
   write(fh) arr(istart:iend,jstart:jend,kstart:kend)
 #endif
@@ -380,6 +388,7 @@ subroutine write_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, ls
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpi_subarray_spc, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend, jstart:jend, kstart:kend, lstart:lend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpi_subarray_spc)
 #else
   write(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
 #endif
@@ -397,8 +406,9 @@ subroutine write_array_1d_sink(fh, arr, istart, iend)
   nbuff = (iend-istart+1)
 
   call get_file_end(fh, end_bytes)
-  call mpi_file_set_view(fh, end_bytes, mpi_type_sink_prop, mpi_type_sink_prop, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, end_bytes, MPI_BYTE, mpi_type_sink_prop_array, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend), nbuff, mpi_type_sink_prop, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpi_type_sink_prop_array)
 #else
   write(fh) arr(istart:iend)
 #endif
@@ -411,13 +421,17 @@ subroutine write_array_1d_char(fh, arr, istart, iend)
   integer, intent(in) :: istart, iend
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: nbuff
+  integer :: nbuff, n
 
   nbuff = (iend - istart + 1) * 10
 
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_CHARACTER, MPI_CHARACTER, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend), nbuff, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+  do n = 1, nbuff
+   call update_offset(fh, MPI_CHARACTER)
+  end do
+
 #else
   write(fh) arr(istart:iend)
 #endif
@@ -449,6 +463,7 @@ subroutine write_extgrv_array(fh, arr)
   call get_file_end(fh, end_bytes)
   call mpi_file_set_view(fh, end_bytes, MPI_REAL8, mpi_subarray_extgrtv, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+  call update_offset(fh, mpi_subarray_extgrtv)
 #else
   write(fh) arr(istart:iend,jstart:jend,kstart:kend)
 #endif
