@@ -158,7 +158,6 @@ subroutine read_parameters(filename)
  use settings
  use grid
  use physval
- use sink_mod,only:nsink
 
  integer:: ui,istat
  character(len=*),intent(in)::filename

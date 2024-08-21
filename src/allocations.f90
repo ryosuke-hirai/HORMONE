@@ -14,6 +14,7 @@ contains
 subroutine allocations
 
  use settings
+ use derived_types,only:null_sink
  use grid
  use physval
  use gravmod
@@ -283,6 +284,9 @@ subroutine allocations
  if(include_sinks)then
   allocate(snkphi,mold=d)
   allocate(sink(1:nsink))
+  do n = 1, nsink
+   call null_sink(sink(n))
+  end do
  end if
 
  return
