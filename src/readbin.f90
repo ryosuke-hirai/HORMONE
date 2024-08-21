@@ -23,7 +23,6 @@ subroutine readbin(filename)
  use composition_mod
  use gravmod
  use sink_mod,only:sink
- use mpi_utils,only:myrank
 
  character(len=*),intent(in):: filename
  integer:: un
