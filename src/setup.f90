@@ -168,9 +168,11 @@ subroutine read_parameters(filename)
                     is, ie, js, je, ks, ke, imesh, jmesh, kmesh, &
                     x1min, x2min, x3min, &
                     fmr_max, fmr_lvl
- namelist /out_con/ outstyle, endstyle, tnlim, t_end, dt_out, tn_out, tn_evo,&
-                    dt_unit, sigfig, outres, write_other_vel, write_shock, &
-                    write_evo, write_other_slice, write_temp, write_mc
+ namelist /out_con/ outdir, outstyle, endstyle, &
+                    tnlim, t_end, dt_out, tn_out, tn_evo, dt_unit, &
+                    sigfig, outres, output_ascii, write_other_vel, &
+                    write_shock, write_evo, write_other_slice, write_temp, &
+                    write_mc
  namelist /eos_con/ eostype, gamma, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, alpha9wave,&
                     include_cooling, include_extforce, frame, extrasfile
