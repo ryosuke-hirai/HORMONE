@@ -25,7 +25,7 @@
 ! write_other_slice : Output an alternative slice for 3D
 ! write_temp : Output temperature (only relevant for eostype=0)
 ! write_mc : Output mass coordinates (only relevant for crdnt=2)
-&out_con  outdir='../../mpi_work/work/data' outstyle=1 endstyle=1
+&out_con  outdir='data' outstyle=1 endstyle=1
           tnlim=0 t_end=0d0 dt_out=1d0 tn_out=1 tn_evo=10
           dt_unit='s' sigfig=7 outres=1 output_ascii=.true.
 	  write_other_vel =.false. write_shock =.false. write_evo=.false.
