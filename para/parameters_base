@@ -8,6 +8,7 @@
 	  x1min=0d0 x2min=0 x3min=0d0
 	  fmr_max=0 fmr_lvl(1:20)=0 /
 
+! outdir : Output directory name
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
 ! t_end : Upper limit for physical time (only when outstyle=1)
@@ -17,15 +18,16 @@
 ! dt_unit : Give name of dt_unit (current options are 'ns,'ms,'s','min','ks','hr','d','yr')
 ! sigfig : How many significant figures in output values
 ! outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
+! output_ascii : Output plt file (some machines are extremely slow at writing ascii files, especially in MPI)
 ! write_other_vel : Set to .true. if 2.5D
 ! write_shock : Output shock switch
 ! write_evo : Output evofile
 ! write_other_slice : Output an alternative slice for 3D
 ! write_temp : Output temperature (only relevant for eostype=0)
 ! write_mc : Output mass coordinates (only relevant for crdnt=2)
-&out_con  outstyle=1 endstyle=1
+&out_con  outdir='../../mpi_work/work/data' outstyle=1 endstyle=1
           tnlim=0 t_end=0d0 dt_out=1d0 tn_out=1 tn_evo=10
-          dt_unit='s' sigfig=7 outres=1
+          dt_unit='s' sigfig=7 outres=1 output_ascii=.true.
 	  write_other_vel =.false. write_shock =.false. write_evo=.false.
 	  write_other_slice=.false. write_temp = .false. write_mc=.false. /
 
