@@ -17,14 +17,14 @@ module profiler_mod
   wtint=10,& ! MUSCL interpolation
   wteos=11,& ! equation of state
   wtsmr=12,& ! smearing
-  wtsm2=13,& ! smearing MPI sweep
+  wtsm2=13,& ! MPI sweep for smearing
   wttim=14,& ! time stepping
   wtgrv=15,& ! gravity
   wtgbn=16,& ! gravbound
   wtpoi=17,& ! Poisson solver
   wthyp=18,& ! hyperbolic self-gravity
   wtgsm=19,& ! gravity smearing
-  wtgs2=20,& ! MPI sweep
+  wtgs2=20,& ! MPI sweep gravity smearing
   wtsho=21,& ! shockfind
   wtrad=22,& ! radiation
   wtopc=23,& ! opacity
@@ -70,14 +70,14 @@ subroutine init_profiler
  parent(wtint) = wthyd ! MUSCL interpolation
  parent(wteos) = wthyd ! equation of state
  parent(wtsmr) = wthyd ! smearing
- parent(wtsm2) = wtsmr ! smearing MPI sweep
+ parent(wtsm2) = wtsmr ! MPI sweep for smearing
  parent(wttim) = wtlop ! time stepping
  parent(wtgrv) = wtlop ! gravity
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtpoi) = wtgrv ! Poisson solver
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
  parent(wtgsm) = wtgrv ! gravity smearing
- parent(wtgs2) = wtgsm ! gravity smearing MPI sweep
+ parent(wtgs2) = wtgsm ! MPI sweep gravity smearing
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
@@ -102,14 +102,14 @@ subroutine init_profiler
  routine_name(wtint) = 'Interpolate' ! MUSCL interpolation
  routine_name(wteos) = 'EoS'         ! equation of state
  routine_name(wtsmr) = 'Smearing'    ! smearing
- routine_name(wtsm2) = 'MPI sweep'   ! smearing MPI sweep
+ routine_name(wtsm2) = 'MPI sweep'   ! MPI sweep for smearing
  routine_name(wttim) = 'Timestep'    ! time stepping
  routine_name(wtgrv) = 'Gravity'     ! gravity
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
  routine_name(wtpoi) = 'MICCG'       ! Poisson solver
  routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
  routine_name(wtgsm) = 'Grav smear'  ! gravity smearing
- routine_name(wtgs2) = 'MPI sweep'   ! gravity smearing MPI sweep
+ routine_name(wtgs2) = 'MPI sweep'   ! MPI sweep for gravity smearing
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
@@ -333,12 +333,6 @@ subroutine profiler_output1(ui,wti)
 
  end if
 
-!!$ select case(j)
-!!$ case(0)
-!!$  k = maxlbl
-!!$ case(1:)
-!!$  k = maxlbl + 2 + get_layer(wti)*2
-!!$ end select
  write(form1,'(a,i2,a)')'(a',i,',":",4(1X,F10.3,a))'
  write(ui,form1)adjustl(lbl),wtime_avg(wti),'s',&
                 wtime_avg(wti)/wtime_avg(wtlop)*1d2,'%',&

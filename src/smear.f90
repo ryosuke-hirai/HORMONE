@@ -92,7 +92,7 @@ contains
   use mpi_utils,only:allreduce_mpi
 
   character(len=*),intent(in):: which
-  integer:: i,j,k,n,jb,kb,wtind
+  integer:: i,j,k,n,jb,kb,wtind,wtin2
   integer,allocatable:: smeared(:)
 
 !-----------------------------------------------------------------------------
@@ -104,9 +104,9 @@ contains
 
   select case(which)
   case('hydro')
-   wtind = wtsmr
+   wtind = wtsmr ; wtin2 = wtsm2
   case('grav')
-   wtind = wtgsm
+   wtind = wtgsm ; wtin2 = wtgs2
   end select
 
   call start_clock(wtind)
@@ -144,6 +144,7 @@ contains
 
 ! Second sweep (for effective cells that span over multiple MPI ranks)
    if(minval(smeared)==0)then
+    call start_clock(wtin2)
     do n = 1, fmr_max
      if(fmr_lvl(n)==0)cycle
      jb = block_j(n)
@@ -163,6 +164,7 @@ contains
       end do
      end do
     end do
+    call stop_clock(wtin2)
    end if
 
    deallocate(smeared)
