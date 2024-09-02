@@ -1224,6 +1224,7 @@ subroutine profiler_output
  call reduce_clocks_mpi
 
  if (myrank==0) then
+  call get_maxlbl
   write(form1,'("(",i2,"X4a12)")')maxlbl+1
   write(forml,'("(",i2,"a)")')maxlbl+1 + 4*12
 

@@ -38,6 +38,7 @@ module profiler_mod
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
  logical,public:: clock_on(0:n_wt)
+ real(8),parameter,private:: thres=1d-10
 
 contains
 
@@ -73,7 +74,7 @@ subroutine init_profiler
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtpoi) = wtgrv ! Poisson solver
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
- parent(wtgsm) = wtgrv ! gravity smearing
+ parent(wtgsm) = wthyp ! gravity smearing
  parent(wtgs2) = wtgsm ! MPI sweep gravity smearing
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
@@ -106,7 +107,7 @@ subroutine init_profiler
  routine_name(wtpoi) = 'MICCG'       ! Poisson solver
  routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
  routine_name(wtgsm) = 'Grav smear'  ! gravity smearing
- routine_name(wtgs2) = 'MPI sweep'   ! gravity smearing
+ routine_name(wtgs2) = 'MPI sweep'   ! MPI sweep for gravity smearing
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
@@ -118,15 +119,32 @@ subroutine init_profiler
  routine_name(wtwai) = 'MPI wait'    ! MPI wait
  routine_name(wttot) = 'Total'       ! total
 
- do i = 0, n_wt
-  maxlbl = max(maxlbl,len_trim(routine_name(i))+get_layer(i)*2)
- end do
- maxlbl = maxlbl + 1
-
  clock_on(0:n_wt) = .false.
 
  return
 end subroutine init_profiler
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                         SUBROUTINE GET_MAXLBL
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute maximum number of characters in the label
+
+subroutine get_maxlbl
+
+ integer:: i
+
+!-----------------------------------------------------------------------------
+
+ maxlbl = 0
+ do i = 0, n_wt
+  if(wtime_max(i)>thres) &
+   maxlbl = max(maxlbl,len_trim(routine_name(i))+get_layer(i)*2)
+ end do
+ maxlbl = maxlbl + 1
+
+return
+end subroutine get_maxlbl
 
 ! Get layer number \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 function get_layer(i) result(ilayer)
@@ -298,8 +316,7 @@ subroutine profiler_output1(ui,wti)
 
  integer,intent(in):: ui,wti
  character(len=30):: form1,lbl
- integer::j,k,next
- real(8),parameter:: thres=1d-10
+ integer::i,j,k,l
 
 !-----------------------------------------------------------------------------
 
@@ -307,38 +324,32 @@ subroutine profiler_output1(ui,wti)
 
  lbl = trim(routine_name(wti))
  j = get_layer(wti)
+ i = maxlbl
  if(j>0)then
 
-! Find the next category with the same parent and finite wall time
-  next = n_wt+1
-  if(wti<n_wt)then
-   do k = wti+1, n_wt
-    if(parent(k)==parent(wti).and.wtime_max(k)>thres)then
-     next = k
-     exit
+  i = i + 4
+  if(last_in_category(wti))then
+   lbl = "└─"//trim(lbl)
+  else
+   lbl = "├─"//trim(lbl)
+  end if
+
+  if(j>1)then
+   l = wti
+   do k = j, 2, -1
+    l = parent(l)
+    if(last_in_category(l))then
+     lbl = "  "//trim(lbl)
+    else
+     lbl = "│ "//trim(lbl)
+     i = i+2
     end if
    end do
   end if
 
-  if(next/=n_wt+1)then
-   lbl = "├─"//trim(lbl)
-  else
-   lbl = "└─"//trim(lbl)
-  end if
-  if(j>1)then
-   do k = j, 2, -1
-    lbl = "│ "//trim(lbl)
-   end do
-  end if
  end if
 
- select case(get_layer(wti))
- case(0)
-  k = maxlbl
- case(1:)
-  k = maxlbl + 2 + get_layer(wti)*2
- end select
- write(form1,'(a,i2,a)')'(a',k,',":",4(1X,F10.3,a))'
+ write(form1,'(a,i2,a)')'(a',i,',":",4(1X,F10.3,a))'
  write(ui,form1)adjustl(lbl),wtime_avg(wti),'s',&
                 wtime_avg(wti)/wtime_avg(wtlop)*1d2,'%',&
                 wtime_avg(wti)/wtime_avg(wttot)*1d2,'%',&
@@ -347,6 +358,29 @@ subroutine profiler_output1(ui,wti)
 return
 end subroutine profiler_output1
 
+function last_in_category(wti)
+! Function to judge whether a profiler element is the last element in a subcategory.
+ integer,intent(in):: wti
+ logical:: last_in_category
+ integer:: k, next
 
+! Find the next category with the same parent and finite wall time
+ next = n_wt+1
+ if(wti<n_wt)then
+  do k = wti+1, n_wt
+   if(parent(k)==parent(wti).and.wtime_max(k)>thres)then
+    next = k
+    exit
+   end if
+  end do
+ end if
+
+ if(next==n_wt+1)then
+  last_in_category = .true.
+ else
+  last_in_category = .false.
+ end if
+
+end function last_in_category
 
 end module profiler_mod
