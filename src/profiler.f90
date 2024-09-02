@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=27 ! number of profiling categories
+ integer,parameter:: n_wt=29 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -17,21 +17,23 @@ module profiler_mod
   wtint=10,& ! MUSCL interpolation
   wteos=11,& ! equation of state
   wtsmr=12,& ! smearing
-  wttim=13,& ! time stepping
-  wtgrv=14,& ! gravity
-  wtgbn=15,& ! gravbound
-  wtpoi=16,& ! Poisson solver
-  wthyp=17,& ! hyperbolic self-gravity
-  wtgsm=18,& ! gravity smearing
-  wtsho=19,& ! shockfind
-  wtrad=20,& ! radiation
-  wtopc=21,& ! opacity
-  wtrfl=22,& ! radiative flux
-  wtsnk=23,& ! sink motion
-  wtacc=24,& ! sink accretion
-  wtout=25,& ! output
-  wtmpi=26,& ! mpi exchange
-  wtwai=27,& ! mpi wait
+  wtsm2=13,& ! MPI sweep for smearing
+  wttim=14,& ! time stepping
+  wtgrv=15,& ! gravity
+  wtgbn=16,& ! gravbound
+  wtpoi=17,& ! Poisson solver
+  wthyp=18,& ! hyperbolic self-gravity
+  wtgsm=19,& ! gravity smearing
+  wtgs2=20,& ! MPI sweep gravity smearing
+  wtsho=21,& ! shockfind
+  wtrad=22,& ! radiation
+  wtopc=23,& ! opacity
+  wtrfl=24,& ! radiative flux
+  wtsnk=25,& ! sink motion
+  wtacc=26,& ! sink accretion
+  wtout=27,& ! output
+  wtmpi=28,& ! mpi exchange
+  wtwai=29,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -67,12 +69,14 @@ subroutine init_profiler
  parent(wtint) = wthyd ! MUSCL interpolation
  parent(wteos) = wthyd ! equation of state
  parent(wtsmr) = wthyd ! smearing
+ parent(wtsm2) = wtsmr ! MPI sweep for smearing
  parent(wttim) = wtlop ! time stepping
  parent(wtgrv) = wtlop ! gravity
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtpoi) = wtgrv ! Poisson solver
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
  parent(wtgsm) = wtgrv ! gravity smearing
+ parent(wtgs2) = wtgsm ! MPI sweep gravity smearing
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
@@ -97,12 +101,14 @@ subroutine init_profiler
  routine_name(wtint) = 'Interpolate' ! MUSCL interpolation
  routine_name(wteos) = 'EoS'         ! equation of state
  routine_name(wtsmr) = 'Smearing'    ! smearing
+ routine_name(wtsm2) = 'MPI sweep'   ! MPI sweep for smearing
  routine_name(wttim) = 'Timestep'    ! time stepping
  routine_name(wtgrv) = 'Gravity'     ! gravity
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
  routine_name(wtpoi) = 'MICCG'       ! Poisson solver
  routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
  routine_name(wtgsm) = 'Grav smear'  ! gravity smearing
+ routine_name(wtgs2) = 'MPI sweep'   ! gravity smearing
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
