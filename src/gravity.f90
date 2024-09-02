@@ -164,6 +164,7 @@ subroutine gravity_relax
  use mpi_utils,only:allreduce_mpi
  use mpi_domain,only:myrank
  use gravity_hyperbolic_mod,only:hyperbolic_gravity_step
+ use profiler_mod
 
  real(8):: err
  integer :: grktype_org
@@ -217,6 +218,9 @@ subroutine gravity_relax
 
  ! Reset grktype
  grktype = grktype_org
+
+! Reset clocks
+ call reset_clock(wthyp)
 
 return
 end subroutine gravity_relax
