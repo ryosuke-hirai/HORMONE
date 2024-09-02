@@ -69,7 +69,6 @@ program write_ascii
 
 ! Start initial setup
   call allocations
-  call gridset
 
   outtn = 0
   outtime = 0d0
