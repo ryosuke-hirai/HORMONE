@@ -76,7 +76,7 @@ subroutine init_profiler
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtpoi) = wtgrv ! Poisson solver
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
- parent(wtgsm) = wtgrv ! gravity smearing
+ parent(wtgsm) = wthyp ! gravity smearing
  parent(wtgs2) = wtgsm ! MPI sweep gravity smearing
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
@@ -121,15 +121,32 @@ subroutine init_profiler
  routine_name(wtwai) = 'MPI wait'    ! MPI wait
  routine_name(wttot) = 'Total'       ! total
 
- do i = 0, n_wt
-  maxlbl = max(maxlbl,len_trim(routine_name(i))+get_layer(i)*2)
- end do
- maxlbl = maxlbl + 1
-
  clock_on(0:n_wt) = .false.
 
  return
 end subroutine init_profiler
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                         SUBROUTINE GET_MAXLBL
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute maximum number of characters in the label
+
+subroutine get_maxlbl
+
+ integer:: i
+
+!-----------------------------------------------------------------------------
+
+ maxlbl = 0
+ do i = 0, n_wt
+  if(wtime_max(i)>thres) &
+   maxlbl = max(maxlbl,len_trim(routine_name(i))+get_layer(i)*2)
+ end do
+ maxlbl = maxlbl + 1
+
+return
+end subroutine get_maxlbl
 
 ! Get layer number \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 function get_layer(i) result(ilayer)
@@ -343,6 +360,7 @@ return
 end subroutine profiler_output1
 
 function last_in_category(wti)
+! Function to judge whether a profiler element is the last element in a subcategory.
  integer,intent(in):: wti
  logical:: last_in_category
  integer:: k, next
