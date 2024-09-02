@@ -3,8 +3,8 @@ module output_mod
 
  integer:: ievo,iskf
  public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
-          scaling_output, write_grid
- private:: write_bin,write_plt,get_header,add_column, &
+          scaling_output,write_grid,write_plt
+ private:: write_bin,get_header,add_column, add_directory_to_filename,&
            write_val,write_vertical_slice
 
  contains
@@ -19,7 +19,7 @@ module output_mod
 
 subroutine output
 
- use settings,only:is_test
+ use settings,only:is_test,output_ascii
  use grid,only:tn
  use profiler_mod
  use mpi_utils,only:barrier_mpi
@@ -41,7 +41,7 @@ subroutine output
  if(tn==0)call write_grid
 
  call write_bin
- call write_plt
+ if(output_ascii)call write_plt
 
 ! Tracer particle outputs
  call write_bpt
@@ -100,7 +100,7 @@ subroutine open_evofile
  use mpi_utils, only:myrank
 
  integer::ierr
- character(len=50):: forma
+ character(len=70):: forma, filename
 
 !-----------------------------------------------------------------------------
 
@@ -108,15 +108,16 @@ subroutine open_evofile
  if(.not.write_evo)return
 
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
+ call add_directory_to_filename('evo.dat',filename)
 
  if(start/=0)then
-  open(newunit=ievo,file='data/evo.dat',status='old',&
+  open(newunit=ievo,file=filename,status='old',&
        position='append',iostat=ierr)
   if(ierr==0)return ! Return if evofile already exists.
  end if
 
 ! Write headers if it needs to be freshly made.
- open(newunit=ievo,file='data/evo.dat',status='replace')
+ open(newunit=ievo,file=filename,status='replace')
 
  write(ievo,'(a10)',advance='no')'tn'
  write(ievo,forma,advance="no")'time'
@@ -313,7 +314,7 @@ subroutine open_sinkfile
  use mpi_utils, only:myrank
 
  integer:: ierr,n
- character(len=50):: forma, forme, header
+ character(len=70):: forma, forme, header, filename
 
 !-----------------------------------------------------------------------------
 
@@ -322,15 +323,16 @@ subroutine open_sinkfile
 
  write(forma,'("(a",i2,")")')sigfig+8 ! for strings
  write(forme,'("(1x,1PE",i2,".",i2,"e2)")')sigfig+7,sigfig-1 ! for real numbers
+ call add_directory_to_filename('sinks.dat',filename)
 
  if(start/=0)then
-  open(newunit=iskf,file='data/sinks.dat',status='old',&
+  open(newunit=iskf,file=filename,status='old',&
        position='append',iostat=ierr)
   if(ierr==0)return ! Return if sinks file already exists.
  end if
 
 ! Write headers if it needs to be freshly made.
- open(newunit=iskf,file='data/sinks.dat',status='replace')
+ open(newunit=iskf,file=filename,status='replace')
 
  do n = 1, nsink
   write(iskf,'(2x,a,i0,a)',advance="no")"Msink_",n,"/Msun="
@@ -427,8 +429,11 @@ end subroutine write_grid
 subroutine write_grid_bin
  use grid
  integer :: ui
+ character(len=70):: filename
 
- open(newunit=ui,file='data/gridfile.bin',status='replace',form='unformatted')
+ call add_directory_to_filename('gridfile.bin',filename)
+
+ open(newunit=ui,file=filename,status='replace',form='unformatted')
 
  write(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2),&
           x2(gjs_global-2:gje_global+2),xi2(gjs_global-2:gje_global+2),dx2(gjs_global-2:gje_global+2),dxi2(gjs_global-2:gje_global+2),&
@@ -448,10 +453,11 @@ subroutine write_grid_dat
  use io, only: write_string_master, open_file_write_ascii, close_file
 
  character(len=50):: formhead,formval,formnum
- character(len=200) :: str
+ character(len=200) :: str,filename
  integer:: i,j,k,ui
 
- call open_file_write_ascii('data/gridfile.dat',ui)
+ call add_directory_to_filename('gridfile.dat',filename)
+ call open_file_write_ascii(filename,ui)
  call write_string_master(ui, '')
  write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')dim,dim+1,sigfig+8
  write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
@@ -604,7 +610,8 @@ subroutine write_grid_dat
 
  if(write_other_slice)then
 
-  call open_file_write_ascii('data/othergrid.dat',ui)
+  call add_directory_to_filename('othergrid.dat',filename)
+  call open_file_write_ascii(filename,ui)
   call write_string_master(ui, '')
   write(formhead,'("(",i1,"a5,",i1,"a",i2,")")')2,2+1,sigfig+8
   write(formval ,'("(",i1,"i5,",i1,"(1x,1PE",i2,".",i2,"e2))")')&
@@ -685,7 +692,7 @@ subroutine write_bin
 
  implicit none
 
- character(len=50):: binfile
+ character(len=70):: binfile
  integer :: un
 
 !-----------------------------------------------------------------------------
@@ -1038,6 +1045,7 @@ subroutine write_extgrv
  use io, only:open_file_write,close_file, write_var, write_extgrv_array, write_dummy_recordmarker
  integer :: ui
  real(8) :: mcore
+ character(len=70):: filename
 
  ! get mcore and ensure each task has the same value
  if (is==is_global) then
@@ -1047,7 +1055,8 @@ subroutine write_extgrv
  endif
  call allreduce_mpi('max', mcore)
 
- call open_file_write('data/extgrv.bin', ui)
+ call add_directory_to_filename('extgrv.bin',filename)
+ call open_file_write(filename, ui)
 
  call write_dummy_recordmarker(ui)
  call write_var(ui, mcore)
@@ -1215,6 +1224,7 @@ subroutine profiler_output
  call reduce_clocks_mpi
 
  if (myrank==0) then
+  call get_maxlbl
   write(form1,'("(",i2,"X4a12)")')maxlbl+1
   write(forml,'("(",i2,"a)")')maxlbl+1 + 4*12
 
@@ -1300,25 +1310,47 @@ subroutine set_file_name(prefix,tn,time,filename)
 
  character(len=*),intent(in):: prefix
  character(len=*),intent(out)::filename
+ character(len=50)::filename1
  integer,intent(in):: tn
  real(8),intent(in):: time
 
 !-----------------------------------------------------------------------------
  select case(outstyle)
  case(1)
-  write(filename,'(a5,a,i11.11,a,a4)')&
-   'data/',trim(prefix),nint(time/dt_unit_in_sec),trim(dt_unit),'.dat'
+  write(filename1,'(a,i11.11,a,a4)')&
+   trim(prefix),nint(time/dt_unit_in_sec),trim(dt_unit),'.dat'
   if(time/dt_unit_in_sec>2147483647d0)then ! if integer is overflowed
-   write(filename,'(a5,a,i9.9,"00",a,a4)')&
-    'data/',trim(prefix),nint(time/dt_unit_in_sec*0.01d0),trim(dt_unit),'.dat'
+   write(filename1,'(a,i9.9,"00",a,a4)')&
+    trim(prefix),nint(time/dt_unit_in_sec*0.01d0),trim(dt_unit),'.dat'
   end if
  case(2)
-  write(filename,'(a5,a,i8.8,a4)')'data/',trim(prefix),tn,'.dat'
+  write(filename1,'(a,i8.8,a4)')trim(prefix),tn,'.dat'
  end select
 
-return
+ call add_directory_to_filename(filename1,filename)
+
+ return
 end subroutine set_file_name
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                    SUBROUTINE ADD_DIRECTORY_TO_FILENAME
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To add the directory to the filename string
+
+subroutine add_directory_to_filename(filename,fullname)
+
+ use settings,only:outdir
+
+ character(len=*),intent(in):: filename
+ character(len=*),intent(out):: fullname
+
+!-----------------------------------------------------------------------------
+
+ write(fullname,'(a,"/",a)') trim(outdir),trim(filename)
+
+return
+end subroutine add_directory_to_filename
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE GET_HEADER

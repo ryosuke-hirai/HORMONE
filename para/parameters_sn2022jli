@@ -26,7 +26,7 @@
 ! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
           tnlim=100000 t_end=18000d0 dt_out=1.d2 tn_out=1
-          dt_unit='min' sigfig=7 outres=1
+          dt_unit='min' sigfig=7 outres=1 output_ascii=.false.
 	  write_other_vel =.false. write_shock =.true.
 	  write_evo=.true. write_other_slice=.true. /
 
