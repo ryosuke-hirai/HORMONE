@@ -62,7 +62,7 @@ subroutine sink_accretion
  use profiler_mod
 
  integer:: n,i,j,k
- real(8):: dis, philoc, tauacc, newd, newe, newp, accmass, dm
+ real(8):: dis, philoc, tauacc, newd, newe, newp, accmass, dm, r_acc
  real(8),dimension(1:3):: accmom, accang, totmom, vcell
 
 !-----------------------------------------------------------------------------
@@ -75,6 +75,7 @@ subroutine sink_accretion
 
  do n = 1, nsink
   if(sink(n)%mass<=0d0)cycle
+  r_acc = max(sink(n)%laccr,sink(n)%locres)
 !$omp parallel do private(i,j,k,dis,philoc,tauacc,newd,newe,newp,vcell,dm) &
 !$omp reduction(+:accmass,accmom,accang) collapse(3)
   do k = ks, ke
@@ -82,12 +83,12 @@ subroutine sink_accretion
     do i = is, ie
      dis = norm2(car_x(:,i,j,k)-sink(n)%x)
 
-     if(dis>sink(n)%laccr)cycle
+     if(dis>r_acc)cycle
 
 ! Suck out mass in the accretion radius on the dynamical timescale
      philoc = G*sink(n)%mass &
                      *softened_pot(dis,max(sink(n)%lsoft,sink(n)%locres))
-     tauacc = sink(n)%laccr/sqrt(-philoc)
+     tauacc = r_acc/sqrt(-philoc)
      newd = d(i,j,k)*exp(-dt/tauacc)
      newp = newd/d(i,j,k)*p(i,j,k)
      select case(eostype)
