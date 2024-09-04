@@ -91,7 +91,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use physval
  use gravmod,only:grvphi,mc
  use utils,only:intpol
- use mpi_domain,only:sum_global_array
 
  real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
