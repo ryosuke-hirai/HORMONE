@@ -302,9 +302,9 @@ contains
     call get_vcar(car_x(:,i,j,k),x3(k),&
                   u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
 ! Use Kahan summation algorithm to minimize roundoff error
-    element = vcar*dvol(i,j,k)-compen
+    element = vcar*dvol(i,j,k)
     tempsum = momtot + element
-    compen = get_compensation(element,tempsum,momtot)
+    compen = get_compensation(compen,element,tempsum,momtot)
     momtot = tempsum ! add up momenta using the Kahan algorithm
 
     etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
@@ -399,7 +399,7 @@ contains
   vol = dvol_block(get_id(i,js_,ks_))
   mtot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt,weight=dvol)
 
-!$ First smear chemical elements
+! First smear chemical elements
   if(compswitch>=2)then
    allocate(spctot(1:spn), comm_chunk(1:spn+3))
 !$omp parallel
