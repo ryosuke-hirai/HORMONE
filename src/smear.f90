@@ -406,7 +406,7 @@ contains
    do n = 1, spn
     arr_sum = 0d0
     if(overlap)then
-!$omp do private(i,j,k) collapse(3) reduction(+:arr_sum)
+!$omp do private(i,j,k) collapse(2) reduction(+:arr_sum)
      do k = kl, kr
       do j = jl, jr
        arr_sum = arr_sum + u(i,j,k,icnt)*dvol(i,j,k)*spc(n,i,j,k)
