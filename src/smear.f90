@@ -5,7 +5,7 @@ module smear_mod
  private:: angular_smear,angular_smear_global
 
  integer,public:: nsmear
- integer,allocatable,public:: block_j(:),block_k(:)
+ integer,allocatable,public:: block_j(:),block_k(:),lijk_from_id(:,:)
  real(8),allocatable,private:: dvol_block(:)
 
 contains
@@ -55,8 +55,8 @@ contains
                       * (ke_global-ks_global+1)/block_k(n)
    end do
 
-! Compute effective cell volumes
-   allocate(dvol_block(1:nsmear))
+! Record effective cell properties
+   allocate(dvol_block(1:nsmear),lijk_from_id(0:3,1:nsmear))
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
     jb = block_j(n)
@@ -65,6 +65,10 @@ contains
      do j = js_global, je_global, jb
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
        dvol_block(get_id(i,j,k)) = sum(dvol(i,j:j+jb-1,k:k+kb-1))
+       lijk_from_id(0,get_id(i,j,k)) = n
+       lijk_from_id(1,get_id(i,j,k)) = i
+       lijk_from_id(2,get_id(i,j,k)) = j
+       lijk_from_id(3,get_id(i,j,k)) = k
       end do
      end do
     end do
@@ -92,7 +96,7 @@ contains
   use mpi_utils,only:allreduce_mpi
 
   character(len=*),intent(in):: which
-  integer:: i,j,k,n,jb,kb,wtind,wtin2
+  integer:: i,j,k,l,n,jb,kb,wtind,wtin2
   integer,allocatable:: smeared(:)
 
 !-----------------------------------------------------------------------------
@@ -117,52 +121,97 @@ contains
    smeared = 0
 
 ! First sweep
-   do n = 1, fmr_max
-    if(fmr_lvl(n)==0)cycle
-    jb = block_j(n)
-    kb = block_k(n)
-!$omp parallel do private(i,j,k) collapse(3)
-    do k = ks_global, ke_global, kb
-     do j = js_global, je_global, jb
-      do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-       if(fully_my_domain(i,j,k,0,jb,kb))then
-        select case(which)
-        case('hydro')
-         call angular_smear(i,j,j+jb-1,k,k+kb-1)
-        case('grav')
-         call angular_smear_grav(i,j,j+jb-1,k,k+kb-1)
-        end select
-        smeared(get_id(i,j,k)) = 1
-       end if
-      end do
-     end do
-    end do
-!$omp end parallel do
+!!$!$omp parallel
+!!$   do n = 1, fmr_max
+!!$    if(fmr_lvl(n)==0)cycle
+!!$    jb = block_j(n)
+!!$    kb = block_k(n)
+!!$!$omp do private(i,j,k) collapse(3) schedule(dynamic)
+!!$    do k = ks_global, ke_global, kb
+!!$     do j = js_global, je_global, jb
+!!$      do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
+!!$       if(fully_my_domain(i,j,k,0,jb,kb))then
+!!$        select case(which)
+!!$        case('hydro')
+!!$         call angular_smear(i,j,j+jb-1,k,k+kb-1)
+!!$        case('grav')
+!!$         call angular_smear_grav(i,j,j+jb-1,k,k+kb-1)
+!!$        end select
+!!$        smeared(get_id(i,j,k)) = 1
+!!$       end if
+!!$      end do
+!!$     end do
+!!$    end do
+!!$!$omp end do
+!!$   end do
+!!$!$omp end parallel
+
+!$omp parallel do private(i,j,k,l,jb,kb) schedule(dynamic)
+   do n = 1, nsmear
+    l = lijk_from_id(0,n)
+    if(fmr_lvl(l)==0)cycle
+    i = lijk_from_id(1,n)
+    j = lijk_from_id(2,n)
+    k = lijk_from_id(3,n)
+    jb = block_j(l)
+    kb = block_k(l)
+    if(fully_my_domain(i,j,k,0,jb,kb))then
+     select case(which)
+     case('hydro')
+      call angular_smear(i,j,j+jb-1,k,k+kb-1)
+     case('grav')
+      call angular_smear_grav(i,j,j+jb-1,k,k+kb-1)
+     end select
+     smeared(n) = 1
+    end if
    end do
+!$omp end parallel do
 
    call allreduce_mpi('sum',smeared)
 
 ! Second sweep (for effective cells that span over multiple MPI ranks)
+!!$   if(minval(smeared)==0)then
+!!$    call start_clock(wtin2)
+!!$    do n = 1, fmr_max
+!!$     if(fmr_lvl(n)==0)cycle
+!!$     jb = block_j(n)
+!!$     kb = block_k(n)
+!!$     do k = ks_global, ke_global, kb
+!!$      do j = js_global, je_global, jb
+!!$       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
+!!$        if(smeared(get_id(i,j,k))==0)then
+!!$         select case(which)
+!!$         case('hydro')
+!!$          call angular_smear_global(i,j,j+jb-1,k,k+kb-1)
+!!$         case('grav')
+!!$          call angular_smear_grav_global(i,j,j+jb-1,k,k+kb-1)
+!!$         end select
+!!$        end if
+!!$       end do
+!!$      end do
+!!$     end do
+!!$    end do
+!!$    call stop_clock(wtin2)
+!!$   end if
+
    if(minval(smeared)==0)then
     call start_clock(wtin2)
-    do n = 1, fmr_max
-     if(fmr_lvl(n)==0)cycle
-     jb = block_j(n)
-     kb = block_k(n)
-     do k = ks_global, ke_global, kb
-      do j = js_global, je_global, jb
-       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
-        if(smeared(get_id(i,j,k))==0)then
-         select case(which)
-         case('hydro')
-          call angular_smear_global(i,j,j+jb-1,k,k+kb-1)
-         case('grav')
-          call angular_smear_grav_global(i,j,j+jb-1,k,k+kb-1)
-         end select
-        end if
-       end do
-      end do
-     end do
+    do n = 1, nsmear
+     if(smeared(n)==0)then
+      l = lijk_from_id(0,n)
+      if(fmr_lvl(l)==0)cycle
+      i = lijk_from_id(1,n)
+      j = lijk_from_id(2,n)
+      k = lijk_from_id(3,n)
+      jb = block_j(l)
+      kb = block_k(l)
+      select case(which)
+      case('hydro')
+       call angular_smear_global(i,j,j+jb-1,k,k+kb-1)
+      case('grav')
+       call angular_smear_grav_global(i,j,j+jb-1,k,k+kb-1)
+      end select
+     end if
     end do
     call stop_clock(wtin2)
    end if
@@ -336,7 +385,8 @@ contains
 
   integer,intent(in)::i,js_,je_,ks_,ke_
   integer:: n,j,k,jl,jr,kl,kr
-  real(8):: mtot, etot, spctot, vol, dave
+  real(8):: mtot, etot, vol, dave, arr_sum
+  real(8),allocatable:: spctot(:), comm_chunk(:)
   real(8),dimension(1:3):: momtot, compen, tempsum, element, vcar, vave
   logical:: overlap
 
@@ -349,38 +399,76 @@ contains
   vol = dvol_block(get_id(i,js_,ks_))
   mtot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt,weight=dvol)
 
+!$ First smear chemical elements
   if(compswitch>=2)then
+   allocate(spctot(1:spn), comm_chunk(1:spn+3))
+!$omp parallel
    do n = 1, spn
-    spctot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt, &
-                              l_weight2=n, weight=dvol, weight2=spc )
-    if (overlap) spc(n,i,jl:jr,kl:kr) = spctot / mtot
+    arr_sum = 0d0
+    if(overlap)then
+!$omp do private(i,j,k) collapse(3) reduction(+:arr_sum)
+     do k = kl, kr
+      do j = jl, jr
+       do i = il, ir
+        arr_sum = arr_sum + u(i,j,k,icnt)*dvol(i,j,k)*spc(n,i,j,k)
+       end do
+      end do
+     end do
+!$omp end do
+    end if
+    spctot(n) = arr_sum
+!!$    spctot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt, &
+!!$                              l_weight2=n, weight=dvol, weight2=spc )
+!!$    if (overlap) spc(n,i,jl:jr,kl:kr) = spctot / mtot
    end do
+!$omp end parallel
+!   call allreduce_mpi('sum',spctot)
+   comm_chunk(4:spn+3) = spctot(1:spn)
+  else
+   allocate(comm_chunk(1:3))
   end if
 
   momtot=0d0;etot=0d0;compen=0d0
   if (overlap) then
+!$omp parallel do private(j,k,element,vcar) collapse(2) reduction(+:etot)
    do k = kl, kr
     do j = jl, jr
      call get_vcar(car_x(:,i,j,k),x3(k),&
                    u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
-! Use Kahan summation algorithm to minimize roundoff error
-     element = vcar*dvol(i,j,k)-compen
+! Use Kahan-Babuska-Neumaier summation algorithm to minimize roundoff error
+     element = vcar*dvol(i,j,k)
+!$omp critical
      tempsum = momtot + element
-     compen = get_compensation(element,tempsum,momtot)
+     compen = get_compensation(compen,element,tempsum,momtot)
      momtot = tempsum ! add up momenta using the Kahan algorithm
-
+!$omp end critical
      etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
      if(gravswitch>0)& ! and gravitational energy
       etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
    end do
+!$omp end parallel do
+   momtot = momtot + compen
   end if
 
   dave = mtot/vol
-  call allreduce_mpi('sum',momtot)
+  comm_chunk(1:3) = momtot(1:3) 
+!  call allreduce_mpi('sum',momtot)
+  call allreduce_mpi('sum',comm_chunk)
+  momtot = comm_chunk(1:3)
   vave = momtot/mtot ! get average cartesian velocity
 
+  if(compswitch>=2.and.overlap)then
+   spctot(1:spn) = comm_chunk(4:spn+3)
+!$omp parallel do private(n)
+   do n = 1, spn
+    spc(n,i,jl:jr,kl:kr) = spctot(n) / mtot    
+   end do
+!$omp end parallel do
+  end if
+
   if (overlap) then
+!$omp parallel do private(j,k) collapse(2)
    do k = kl, kr
     do j = jl, jr
      u(i,j,k,icnt) = dave ! density
@@ -393,6 +481,7 @@ contains
       etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
    end do
+!$omp end parallel do
   end if
 
   call allreduce_mpi('sum',etot)
@@ -507,9 +596,9 @@ contains
   real(8):: c
 
   if(abs(s)>=abs(y))then
-   c = (s-t)+y
+   c = c+(s-t)+y
   else
-   c = (y-t)+s
+   c = c+(y-t)+s
   end if
 
  end function get_compensation
