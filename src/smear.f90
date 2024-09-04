@@ -409,9 +409,7 @@ contains
 !$omp do private(i,j,k) collapse(3) reduction(+:arr_sum)
      do k = kl, kr
       do j = jl, jr
-       do i = il, ir
-        arr_sum = arr_sum + u(i,j,k,icnt)*dvol(i,j,k)*spc(n,i,j,k)
-       end do
+       arr_sum = arr_sum + u(i,j,k,icnt)*dvol(i,j,k)*spc(n,i,j,k)
       end do
      end do
 !$omp end do
@@ -590,15 +588,15 @@ contains
 
  end subroutine angular_smear_grav_global
 
- pure elemental function get_compensation(y,t,s) result(c)
+ pure elemental function get_compensation(c0,y,t,s) result(c)
 ! Get compensation term for the Kahan-Babuska-Neumaier method
-  real(8),intent(in):: y,t,s
+  real(8),intent(in):: c0,y,t,s
   real(8):: c
 
   if(abs(s)>=abs(y))then
-   c = c+(s-t)+y
+   c = c0+(s-t)+y
   else
-   c = c+(y-t)+s
+   c = c0+(y-t)+s
   end if
 
  end function get_compensation
