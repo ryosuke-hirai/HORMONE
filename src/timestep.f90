@@ -21,11 +21,12 @@ contains
   use grid
   use physval
   use gravmod,only:gravswitch,dtgrav,cgrav,cgrav2
+  use smear_mod
   use profiler_mod
 
   real(8),allocatable,dimension(:,:,:):: dti,dtg
   real(8):: cfmax0,cfmax
-  integer:: i,j,k,n,jb,kb,il,ir
+  integer:: i,j,k,l,n,jb,kb,il,ir
 
 !-------------------------------------------------------------------------
 
@@ -67,33 +68,21 @@ contains
 
 ! Use longer time step if using nested grids
   if(fmr_max>0.and.crdnt==2)then
-!$omp parallel
-   do n = 1, fmr_max
-    if(fmr_lvl(n)==0)cycle
-    if(n==1)then
-     jb=je_global-js_global+1;kb=ke_global-ks_global+1
-    else
-     jb=min(2**(fmr_max-n+1),je_global) ; kb=min(2**(fmr_max-n+1),ke_global)
+!$omp parallel do private(i,j,k,l,jb,kb) schedule(dynamic)
+   do n = 1, nsmear
+    l = lijk_from_id(0,n)
+    if(fmr_lvl(l)==0)cycle
+    i = lijk_from_id(1,n)
+    j = lijk_from_id(2,n)
+    k = lijk_from_id(3,n)
+    jb = block_j(l)
+    kb = block_k(l)
+    if(partially_my_domain(i,j,k,1,jb,kb))then
+     call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+     if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
     end if
-    ! These need to be computed before the loop,
-    ! or else ifort+omp will give incorrect results
-    il = sum(fmr_lvl(0:n-1))
-    ir = sum(fmr_lvl(0:n))-1
-!$omp do private(i,j,k) collapse(3)
-    do k = ks_global, ke_global, kb
-     do j = js_global, je_global, jb
-      do i = is_global+il, is_global+ir
-! update dti if any of the four corners of the block is in the domain
-       if(partially_my_domain(i,j,k,0,jb,kb))then
-        call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-        if(gravswitch==3)call dtgrav_cell(i,j,k,dtg,cgrav,jb=jb,kb=kb)
-       endif
-      end do
-     end do
-    end do
-!$omp end do
    end do
-!$omp end parallel
+!$omp end parallel do
   end if
 
   dt = courant * minval(dti)

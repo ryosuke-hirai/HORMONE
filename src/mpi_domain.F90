@@ -636,17 +636,18 @@ module mpi_domain
    end function is_my_domain
 
    logical function partially_my_domain(i,j,k,ib,jb,kb)
+      use grid,only:is,ie,js,je,ks,ke
       integer, intent(in) :: i, j, k, ib, jb, kb
+      integer:: ibe, jbe, kbe
+
+      ibe = i+ib-1
+      jbe = j+jb-1
+      kbe = k+kb-1
 
       partially_my_domain = &
-          is_my_domain(i     ,j     ,k     ).or.&
-          is_my_domain(i     ,j+jb-1,k     ).or.&
-          is_my_domain(i     ,j     ,k+kb-1).or.&
-          is_my_domain(i     ,j+jb-1,k+kb-1).or.&
-          is_my_domain(i+ib-1,j     ,k     ).or.&
-          is_my_domain(i+ib-1,j+jb-1,k     ).or.&
-          is_my_domain(i+ib-1,j     ,k+kb-1).or.&
-          is_my_domain(i+ib-1,j+jb-1,k+kb-1)
+       (ibe>=is.and.i<=ie).and.&
+       (jbe>=js.and.j<=je).and.&
+       (kbe>=ks.and.k<=ke)
 
    end function partially_my_domain
 
@@ -684,6 +685,7 @@ module mpi_domain
       kr = min(ke_,ke)
 
       arr_sum = 0d0
+      if(partially_my_domain(is_,js_,ks_,ie_-is_+1,je_-js_+1,ke_-ks_+1))then
       if (present(weight)) then
 !$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
        do k = kl, kr
@@ -694,8 +696,6 @@ module mpi_domain
         end do
        end do
 !$omp end parallel do
-!         arr_sum = sum(array(il:ir, jl:jr, kl:kr) &
-!                     * weight(il:ir, jl:jr, kl:kr) )
       else
 !$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
        do k = kl, kr
@@ -706,8 +706,9 @@ module mpi_domain
         end do
        end do
 !$omp end parallel do
-!         arr_sum = sum(array(il:ir, jl:jr, kl:kr))
       endif
+      end if
+
       call allreduce_mpi('sum', arr_sum)
 
     end function sum_global_array_scalar
@@ -744,33 +745,27 @@ module mpi_domain
          end do
         end do
 !$omp end parallel do
-!!$         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
-!!$                     * weight(il:ir, jl:jr, kl:kr) &
-!!$         * weight2(l_weight2, il:ir, jl:jr, kl:kr) )
-         else
+       else
 !$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
-          do k = kl, kr
-           do j = jl, jr
-            do i = il, ir
-             arr_sum = arr_sum + array(i,j,k,l_array)*weight(i,j,k)
-            end do
-           end do
+        do k = kl, kr
+         do j = jl, jr
+          do i = il, ir
+           arr_sum = arr_sum + array(i,j,k,l_array)*weight(i,j,k)
           end do
+         end do
+        end do
 !$omp end parallel do
-!!$        arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
-!!$                     * weight(il:ir, jl:jr, kl:kr) )
-         end if
-        else
+       end if
+      else
 !$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
-         do k = kl, kr
-          do j = jl, jr
-            do i = il, ir
-             arr_sum = arr_sum + array(i,j,k,l_array)
-            end do
-           end do
-          end do
+       do k = kl, kr
+        do j = jl, jr
+         do i = il, ir
+          arr_sum = arr_sum + array(i,j,k,l_array)
+         end do
+        end do
+       end do
 !$omp end parallel do
-!         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) )
       end if
       call allreduce_mpi('sum', arr_sum)
 
