@@ -308,7 +308,7 @@ contains
   integer,intent(in)::i,js_,je_,ks_,ke_
   integer:: n,j,k,jl,jr,kl,kr
   real(8):: mtot, etot, vol, dave, arr_sum
-  real(8),allocatable:: spctot(:),mpi_parcel(:)
+  real(8),allocatable:: spctot(:)
   real(8),dimension(1:3):: momtot, compen, tempsum, element, vcar, vave
   logical:: overlap
 
