@@ -26,7 +26,7 @@ contains
 
   real(8),allocatable,dimension(:,:,:):: dti,dtg
   real(8):: cfmax0,cfmax
-  integer:: i,j,k,l,n,jb,kb,il,ir
+  integer:: i,j,k,l,n,jb,kb
 
 !-------------------------------------------------------------------------
 
