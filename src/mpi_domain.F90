@@ -636,17 +636,18 @@ module mpi_domain
    end function is_my_domain
 
    logical function partially_my_domain(i,j,k,ib,jb,kb)
+      use grid,only:is,ie,js,je,ks,ke
       integer, intent(in) :: i, j, k, ib, jb, kb
+      integer:: ibe, jbe, kbe
+
+      ibe = i+ib-1
+      jbe = j+jb-1
+      kbe = k+kb-1
 
       partially_my_domain = &
-          is_my_domain(i     ,j     ,k     ).or.&
-          is_my_domain(i     ,j+jb-1,k     ).or.&
-          is_my_domain(i     ,j     ,k+kb-1).or.&
-          is_my_domain(i     ,j+jb-1,k+kb-1).or.&
-          is_my_domain(i+ib-1,j     ,k     ).or.&
-          is_my_domain(i+ib-1,j+jb-1,k     ).or.&
-          is_my_domain(i+ib-1,j     ,k+kb-1).or.&
-          is_my_domain(i+ib-1,j+jb-1,k+kb-1)
+       (ibe>=is.and.i<=ie).and.&
+       (jbe>=js.and.j<=je).and.&
+       (kbe>=ks.and.k<=ke)
 
    end function partially_my_domain
 
@@ -674,7 +675,7 @@ module mpi_domain
       real(8), intent(in), allocatable :: array(:,:,:)
       real(8), intent(in), allocatable, optional :: weight(:,:,:)
       real(8) :: arr_sum
-      integer :: il,ir,jl,jr,kl,kr
+      integer :: il,ir,jl,jr,kl,kr,i,j,k
 
       il = max(is_,is)
       ir = min(ie_,ie)
@@ -683,12 +684,31 @@ module mpi_domain
       kl = max(ks_,ks)
       kr = min(ke_,ke)
 
+      arr_sum = 0d0
+      if(partially_my_domain(is_,js_,ks_,ie_-is_+1,je_-js_+1,ke_-ks_+1))then
       if (present(weight)) then
-         arr_sum = sum(array(il:ir, jl:jr, kl:kr) &
-                     * weight(il:ir, jl:jr, kl:kr) )
+!$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
+       do k = kl, kr
+        do j = jl, jr
+         do i = il, ir
+          arr_sum = arr_sum + array(i,j,k)*weight(i,j,k)
+         end do
+        end do
+       end do
+!$omp end parallel do
       else
-         arr_sum = sum(array(il:ir, jl:jr, kl:kr))
+!$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
+       do k = kl, kr
+        do j = jl, jr
+         do i = il, ir
+          arr_sum = arr_sum + array(i,j,k)
+         end do
+        end do
+       end do
+!$omp end parallel do
       endif
+      end if
+
       call allreduce_mpi('sum', arr_sum)
 
     end function sum_global_array_scalar
@@ -703,7 +723,7 @@ module mpi_domain
       real(8), intent(in), allocatable :: array(:,:,:,:)
       real(8), intent(in), allocatable, optional :: weight(:,:,:), weight2(:,:,:,:)
       real(8) :: arr_sum
-      integer :: il,ir,jl,jr,kl,kr
+      integer :: il,ir,jl,jr,kl,kr,i,j,k
 
       il = max(is_,is)
       ir = min(ie_,ie)
@@ -712,18 +732,41 @@ module mpi_domain
       kl = max(ks_,ks)
       kr = min(ke_,ke)
 
+      arr_sum = 0d0
       if (present(weight)) then
-         if (present(weight2)) then
-         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
-                     * weight(il:ir, jl:jr, kl:kr) &
-         * weight2(l_weight2, il:ir, jl:jr, kl:kr) )
-         else
-         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) &
-                     * weight(il:ir, jl:jr, kl:kr) )
-         endif
+       if (present(weight2)) then
+!$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
+        do k = kl, kr
+         do j = jl, jr
+          do i = il, ir
+           arr_sum = arr_sum + array(i,j,k,l_array) &
+                              *weight(i,j,k)*weight2(l_weight2,i,j,k)
+          end do
+         end do
+        end do
+!$omp end parallel do
+       else
+!$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
+        do k = kl, kr
+         do j = jl, jr
+          do i = il, ir
+           arr_sum = arr_sum + array(i,j,k,l_array)*weight(i,j,k)
+          end do
+         end do
+        end do
+!$omp end parallel do
+       end if
       else
-         arr_sum = sum( array(il:ir, jl:jr, kl:kr, l_array) )
-      endif
+!$omp parallel do private(i,j,k) collapse(3) reduction(+:arr_sum)
+       do k = kl, kr
+        do j = jl, jr
+         do i = il, ir
+          arr_sum = arr_sum + array(i,j,k,l_array)
+         end do
+        end do
+       end do
+!$omp end parallel do
+      end if
       call allreduce_mpi('sum', arr_sum)
 
     end function sum_global_array_spc
