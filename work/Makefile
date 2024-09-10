@@ -20,7 +20,8 @@ endif
 
 ifeq (${FC},ifx)
 ifeq (${MPI},yes)
-$(error "MPI not supported for ifx")
+override FC := mpiifx
+FPPFLAG += -DMPI
 endif
 MODFLAG= -module # trailing space is important
 FCFLAG:= $(CFLAG) -qopenmp -fp-model precise #-heap-arrays

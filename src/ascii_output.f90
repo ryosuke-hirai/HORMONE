@@ -70,8 +70,8 @@ program write_ascii
 ! Start initial setup
   call allocations
 
-  outtn = 0
-  outtime = 0d0
+  outtn = start
+  outtime = dble(start)*dt_unit_in_sec
   do
    call set_file_name('bin',outtn,outtime,file)
    print*,'Reading ',file
