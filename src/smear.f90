@@ -149,7 +149,6 @@ contains
     do n = 1, nsmear
      if(smeared(n)==0)then
       l = lijk_from_id(0,n)
-      if(fmr_lvl(l)==0)cycle
       i = lijk_from_id(1,n)
       j = lijk_from_id(2,n)
       k = lijk_from_id(3,n)
@@ -324,27 +323,25 @@ contains
 ! First smear chemical elements
   if(compswitch>=2)then
    allocate(spctot(1:spn))
-!$omp parallel
    do n = 1, spn
     arr_sum = 0d0
     if(overlap)then
-!$omp do private(j,k) collapse(2) reduction(+:arr_sum)
+!$omp parallel do private(j,k) collapse(2) reduction(+:arr_sum)
      do k = kl, kr
       do j = jl, jr
        arr_sum = arr_sum + u(i,j,k,icnt)*dvol(i,j,k)*spc(n,i,j,k)
       end do
      end do
-!$omp end do
+!$omp end parallel do
     end if
     spctot(n) = arr_sum
    end do
-!$omp end parallel
   end if
   call allreduce_mpi('sum',spctot)
   if(compswitch>=2.and.overlap)then
 !$omp parallel do private(n)
    do n = 1, spn
-    spc(n,i,jl:jr,kl:kr) = spctot(n) / mtot    
+    spc(n,i,jl:jr,kl:kr) = spctot(n) / mtot
    end do
 !$omp end parallel do
   end if
