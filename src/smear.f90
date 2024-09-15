@@ -2,10 +2,10 @@ module smear_mod
  implicit none
 
  public:: smear_setup,smear
- private:: angular_smear,angular_smear_global
 
- integer,public:: nsmear
+ integer,public:: nsmear, nsmear_mydom, nsmear_split
  integer,allocatable,public:: block_j(:),block_k(:),lijk_from_id(:,:)
+ integer,allocatable,private:: list_split(:),list_mydom(:,:)
  real(8),allocatable,private:: dvol_block(:)
 
 contains
@@ -22,8 +22,11 @@ contains
 
   use grid,only:is_global,js_global,je_global,ks_global,ke_global,&
                 fmr_max,fmr_lvl,crdnt,dvol
+  use mpi_domain,only:fully_my_domain,partially_my_domain
+  use mpi_utils,only:allreduce_mpi
 
-  integer:: n,i,j,k,jb,kb
+  integer:: n,nn,i,j,k,jb,kb
+  integer,allocatable:: temp1(:),temp2(:)
 
 !-----------------------------------------------------------------------------
 
@@ -56,7 +59,9 @@ contains
    end do
 
 ! Record effective cell properties
-   allocate(dvol_block(1:nsmear),lijk_from_id(0:3,1:nsmear))
+   allocate(dvol_block(1:nsmear),lijk_from_id(0:3,1:nsmear),temp1(1:nsmear))
+   allocate(temp2,mold=temp1)
+   nsmear_mydom = 0
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
     jb = block_j(n)
@@ -69,9 +74,39 @@ contains
        lijk_from_id(1,get_id(i,j,k)) = i
        lijk_from_id(2,get_id(i,j,k)) = j
        lijk_from_id(3,get_id(i,j,k)) = k
+       if(partially_my_domain(i,j,k,1,jb,kb))then
+        nsmear_mydom = nsmear_mydom+1
+        temp1(nsmear_mydom) = get_id(i,j,k)
+       end if
+       if(fully_my_domain(i,j,k,1,jb,kb))then
+        temp2(get_id(i,j,k)) = 1
+       end if
       end do
      end do
     end do
+   end do
+
+! Record list of effective cells that are covered by my domain
+   allocate(list_mydom(1:2,1:nsmear_mydom))
+   list_mydom(1,1:nsmear_mydom) = temp1(1:nsmear_mydom)
+   list_mydom(2,1:nsmear_mydom) = 0
+
+! Record list of effective cells that are split over multiple MPI ranks
+   call allreduce_mpi('sum',temp2)
+   nsmear_split = nsmear - sum(temp2)
+   allocate(list_split(1:nsmear_split))
+   nsmear_split = 0
+   do n = 1, nsmear
+    if(temp2(n)==0)then
+     nsmear_split = nsmear_split + 1
+     do nn = 1, nsmear_mydom
+      if(list_mydom(1,nn)==n)then
+       list_mydom(2,nn) = nsmear_split
+       list_split(nsmear_split) = nn
+       exit
+      end if
+     end do
+    end if
    end do
 
   end if
@@ -81,7 +116,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                           SUBROUTINE SMEAR
+!                             SUBROUTINE SMEAR
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -89,14 +124,16 @@ contains
 
  subroutine smear(which)
 
-  use grid,only:fmr_max,fmr_lvl,dim,crdnt
+  use settings,only:spn,compswitch
+  use grid,only:fmr_max,dim,crdnt
   use profiler_mod
-  use mpi_domain,only:fully_my_domain
   use mpi_utils,only:allreduce_mpi
 
   character(len=*),intent(in):: which
-  integer:: i,j,k,l,n,jb,kb,wtind,wtin2
-  integer,allocatable:: smeared(:)
+  integer:: i,j,k,l,n,nn,m,jb,kb,wtind,wtin2
+  real(8),allocatable,dimension(:,:):: exchange,momtot,spctot
+  real(8),allocatable,dimension(:):: spctot1,mtot,etot,phitot,psitot
+  real(8):: mtot1,momtot1(1:3),etot1,phitot1,psitot1
 
 !-----------------------------------------------------------------------------
 
@@ -108,65 +145,137 @@ contains
   select case(which)
   case('hydro')
    wtind = wtsmr ; wtin2 = wtsm2
+   allocate(exchange(4+spn,max(nsmear_split,1)),spctot1(max(spn,1)),&
+            mtot(nsmear_mydom),etot(nsmear_mydom),momtot(3,nsmear_mydom),&
+            spctot(max(spn,1),nsmear_mydom))
   case('grav')
    wtind = wtgsm ; wtin2 = wtgs2
+   allocate(exchange(2,max(nsmear_split,1)),&
+            phitot(nsmear_mydom),psitot(nsmear_mydom))
   end select
+  exchange = 0d0
 
   call start_clock(wtind)
 
   if(crdnt==2)then
 
-   allocate( smeared(1:nsmear) )
-   smeared = 0
-
-! First sweep
-!$omp parallel do private(i,j,k,l,jb,kb) schedule(dynamic)
-   do n = 1, nsmear
+! First sweep ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!$omp parallel do private(i,j,k,l,n,nn,m,jb,kb,mtot1,momtot1,etot1,spctot1,&
+!$omp phitot1,psitot1) schedule(dynamic,1)
+   do nn = 1, nsmear_mydom
+    n = list_mydom(1,nn)
     l = lijk_from_id(0,n)
-    if(fmr_lvl(l)==0)cycle
     i = lijk_from_id(1,n)
     j = lijk_from_id(2,n)
     k = lijk_from_id(3,n)
     jb = block_j(l)
     kb = block_k(l)
-    if(fully_my_domain(i,j,k,1,jb,kb))then
-     select case(which)
-     case('hydro')
-      call angular_smear(i,j,j+jb-1,k,k+kb-1)
-     case('grav')
-      call angular_smear_grav(i,j,j+jb-1,k,k+kb-1)
-     end select
-     smeared(n) = 1
-    end if
+    select case(which)
+    case('hydro')
+     call angular_sums(i,j,j+jb-1,k,k+kb-1,mtot1,momtot1,etot1,spctot1)
+     mtot(nn) = mtot1
+     momtot(1:3,nn) = momtot1(1:3)
+     etot(nn) = etot1
+     if(compswitch>=2) spctot(1:spn,nn) = spctot1(1:spn)
+
+     if(list_mydom(2,nn)>0)then
+      m = list_mydom(2,nn)
+      exchange(1,m) = mtot(nn)
+      exchange(2:4,m) = momtot(1:3,nn)
+      if(compswitch>=2) exchange(5:4+spn,m) = spctot(1:spn,nn)
+     end if
+
+    case('grav')
+     call angular_sums_grav(i,j,j+jb-1,k,k+kb-1,phitot1,psitot1)
+     phitot(nn) = phitot1
+     psitot(nn) = psitot1
+     if(list_mydom(2,nn)>0)then
+      m = list_mydom(2,nn)
+      exchange(1,m) = phitot(nn)
+      exchange(2,m) = psitot(nn)
+     end if
+
+    end select
    end do
 !$omp end parallel do
 
-   call allreduce_mpi('sum',smeared)
-
-! Second sweep (for effective cells that span over multiple MPI ranks)
-   if(minval(smeared)==0)then
+! Reduce summed variables over all MPI ranks for split cells
+   if(nsmear_split>0)then
     call start_clock(wtin2)
-    do n = 1, nsmear
-     if(smeared(n)==0)then
-      l = lijk_from_id(0,n)
-      if(fmr_lvl(l)==0)cycle
-      i = lijk_from_id(1,n)
-      j = lijk_from_id(2,n)
-      k = lijk_from_id(3,n)
-      jb = block_j(l)
-      kb = block_k(l)
+    call allreduce_mpi('sum',exchange)
+!$omp parallel do private(nn,n) schedule(dynamic,1)
+    do nn = 1, nsmear_split
+     n = list_split(nn)
+     if(n>0)then
       select case(which)
       case('hydro')
-       call angular_smear_global(i,j,j+jb-1,k,k+kb-1)
+       mtot(n) = exchange(1,nn)
+       momtot(1:3,n) = exchange(2:4,nn)
+       if(compswitch>=2) spctot(1:spn,n) = exchange(5:4+spn,nn)
       case('grav')
-       call angular_smear_grav_global(i,j,j+jb-1,k,k+kb-1)
+       phitot(n) = exchange(1,nn)
+       psitot(n) = exchange(2,nn)
       end select
      end if
     end do
+!$omp end parallel do
+    if(which=='hydro')then
+     deallocate(exchange)
+     allocate(exchange(1,nsmear_split))
+!$omp parallel workshare
+     exchange = 0d0
+!$omp end parallel workshare
+    end if
     call stop_clock(wtin2)
    end if
 
-   deallocate(smeared)
+! Second sweep (for effective cells that span over multiple MPI ranks) +++++++
+!$omp parallel do private(n,nn,i,j,k,l,m,jb,kb) schedule(dynamic,1)
+   do nn = 1, nsmear_mydom
+    n = list_mydom(1,nn)
+    l = lijk_from_id(0,n)
+    i = lijk_from_id(1,n)
+    j = lijk_from_id(2,n)
+    k = lijk_from_id(3,n)
+    jb = block_j(l)
+    kb = block_k(l)
+    select case(which)
+    case('hydro')
+     call angular_smear_hydro(i,j,j+jb-1,k,k+kb-1,&
+                              mtot(nn),momtot(1:3,nn),etot(nn),&
+                              spctot(1:max(spn,1),nn))
+     if(list_mydom(2,nn)>0)then
+      m = list_mydom(2,nn)
+      exchange(1,m) = etot(nn)
+     end if
+
+    case('grav')
+     call angular_smear_grav(i,j,j+jb-1,k,k+kb-1,phitot(nn),psitot(nn))
+    end select
+   end do
+!$omp end parallel do
+
+   if(which=='hydro')then
+    call allreduce_mpi('sum',exchange)
+    if(nsmear_split>0)then
+     do nn = 1, nsmear_split
+      n = list_split(nn)
+      if(n>0)etot(n) = exchange(1,nn)
+     end do
+    end if
+!$omp parallel do private(nn,n,i,j,k,l,jb,kb) schedule(dynamic,1)
+    do nn = 1, nsmear_mydom
+     n = list_mydom(1,nn)
+     l = lijk_from_id(0,n)
+     i = lijk_from_id(1,n)
+     j = lijk_from_id(2,n)
+     k = lijk_from_id(3,n)
+     jb = block_j(l)
+     kb = block_k(l)
+     call angular_smear_e(i,j,j+jb-1,k,k+kb-1,etot(nn))
+    end do
+!$omp end parallel do
+   end if
 
   end if
 
@@ -210,45 +319,132 @@ contains
   return
  end function get_id
 
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE ANGULAR_SMEAR
+!                     SUBROUTINE ANGULAR_SMEAR_E
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Average out energy over several cells in the jk direction
+
+ subroutine angular_smear_e(i,js_,je_,ks_,ke_,etot)
+
+  use grid,only:js,je,ks,ke
+  use physval,only:u,iene
+
+  integer,intent(in):: i,js_,je_,ks_,ke_
+  real(8),intent(in)::etot
+  real(8):: vol
+  integer:: jl,jr,kl,kr
+
+!-----------------------------------------------------------------------------
+
+  jl = max(js_,js); jr = min(je_,je)
+  kl = max(ks_,ks); kr = min(ke_,ke)
+
+  vol = dvol_block(get_id(i,js_,ks_))
+
+  u(i,jl:jr,kl:kr,iene) = etot / vol  
+  
+ end subroutine angular_smear_e
+ 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                     SUBROUTINE ANGULAR_SMEAR_HYDRO
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Average out hydro quantities over several cells in the jk direction
 
- subroutine angular_smear(i,js_,je_,ks_,ke_)
+ subroutine angular_smear_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
 
   use settings,only:spn,compswitch
-  use grid,only:x3,dvol,car_x
-  use physval,only:u,spc,v1,v2,v3,icnt,iene,imo1,imo2,imo3
+  use grid,only:x3,dvol,car_x,js,je,ks,ke
+  use physval,only:u,spc,v1,v2,v3,icnt,imo1,imo2,imo3
   use utils
   use gravmod,only:totphi,gravswitch
 
   implicit none
 
   integer,intent(in)::i,js_,je_,ks_,ke_
-  integer:: n,j,k
-  real(8):: mtot, etot, spctot, vol, dave
-  real(8),dimension(1:3):: momtot, compen, tempsum, element, vcar, vave
+  real(8),intent(in):: mtot,momtot(1:3),spctot(1:max(spn,1))
+  real(8),intent(inout):: etot
+  integer:: n,j,k,jl,jr,kl,kr
+  real(8):: vol, dave, vave(1:3)
 
 !-----------------------------------------------------------------------------
 
+  jl = max(js_,js); jr = min(je_,je)
+  kl = max(ks_,ks); kr = min(ke_,ke)
+
   vol = dvol_block(get_id(i,js_,ks_))
-  mtot = sum(u(i,js_:je_,ks_:ke_,icnt)*dvol(i,js_:je_,ks_:ke_))
+  dave = mtot/vol    ! get average density
+  vave = momtot/mtot ! get average cartesian velocity
 
   if(compswitch>=2)then
    do n = 1, spn
-    spctot = sum(spc(n,i,js_:je_,ks_:ke_)*u(i,js_:je_,ks_:ke_,icnt)&
-                                         *dvol(i,js_:je_,ks_:ke_))
-    spc(n,i,js_:je_,ks_:ke_) = spctot / mtot
+    spc(n,i,jl:jr,kl:kr) = spctot(n) / mtot
+   end do
+  end if
+  
+  do k = kl, kr
+   do j = jl, jr
+    u(i,j,k,icnt) = dave ! density
+    call get_vpol(car_x(:,i,j,k),x3(k),vave,&
+                  v1(i,j,k),v2(i,j,k),v3(i,j,k))
+    u(i,j,k,imo1) = v1(i,j,k)*dave
+    u(i,j,k,imo2) = v2(i,j,k)*dave
+    u(i,j,k,imo3) = v3(i,j,k)*dave
+    if(gravswitch>0)&
+     etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+   end do
+  end do
+
+ end subroutine angular_smear_hydro
+ 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE ANGULAR_SUMS
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To integrate total mass/momentum/energy/species over effective cells
+
+ subroutine angular_sums(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
+
+  use settings,only:spn,compswitch
+  use grid,only:x3,dvol,car_x,js,je,ks,ke
+  use physval,only:u,spc,icnt,iene,imo1,imo2,imo3
+  use utils
+  use gravmod,only:totphi,gravswitch
+
+  implicit none
+
+  integer,intent(in)::i,js_,je_,ks_,ke_
+  real(8),intent(out):: mtot,momtot(1:3),etot
+  real(8),allocatable,intent(inout):: spctot(:)
+  integer:: n,j,k,jl,jr,kl,kr
+  real(8),dimension(1:3):: compen, tempsum, element, vcar
+
+!-----------------------------------------------------------------------------
+
+  jl = max(js_,js); jr = min(je_,je)
+  kl = max(ks_,ks); kr = min(ke_,ke)
+
+  mtot = sum(u(i,jl:jr,kl:kr,icnt)*dvol(i,jl:jr,kl:kr))
+
+  if(compswitch>=2)then
+   do n = 1, spn
+    spctot(n) = 0d0
+    spctot(n) = sum(spc(n,i,jl:jr,kl:kr)*u(i,jl:jr,kl:kr,icnt)&
+                                     *dvol(i,jl:jr,kl:kr))
    end do
   end if
 
   momtot=0d0;etot=0d0;compen=0d0
-  do k = ks_, ke_
-   do j = js_, je_
+  do k = kl, kr
+   do j = jl, jr
     call get_vcar(car_x(:,i,j,k),x3(k),&
                   u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
 ! Use Kahan summation algorithm to minimize roundoff error
@@ -264,139 +460,36 @@ contains
   end do
   momtot = momtot + compen
 
-  dave = mtot/vol    ! get average density
-  vave = momtot/mtot ! get average cartesian velocity
-
-  do k = ks_, ke_
-   do j = js_, je_
-    u(i,j,k,icnt) = dave ! density
-    call get_vpol(car_x(:,i,j,k),x3(k),vave,&
-                  v1(i,j,k),v2(i,j,k),v3(i,j,k))
-    u(i,j,k,imo1) = v1(i,j,k)*dave
-    u(i,j,k,imo2) = v2(i,j,k)*dave
-    u(i,j,k,imo3) = v3(i,j,k)*dave
-    if(gravswitch>0)&
-     etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
-   end do
-  end do
-
-  u(i,js_:je_,ks_:ke_,iene) = etot / vol
-
- end subroutine angular_smear
+ end subroutine angular_sums
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                     SUBROUTINE ANGULAR_SMEAR_GLOBAL
+!                      SUBROUTINE ANGULAR_SUMS_GRAV
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: Average out quantities over several cells in the angular direction
-!          Particularly for smearing over multiple MPI ranks
+! PURPOSE: Integrate the gravity quantities over angular effective cells
 
- subroutine angular_smear_global(i,js_,je_,ks_,ke_)
+ subroutine angular_sums_grav(i,js_,je_,ks_,ke_,phitot,psitot)
 
-  use settings,only:spn,compswitch
-  use grid,only:x3,dvol,js,je,ks,ke,car_x
-  use physval,only:u,spc,v1,v2,v3,icnt,iene,imo1,imo2,imo3
-  use utils
-  use gravmod,only:totphi,gravswitch
-  use mpi_utils,only:allreduce_mpi
-  use mpi_domain,only:sum_global_array,partially_my_domain
+  use grid,only:dvol,js,je,ks,ke
+  use gravmod,only:grvphi,grvpsi
 
   implicit none
 
   integer,intent(in)::i,js_,je_,ks_,ke_
-  integer:: n,j,k,jl,jr,kl,kr
-  real(8):: mtot, etot, vol, dave, arr_sum
-  real(8),allocatable:: spctot(:)
-  real(8),dimension(1:3):: momtot, compen, tempsum, element, vcar, vave
-  logical:: overlap
+  real(8),intent(out):: phitot,psitot
+  integer:: jl,jr,kl,kr
 
 !-----------------------------------------------------------------------------
 
   jl = max(js_,js); jr = min(je_,je)
   kl = max(ks_,ks); kr = min(ke_,ke)
-  overlap = partially_my_domain(i,js_,ks_,1,je_-js_+1,ke_-ks_+1)
 
-  vol = dvol_block(get_id(i,js_,ks_))
-  mtot = sum_global_array(u,i,i,js_,je_,ks_,ke_,icnt,weight=dvol)
+  phitot = sum( grvphi(i,jl:jr,kl:kr)*dvol(i,jl:jr,kl:kr) )
+  psitot = sum( grvpsi(i,jl:jr,kl:kr)*dvol(i,jl:jr,kl:kr) )
 
-! First smear chemical elements
-  if(compswitch>=2)then
-   allocate(spctot(1:spn))
-!$omp parallel
-   do n = 1, spn
-    arr_sum = 0d0
-    if(overlap)then
-!$omp do private(j,k) collapse(2) reduction(+:arr_sum)
-     do k = kl, kr
-      do j = jl, jr
-       arr_sum = arr_sum + u(i,j,k,icnt)*dvol(i,j,k)*spc(n,i,j,k)
-      end do
-     end do
-!$omp end do
-    end if
-    spctot(n) = arr_sum
-   end do
-!$omp end parallel
-  end if
-  call allreduce_mpi('sum',spctot)
-  if(compswitch>=2.and.overlap)then
-!$omp parallel do private(n)
-   do n = 1, spn
-    spc(n,i,jl:jr,kl:kr) = spctot(n) / mtot    
-   end do
-!$omp end parallel do
-  end if
-
-  momtot=0d0;etot=0d0;compen=0d0
-  if (overlap) then
-!$omp parallel do private(j,k,vcar,element) collapse(2) reduction(+:etot)
-   do k = kl, kr
-    do j = jl, jr
-     call get_vcar(car_x(:,i,j,k),x3(k),&
-                   u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
-! Use Kahan summation algorithm to minimize roundoff error
-     element = vcar*dvol(i,j,k)!-compen
-!$omp critical
-     tempsum = momtot + element
-     compen = get_compensation(compen,element,tempsum,momtot)
-     momtot = tempsum ! add up momenta using the Kahan algorithm
-!$omp end critical
-     etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
-     if(gravswitch>0)& ! and gravitational energy
-      etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
-    end do
-   end do
-!$omp end parallel do
-   momtot = momtot + compen
-  end if
-
-  dave = mtot/vol
-  call allreduce_mpi('sum',momtot)
-  vave = momtot/mtot ! get average cartesian velocity
-
-  if (overlap) then
-!$omp parallel do private(j,k) collapse(2) reduction(+:etot)
-   do k = kl, kr
-    do j = jl, jr
-     u(i,j,k,icnt) = dave ! density
-     call get_vpol(car_x(:,i,j,k),x3(k),vave,&
-                   v1(i,j,k),v2(i,j,k),v3(i,j,k))
-     u(i,j,k,imo1) = v1(i,j,k)*dave
-     u(i,j,k,imo2) = v2(i,j,k)*dave
-     u(i,j,k,imo3) = v3(i,j,k)*dave
-     if(gravswitch>0)&
-      etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
-    end do
-   end do
-!$omp end parallel do
-  end if
-
-  call allreduce_mpi('sum',etot)
-  if (overlap) u(i,jl:jr,kl:kr,iene) = etot / vol
-
- end subroutine angular_smear_global
+ end subroutine angular_sums_grav
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -404,65 +497,32 @@ contains
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: Average out gravity quantities over several cells in the jk direction
+! PURPOSE: Smear the gravity quantities over angular effective cells
 
- subroutine angular_smear_grav(i,js_,je_,ks_,ke_)
+ subroutine angular_smear_grav(i,js_,je_,ks_,ke_,phitot,psitot)
 
-  use grid,only:dvol
+  use grid,only:js,je,ks,ke
   use gravmod,only:grvphi,grvpsi
 
   implicit none
 
   integer,intent(in)::i,js_,je_,ks_,ke_
+  real(8),intent(in):: phitot,psitot
+  integer:: jl,jr,kl,kr
   real(8):: vol
 
 !-----------------------------------------------------------------------------
 
+  jl = max(js_,js); jr = min(je_,je)
+  kl = max(ks_,ks); kr = min(ke_,ke)
+
   vol = dvol_block(get_id(i,js_,ks_))
 
-  grvphi(i,js_:je_,ks_:ke_) = sum( grvphi(i,js_:je_,ks_:ke_) &
-                                 * dvol  (i,js_:je_,ks_:ke_) ) / vol
-  grvpsi(i,js_:je_,ks_:ke_) = sum( grvpsi(i,js_:je_,ks_:ke_) &
-                                 * dvol  (i,js_:je_,ks_:ke_) ) / vol
+  grvphi(i,jl:jr,kl:kr) = phitot / vol
+  grvpsi(i,jl:jr,kl:kr) = psitot / vol
 
  end subroutine angular_smear_grav
 
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!
-!                   SUBROUTINE ANGULAR_SMEAR_GRAV_GLOBAL
-!
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: Average out gravity quantities over several cells in the jk direction
-
- subroutine angular_smear_grav_global(i,js_,je_,ks_,ke_)
-
-  use grid,only:js,je,ks,ke,dvol
-  use gravmod,only:grvphi,grvpsi
-  use mpi_domain,only:sum_global_array,partially_my_domain
-
-  implicit none
-
-  integer,intent(in)::i,js_,je_,ks_,ke_
-  integer:: jl,jr,kl,kr
-  real(8):: vol, phiave, psiave
-
-!-----------------------------------------------------------------------------
-
-  vol = dvol_block(get_id(i,js_,ks_))
-
-  phiave = sum_global_array(grvphi,i,i,js_,je_,ks_,ke_,weight=dvol) / vol
-  psiave = sum_global_array(grvpsi,i,i,js_,je_,ks_,ke_,weight=dvol) / vol
-
-  if(partially_my_domain(i,js_,ks_,1,je_-js_+1,ke_-ks_+1))then
-   jl = max(js_,js); jr = min(je_,je)
-   kl = max(ks_,ks); kr = min(ke_,ke)
-   grvphi(i,jl:jr,kl:kr) = phiave
-   grvpsi(i,jl:jr,kl:kr) = psiave
-  end if
-
- end subroutine angular_smear_grav_global
 
  pure elemental function get_compensation(c0,y,t,s) result(c)
 ! Get compensation term for the Kahan-Babuska-Neumaier method
