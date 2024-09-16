@@ -159,7 +159,7 @@ contains
 
   if(crdnt==2)then
 
-! First sweep ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! Integrate quantities over effective cells ++++++++++++++++++++++++++++++++++
 !$omp parallel do private(i,j,k,l,n,nn,m,jb,kb,mtot1,momtot1,etot1,spctot1,&
 !$omp phitot1,psitot1) schedule(dynamic,1)
    do nn = 1, nsmear_mydom
@@ -172,7 +172,7 @@ contains
     kb = block_k(l)
     select case(which)
     case('hydro')
-     call angular_sums(i,j,j+jb-1,k,k+kb-1,mtot1,momtot1,etot1,spctot1)
+     call angular_sums_hydro(i,j,j+jb-1,k,k+kb-1,mtot1,momtot1,etot1,spctot1)
      mtot(nn) = mtot1
      momtot(1:3,nn) = momtot1(1:3)
      etot(nn) = etot1
@@ -199,7 +199,7 @@ contains
    end do
 !$omp end parallel do
 
-! Reduce summed variables over all MPI ranks for split cells
+! Reduce summed variables over all MPI ranks for split cells +++++++++++++++++
    if(nsmear_split>0)then
     call start_clock(wtin2)
     call allreduce_mpi('sum',exchange)
@@ -229,7 +229,7 @@ contains
     call stop_clock(wtin2)
    end if
 
-! Second sweep (for effective cells that span over multiple MPI ranks) +++++++
+! Average out quantities over effective cells ++++++++++++++++++++++++++++++++
 !$omp parallel do private(n,nn,i,j,k,l,m,jb,kb) schedule(dynamic,1)
    do nn = 1, nsmear_mydom
     n = list_mydom(1,nn)
@@ -255,6 +255,7 @@ contains
    end do
 !$omp end parallel do
 
+! Adjust energy over effective cells +++++++++++++++++++++++++++++++++++++++++
    if(which=='hydro')then
     call allreduce_mpi('sum',exchange)
     if(nsmear_split>0)then
@@ -322,7 +323,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                     SUBROUTINE ANGULAR_SMEAR_E
+!                       SUBROUTINE ANGULAR_SMEAR_E
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -362,7 +363,7 @@ contains
   use settings,only:spn,compswitch
   use grid,only:x3,dvol,car_x,js,je,ks,ke
   use physval,only:u,spc,v1,v2,v3,icnt,imo1,imo2,imo3
-  use utils
+  use utils,only:get_vpol
   use gravmod,only:totphi,gravswitch
 
   implicit none
@@ -405,13 +406,13 @@ contains
  
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                          SUBROUTINE ANGULAR_SUMS
+!                      SUBROUTINE ANGULAR_SUMS_HYDRO
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To integrate total mass/momentum/energy/species over effective cells
 
- subroutine angular_sums(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
+ subroutine angular_sums_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
 
   use settings,only:spn,compswitch
   use grid,only:x3,dvol,car_x,js,je,ks,ke
@@ -436,7 +437,6 @@ contains
 
   if(compswitch>=2)then
    do n = 1, spn
-    spctot(n) = 0d0
     spctot(n) = sum(spc(n,i,jl:jr,kl:kr)*u(i,jl:jr,kl:kr,icnt)&
                                      *dvol(i,jl:jr,kl:kr))
    end do
@@ -460,7 +460,7 @@ contains
   end do
   momtot = momtot + compen
 
- end subroutine angular_sums
+ end subroutine angular_sums_hydro
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
