@@ -18,7 +18,6 @@ subroutine sedov
  use physval
  use pressure_mod,only:eos_p
  use input_mod,only:error_extras,error_nml
- use mpi_domain,only:sum_global_array
 
  real(8):: damb, Eexp, ein, pin, pamb, Tin, imuconst
  real(8):: vol_inj, vol_tot

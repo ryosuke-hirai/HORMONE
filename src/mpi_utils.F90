@@ -7,6 +7,7 @@ module mpi_utils
   interface allreduce_mpi
     module procedure allreduce_mpi_real8
     module procedure allreduce_mpi_real8_array
+    module procedure allreduce_mpi_real8_2darray
     module procedure allreduce_mpi_int4
     module procedure allreduce_mpi_int4_array
   end interface allreduce_mpi
@@ -107,6 +108,43 @@ module mpi_utils
 
   end subroutine allreduce_mpi_real8_array
 
+  subroutine allreduce_mpi_real8_2darray(op_str, value)
+    character(len=*), intent(in) :: op_str
+    real(8), intent(inout) :: value(:,:)
+
+#ifdef MPI
+    real(8), allocatable :: value_reduced(:,:)
+    integer :: op, ierr
+
+    allocate(value_reduced,mold=value)
+
+    select case (op_str)
+    case ('sum')
+      op = MPI_SUM
+    case ('max')
+      op = MPI_MAX
+    case ('min')
+      op = MPI_MIN
+    case default
+      error stop "Invalid operation specified"
+    end select
+
+    call MPI_ALLREDUCE(value, value_reduced, size(value), MPI_REAL8, op, MPI_COMM_WORLD, ierr)
+    value = value_reduced
+
+    deallocate(value_reduced)
+#else
+    ! Check if operation is valid, but do nothing
+    select case (op_str)
+    case ('sum', 'max', 'min')
+      value = value
+    case default
+      error stop "Invalid operation specified"
+    end select
+#endif
+
+  end subroutine allreduce_mpi_real8_2darray
+  
   subroutine allreduce_mpi_int4(op_str, value)
     character(len=*), intent(in) :: op_str
     integer, intent(inout) :: value

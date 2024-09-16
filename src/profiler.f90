@@ -178,7 +178,6 @@ subroutine start_clock(i)
 
 !-----------------------------------------------------------------------------
 
- if(i==18) print*,i,routine_name(i),parent(i),clock_on(i)
  if(clock_on(i))then
   print*,"Error in start_clock"
   print*,'category: ',routine_name(i)
