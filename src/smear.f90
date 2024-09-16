@@ -2,8 +2,12 @@ module smear_mod
  implicit none
 
  public:: smear_setup,smear
+ private:: angular_sums_hydro,angular_sums_grav,&
+           angular_smear_hydro,angular_smear_grav,angular_smear_e,&
+           get_compensation,get_id
 
- integer,public:: nsmear, nsmear_mydom, nsmear_split
+ integer,public:: nsmear
+ integer,private:: nsmear_mydom, nsmear_split
  integer,allocatable,public:: block_j(:),block_k(:),lijk_from_id(:,:)
  integer,allocatable,private:: list_split(:),list_mydom(:,:)
  real(8),allocatable,private:: dvol_block(:)
@@ -366,8 +370,6 @@ contains
   use utils,only:get_vpol
   use gravmod,only:totphi,gravswitch
 
-  implicit none
-
   integer,intent(in)::i,js_,je_,ks_,ke_
   real(8),intent(in):: mtot,momtot(1:3),spctot(1:max(spn,1))
   real(8),intent(inout):: etot
@@ -419,8 +421,6 @@ contains
   use physval,only:u,spc,icnt,iene,imo1,imo2,imo3
   use utils
   use gravmod,only:totphi,gravswitch
-
-  implicit none
 
   integer,intent(in)::i,js_,je_,ks_,ke_
   real(8),intent(out):: mtot,momtot(1:3),etot
@@ -475,8 +475,6 @@ contains
   use grid,only:dvol,js,je,ks,ke
   use gravmod,only:grvphi,grvpsi
 
-  implicit none
-
   integer,intent(in)::i,js_,je_,ks_,ke_
   real(8),intent(out):: phitot,psitot
   integer:: jl,jr,kl,kr
@@ -503,8 +501,6 @@ contains
 
   use grid,only:js,je,ks,ke
   use gravmod,only:grvphi,grvpsi
-
-  implicit none
 
   integer,intent(in)::i,js_,je_,ks_,ke_
   real(8),intent(in):: phitot,psitot
