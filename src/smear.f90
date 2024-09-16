@@ -121,7 +121,7 @@ contains
     if(fmr_lvl(n)==0)cycle
     jb = block_j(n)
     kb = block_k(n)
-!$omp parallel do private(i,j,k) collapse(3)
+!$omp parallel do private(i,j,k) collapse(3) schedule(dynamic)
     do k = ks_global, ke_global, kb
      do j = js_global, je_global, jb
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
