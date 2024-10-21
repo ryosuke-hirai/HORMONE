@@ -100,6 +100,7 @@ contains
    nsmear_split = nsmear - sum(temp2)
    allocate(list_split(1:nsmear_split))
    nsmear_split = 0
+   list_split = 0
    do n = 1, nsmear
     if(temp2(n)==0)then
      nsmear_split = nsmear_split + 1
@@ -164,44 +165,47 @@ contains
   if(crdnt==2)then
 
 ! Integrate quantities over effective cells ++++++++++++++++++++++++++++++++++
+   if(nsmear_mydom>0)then
 !$omp parallel do private(i,j,k,l,n,nn,m,jb,kb,mtot1,momtot1,etot1,spctot1,&
 !$omp phitot1,psitot1) schedule(dynamic,1)
-   do nn = 1, nsmear_mydom
-    n = list_mydom(1,nn)
-    l = lijk_from_id(0,n)
-    i = lijk_from_id(1,n)
-    j = lijk_from_id(2,n)
-    k = lijk_from_id(3,n)
-    jb = block_j(l)
-    kb = block_k(l)
-    select case(which)
-    case('hydro')
-     call angular_sums_hydro(i,j,j+jb-1,k,k+kb-1,mtot1,momtot1,etot1,spctot1)
-     mtot(nn) = mtot1
-     momtot(1:3,nn) = momtot1(1:3)
-     etot(nn) = etot1
-     if(compswitch>=2) spctot(1:spn,nn) = spctot1(1:spn)
+    do nn = 1, nsmear_mydom
+     n = list_mydom(1,nn)
+     l = lijk_from_id(0,n)
+     i = lijk_from_id(1,n)
+     j = lijk_from_id(2,n)
+     k = lijk_from_id(3,n)
+     jb = block_j(l)
+     kb = block_k(l)
 
-     if(list_mydom(2,nn)>0)then
-      m = list_mydom(2,nn)
-      exchange(1,m) = mtot(nn)
-      exchange(2:4,m) = momtot(1:3,nn)
-      if(compswitch>=2) exchange(5:4+spn,m) = spctot(1:spn,nn)
-     end if
+     select case(which)
+     case('hydro')
+      call angular_sums_hydro(i,j,j+jb-1,k,k+kb-1,mtot1,momtot1,etot1,spctot1)
+      mtot(nn) = mtot1
+      momtot(1:3,nn) = momtot1(1:3)
+      etot(nn) = etot1
+      if(compswitch>=2) spctot(1:spn,nn) = spctot1(1:spn)
 
-    case('grav')
-     call angular_sums_grav(i,j,j+jb-1,k,k+kb-1,phitot1,psitot1)
-     phitot(nn) = phitot1
-     psitot(nn) = psitot1
-     if(list_mydom(2,nn)>0)then
-      m = list_mydom(2,nn)
-      exchange(1,m) = phitot(nn)
-      exchange(2,m) = psitot(nn)
-     end if
+      if(list_mydom(2,nn)>0)then
+       m = list_mydom(2,nn)
+       exchange(1  ,m) = mtot(nn)
+       exchange(2:4,m) = momtot(1:3,nn)
+       if(compswitch>=2) exchange(5:4+spn,m) = spctot(1:spn,nn)
+      end if
 
-    end select
-   end do
+     case('grav')
+      call angular_sums_grav(i,j,j+jb-1,k,k+kb-1,phitot1,psitot1)
+      phitot(nn) = phitot1
+      psitot(nn) = psitot1
+      if(list_mydom(2,nn)>0)then
+       m = list_mydom(2,nn)
+       exchange(1,m) = phitot(nn)
+       exchange(2,m) = psitot(nn)
+      end if
+
+     end select
+    end do
 !$omp end parallel do
+   end if
 
 ! Reduce summed variables over all MPI ranks for split cells +++++++++++++++++
    if(nsmear_split>0)then
@@ -234,41 +238,8 @@ contains
    end if
 
 ! Average out quantities over effective cells ++++++++++++++++++++++++++++++++
+   if(nsmear_mydom>0)then
 !$omp parallel do private(n,nn,i,j,k,l,m,jb,kb) schedule(dynamic,1)
-   do nn = 1, nsmear_mydom
-    n = list_mydom(1,nn)
-    l = lijk_from_id(0,n)
-    i = lijk_from_id(1,n)
-    j = lijk_from_id(2,n)
-    k = lijk_from_id(3,n)
-    jb = block_j(l)
-    kb = block_k(l)
-    select case(which)
-    case('hydro')
-     call angular_smear_hydro(i,j,j+jb-1,k,k+kb-1,&
-                              mtot(nn),momtot(1:3,nn),etot(nn),&
-                              spctot(1:max(spn,1),nn))
-     if(list_mydom(2,nn)>0)then
-      m = list_mydom(2,nn)
-      exchange(1,m) = etot(nn)
-     end if
-
-    case('grav')
-     call angular_smear_grav(i,j,j+jb-1,k,k+kb-1,phitot(nn),psitot(nn))
-    end select
-   end do
-!$omp end parallel do
-
-! Adjust energy over effective cells +++++++++++++++++++++++++++++++++++++++++
-   if(which=='hydro')then
-    call allreduce_mpi('sum',exchange)
-    if(nsmear_split>0)then
-     do nn = 1, nsmear_split
-      n = list_split(nn)
-      if(n>0)etot(n) = exchange(1,nn)
-     end do
-    end if
-!$omp parallel do private(nn,n,i,j,k,l,jb,kb) schedule(dynamic,1)
     do nn = 1, nsmear_mydom
      n = list_mydom(1,nn)
      l = lijk_from_id(0,n)
@@ -277,9 +248,46 @@ contains
      k = lijk_from_id(3,n)
      jb = block_j(l)
      kb = block_k(l)
-     call angular_smear_e(i,j,j+jb-1,k,k+kb-1,etot(nn))
+     select case(which)
+     case('hydro')
+      call angular_smear_hydro(i,j,j+jb-1,k,k+kb-1,&
+                               mtot(nn),momtot(1:3,nn),etot(nn),&
+                               spctot(1:max(spn,1),nn))
+      if(list_mydom(2,nn)>0)then
+       m = list_mydom(2,nn)
+       exchange(1,m) = etot(nn)
+      end if
+
+     case('grav')
+      call angular_smear_grav(i,j,j+jb-1,k,k+kb-1,phitot(nn),psitot(nn))
+     end select
     end do
 !$omp end parallel do
+   end if
+
+! Adjust energy over effective cells +++++++++++++++++++++++++++++++++++++++++
+   if(which=='hydro')then
+    if(nsmear_split>0)then
+     call allreduce_mpi('sum',exchange)
+     do nn = 1, nsmear_split
+      n = list_split(nn)
+      if(n>0)etot(n) = exchange(1,nn)
+     end do
+    end if
+    if(nsmear_mydom>0)then
+!$omp parallel do private(nn,n,i,j,k,l,jb,kb) schedule(dynamic,1)
+     do nn = 1, nsmear_mydom
+      n = list_mydom(1,nn)
+      l = lijk_from_id(0,n)
+      i = lijk_from_id(1,n)
+      j = lijk_from_id(2,n)
+      k = lijk_from_id(3,n)
+      jb = block_j(l)
+      kb = block_k(l)
+      call angular_smear_e(i,j,j+jb-1,k,k+kb-1,etot(nn))
+     end do
+!$omp end parallel do
+    end if
    end if
 
   end if
