@@ -49,7 +49,6 @@ contains
 !$omp end parallel do
 
   call allreduce_mpi('max',cfmax)
-!  call allreduce_mpi('max',cgrav)
 
 ! Use longer time step if using nested grids
   if(fmr_max>0.and.crdnt==2)then
@@ -70,12 +69,14 @@ contains
   dt = courant * minval(dti)
 
   if(outstyle==1)then
-!!$   if(t_out-time-dt>0d0.and.t_out-time-2d0*dt<0d0)then
-!!$    dt = 0.5d0*(t_out-time)
-!!$   else
+   if(t_out-time-dt>0d0.and.t_out-time-2d0*dt<0d0)then
+    dt = 0.5d0*(t_out-time)
+   else
     dt = min(dt,t_out-time)
-!!$   end if
+   end if
   end if
+
+  dt = min(dt,t_end-time)
 
   call allreduce_mpi('min',dt)
 
@@ -83,8 +84,7 @@ contains
 
 ! Compute dtgrav if using hyperbolic self-gravity
   if(gravswitch==3)then
-   cgrav = cfmax
-   cgrav = HGfac*cgrav
+   cgrav = HGfac*cfmax
 ! Limit number of substeps if HG becomes prohibitively slow (use with care!!)
    if(maxtngrv>0) cgrav = min(cgrav,hgcfl*dtg_unit*dble(maxtngrv)/dt)
    dtgrav = min(dt,hgcfl*dtg_unit/cgrav)
