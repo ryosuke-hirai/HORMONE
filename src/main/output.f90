@@ -3,7 +3,7 @@ module output_mod
 
  integer:: ievo,iskf
  public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
-          scaling_output,write_grid,write_plt
+          scaling_output,write_grid,write_plt,write_grid_dat
  private:: write_bin,get_header,add_column, add_directory_to_filename,&
            write_val,write_vertical_slice
 
@@ -353,6 +353,7 @@ subroutine open_sinkfile
   if(include_accretion.and.sink(n)%laccr>0d0)then
    write(iskf,forma,advance="no")trim(header)//'_mass'
    write(iskf,forma,advance="no")trim(header)//'_mdot'
+   write(iskf,forma,advance="no")trim(header)//'_facc'
    write(iskf,forma,advance="no")trim(header)//'_Jspin'
    write(iskf,forma,advance="no")trim(header)//'_jdot'
   end if
@@ -399,6 +400,7 @@ subroutine sink_output
   if(include_accretion.and.sink(n)%laccr>0d0)then
    call write_anyval(iskf,forme,sink(n)%mass/msun,1)
    call write_anyval(iskf,forme,sink(n)%mdot/msun*year,1)
+   call write_anyval(iskf,forme,sink(n)%facc,1)
    call write_anyval(iskf,forme,sink(n)%Jspin(3),1)
    call write_anyval(iskf,forme,sink(n)%jdot(3),1)
   end if
@@ -416,11 +418,12 @@ end subroutine sink_output
 ! PURPOSE: To output gridfile.bin and gridfile.dat
 subroutine write_grid
  use mpi_utils, only:myrank,barrier_mpi
+ use settings,only:output_ascii
 
  if (myrank==0) &
   call write_grid_bin
  call barrier_mpi
- call write_grid_dat
+ if(output_ascii)call write_grid_dat
  call barrier_mpi
 
  return
@@ -706,11 +709,11 @@ subroutine write_bin
  call write_dummy_recordmarker(un)
 
  call write_dummy_recordmarker(un)
- call write_var(un, d, is, ie, js, je, ks, ke)
+ call write_var(un,  d, is, ie, js, je, ks, ke)
  call write_var(un, v1, is, ie, js, je, ks, ke)
  call write_var(un, v2, is, ie, js, je, ks, ke)
  call write_var(un, v3, is, ie, js, je, ks, ke)
- call write_var(un, e, is, ie, js, je, ks, ke)
+ call write_var(un,  e, is, ie, js, je, ks, ke)
  call write_dummy_recordmarker(un)
 
  if(eostype>=1)then

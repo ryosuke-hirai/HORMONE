@@ -22,7 +22,7 @@ module settings
  character(len=5):: dt_unit
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl, alphagrv
  integer:: imesh, jmesh, kmesh
- integer:: nsink
+ integer:: nsink, maxtngrv
 ! test tolerance
  real(8):: test_tol
 ! switches
@@ -140,7 +140,7 @@ module gravmod
   real(8),target:: grvtime, dtgrav, cgrav2, cgrav, cgrav_old
   real(8),allocatable,dimension(:):: mc
   real(8),allocatable,dimension(:,:,:):: orgdis, extgrv, hgsrc, gsrc
-  real(8):: coremass
+  real(8):: coremass,dtg_unit
 
 end module gravmod
 
@@ -166,7 +166,7 @@ module derived_types
  type sink_prop
   sequence
   integer:: i,j,k,pad ! pad is added to align memory for 64-bit machines
-  real(8):: mass, softfac, lsoft, laccr, locres, dt, mdot
+  real(8):: mass, softfac, lsoft, laccr, locres, dt, mdot, racc, facc
   real(8),dimension(1:3):: x,v,a,xpol,Jspin,jdot
  end type sink_prop
 
@@ -185,6 +185,8 @@ contains
   sink%locres=0d0
   sink%dt=0d0
   sink%mdot=0d0
+  sink%racc=0d0
+  sink%facc=0d0
   sink%x=0d0
   sink%v=0d0
   sink%a=0d0

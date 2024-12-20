@@ -303,7 +303,7 @@ module mpi_domain
       use gravmod
 
       if (gravswitch == 3) then
-         call exchange_scalar(grvphi)
+       call exchange_scalar(grvphi)
       endif
    end subroutine exchange_gravity_mpi
 
@@ -477,7 +477,7 @@ module mpi_domain
       use mpi_utils, only: mpi_type_sink_prop, mpi_type_sink_prop_array
       use derived_types, only: sink_prop,null_sink
       type(sink_prop) :: sink
-      integer, parameter :: nattr = 17
+      integer, parameter :: nattr = 19
       integer, dimension(nattr) :: types, blocklengths
       integer(kind=MPI_ADDRESS_KIND), dimension(nattr) :: offsets
       integer :: ierr
@@ -495,27 +495,30 @@ module mpi_domain
       call MPI_Get_address(sink%locres , offsets( 9), ierr)
       call MPI_Get_address(sink%dt     , offsets(10), ierr)
       call MPI_Get_address(sink%mdot   , offsets(11), ierr)
-      call MPI_Get_address(sink%x      , offsets(12), ierr)
-      call MPI_Get_address(sink%v      , offsets(13), ierr)
-      call MPI_Get_address(sink%a      , offsets(14), ierr)
-      call MPI_Get_address(sink%xpol   , offsets(15), ierr)
-      call MPI_Get_address(sink%Jspin  , offsets(16), ierr)
-      call MPI_Get_address(sink%jdot   , offsets(17), ierr)
+      call MPI_Get_address(sink%racc   , offsets(12), ierr)
+      call MPI_Get_address(sink%facc   , offsets(13), ierr)
+      call MPI_Get_address(sink%x      , offsets(14), ierr)
+      call MPI_Get_address(sink%v      , offsets(15), ierr)
+      call MPI_Get_address(sink%a      , offsets(16), ierr)
+      call MPI_Get_address(sink%xpol   , offsets(17), ierr)
+      call MPI_Get_address(sink%Jspin  , offsets(18), ierr)
+      call MPI_Get_address(sink%jdot   , offsets(19), ierr)
 
       ! Compute offsets as relative to the start of sink
       offsets = offsets - offsets(1)
 
       ! Set the blocklengths (number of elements in each block)
-      blocklengths = [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3 ]
+      blocklengths = [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3 ]
 
       ! Set the types (type of each block)
-      types = [ MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
-                MPI_DOUBLE_PRECISION, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
-                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, \
+      types = [ MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, &
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, &
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, &
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, &
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, &
+                MPI_DOUBLE_PRECISION, &
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, &
+                MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, &
                 MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION ]
 
       ! Create the custom datatype

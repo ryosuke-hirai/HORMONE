@@ -88,6 +88,8 @@ module iotest_mod
         sink(i)%locres = 10000.d0*i
         sink(i)%dt = 100000.d0*i
         sink(i)%mdot = 1000000.d0*i
+        sink(i)%racc = 10000000.d0*i
+        sink(i)%facc = 100000000.d0*i
         sink(i)%x = (/1.d0*i,10.d0*i,100.d0*i/)
         sink(i)%v = (/2.d0*i,20.d0*i,200.d0*i/)
         sink(i)%a = (/3.d0*i,30.d0*i,300.d0*i/)
@@ -236,6 +238,8 @@ module iotest_mod
         err = err + abs(sink(i)%locres - 10000.d0*i)
         err = err + abs(sink(i)%dt - 100000.d0*i)
         err = err + abs(sink(i)%mdot - 1000000.d0*i)
+        err = err + abs(sink(i)%racc - 10000000.d0*i)
+        err = err + abs(sink(i)%facc - 100000000.d0*i)
         err = err + sum(abs(sink(i)%x - (/1.d0*i, 10.d0*i, 100.d0*i/)))
         err = err + sum(abs(sink(i)%v - (/2.d0*i, 20.d0*i, 200.d0*i/)))
         err = err + sum(abs(sink(i)%a - (/3.d0*i, 30.d0*i, 300.d0*i/)))
