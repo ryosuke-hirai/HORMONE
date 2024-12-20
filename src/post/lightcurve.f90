@@ -78,7 +78,11 @@ program lightcurve
 
   do angle = iangle, fangle, dangle
    write(outfile,'("data/",i2.2,"deg_lightcurve.dat")')angle
-   open(newunit=unitn(angle),file=outfile,status='replace')
+   if(start>0)then
+    open(newunit=unitn(angle),file=outfile,status='old',position='append')
+   else
+    open(newunit=unitn(angle),file=outfile,status='replace')
+   end if
   end do
 
   outtn = start

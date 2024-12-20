@@ -14,17 +14,21 @@ contains
 subroutine tools
 
  use settings,only:crdnt,gravswitch,radswitch,include_cooling,eostype
- use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_max
+ use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_max,fmr_lvl
  use physval,only:gamma,imu,muconst
- use gravmod,only:llmax,Plc,Pl
+ use gravmod,only:llmax,Plc,Pl,dtg_unit
  use constants,only:fac_egas,fac_pgas,kbol,amu
+ use timestep_mod,only:dtgrav_cell
  use ionization_mod,only:ionization_setup
  use cooling_mod,only:cooling_setup
  use gravity_mod,only:gravsetup
  use radiation_mod,only:radiation_setup
- use smear_mod,only:smear_setup
+ use smear_mod,only:smear_setup,block_j,block_k,lijk_from_id,nsmear
+ use mpi_utils,only:allreduce_mpi
+ use mpi_domain,only:partially_my_domain
 
- integer:: i,j,k,ll
+ integer:: i,j,k,n,l,ll,jb,kb
+ real(8),allocatable,dimension(:,:,:):: dtg
 
 !-----------------------------------------------------------------------------
 
@@ -146,6 +150,39 @@ subroutine tools
 
 ! Set smearing parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if(fmr_max>0) call smear_setup
+
+! Set baseline dtgrav %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ if(gravswitch==3)then
+  allocate(dtg(is:ie,js:je,ks:ke))
+!$omp parallel do private(i,j,k) collapse(3)
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     call dtgrav_cell(i,j,k,dtg,1d0)
+    end do
+   end do
+  end do
+!$omp end parallel do
+
+! Use longer time step if using nested grids
+  if(fmr_max>0.and.crdnt==2)then
+!$omp parallel do private(i,j,k,l,jb,kb) schedule(dynamic)
+   do n = 1, nsmear
+    l = lijk_from_id(0,n)
+    if(fmr_lvl(l)==0)cycle
+    i = lijk_from_id(1,n)
+    j = lijk_from_id(2,n)
+    k = lijk_from_id(3,n)
+    jb = block_j(l)
+    kb = block_k(l)
+    if(partially_my_domain(i,j,k,1,jb,kb)) &
+                call dtgrav_cell(i,j,k,dtg,1d0,jb=jb,kb=kb)
+   end do
+!$omp end parallel do
+  end if
+  dtg_unit = minval(dtg)
+  call allreduce_mpi('min',dtg_unit)
+ end if
  
 return
 end subroutine tools

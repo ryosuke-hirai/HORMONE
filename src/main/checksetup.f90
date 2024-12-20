@@ -198,6 +198,10 @@ subroutine checksetup
   dt_out = dt_out*dt_unit_in_sec
   t_out = dt_out
   t_end = t_end*dt_unit_in_sec
+  if(is_test)then
+   t_out = 2d0*t_end
+   tn_out = 2*tnlim
+  end if
 
 ! Spherical composition only for spherical coordinates
   if(compswitch==1.and.(crdnt/=2.or.max(je-js,ke-ks)>0))then
