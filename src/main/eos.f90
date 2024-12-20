@@ -30,13 +30,13 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 
  case(1) ! ideal gas + radiation
   corr = huge
-  do n = 1, 50
+  do n = 1, 500
    corr = (eint-(arad*T**3+d*fac_egas*imu)*T) &
         / ( -4d0*arad*T**3-d*fac_egas*imu)
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
-  if(n>50)then
+  if(n>500)then
    print*,'Error in getT_from_de, eostype=',eostype
    print*,'d=',d,'eint=',eint,'mu=',1d0/imu
    stop
