@@ -70,11 +70,11 @@ contains
   dt = courant * minval(dti)
 
   if(outstyle==1)then
-   if(t_out-time-dt>0d0.and.t_out-time-2d0*dt<0d0)then
-    dt = 0.5d0*(t_out-time)
-   else
+!!$   if(t_out-time-dt>0d0.and.t_out-time-2d0*dt<0d0)then
+!!$    dt = 0.5d0*(t_out-time)
+!!$   else
     dt = min(dt,t_out-time)
-   end if
+!!$   end if
   end if
 
   call allreduce_mpi('min',dt)
