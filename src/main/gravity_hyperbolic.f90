@@ -10,7 +10,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                   SUBROUTINE GRAVITY_HYPERBOLIC
+!                     SUBROUTINE GRAVITY_HYPERBOLIC
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -69,7 +69,7 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
 
  real(8),intent(in):: dtg,cgrav_now,cgrav_old
  integer:: i,j,k,grungen
- real(8):: faco, facn, fact
+ real(8):: faco, facn, fact, damp_factor
 
 !-----------------------------------------------------------------------------
 
@@ -112,11 +112,12 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
  end do
 
 ! Damping of grvpsi by separation of variables
+ damp_factor = exp(-(1d0-cgrav_old/cgrav_now+alphagrv*hgcfl))
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    grvpsi(i,j,k) = grvpsi(i,j,k)*exp(-(1d0-cgrav_old/cgrav_now+alphagrv*hgcfl))
+    grvpsi(i,j,k) = grvpsi(i,j,k)*damp_factor
    end do
   end do
  end do
@@ -200,17 +201,17 @@ subroutine hg_boundary_conditions
   end do
   !$omp end do
   if(ke>ks)then
-   !$omp do private(i,j) collapse(2)
-   do j = js-1, je+1
-    do i = is-1, ie+1
-     ! Note: in MPI mode, cell exchange already implements periodic BCs
-     if(ks==ks_global .and. ke==ke_global) then
+   ! Note: in MPI mode, cell exchange already implements periodic BCs
+   if(ks==ks_global .and. ke==ke_global) then
+    !$omp do private(i,j) collapse(2)
+    do j = js-1, je+1
+     do i = is-1, ie+1
       grvphi(i,j,ks-1) = grvphi(i,j,ke)
       grvphi(i,j,ke+1) = grvphi(i,j,ks)
-     end if
+     end do
     end do
-   end do
-   !$omp end do
+    !$omp end do
+   end if
   end if
 
  end select

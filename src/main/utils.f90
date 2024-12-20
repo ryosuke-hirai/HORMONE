@@ -25,10 +25,11 @@ contains
  pure function carpol(x) result(xp)
   implicit none
   real(8),intent(in):: x(1:3)
-  real(8):: xp(1:3)
-  real(8),parameter:: tiny=1d-99
+  real(8):: xp(1:3), arg
   xp(1) = norm2(x)
-  xp(2) = acos(x(3)/max(xp(1),tiny))
+  arg = x(3)/max(xp(1),tiny(1d0)) ! avoid dividing by 0
+  arg = sign(min(abs(arg),1d0),arg) ! avoid arguments for acos being >1 or <-1
+  xp(2) = acos(arg)
   xp(3) = atan2(x(2),x(1))
  end function carpol
 

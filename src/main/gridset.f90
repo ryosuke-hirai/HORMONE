@@ -516,7 +516,6 @@ subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
  dxi1(is+istar:is+istar+iflat-1) = dxmin
  dxi1(is+istar+iflat:ie+2)   = dx_outer(is+istar+iflat:ie+2)
 
-
 return
 end subroutine other_imesh
 
