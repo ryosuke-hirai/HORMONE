@@ -12,18 +12,20 @@
 !                                                                           !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\!
 
-! PURPOSE: Main program to solve ideal MHD problems
+! PURPOSE: Program to post-process light curves
 
 !############################################################################
 
-program write_ascii
+program lightcurve
 
   use mpi_utils
   use mpi_domain
   use settings
   use grid
   use physval
+  use constants
   use allocation_mod
+  use boundary_mod
   use tools_mod
   use checksetup_mod
   use setup_mod
@@ -31,12 +33,14 @@ program write_ascii
   use output_mod
   use gridset_mod
   use profiler_mod
+  use analysis_mod
 
   implicit none
 
-  integer:: outtn
-  real(8):: outtime
-  character(len=70):: file
+  integer,parameter:: iangle=0, fangle=90, dangle=15
+  integer:: outtn, angle, unitn(0:fangle)
+  real(8):: outtime, rad, lum
+  character(len=70):: file, outfile
 
 
 !############################## start program ################################
@@ -70,10 +74,12 @@ program write_ascii
 ! Start initial setup
   call allocations
 
-  if(start==0)then
-   call readgrid('data/gridfile.bin')
-   call write_grid_dat
-  end if
+  call readgrid('data/gridfile.bin')
+
+  do angle = iangle, fangle, dangle
+   write(outfile,'("data/",i2.2,"deg_lightcurve.dat")')angle
+   open(newunit=unitn(angle),file=outfile,status='replace')
+  end do
 
   outtn = start
   outtime = dble(start)*dt_unit_in_sec
@@ -81,13 +87,26 @@ program write_ascii
    call set_file_name('bin',outtn,outtime,file)
    print*,'Reading ',file
    call readbin(file)
-   call write_plt
+   call boundarycondition
+
+   do angle = iangle, fangle, dangle
+    rad = dble(angle)*pi/180d0
+    call get_luminosity2(rad,lum)
+    print*,time,angle,lum
+    write(unitn(angle),'(i5,2(1PE14.6e2))')tn,time,lum
+    flush(unitn(angle))
+   end do
+   
    outtime = outtime + dt_out
    outtn = outtn + tn_out
+  end do
+
+  do angle = iangle, fangle, dangle
+   close(unitn(angle))
   end do
 
   call finalize_mpi
 
 !------------------------------- end program ---------------------------------
 
- end program write_ascii
+ end program lightcurve
