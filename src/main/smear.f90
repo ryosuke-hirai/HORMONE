@@ -65,7 +65,8 @@ contains
 ! Record effective cell properties
    allocate(dvol_block(1:nsmear),lijk_from_id(0:3,1:nsmear),temp1(1:nsmear))
    allocate(temp2,mold=temp1)
-   nsmear_mydom = 0 ; temp1 = 0 ; temp2 = 0
+   nsmear_mydom = 0
+   temp1 = 0; temp2 = 0
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
     jb = block_j(n)
