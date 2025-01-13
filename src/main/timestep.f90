@@ -42,7 +42,6 @@ contains
     do i = is, ie
      call dti_cell(i,j,k,dti,cfmax=cfmax0)
      cfmax = max(cfmax,cfmax0)
-     cgrav = max(cgrav,cfmax0)
     end do
    end do
   end do
@@ -84,7 +83,8 @@ contains
 
 ! Compute dtgrav if using hyperbolic self-gravity
   if(gravswitch==3)then
-   cgrav = HGfac*cfmax
+   cgrav = cfmax
+   cgrav = HGfac*cgrav
 ! Limit number of substeps if HG becomes prohibitively slow (use with care!!)
    if(maxtngrv>0) cgrav = min(cgrav,hgcfl*dtg_unit*dble(maxtngrv)/dt)
    dtgrav = min(dt,hgcfl*dtg_unit/cgrav)
