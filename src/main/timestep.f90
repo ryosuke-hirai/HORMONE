@@ -77,6 +77,8 @@ contains
    end if
   end if
 
+  if(endstyle==1)dt = min(dt,t_end-time)
+
   call allreduce_mpi('min',dt)
 
   ch = cfmax
