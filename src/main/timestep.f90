@@ -42,14 +42,12 @@ contains
     do i = is, ie
      call dti_cell(i,j,k,dti,cfmax=cfmax0)
      cfmax = max(cfmax,cfmax0)
-     cgrav = max(cgrav,cfmax0)
     end do
    end do
   end do
 !$omp end parallel do
 
   call allreduce_mpi('max',cfmax)
-!  call allreduce_mpi('max',cgrav)
 
 ! Use longer time step if using nested grids
   if(fmr_max>0.and.crdnt==2)then
