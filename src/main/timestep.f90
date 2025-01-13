@@ -17,7 +17,7 @@ contains
   use mpi_utils,only:allreduce_mpi
   use mpi_domain,only:partially_my_domain
   use constants,only:tiny
-  use settings,only:courant,outstyle,HGfac,hgcfl,maxtngrv,t_end,endstyle
+  use settings,only:courant,outstyle,HGfac,hgcfl,maxtngrv
   use grid
   use physval
   use gravmod,only:gravswitch,dtgrav,cgrav,cgrav2,dtg_unit
@@ -49,6 +49,7 @@ contains
 !$omp end parallel do
 
   call allreduce_mpi('max',cfmax)
+!  call allreduce_mpi('max',cgrav)
 
 ! Use longer time step if using nested grids
   if(fmr_max>0.and.crdnt==2)then
@@ -76,15 +77,14 @@ contains
    end if
   end if
 
-  if(endstyle==1)dt = min(dt,t_end-time)
-
   call allreduce_mpi('min',dt)
 
   ch = cfmax
 
 ! Compute dtgrav if using hyperbolic self-gravity
   if(gravswitch==3)then
-   cgrav = HGfac*cfmax
+   cgrav = cfmax
+   cgrav = HGfac*cgrav
 ! Limit number of substeps if HG becomes prohibitively slow (use with care!!)
    if(maxtngrv>0) cgrav = min(cgrav,hgcfl*dtg_unit*dble(maxtngrv)/dt)
    dtgrav = min(dt,hgcfl*dtg_unit/cgrav)
