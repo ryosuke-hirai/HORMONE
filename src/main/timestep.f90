@@ -17,7 +17,7 @@ contains
   use mpi_utils,only:allreduce_mpi
   use mpi_domain,only:partially_my_domain
   use constants,only:tiny
-  use settings,only:courant,outstyle,HGfac,hgcfl,maxtngrv
+  use settings,only:courant,outstyle,HGfac,hgcfl,maxtngrv,t_end,endstyle
   use grid
   use physval
   use gravmod,only:gravswitch,dtgrav,cgrav,cgrav2,dtg_unit
