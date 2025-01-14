@@ -380,24 +380,20 @@ subroutine masscoordinate
   fac=1d0
  end if
 
-!$omp parallel
  do i = is_global, ie_global
   shellmass = 0d0
   if (is<=i .and. i<=ie) then
-!$omp do private(j,k) reduction(+:shellmass)
+!$omp parallel do private(j,k) reduction(+:shellmass) collapse(2)
    do k = ks, ke
     do j = js, je
      shellmass = shellmass + d(i,j,k)*dvol(i,j,k)
     end do
    end do
-!$omp end do
+!$omp end parallel do
   end if
-!$omp single
   call allreduce_mpi('sum',shellmass)
   mc(i) = mc(i-1) + fac*shellmass
-!$omp end single
  end do
-!$omp end parallel
 
 return
 end subroutine masscoordinate
