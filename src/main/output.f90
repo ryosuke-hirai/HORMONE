@@ -799,7 +799,7 @@ subroutine write_plt
  call open_file_write_ascii(pltfile,ui)
 
 ! Write time and time step
- write(str,'(a,i7,a,1PE12.4e2,a)')&
+ write(str,'(a,i10,a,1PE12.4e2,a)')&
   '#tn =',tn,'  time= ',time/dt_unit_in_sec,dt_unit
  call write_string_master(ui,str)
 

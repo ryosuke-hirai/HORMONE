@@ -8,7 +8,7 @@ module sink_mod
  type(sink_prop),allocatable,public:: sink(:)
  real(8),allocatable,public:: snkphi(:,:,:)
 
- public:: sink_motion,sinkfield,get_sink_acc
+ public:: sink_motion,sinkfield,get_sink_acc,sink_accretion
  private:: get_sinksink_acc,get_sink_loc,get_sinkgas_acc
 
 contains
@@ -52,32 +52,58 @@ end subroutine sink_motion
 
 subroutine sink_accretion
 
- use settings,only:eostype,eq_sym,mag_on
- use constants,only:G
- use utils,only:softened_pot,get_vcar,cross
+ use settings,only:eostype,eq_sym,mag_on,jet_ang
+ use constants,only:G,pi
+ use utils,only:softened_pot,get_vcar,cross,get_vpol
  use grid,only:is,ie,js,je,ks,ke,dt,dvol,car_x,x3
  use physval
- use pressure_mod,only:eos_p_cs,eos_e
+ use pressure_mod,only:eos_p,eos_e
  use mpi_utils,only:allreduce_mpi
  use profiler_mod
 
  integer:: n,i,j,k
- real(8):: dis, philoc, tauacc, newd, newe, newp, accmass, dm, r_acc
- real(8),dimension(1:3):: accmom, accang, totmom, vcell
-
+ real(8):: dis, philoc, itauacc, newd, newe, newp, accmass, dm, spc1, spc2
+ real(8):: r_acc, r_sof, phi0, ambmass, kappa, exchange(9)
+ real(8),dimension(1:3):: accmom, accang, totmom, vcell, vrel
+ real(8):: Ejet, mjet, ang_to_ns, perp, vjet
 !-----------------------------------------------------------------------------
 
  call start_clock(wtacc)
 
- accmass = 0d0
- accmom  = 0d0
- accang = 0d0
+ kappa = 0.d0 ! Temporary: ignore radiative heating
+ jet_ang = 45d0 ! Jet opening angle (deg)
 
  do n = 1, nsink
   if(sink(n)%mass<=0d0)cycle
+  accmass = 0d0
+  accmom  = 0d0
+  accang  = 0d0
+  ambmass = 0d0
+  Ejet = 0d0
+  mjet = 0d0
+
   r_acc = max(sink(n)%laccr,sink(n)%locres)
-!$omp parallel do private(i,j,k,dis,philoc,tauacc,newd,newe,newp,vcell,dm) &
-!$omp reduction(+:accmass,accmom,accang) collapse(3)
+  r_sof = max(sink(n)%lsoft,sink(n)%locres)
+  phi0 = G*sink(n)%mass*softened_pot(r_sof,r_sof)
+!$omp parallel do private(i,j,k,dis) reduction(+:ambmass) collapse(3)
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     dis = norm2(car_x(:,i,j,k)-sink(n)%x)
+     if(dis<=r_acc) ambmass = ambmass + d(i,j,k)*dvol(i,j,k)
+    end do
+   end do
+  end do
+!$omp end parallel do
+
+  call allreduce_mpi('sum',ambmass)
+
+! Roughly estimate heat rate by optical depth
+  sink(n)%facc = 1d0 - exp(-kappa*ambmass/(4d0*pi/3d0*r_acc**2))
+
+!$omp parallel do private(i,j,k,dis,philoc,itauacc,newd,newe,newp,vcell,vrel,&
+!$omp dm,spc1,spc2,ang_to_ns,perp) &
+!$omp reduction(+:accmass,accmom,accang,Ejet,mjet) collapse(3)
   do k = ks, ke
    do j = js, je
     do i = is, ie
@@ -85,31 +111,47 @@ subroutine sink_accretion
 
      if(dis>r_acc)cycle
 
+! Compute Cartesian velocity in cell
+     call get_vcar(car_x(:,i,j,k),x3(k),v1(i,j,k),v2(i,j,k),v3(i,j,k),vcell)
+     vrel = vcell-sink(n)%v
+
 ! Suck out mass in the accretion radius on the dynamical timescale
-     philoc = G*sink(n)%mass &
-                     *softened_pot(dis,max(sink(n)%lsoft,sink(n)%locres))
-     tauacc = r_acc/sqrt(-philoc)
-     newd = d(i,j,k)*exp(-dt/tauacc)
+     philoc = G*sink(n)%mass * softened_pot(dis,r_sof)
+!     if(0.5d0*dot_product(vrel,vrel)+eint(i,j,k)/d(i,j,k)+philoc>0d0)cycle
+     itauacc = sqrt(-philoc+phi0)/r_acc
+     newd = d(i,j,k)*exp(-dt*itauacc)
      newp = newd/d(i,j,k)*p(i,j,k)
      select case(eostype)
      case(0:1)
-      newe = eos_e(newd,newp,T(i,j,k),imu(i,j,k))
+      spc1=0d0;spc2=0d0
      case(2)
-      newe = eos_e(newd,newp,T(i,j,k),imu(i,j,k),spc(1,i,j,k),spc(2,i,j,k))
+      spc1=spc(1,i,j,k); spc2=spc(2,i,j,k)
      end select
+     newe = eos_e(newd,newp,T(i,j,k),imu(i,j,k),spc1,spc2) &
+          + G*sink(n)%mass*(d(i,j,k)-newd)/sink(n)%racc*sink(n)%facc
+     newp = eos_p(newd,newe,T(i,j,k),imu(i,j,k),spc1,spc2)
 
 ! Add up mass/momentum/AM lost from each cell
      dm = (d(i,j,k) - newd)*dvol(i,j,k)
-     call get_vcar(car_x(:,i,j,k),x3(k),v1(i,j,k),v2(i,j,k),v3(i,j,k),vcell)
      accmass = accmass + dm
      accmom = accmom + vcell*dm
      accang = accang + cross(car_x(:,i,j,k)-sink(n)%x,vcell-sink(n)%v)*dm
+
+! Calculate jet quantities
+     perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
+     ang_to_ns = asin(perp/dis)/pi*180d0
+
+     if(ang_to_ns<=jet_ang)then
+      mjet = mjet + newd*dvol(i,j,k)
+      Ejet = Ejet + 0.5d0*newd*dvol(i,j,k)*dot_product(vcell,vcell)
+     end if
 
 ! Update primitive variables
      d(i,j,k) = newd
      p(i,j,k) = newp
      eint(i,j,k) = newe
-     e(i,j,k) = newe + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
+     e(i,j,k) = eint(i,j,k) &
+              + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
      if(mag_on) &
       e(i,j,k) = e(i,j,k) + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2)
 ! Update conservative variables
@@ -123,9 +165,16 @@ subroutine sink_accretion
   end do
 !$omp end parallel do
 
-  call allreduce_mpi('sum',accmass)
-  call allreduce_mpi('sum',accmom)
-  call allreduce_mpi('sum',accang)
+  exchange = [accmass,&
+              accmom(1),accmom(2),accmom(3),&
+              accang(1),accang(2),accang(3),&
+              mjet,Ejet]
+  call allreduce_mpi('sum',exchange)
+  accmass = exchange(1)
+  accmom = exchange(2:4)
+  accang = exchange(5:7)
+  mjet = exchange(8)
+  Ejet = exchange(9)
 
   if(eq_sym)then
    accmass = 2d0*accmass
@@ -133,7 +182,43 @@ subroutine sink_accretion
    accmom(3) = 0d0
    accang(1:2) = 0d0
    accang(3) = 2d0*accang(3)
+   mjet = 2d0*mjet
+   Ejet = 2d0*Ejet
   end if
+
+  Ejet = Ejet + G*sink(n)%mass*accmass/sink(n)%racc!*sink(n)%facc
+  vjet = sqrt(2d0*Ejet/mjet)
+
+!$omp parallel do private(i,j,k,dis,vcell,ang_to_ns,perp) collapse(3)
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     dis = norm2(car_x(:,i,j,k)-sink(n)%x)
+
+     if(dis>r_acc)cycle
+
+     ! Calculate jet quantities
+     perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
+     ang_to_ns = asin(perp/dis)/pi*180d0
+
+     if(ang_to_ns>jet_ang)cycle
+     vcell = vjet*(car_x(:,i,j,k)-sink(n)%x)/dis + sink(n)%v
+     call get_vpol(car_x(:,i,j,k),x3(k),vcell,v1(i,j,k),v2(i,j,k),v3(i,j,k))
+
+     e(i,j,k) = eint(i,j,k) &
+              + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
+     if(mag_on) &
+      e(i,j,k) = e(i,j,k) + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2)
+
+! Update conservative variables
+     u(i,j,k,imo1) = d(i,j,k)*v1(i,j,k)
+     u(i,j,k,imo2) = d(i,j,k)*v2(i,j,k)
+     u(i,j,k,imo3) = d(i,j,k)*v3(i,j,k)
+     u(i,j,k,iene) = e(i,j,k)
+    end do
+   end do
+  end do
+!$omp end parallel do
 
 ! Update sink properties in response to accretion
   totmom = sink(n)%mass*sink(n)%v + accmom
@@ -244,7 +329,7 @@ subroutine get_sinkgas_acc(sink)
  use mpi_domain,only:is_my_domain
  use constants,only:tiny
  use settings,only:crdnt,eq_sym,courant
- use grid,only:idx1,idx3,x1,g22,dxi1,dxi2,dxi3,x1,x3
+ use grid,only:idx1,idx3,x1,g22,dxi1,dxi2,dxi3,x1,x3,ie,ke
  use gravmod,only:gphi=>grvphi
 
  type(sink_prop),intent(inout):: sink
@@ -271,12 +356,15 @@ subroutine get_sinkgas_acc(sink)
 
    elseif(eq_sym)then ! for equatorial symmetry
 
+    ! temporary workaround to avoid corner boundary problems
+    if(k==ke.and.i==ie)gphi(i+1,j,k+1)=gphi(i,j,k+1)+gphi(i+1,j,k)-gphi(i,j,k)
+
 ! acc is in polar coordinates
-    acc(1) = (-(gphi(i+1,j,k  )-gphi(i,j,k  ))*(x3(k+1)-xpol(3))&
+    acc(1) = (-(gphi(i+1,j,k  )-gphi(i,j,k  ))*(x3(k+1)-xpol(3)) &
               -(gphi(i+1,j,k+1)-gphi(i,j,k+1))*(xpol(3)-x3(k  )))&
            *idx3(k+1)*idx1(i+1)
     acc(2) = 0d0
-    acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))/abs(x1(i  ))*(x1(i+1)-xpol(1))&
+    acc(3) = (-(gphi(i  ,j,k+1)-gphi(i  ,j,k))/abs(x1(i  ))*(x1(i+1)-xpol(1)) &
               -(gphi(i+1,j,k+1)-gphi(i+1,j,k))/abs(x1(i+1))*(xpol(1)-x1(i  )))&
            *idx1(i+1)*idx3(k+1)
 
