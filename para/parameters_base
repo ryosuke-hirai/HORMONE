@@ -84,8 +84,10 @@
 ! include_sinks: switch for sink particles
 ! nsink: number of sink particles
 ! include_accretion: switch for accretion onto sink particles
+! jet_ang: opening angle for kinetic feedback (deg)
 !!! other quantities should be given in initial condition file
-&sinkcon include_sinks=.false. nsink=0 include_accretion=.false. /
+&sinkcon include_sinks=.false. nsink=0 include_accretion=.false.
+         jet_ang = 45d0 /
 
 ! radswitch:0=off,1=flux limited diffusion
 ! opacitytype:0=fixed,1=ionisation
