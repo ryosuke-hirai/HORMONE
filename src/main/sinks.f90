@@ -52,7 +52,7 @@ end subroutine sink_motion
 
 subroutine sink_accretion
 
- use settings,only:eostype,eq_sym,mag_on
+ use settings,only:eostype,eq_sym,mag_on,jet_ang
  use constants,only:G,pi
  use utils,only:softened_pot,get_vcar,cross,get_vpol
  use grid,only:is,ie,js,je,ks,ke,dt,dvol,car_x,x3
