@@ -236,7 +236,7 @@ subroutine checksetup
   end if
 
 ! EoS can only be specific types if radiation is switched on
-  if(radswitch>0.and.eostype==1)then
+  if(radswitch>0.and.eostype/=0)then
    print*,'Cannot select gas+radiation EoS if radswitch>0'
    print*,'eostype=',eostype
    stop

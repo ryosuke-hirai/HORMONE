@@ -139,15 +139,15 @@ end subroutine getT_from_dp
 
 ! PURPOSE: To calculate pressure and thermal sound speed from d and eint
 
-subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
+subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
 
  implicit none
  real(8),intent( in):: d,eint
- real(8),intent( in),optional:: X,Y
+ real(8),intent( in),optional:: X,Y,erad
  real(8),intent(inout):: T,imu
  real(8),intent(out):: p,cs
  integer,intent(out):: ierr
- real(8):: gamma_eff,erec,Ttemp
+ real(8):: gamma_eff,erec,Ttemp,cs2
 
 !-----------------------------------------------------------------------------
 
@@ -162,8 +162,10 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
  case(0) ! ideal gas
   p = eos_p(d,eint,T,imu)
   gamma_eff = 1d0+p/eint
+  cs2 = gamma_eff*p/d
+  if(present(erad))cs2 = cs2 + 4d0*erad/(9d0*d)
 
-  cs = sqrt(gamma_eff*p/d)
+  cs = sqrt(cs2)
 
  case(1) ! ideal gas + radiation pressure
   p = eos_p(d,eint,T,imu)

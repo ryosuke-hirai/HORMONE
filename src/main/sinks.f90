@@ -52,7 +52,7 @@ end subroutine sink_motion
 
 subroutine sink_accretion
 
- use settings,only:eostype,eq_sym,mag_on,jet_ang
+ use settings,only:eostype,eq_sym,mag_on
  use constants,only:G,pi
  use utils,only:softened_pot,get_vcar,cross,get_vpol
  use grid,only:is,ie,js,je,ks,ke,dt,dvol,car_x,x3
@@ -71,7 +71,6 @@ subroutine sink_accretion
  call start_clock(wtacc)
 
  kappa = 0.d0 ! Temporary: ignore radiative heating
- jet_ang = 45d0 ! Jet opening angle (deg)
 
  do n = 1, nsink
   if(sink(n)%mass<=0d0)cycle
@@ -141,7 +140,7 @@ subroutine sink_accretion
      perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
      ang_to_ns = asin(perp/dis)/pi*180d0
 
-     if(ang_to_ns<=jet_ang)then
+     if(ang_to_ns<=sink(n)%jet_ang)then
       mjet = mjet + newd*dvol(i,j,k)
       Ejet = Ejet + 0.5d0*newd*dvol(i,j,k)*dot_product(vcell,vcell)
      end if
@@ -201,7 +200,7 @@ subroutine sink_accretion
      perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
      ang_to_ns = asin(perp/dis)/pi*180d0
 
-     if(ang_to_ns>jet_ang)cycle
+     if(ang_to_ns>sink(n)%jet_ang)cycle
      vcell = vjet*(car_x(:,i,j,k)-sink(n)%x)/dis + sink(n)%v
      call get_vpol(car_x(:,i,j,k),x3(k),vcell,v1(i,j,k),v2(i,j,k),v3(i,j,k))
 

@@ -60,6 +60,7 @@ subroutine allocations
  allocate(phi(is-2:ie+2,js-2:je+2,ks-2:ke+2))
  allocate(v1,v2,v3,b1,b2,b3,grv1,grv2,grv3,mold=phi)
  allocate(shock(is-2:ie+2,js-2:je+2,ks-2:ke+2))
+ if(radswitch>0)allocate(erad,mold=eint)
 
 ! Parallel first touch for OpenMP optimization on NUMA cores
 !$omp parallel
@@ -76,6 +77,7 @@ subroutine allocations
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
     grv1(i,j,k) = 0d0; grv2(i,j,k) = 0d0; grv3(i,j,k) = 0d0
     phi(i,j,k) = 0d0
+    if(radswitch>0)erad(i,j,k) = 0d0
     shock(i,j,k) = 0
    end do
   end do
@@ -167,6 +169,7 @@ subroutine allocations
 ! gradients
  allocate(dd(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:3))
  allocate(de,dphi,dm1,dm2,dm3,db1,db2,db3,dmu,mold=dd)
+ if(radswitch>0)allocate(der,mold=dd)
 
 ! conserved quantities and flux
  allocate(u(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:ufnmax))

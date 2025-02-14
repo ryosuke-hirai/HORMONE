@@ -15,7 +15,7 @@ contains
 subroutine interpolation
 
  use settings,only:compswitch,spn,mag_on,flux_limiter,solve_i,solve_j,solve_k,&
-                   bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
+                   bc1is,bc1os,bc2is,bc2os,bc3is,bc3os,radswitch
 !  use settings, only:eostype
  use grid
  use physval
@@ -26,7 +26,7 @@ subroutine interpolation
  integer:: i,j,k,n
  real(8):: dl, dr, ptl, ptr, el, er, m1l, m1r, m2l, m2r, m3l, m3r
  real(8):: b1l, b1r, b2l, b2r, b3l, b3r, phil, phir, eintl, eintr,imul,imur
- real(8):: uu(1:3), du, Xl, Xr, Yl, Yr, Tini
+ real(8):: uu(1:3), du, Xl, Xr, Yl, Yr, Tini, eradl, eradr
  real(8):: dx(1:2), x(1:3), xi(1:2)
 
 !-----------------------------------------------------------------------------
@@ -34,13 +34,14 @@ subroutine interpolation
  call start_clock(wtint)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! Notations !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! slopes : dd, de, dm1, dm2, dm3, db1, db2, db3
+! slopes : dd, de, dm1, dm2, dm3, db1, db2, db3, der
 ! *l, *r are cell boundary values at left and right looking from x1(i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Flat reconstruction
  if(flux_limiter=='flat')then
   dd=0d0;de=0d0;dm1=0d0;dm2=0d0;dm3=0d0;db1=0d0;db2=0d0;db3=0d0;dphi=0d0
+  if(radswitch>0)der=0d0
   call stop_clock(wtint)
   return
  end if
@@ -51,7 +52,7 @@ subroutine interpolation
 if(solve_i)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
+!$omp Xl,Xr,Yl,Yr,eradl,eradr,Tini) collapse(3)
  do k = ks,ke
   do j = js,je
    do i = is-1,ie+1
@@ -106,6 +107,13 @@ if(solve_i)then
      b3l = uu(2) - (x1(i)-xi1(i-1))*du ; b3r = uu(2) + (xi1(i)-x1(i))*du
     else
      b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
+    end if
+
+! if radiation transport is on
+    if(radswitch>0)then
+     uu(1:3) = b1(i-1:i+1,j,k)
+     call minmod(du,uu,dx) ; db1(i,j,k,1) = du
+     b1l = uu(2) - (x1(i)-xi1(i-1))*du ; b1r = uu(2) + (xi1(i)-x1(i))*du
     end if
 
 

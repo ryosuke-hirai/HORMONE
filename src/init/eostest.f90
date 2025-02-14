@@ -200,7 +200,7 @@ subroutine eostest
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
    e = eos_e(d,p,T,imu,X,Y)
    p2 = eos_p(d,e,T2,imu2,X,Y)
-   call eos_p_cs(d,e,T3,imu3,p3,cs,X,Y,ierr)
+   call eos_p_cs(d,e,T3,imu3,p3,cs,X,Y,ierr=ierr)
 
 ! Currently not ready for entropy calculations
 !   S = entropy_from_dp(d,p,T4,imu4,X,Y)

@@ -182,8 +182,12 @@ subroutine sn2022jli
  sink(2)%softfac = 3d0
  sink(2)%laccr = nssoft
  sink(2)%mdot = 0d0
+ sink(2)%racc = 0d0
+ sink(2)%facc = 0d0
  sink(2)%jdot = 0d0
  sink(2)%Jspin = 0d0
+ sink(2)%jet_ang = 45d0
+ sink(2)%jet_dir = [sin(0.25d0*pi),0d0,cos(0.25d0*pi)]
 
 ! For SN2022jli
  asep = (G*(mass+nsmass)*(Porb*3600d0*24d0/2d0/pi)**2)**(1d0/3d0)
