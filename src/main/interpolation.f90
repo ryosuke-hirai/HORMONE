@@ -109,6 +109,13 @@ if(solve_i)then
      b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
     end if
 
+! if radiation transport is on
+    if(radswitch>0)then
+     uu(1:3) = b1(i-1:i+1,j,k)
+     call minmod(du,uu,dx) ; db1(i,j,k,1) = du
+     b1l = uu(2) - (x1(i)-xi1(i-1))*du ; b1r = uu(2) + (xi1(i)-x1(i))*du
+    end if
+
 
 ! check stability at cell boundary ---------------------------------------- !
     ! first calculate mean molecular weight at the surface
