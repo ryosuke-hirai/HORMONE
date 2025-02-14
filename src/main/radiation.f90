@@ -2,9 +2,10 @@ module radiation_mod
  implicit none
 
  public:: radiation,radiation_setup
- private::lambda,lambda_LP81,lambda_M78,lambda_K89,kappa_r,kappa_p,get_radflux,get_source_term,get_geo,setup_radcg
+ private::lambda,lambda_LP81,lambda_M78,lambda_K89,kappa_r,kappa_p,&
+          get_radflux,get_source_term,get_geo,setup_radcg
  real(8),allocatable,private:: geo(:,:,:,:)
- real(8),allocatable,public:: urad(:,:,:),rsrc(:,:,:)
+ real(8),allocatable,public:: rsrc(:,:,:)
 
 contains
 
@@ -31,9 +32,9 @@ subroutine radiation
 
  allocate(radK(1:3,cg%is-1:cg%ie,cg%js-1:cg%je,cg%ks-1:cg%ke))
 
- call get_radflux(urad,d,T,cg,radK)
+ call get_radflux(erad,d,T,cg,radK)
  call get_radA(radK,cg)
- call get_source_term(d,T,urad,dt,cg,rsrc)
+ call get_source_term(d,T,erad,dt,cg,rsrc)
 
 ! call miccg(cg,rsrc,x)
 
@@ -123,14 +124,14 @@ end function kappa_p
 
 ! PURPOSE: Compute radiative fluxes at each interface
 
-subroutine get_radflux(urad,d,T,cg,radK)
+subroutine get_radflux(erad,d,T,cg,radK)
 
  use constants,only:c=>clight
  use grid,only: x1,xi1,x2,xi2,x3,xi3,dx1,dx2,dx3,g22,g33
  use miccg_mod,only:cg_set
  use utils,only:intpol
 
- real(8),allocatable,dimension(:,:,:),intent(in):: urad,d,T
+ real(8),allocatable,dimension(:,:,:),intent(in):: erad,d,T
  type(cg_set),intent(in):: cg
  real(8),allocatable,intent(inout):: radK(:,:,:,:)
  real(8):: gradE,R,rho,TT,xi
@@ -143,26 +144,26 @@ subroutine get_radflux(urad,d,T,cg,radK)
   do j = cg%js-1, cg%je
    do i = cg%is-1, cg%ie
 ! Flux in x1 direction
-    gradE = (urad(i+1,j,k) - urad(i,j,k))/dx1(i+1)
+    gradE = (erad(i+1,j,k) - erad(i,j,k))/dx1(i+1)
     rho = intpol(x1(i:i+1),d   (i:i+1,j,k),xi1(i))
     TT  = intpol(x1(i:i+1),T   (i:i+1,j,k),xi1(i))
-    xi  = intpol(x1(i:i+1),urad(i:i+1,j,k),xi1(i))
+    xi  = intpol(x1(i:i+1),erad(i:i+1,j,k),xi1(i))
     R = abs(gradE)/(kappa_r(rho,TT)*rho*xi)
     radK(1,i,j,k) = c*lambda(R)/(kappa_r(rho,TT)*rho)
 
 ! Flux in x2 direction
-    gradE = (urad(i,j+1,k) - urad(i,j,k))/(dx2(j+1)*g22(i))
+    gradE = (erad(i,j+1,k) - erad(i,j,k))/(dx2(j+1)*g22(i))
     rho = intpol(x2(j:j+1),d   (i,j:j+1,k),xi2(j))
     TT  = intpol(x2(j:j+1),T   (i,j:j+1,k),xi2(j))
-    xi  = intpol(x2(j:j+1),urad(i,j:j+1,k),xi2(j))
+    xi  = intpol(x2(j:j+1),erad(i,j:j+1,k),xi2(j))
     R = abs(gradE)/(kappa_r(rho,TT)*rho*xi)
     radK(2,i,j,k) = c*lambda(R)/(kappa_r(rho,TT)*rho)
 
 ! Flux in x3 direction
-    gradE = (urad(i,j,k+1) - urad(i,j,k))/(dx3(k+1)*g33(i,j))
+    gradE = (erad(i,j,k+1) - erad(i,j,k))/(dx3(k+1)*g33(i,j))
     rho = intpol(x3(k:k+1),d   (i,j,k:k+1),xi3(k))
     TT  = intpol(x3(k:k+1),T   (i,j,k:k+1),xi3(k))
-    xi  = intpol(x3(k:k+1),urad(i,j,k:k+1),xi3(k))
+    xi  = intpol(x3(k:k+1),erad(i,j,k:k+1),xi3(k))
     R = abs(gradE)/(kappa_r(rho,TT)*rho*xi)
     radK(3,i,j,k) = c*lambda(R)/(kappa_r(rho,TT)*rho)
 
@@ -249,10 +250,10 @@ subroutine get_radA(radK,cg)
     call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
-     + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
-     + geo(3,i,j,k-1)*radK(2,i,j-1,k) + geo(3,i,j,k)*radK(2,i,j,k) &
-     + dvol(i,j,k)*d(i,j,k)*fac_egas*imu(i,j,k)*kappap*c &
-      /(fac_egas*imu(i,j,k)+4d0*kappap*c*arad*T(i,j,k)**3*dt)
+              + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
+              + geo(3,i,j,k-1)*radK(2,i,j-1,k) + geo(3,i,j,k)*radK(2,i,j,k) &
+              + dvol(i,j,k)*d(i,j,k)*fac_egas*imu(i,j,k)*kappap*c &
+               /(fac_egas*imu(i,j,k)+4d0*kappap*c*arad*T(i,j,k)**3*dt)
     cg%A(2,l) = -geo(1,i,j,k)*radK(1,i,j,k)
     cg%A(3,l) = -geo(3,i,j,k)*radK(3,i,j,k)
     if(i==cg%ie)cg%A(2,l) = 0d0
@@ -268,11 +269,11 @@ subroutine get_radA(radK,cg)
     call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = dvol(i,j,k)/dt &
-    + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
-    + geo(2,i,j-1,k)*radK(2,i,j-1,k) + geo(2,i,j,k)*radK(2,i,j,k) &
-    + geo(3,i,j,k-1)*radK(3,i,j,k-1) + geo(3,i,j,k)*radK(3,i,j,k) &
-    + dvol(i,j,k)*d(i,j,k)*fac_egas*imu(i,j,k)*kappap*c &
-     /(fac_egas*imu(i,j,k)+4d0*kappap*c*arad*T(i,j,k)**3*dt)
+              + geo(1,i-1,j,k)*radK(1,i-1,j,k) + geo(1,i,j,k)*radK(1,i,j,k) &
+              + geo(2,i,j-1,k)*radK(2,i,j-1,k) + geo(2,i,j,k)*radK(2,i,j,k) &
+              + geo(3,i,j,k-1)*radK(3,i,j,k-1) + geo(3,i,j,k)*radK(3,i,j,k) &
+              + dvol(i,j,k)*d(i,j,k)*fac_egas*imu(i,j,k)*kappap*c &
+               /(fac_egas*imu(i,j,k)+4d0*kappap*c*arad*T(i,j,k)**3*dt)
     cg%A(2,l) = -geo(1,i,j,k)*radK(1,i,j,k)
     cg%A(3,l) = -geo(2,i,j,k)*radK(2,i,j,k)
     cg%A(4,l) = -geo(3,i,j,k)*radK(3,i,j,k)
@@ -408,12 +409,12 @@ end subroutine setup_radcg
 
 ! PURPOSE: To compute the source term for radiation
 
-subroutine get_source_term(d,T,urad,dt,cg,rsrc)
+subroutine get_source_term(d,T,erad,dt,cg,rsrc)
 
  use grid,only:dim,crdnt
  use miccg_mod,only:cg_set,ijk_from_l
 
- real(8),allocatable,dimension(:,:,:),intent(in):: d,T,urad
+ real(8),allocatable,dimension(:,:,:),intent(in):: d,T,erad
  real(8),intent(in):: dt
  type(cg_set),intent(inout):: cg
  real(8),allocatable,intent(inout):: rsrc(:,:,:)
@@ -421,7 +422,7 @@ subroutine get_source_term(d,T,urad,dt,cg,rsrc)
 
  ! TEMPORARY: Suppress warnings for subroutine under construction
  if (.false.) then
-  if (sum(d)>0.d0 .and. sum(T)>0.d0 .and. sum(urad)>0.d0 .and. dt>0.d0) continue
+  if (sum(d)>0.d0 .and. sum(T)>0.d0 .and. sum(erad)>0.d0 .and. dt>0.d0) continue
  end if
 
 !-----------------------------------------------------------------------------

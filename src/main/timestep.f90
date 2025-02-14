@@ -116,7 +116,7 @@ contains
 
 subroutine dti_cell(i,j_,k_,dti,jb,kb,cfmax)
 
- use settings,only:mag_on,eostype,solve_i,solve_j,solve_k
+ use settings,only:mag_on,eostype,solve_i,solve_j,solve_k,radswitch
  use grid,only:js,je,ks,ke,js_global,je_global,ks_global,ke_global,&
                sa1,sa2,sa3,dvol
  use physval,only:d,eint,T,imu,p,cs,v1,v2,v3,b1,b2,b3,spc
@@ -141,9 +141,14 @@ subroutine dti_cell(i,j_,k_,dti,jb,kb,cfmax)
 
  select case(eostype)
  case(0:1)
-  call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
-                p(i,j,k), cs(i,j,k), ierr=ierr )
- case(2)
+  if(radswitch==0)then
+   call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
+                 p(i,j,k), cs(i,j,k), ierr=ierr )
+  else
+   call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
+                 p(i,j,k), cs(i,j,k), erad=erad(i,j,k), ierr=ierr )
+  end if
+  case(2)
   call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
                 p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
  end select

@@ -14,7 +14,7 @@ contains
  subroutine numflux
 
   use settings,only:solve_i,solve_j,solve_k,&
-                    compswitch,spn,eostype,mag_on,fluxbound_on,&
+                    compswitch,spn,eostype,mag_on,fluxbound_on,radswitch,&
                     bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
   use grid
   use physval
@@ -24,10 +24,11 @@ contains
   use interpolation_mod
   use fluxbound_mod
   use profiler_mod
+  use radiation_mod,only:erad
 
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
-           v2l, v2r, v3l, v3r, eil, eir, csl, csr
+           v2l, v2r, v3l, v3r, eil, eir, erl, err, csl, csr
   real(8),dimension(1:9)::tmpflux
   real(8),dimension(1:2):: dx
   real(8),dimension(1:spn):: spcl,spcr
@@ -47,13 +48,14 @@ contains
 !$omp parallel
   if(solve_i)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,erl,err,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks,ke
     do j = js,je
      do i = is-1,ie
 
+      ! Don't bother calculating fluxes for flux boundaries
       if(i==is-1)then
        if(bc1is==10)cycle
       end if
@@ -99,13 +101,20 @@ contains
       eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
       eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
+      if(radswitch>0)then
+       erl = erad(i  ,j,k) + dx(1) * der(i  ,j,k,1)
+       err = erad(i+1,j,k) - dx(2) * der(i+1,j,k,1)
+      else
+       erl = 0d0 ; err = 0d0
+      end if
+
       select case (eostype)
       case(0:1) ! without recombination
        imul = 1d0/imu(i  ,j,k) + dx(1) * dmu(i  ,j,k,1)
        imur = 1d0/imu(i+1,j,k) - dx(2) * dmu(i+1,j,k,1)
        imul = 1d0/imul ; imur = 1d0/imur
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,erad=erl,ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,erad=err,ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,1,ierr)
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i  ,j,k) + dx(1) * dspc(1:2,i  ,j,k,1)
@@ -201,13 +210,14 @@ contains
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(solve_j)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,erl,err,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks,ke
     do j = js-1,je
      do i = is,ie
 
+      ! Don't bother calculating fluxes for flux boundaries
       if(j==js-1)then
        if(bc2is==10)cycle
       end if
@@ -253,13 +263,20 @@ contains
       eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
       eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
+      if(radswitch>0)then
+       erl = erad(i,j  ,k) + dx(1) * der(i,j  ,k,2)
+       err = erad(i,j+1,k) - dx(2) * der(i,j+1,k,2)
+      else
+       erl = 0d0 ; err = 0d0
+      end if
+      
       select case (eostype)
       case(0:1) ! without recombination
        imul = 1d0/imu(i,j  ,k) + dx(1) * dmu(i,j  ,k,2)
        imur = 1d0/imu(i,j+1,k) - dx(2) * dmu(i,j+1,k,2)
        imul = 1d0/imul ; imur = 1d0/imur
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,erad=erl,ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,erad=err,ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,2,ierr)
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i,j  ,k) + dx(1) * dspc(1:2,i,j  ,k,2)
@@ -363,13 +380,14 @@ contains
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(solve_k)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,erl,err,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks-1,ke
     do j = js,je
      do i = is,ie
 
+      ! Don't bother calculating fluxes for flux boundaries
       if(k==ks-1)then
        if(bc3is==10)cycle
       end if
@@ -415,13 +433,20 @@ contains
       eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
       eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
+      if(radswitch>0)then
+       erl = erad(i,j,k  ) + dx(1) * der(i,j,k  ,3)
+       err = erad(i,j,k+1) - dx(2) * der(i,j,k+1,3)
+      else
+       erl = 0d0 ; err = 0d0
+      end if
+
       select case (eostype)
       case(0:1) ! without recombination
        imul = 1d0/imu(i,j,k  ) + dx(1) * dmu(i,j,k  ,3)
        imur = 1d0/imu(i,j,k+1) - dx(2) * dmu(i,j,k+1,3)
        imul = 1d0/imul ; imur = 1d0/imur
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,erad=erl,ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,erad=err,ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,3,ierr)
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i,j,k  ) + dx(1) * dspc(1:2,i,j,k  ,3)
