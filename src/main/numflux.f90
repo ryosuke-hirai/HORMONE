@@ -24,7 +24,6 @@ contains
   use interpolation_mod
   use fluxbound_mod
   use profiler_mod
-  use radiation_mod,only:erad
 
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
@@ -119,8 +118,8 @@ contains
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i  ,j,k) + dx(1) * dspc(1:2,i  ,j,k,1)
        spcr(1:2) = spc(1:2,i+1,j,k) - dx(2) * dspc(1:2,i+1,j,k,1)
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,1,ierr)
       end select
       ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
@@ -281,8 +280,8 @@ contains
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i,j  ,k) + dx(1) * dspc(1:2,i,j  ,k,2)
        spcr(1:2) = spc(1:2,i,j+1,k) - dx(2) * dspc(1:2,i,j+1,k,2)
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,2,ierr)
       end select
       ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
@@ -451,8 +450,8 @@ contains
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i,j,k  ) + dx(1) * dspc(1:2,i,j,k  ,3)
        spcr(1:2) = spc(1:2,i,j,k+1) - dx(2) * dspc(1:2,i,j,k+1,3)
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,3,ierr)
       end select
       ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
