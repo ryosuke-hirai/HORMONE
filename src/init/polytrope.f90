@@ -34,7 +34,7 @@ subroutine polytrope
  call isentropic_star(mass,radius,mcore,rsoft,imu_const,m,r,rho,pres)
 
  ! Place the star at the origin
- call set_star_sph_grid(r,m,rho,pres)
+ call set_star_sph_grid(r,m,pres)
 
  ! Attach a wind-like atmosphere
  dbg = rho(size(rho)-1)

@@ -83,22 +83,21 @@ end subroutine replace_core
 
 ! PURPOSE: To place star at the origin of a spherical coordinate grid
 
-subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
+subroutine set_star_sph_grid(r,m,pres,comp,comp_list)
 
  use settings,only:spn,compswitch,eq_sym
- use constants,only:G,pi
  use grid
  use physval
- use gravmod,only:grvphi,mc
+ use gravmod,only:mc
  use utils,only:intpol,gravpot1d
 
- real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
+ real(8),allocatable,dimension(:),intent(in):: r,m,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
  character(len=10),allocatable,intent(in),optional:: comp_list(:)
- real(8),allocatable,dimension(:)::gpot,Vshell
+ real(8),allocatable,dimension(:):: Vshell
  integer::i,j,k,n,lines,nn,sn
  real(8):: mass, radius
- real(8):: mnow,volfac
+ real(8):: volfac
 
 !-----------------------------------------------------------------------------
 
