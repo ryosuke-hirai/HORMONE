@@ -89,10 +89,10 @@ module constants
   real(8),parameter:: sigma=2d0*pi**5*kbol**4/(15d0*clight**2*hplanck**3)
   real(8),parameter:: arad = 4d0*sigma/clight
 ! Measured values
-  real(8),parameter:: G  = 6.67430d-8
-  real(8),parameter:: N_A = 6.02214076d23, amu = 1d0/N_A
+  real(8),parameter:: G = 6.67430d-8
+  real(8),parameter:: Navo = 6.02214076d23, amu = 1d0/Navo
   real(8),parameter:: m_p = 1.6726231d-24, m_n = 1.6749286d-24
-  real(8),parameter:: m_e = 9.1093897d-28, Rgas = kbol*N_A
+  real(8),parameter:: m_e = 9.1093897d-28, Rgas = kbol*Navo
   real(8),parameter:: year = 3600d0*24d0*365.25d0
 ! IAU 2015 Resolution B3
   real(8),parameter:: msun = 1.3271244d26/G, rsun = 6.957d10
