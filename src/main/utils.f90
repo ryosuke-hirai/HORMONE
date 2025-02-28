@@ -340,14 +340,14 @@ subroutine gravpot1d
 
   ! If the cell(s) is in the current MPI task, update grvphi.
   if (is<=i .and. i<=ie) then
-    grvphi(i,js-1:je+1,ks-1:ke+1) = G*(-mc(i)/x1(i)+4d0*pi*ishell)
+    grvphi(i,js-2:je+2,ks-2:ke+2) = G*(-mc(i)/x1(i)+4d0*pi*ishell)
   endif
 
  end do
 
  ! Outermost shell
  if (ie==ie_global) then
-    grvphi(ie,js-1:je+1,ks-1:ke+1) = -G*mc(ie)/x1(ie)
+    grvphi(ie,js-2:je+2,ks-2:ke+2) = -G*mc(ie)/x1(ie)
  end if
 
  return
