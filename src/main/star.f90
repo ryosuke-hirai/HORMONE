@@ -90,7 +90,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  use grid
  use physval
  use gravmod,only:grvphi,mc
- use utils,only:intpol
+ use utils,only:intpol,gravpot1d
 
  real(8),allocatable,dimension(:),intent(in):: r,m,rho,pres
  real(8),allocatable,dimension(:,:),intent(in),optional:: comp
@@ -106,24 +106,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  lines = size(r)-1
  mass = m(lines)
  radius = r(lines)
-
-! calculate gravitational potential
- allocate(gpot(0:lines))
- do n = 0, lines-1
-  ! To reduce roundoff error
-  !   1) split summation into 4 terms
-  term1 = 0d0; term2 = 0d0; term3 = 0d0; term4 = 0d0
-  !   2) sum in reverse, since outer shells have less mass,
-  !      so we want to add those together first
-  do i = lines, n+1, -1
-   term1 = term1 + rho(i-1)*r(i)  *(r(i)+r(i-1))
-   term2 = term2 + rho(i)  *r(i-1)*(r(i)+r(i-1))
-   term3 = term3 + rho(i)  *(r(i)**2+r(i)*r(i-1)+r(i-1)**2)
-   term4 = term4 + rho(i-1)*(r(i)**2+r(i)*r(i-1)+r(i-1)**2)
-  end do
-  mnow = 0.5d0*(term1-term2)+(term3-term4)/3d0
-  gpot(n) = -G*m(n)/(r(n)+1d-99)-4d0*pi*G*mnow
- end do
 
  do i = max(is_global,is-1), ie
   if(xi1(i)>=radius)then
@@ -196,23 +178,7 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  end do
 !$omp end parallel do
 
-!$omp parallel do private(i,j,k,n) collapse(3)
- do k = gks-2, gke+2
-  do j = gjs-2, gje+2
-   do i = gis-2, gie+2
-    if(x1(i)<r(lines-1))then
-     do n = 0, lines-1
-      if(r(n+1)>abs(x1(i)).and.r(n)<=abs(x1(i)))then
-       grvphi(i,j,k) = intpol(r(n:n+1),gpot(n:n+1),abs(x1(i)))
-      end if
-     end do
-    else
-     grvphi(i,j,k) = -G*mass/x1(i)
-    end if
-   end do
-  end do
- end do
-!$omp end parallel do
+ call gravpot1d
 
 return
 end subroutine set_star_sph_grid

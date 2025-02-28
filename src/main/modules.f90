@@ -97,6 +97,7 @@ module constants
 ! IAU 2015 Resolution B3
   real(8),parameter:: msun = 1.3271244d26/G, rsun = 6.957d10
   real(8),parameter:: au = 1.49597870700d13
+! Others
   real(8),parameter:: huge = 1d99, tiny = 1d-99
   real(8):: fac_egas
 
