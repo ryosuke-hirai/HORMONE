@@ -200,7 +200,7 @@ subroutine checksetup
   t_end = t_end*dt_unit_in_sec
   if(is_test)then
    t_out  = 2d0*t_end
-   tn_out = 2d0*tnlim
+   tn_out = 2*tnlim
   end if
 
 ! Spherical composition only for spherical coordinates

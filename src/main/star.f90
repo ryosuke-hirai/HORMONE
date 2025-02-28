@@ -99,7 +99,6 @@ subroutine set_star_sph_grid(r,m,rho,pres,comp,comp_list)
  integer::i,j,k,n,lines,nn,sn
  real(8):: mass, radius
  real(8):: mnow,volfac
- real(8):: term1, term2, term3, term4
 
 !-----------------------------------------------------------------------------
 
