@@ -16,7 +16,7 @@ subroutine gridset
  use settings,only:imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
  use grid
  use constants,only:pi
- use utils,only:geometrical_series
+ use utils,only:geometrical_series,sin0,cos0
  use readbin_mod,only:readgrid
 
  integer::i,j,k,jetmp,ketmp
@@ -385,10 +385,10 @@ subroutine gridset
 
   allocate( sinc, sini, cosc, cosi, mold=x2 )
   do j = js_global-2, je_global+2
-   sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)
-   sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)
-   cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)
-   cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)
+   sinc(j)=sin0(x2 (j))!real(sin(real(x2 (j),kind=16)),kind=8)
+   sini(j)=sin0(xi2(j))!real(sin(real(xi2(j),kind=16)),kind=8)
+   cosc(j)=cos0(x2 (j))!real(cos(real(x2 (j),kind=16)),kind=8)
+   cosi(j)=cos0(xi2(j))!real(cos(real(xi2(j),kind=16)),kind=8)
   end do
 
 ! for volumetric centre
@@ -454,10 +454,10 @@ subroutine gridset
   if(crdnt==2)then
    allocate( sinc, sini, cosc, cosi, mold=x2 )
    do j = js_global-2, je_global+2
-    sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)
-    sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)
-    cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)
-    cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)
+    sinc(j)=sin0(x2 (j))!real(sin(real(x2 (j),kind=16)),kind=8)
+    sini(j)=sin0(xi2(j))!real(sin(real(xi2(j),kind=16)),kind=8)
+    cosc(j)=cos0(x2 (j))!real(cos(real(x2 (j),kind=16)),kind=8)
+    cosi(j)=cos0(xi2(j))!real(cos(real(xi2(j),kind=16)),kind=8)
    end do
   end if
 

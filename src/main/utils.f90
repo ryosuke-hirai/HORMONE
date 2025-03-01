@@ -3,6 +3,63 @@ module utils
 
 contains
 
+! In-house sine function to avoid machine-dependent behaviour
+ function sin0(x) result(s)
+  use constants,only:pi
+  real(8), intent(in) :: x
+  real(8):: s, x_reduced, cosx
+  integer:: sign_factor
+
+! Reduce x to [0, 2π] using periodicity
+  x_reduced = modulo(x,2d0*pi)
+
+! Reduce to [0, π] and keep track of sign
+  sign_factor = 1
+  if (x_reduced > pi) then
+   x_reduced = 2d0*pi - x_reduced
+   sign_factor = -1
+  end if
+
+! Reduce to [0, π/2] using symmetry sin(π - x) = sin(x)
+  if (x_reduced > 0.5d0*pi) then
+   x_reduced = pi - x_reduced
+  end if
+
+! Reduce to [0, π/4] using sin(x) = cos(π/2 - x) and cos(x) = sin(π/2 - x)
+  if (x_reduced > 0.25d0*pi) then
+   cosx = sine_taylor(0.5d0*pi-x_reduced)
+   s = dble(sign_factor) * sqrt(1d0-cosx*cosx)
+  else
+   s = dble(sign_factor) * sine_taylor(x_reduced)
+  end if
+ end function sin0
+
+ function cos0(x) result(c)
+  use constants,only: pi
+  real(8),intent(in):: x
+  real(8):: c
+  c = sin0(0.5d0*pi-x)
+ end function cos0
+
+ pure function sine_taylor(x) result(s)
+  real(8), intent(in) :: x
+  real(8) :: s, term
+  real(8),parameter:: tolerance=1d-15
+  integer :: n
+
+! Taylor series initialization
+  s = 0d0
+  term = x
+  n = 1
+
+! Compute sine via Taylor series: sin(x) = x - x^3/3! + x^5/5! - ...
+  do while (abs(term) > tolerance)
+   s = s + term
+   n = n + 2
+   term = -term*x*x / dble(n*(n-1))
+  end do
+ end function sine_taylor
+ 
 ! convert polar to cartesian coordinates
  pure function polcar(xp) result(x)
   implicit none
