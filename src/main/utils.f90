@@ -3,7 +3,7 @@ module utils
 
 contains
 
-! In-house sine function to avoid machine-dependent behaviour
+! In-house sine function to minimize machine-dependent behaviour
  function sin0(x) result(s)
   use constants,only:pi
   real(8), intent(in) :: x
@@ -60,6 +60,7 @@ contains
   end do
  end function sine_taylor
 
+! In-house exponential function to minimize machine-dependent behaviour
  pure function exp0(x) result(e)
   real(8), intent(in) :: x
   real(8) :: e, term
