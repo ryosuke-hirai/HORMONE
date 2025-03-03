@@ -375,10 +375,10 @@ subroutine gridset
 
   allocate( sinc, sini, cosc, cosi, mold=x2 )
   do j = js_global-2, je_global+2
-   sinc(j)=sin0(x2 (j))!real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))!
-   sini(j)=sin0(xi2(j))!real(sin(real(xi2(j),kind=16)),kind=8)!sin0(xi2(j))!
-   cosc(j)=cos0(x2 (j))!real(cos(real(x2 (j),kind=16)),kind=8)!cos0(x2 (j))!
-   cosi(j)=cos0(xi2(j))!real(cos(real(xi2(j),kind=16)),kind=8)!cos0(xi2(j))!
+   sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))!
+   sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)!sin0(xi2(j))!
+   cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)!cos0(x2 (j))!
+   cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)!cos0(xi2(j))!
   end do
 
 ! for volumetric centre
@@ -444,10 +444,10 @@ subroutine gridset
   if(crdnt==2)then
    allocate( sinc, sini, cosc, cosi, mold=x2 )
    do j = js_global-2, je_global+2
-    sinc(j)=sin0(x2 (j))!real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))
-    sini(j)=sin0(xi2(j))!real(sin(real(xi2(j),kind=16)),kind=8)!sin0(xi2(j))
-    cosc(j)=cos0(x2 (j))!real(cos(real(x2 (j),kind=16)),kind=8)!cos0(x2 (j))
-    cosi(j)=cos0(xi2(j))!real(cos(real(xi2(j),kind=16)),kind=8)!cos0(xi2(j))
+    sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))
+    sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)!sin0(xi2(j))
+    cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)!cos0(x2 (j))
+    cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)!cos0(xi2(j))
    end do
   end if
 
