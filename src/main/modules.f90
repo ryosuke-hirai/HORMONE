@@ -24,7 +24,7 @@ module settings
  integer:: imesh, jmesh, kmesh
  integer:: nsink, maxtngrv
 ! test tolerance
- real(8):: test_tol
+ real(8):: test_tol, Mach_tol
 ! switches
  logical:: solve_i, solve_j, solve_k
  logical:: include_extgrv, include_particles, include_cooling, mag_on

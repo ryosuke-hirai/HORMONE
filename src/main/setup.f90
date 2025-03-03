@@ -187,7 +187,7 @@ subroutine read_parameters(filename)
  namelist /sinkcon/ include_sinks, nsink, include_accretion
  namelist /rad_con/ radswitch, opacitytype, c_kappa, lambdatype
  namelist /partcon/ include_particles, maxptc
- namelist /testcon/ test_tol
+ namelist /testcon/ test_tol, Mach_tol
 
  if(filename=='')return
 

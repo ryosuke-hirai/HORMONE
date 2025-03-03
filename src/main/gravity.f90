@@ -175,6 +175,8 @@ subroutine gravity_relax
  real(8), allocatable :: mass(:,:,:)
  real(8) :: mtot
 
+!-----------------------------------------------------------------------------
+
  if (myrank==0) print*, 'Initialising gravity using hyperbolic solver...'
 
  call timestep
