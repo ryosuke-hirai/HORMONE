@@ -16,7 +16,7 @@ subroutine gridset
  use settings,only:imesh,jmesh,kmesh,eq_sym,start,gravswitch,crdnt
  use grid
  use constants,only:pi
- use utils,only:geometrical_series,sin0,cos0
+ use utils,only:geometrical_series
  use readbin_mod,only:readgrid
 
  integer::i,j,k,jetmp,ketmp
