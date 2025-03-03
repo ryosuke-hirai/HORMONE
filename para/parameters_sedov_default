@@ -31,8 +31,8 @@
 
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
-! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-&simucon flux_limiter='flat' crdnt=2 /
+! flux_limiter: 'flat' or 'minmod' or 'flat'
+&simucon flux_limiter='modified_mc' crdnt=2 /
 
 ! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)
