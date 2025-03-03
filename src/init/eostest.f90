@@ -72,7 +72,7 @@ subroutine eostest
 
    d = 10d0**(log10(Q)+2d0*log10(T)-12d0)
 
-   p = fac_pgas*imu*d*T
+   p = Rgas*imu*d*T
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
    e = eos_e(d,p,T,imu)
    p2 = eos_p(d,e,T2,imu)
@@ -133,7 +133,7 @@ subroutine eostest
 
    d = 10d0**(log10(Q)+2d0*log10(T)-12d0)
 
-   p = fac_pgas*imu*d*T+arad*T**4/3d0
+   p = Rgas*imu*d*T+arad*T**4/3d0
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
    e = eos_e(d,p,T,imu)
    p2 = eos_p(d,e,T2,imu)
@@ -196,7 +196,7 @@ subroutine eostest
    d = 10d0**(log10(Q)+2d0*log10(T)-12d0)
    call get_erec_imurec(log10(d),T,X,Y,erec,imu)
 
-   p = fac_pgas*imu*d*T+arad*T**4/3d0
+   p = Rgas*imu*d*T+arad*T**4/3d0
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
    e = eos_e(d,p,T,imu,X,Y)
    p2 = eos_p(d,e,T2,imu2,X,Y)

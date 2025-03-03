@@ -171,6 +171,36 @@ subroutine get_vcyl(xcar,vcar,v1,v2,v3)
 return
 end subroutine get_vcyl
 
+! Compute gradient with second order accuracy
+function get_grad(u,i,j,k) result(gradu)
+
+ use settings,only:solve_i,solve_j,solve_k
+ use grid,only:dx1,dx2,dx3,sx1,sisin
+
+ integer,intent(in):: i,j,k
+ real(8),intent(in),allocatable:: u(:,:,:)
+ real(8):: gradu(1:3)
+
+ gradu = 0d0
+ if(solve_i) &
+  gradu(1) = ( dx1(i)**2*u(i+1,j,k)-dx1(i+1)**2*u(i-1,j,k)  &
+              +(dx1(i)+dx1(i+1))*(dx1(i+1)-dx1(i))*u(i,j,k) )&
+             / (dx1(i)*dx1(i+1)*(dx1(i)+dx1(i+1)))
+
+ if(solve_j) &
+  gradu(2) = ( dx2(j)**2*u(i,j+1,k)-dx2(j+1)**2*u(i,j-1,k)  &
+              +(dx2(j)+dx2(j+1))*(dx2(j)-dx2(j+1))*u(i,j,k) )&
+             / (dx2(j)*dx2(j+1)*(dx2(j)+dx2(j+1))) &
+           * sx1(i)
+
+ if(solve_k) &
+  gradu(3) = ( dx3(k)**2*u(i,j,k+1)-dx3(k+1)**2*u(i,j,k-1)  &
+              +(dx3(k)+dx3(k+1))*(dx3(k)-dx3(k+1))*u(i,j,k) )&
+             / (dx3(k)*dx3(k+1)*(dx3(k)+dx3(k+1))) &
+           * sx1(i)*sisin(j)
+
+end function get_grad
+
 ! This function is equivalent to rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
 ! but expanded out, to reduce roundoff error
  pure function get_uvec2(x,theta) result(xp)

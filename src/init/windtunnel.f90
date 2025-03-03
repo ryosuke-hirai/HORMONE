@@ -13,7 +13,7 @@ contains
 
 subroutine windtunnel
 
- use constants,only:msun,rsun,fac_pgas,arad
+ use constants,only:msun,rsun,Rgas,arad
  use settings,only:extrasfile
  use grid
  use physval
@@ -50,7 +50,7 @@ subroutine windtunnel
 ! Place the star at the origin
  call set_star_cyl_grid(r,m,pres)
 
- pwind = (fac_pgas/muconst*dwind + arad*Twind**3/3d0*0d0)*Twind
+ pwind = (Rgas/muconst*dwind + arad*Twind**3/3d0*0d0)*Twind
 ! Embed the star in a uniform wind tunnel
  do k = ks, ke
   do j = js, je

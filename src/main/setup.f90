@@ -135,6 +135,8 @@ subroutine read_default
   filename='../para/parameters_smearing'
  case('iotest')
   filename='../para/parameters_iotest'
+ case('matrad_coupling')
+  filename='../para/parameters_matrad_coupling'
  case default
   print*,'This simtype does not exist yet, simtype ="',trim(simtype),'"'
   stop
@@ -183,7 +185,7 @@ subroutine read_parameters(filename)
                     grav_init_other, grav_init_relax, include_extgrv,&
                     gis, gie, gjs, gje, gks, gke
  namelist /sinkcon/ include_sinks, nsink, include_accretion
- namelist /rad_con/ radswitch, opacitytype, lambdatype
+ namelist /rad_con/ radswitch, opacitytype, c_kappa, lambdatype
  namelist /partcon/ include_particles, maxptc
  namelist /testcon/ test_tol
 

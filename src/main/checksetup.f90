@@ -69,6 +69,8 @@ subroutine checksetup
    if(dim>1)&
     call add_equation(i9wv,ufnmax) ! Divergence cleaning (9-wave method)
   end if
+  if(radswitch>0)&
+   call add_equation(irad,ufnmax) ! Radiation transport
 
 ! Set uniform mesh if that dimension is not used
   if(.not.solve_i)imesh=0
