@@ -20,7 +20,7 @@
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
-          tnlim=100000 t_end=300d0 dt_out=300d0 tn_out=1
+          tnlim=100000 t_end=300d0 dt_out=500d0 tn_out=1
           dt_unit='ms' outres=1 write_shock =.false. /
 
 ! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
@@ -31,7 +31,7 @@
 
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
-! flux_limiter: 'flat' or 'minmod' or 'flat'
+! flux_limiter: 'flat' or 'minmod' or 'modified_mc'
 &simucon flux_limiter='modified_mc' crdnt=2 /
 
 ! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
