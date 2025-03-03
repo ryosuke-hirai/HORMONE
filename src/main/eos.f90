@@ -1,5 +1,5 @@
 module pressure_mod
- use constants,only:fac_egas,fac_pgas,arad,huge
+ use constants,only:fac_egas,Rgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr
  implicit none
@@ -94,13 +94,13 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
 
  select case (eostype)
  case(0) ! ideal gas
-  T = p/(fac_pgas*imu)
+  T = p/(Rgas*imu)
 
  case(1) ! ideal gas + radiation
   corr = huge
   do n = 1, 500
-   corr = (p - (arad*T**3/3d0+d*fac_pgas*imu)*T) &
-        / (-4d0*arad*T**3/3d0-d*fac_pgas*imu)
+   corr = (p - (arad*T**3/3d0+d*Rgas*imu)*T) &
+        / (-4d0*arad*T**3/3d0-d*Rgas*imu)
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
@@ -114,8 +114,8 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
   corr = huge; logd = log10(d)
   do n = 1, 500
    call get_imurec(logd,T,X,Y,imurec,dimurecdT)
-   corr = (p - (arad*T**3/3d0+d*fac_pgas*imurec)*T) &
-        / (-4d0*arad*T**3/3d0-d*fac_pgas*(imurec+dimurecdT*T))
+   corr = (p - (arad*T**3/3d0+d*Rgas*imurec)*T) &
+        / (-4d0*arad*T**3/3d0-d*Rgas*(imurec+dimurecdT*T))
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
@@ -204,11 +204,11 @@ function eos_p(d,eint,T,imu,X,Y)
 
  case(1) ! ideal gas + radiation
   call getT_from_de(d,eint,T,imu)
-  eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
+  eos_p = ( Rgas*imu*d + arad*T**3/3d0 )*T
 
  case(2) ! ideal gas + radiation + recombination
   call getT_from_de(d,eint,T,imu,X,Y)
-  eos_p = ( fac_pgas*imu*d + arad*T**3/3d0 )*T
+  eos_p = ( Rgas*imu*d + arad*T**3/3d0 )*T
 
  case default
   stop 'Error in eostype'
@@ -278,13 +278,13 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
 
  select case(eostype)
  case(0) ! ideal gas
-  p = fac_pgas*T*imu
+  p = Rgas*T*imu
   entropy = p/d**gamma
 
  case(1) ! ideal gas + radiation
-  S_ion = fac_pgas*imu*log(T**1.5d0/d)
+  S_ion = Rgas*imu*log(T**1.5d0/d)
   S_rad = 4d0*arad*T**3/(3d0*d)
-  entropy = (S_ion + S_rad) / fac_pgas
+  entropy = (S_ion + S_rad) / Rgas
 
  case(2) ! ideal gas + radiation + recombination
   call get_xion(log(d),T,Y,xion)
@@ -397,7 +397,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
 
  case(1) ! ideal gas + radiation (fully ionized, uniform composition)
   d = 1d-8 ! initial guess
-  T = p/(fac_pgas*d*imu)
+  T = p/(Rgas*d*imu)
   corr=1d99
   do n = 1, 5000 ! Newton-Raphson iteration to get density
    dp = d*(1d0+dfac)
