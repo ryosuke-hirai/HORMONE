@@ -344,16 +344,6 @@ subroutine gridset
     dx1(gis_global-2) = dxi1(gis_global-2) ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
    end if
 
-!!$   if(gravswitch/=0)then
-!!$    dx1 = dxi1 ; idx1 = 1d0 / dx1 ; idxi1 = 1d0 / dxi1
-!!$    do i = ie+1, gie+2
-!!$     xi1(i) = xi1(i-1) + dxi1(i)
-!!$     x1(i)  = sqrt( (xi1(i-1)**3d0+xi1(i)**3d0) *(1d0/3d0) )
-!!$     dx1(i) = x1(i) - x1(i-1)
-!!$     idx1(i) = 1d0 / dx1(i)
-!!$    end do
-!!$   end if
-
 ! set theta direction
    mesh_sph2: select case (jmesh)
    case(0) mesh_sph2 ! uniform theta
@@ -385,10 +375,10 @@ subroutine gridset
 
   allocate( sinc, sini, cosc, cosi, mold=x2 )
   do j = js_global-2, je_global+2
-   sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)
-   sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)
-   cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)
-   cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)
+   sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))!
+   sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)!sin0(xi2(j))!
+   cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)!cos0(x2 (j))!
+   cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)!cos0(xi2(j))!
   end do
 
 ! for volumetric centre
@@ -454,10 +444,10 @@ subroutine gridset
   if(crdnt==2)then
    allocate( sinc, sini, cosc, cosi, mold=x2 )
    do j = js_global-2, je_global+2
-    sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)
-    sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)
-    cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)
-    cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)
+    sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))
+    sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)!sin0(xi2(j))
+    cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)!cos0(x2 (j))
+    cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)!cos0(xi2(j))
    end do
   end if
 

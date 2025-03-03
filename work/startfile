@@ -24,6 +24,7 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'star_sph': Do something with a star on spherical coordinates
 'polytrope': Polytropic star on spherical coordinates
 'iotest': Test the read/write routines
+'smearing': Test the smearing module
 ** Test files NOT available **
 'sedov_other': Sedov blast wave. Set model parameters in extras file.
 'eruption': 1D eruption of stars (Owocki+2019)

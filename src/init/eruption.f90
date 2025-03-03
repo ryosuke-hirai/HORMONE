@@ -110,7 +110,7 @@ subroutine eruption
  spc_bg(spn) = 1d0-sum(spc_bg(1:spn-1))
 
 ! Place the star at the origin
- call set_star_sph_grid(r,m,rho,pres,comp,comp_list)
+ call set_star_sph_grid(r,m,pres,comp,comp_list)
 
 ! Attach a wind-like atmosphere
  do k = ks, ke

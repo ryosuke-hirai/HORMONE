@@ -83,8 +83,7 @@ contains
 
 ! Compute dtgrav if using hyperbolic self-gravity
   if(gravswitch==3)then
-   cgrav = cfmax
-   cgrav = HGfac*cgrav
+   cgrav = HGfac*cfmax
 ! Limit number of substeps if HG becomes prohibitively slow (use with care!!)
    if(maxtngrv>0) cgrav = min(cgrav,hgcfl*dtg_unit*dble(maxtngrv)/dt)
    dtgrav = min(dt,hgcfl*dtg_unit/cgrav)

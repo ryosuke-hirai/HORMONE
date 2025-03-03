@@ -47,11 +47,12 @@ contains
 
   use utils,only:isequal
   use mpi_utils,only:myrank
-  use settings,only:simtype,mag_on,test_tol,compswitch,spn
+  use settings,only:simtype,mag_on,test_tol,Mach_tol,compswitch,spn
   use grid,only:is,ie,js,je,ks,ke,dim
   use physval
   use gravmod
   use readbin_mod,only:readbin
+  use timestep_mod,only:timestep
 
   logical, intent(out) :: passed
   integer:: n
@@ -130,12 +131,16 @@ contains
   ! Calculate the magnitude of velocity and magnetic field
   vmag(is:ie,js:je,ks:ke) = sqrt(v1(is:ie,js:je,ks:ke)**2+v2(is:ie,js:je,ks:ke)**2+v3(is:ie,js:je,ks:ke)**2)
   bmag(is:ie,js:je,ks:ke) = sqrt(b1(is:ie,js:je,ks:ke)**2+b2(is:ie,js:je,ks:ke)**2+b3(is:ie,js:je,ks:ke)**2)
+  ! Calculate the sound speed
+  call timestep
 
   ! Magnitude of this quantity used to normalise the error
   do n = 1, nn+spn
     ! If the variable is a component of velocity or magnetic field, use the magnitude
     if (n>=3.and.n<=5) then
-      scale(is:ie,js:je,ks:ke,n) = vmag(is:ie,js:je,ks:ke)
+      ! Down-weigh velocity errors when Mach<<1
+      scale(is:ie,js:je,ks:ke,n) = max(vmag(is:ie,js:je,ks:ke), &
+                                       cs  (is:ie,js:je,ks:ke) * Mach_tol )
     else if (n>=6.and.n<=8) then
       scale(is:ie,js:je,ks:ke,n) = bmag(is:ie,js:je,ks:ke)
     else

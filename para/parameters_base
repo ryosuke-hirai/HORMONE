@@ -95,3 +95,7 @@
 &rad_con radswitch=0 opacitytype=1 lambdatype=1 /
 
 &partcon include_particles=.false. maxptc=0 /
+
+! test_tol: tolerance for test simulation
+! Mach_tol: Normalize velocities by this Mach number to avoid dividing by zero
+&testcon test_tol=1d-15 Mach_tol=1d-5 /

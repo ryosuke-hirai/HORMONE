@@ -124,7 +124,7 @@ subroutine redsupergiant
 
 ! Place the star at the origin
  m = m-mcore
- call set_star_sph_grid(r,m,rho,pres,comp,comp_list)
+ call set_star_sph_grid(r,m,pres,comp,comp_list)
 
 ! Attach a uniform density atmosphere
  do k = ks, ke

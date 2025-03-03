@@ -25,7 +25,7 @@ module settings
  integer:: nsink, maxtngrv
  real(8):: jet_ang
 ! test tolerance
- real(8):: test_tol
+ real(8):: test_tol, Mach_tol
 ! switches
  logical:: solve_i, solve_j, solve_k
  logical:: include_extgrv, include_particles, include_cooling, mag_on
@@ -82,18 +82,24 @@ module constants
   implicit none
 
 ! all in cgs units
-  real(8),parameter:: pi = acos(-1d0)
-  real(8),parameter:: G  = 6.67428d-8, clight = 2.99792458d10
-  real(8),parameter:: msun = 1.989d33, rsun = 6.963d10
-  real(8),parameter:: msolar = msun, rsolar = rsun, au = 1.49598073d13
-  real(8),parameter:: kbol = 1.38064852d-16, amu = 1.6605402d-24
-  real(8),parameter:: arad = 7.5646d-15, sigma = 5.67051d-5
-  real(8),parameter:: hplanck = 6.6260755d-27, m_p = 1.6726231d-24
-  real(8),parameter:: m_n = 1.6749286d-24, m_e = 9.1093897d-28
-  real(8),parameter:: N_A = 6.0221367d23
+
+! Exact values
+  real(8),parameter:: pi = acos(-1d0), clight = 2.99792458d10
+  real(8),parameter:: kbol = 1.380649d-16, hplanck = 6.62607015d-27
+  real(8),parameter:: sigma=2d0*pi**5*kbol**4/(15d0*clight**2*hplanck**3)
+  real(8),parameter:: arad = 4d0*sigma/clight
+! Measured values
+  real(8),parameter:: G = 6.67430d-8
+  real(8),parameter:: Navo = 6.02214076d23, amu = 1d0/Navo
+  real(8),parameter:: m_p = 1.6726231d-24, m_n = 1.6749286d-24
+  real(8),parameter:: m_e = 9.1093897d-28, Rgas = kbol*Navo
   real(8),parameter:: year = 3600d0*24d0*365.25d0
+! IAU 2015 Resolution B3
+  real(8),parameter:: msun = 1.3271244d26/G, rsun = 6.957d10
+  real(8),parameter:: au = 1.49597870700d13
+! Others
   real(8),parameter:: huge = 1d99, tiny = 1d-99
-  real(8):: fac_pgas, fac_egas
+  real(8):: fac_egas
 
 end module constants
 
