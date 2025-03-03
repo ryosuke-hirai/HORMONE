@@ -59,7 +59,25 @@ contains
    term = -term*x*x / dble(n*(n-1))
   end do
  end function sine_taylor
- 
+
+ pure function exp0(x) result(e)
+  real(8), intent(in) :: x
+  real(8) :: e, term
+  integer :: n
+
+! Initialize the Taylor series
+  e = 1d0  ! First term: x^0 / 0! = 1
+  term = 1d0
+  n = 1
+
+! Compute terms until convergence
+  do while (abs(term/e) > 1.0d-16)
+   term = term * x / dble(n)  ! Compute next term x^n / n!
+   e = e + term
+   n = n + 1
+  end do
+ end function exp0
+
 ! convert polar to cartesian coordinates
  pure function polcar(xp) result(x)
   implicit none

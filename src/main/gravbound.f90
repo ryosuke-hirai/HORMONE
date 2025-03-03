@@ -1,5 +1,3 @@
-
-
 module gravbound_mod
  implicit none
 

@@ -20,7 +20,7 @@
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
-          tnlim=10 t_end=1d1 dt_out=2d1 tn_out=10
+          tnlim=30 t_end=1d1 dt_out=2d1 tn_out=30
           dt_unit='s' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.true. /
 
@@ -52,4 +52,4 @@
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
 ! test tolerance
-&testcon  test_tol=1d-11 /
+&testcon  test_tol=1d-11 Mach_tol=1d-5/
