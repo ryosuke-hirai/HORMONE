@@ -91,8 +91,11 @@
 
 ! radswitch:0=off,1=flux limited diffusion
 ! opacitytype:0=fixed,1=ionisation
-! lambdatype:1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
-&rad_con radswitch=0 opacitytype=1 lambdatype=1 /
+! c_kappa_{r,p,f}: values for fixed opacity (Rosseland, Planck, flux-weighted mean)
+! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
+! rbtype:0=zero-gradient boundary
+&rad_con radswitch=0 opacitytype=0 c_kappa_r=1d0 c_kappa_p=1d0 c_kappa_f=1d0
+         lambdatype=0 rbtype=0 /
 
 &partcon include_particles=.false. maxptc=0 /
 
