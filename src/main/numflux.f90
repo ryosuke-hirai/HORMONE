@@ -28,7 +28,7 @@ contains
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
            v2l, v2r, v3l, v3r, eil, eir, erl, err, csl, csr
-  real(8),dimension(1:9)::tmpflux
+  real(8),dimension(1:10)::tmpflux
   real(8),dimension(1:2):: dx
   real(8),dimension(1:spn):: spcl,spcr
   real(8):: signdflx,fix,ul,ur,fl,fr,rinji
@@ -129,7 +129,8 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch,&
+                            erl,err)
 
 !!$     if(maxval(shock(i:i+1,j-1:j+1,k-1:k+1))==1)then ! if supersonic
 !!$      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v2l),abs(v2r),abs(v1l),abs(v1r)))then ! and aligned
@@ -182,9 +183,19 @@ contains
 !!$      end if
 !!$     end if
 
-      do n = 1,ufnmax
-       flux1(i,j,k,n) = tmpflux(n)
-      end do
+      flux1(i,j,k,icnt) = tmpflux(1)
+      flux1(i,j,k,imo1) = tmpflux(2)
+      flux1(i,j,k,imo2) = tmpflux(3)
+      flux1(i,j,k,imo3) = tmpflux(4)
+      flux1(i,j,k,iene) = tmpflux(5)
+      if(mag_on)then
+       flux1(i,j,k,img1) = tmpflux(6)
+       flux1(i,j,k,img2) = tmpflux(7)
+       flux1(i,j,k,img3) = tmpflux(8)
+       if(dim>1)flux1(i,j,k,i9wv) = tmpflux(9)
+      end if
+      if(radswitch>0)&
+       flux1(i,j,k,iene) = tmpflux(10)
 
       if(compswitch>=2)then
        do n = 1, spn
@@ -290,7 +301,8 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch,&
+                            erl,err)
 
 
 !!$     if(maxval(shock(i-1:i+1,j:j+1,k-1:k+1))==1)then ! if shock
@@ -344,17 +356,19 @@ contains
 !!$      end if
 !!$     end if
 
-      flux2(i,j,k,icnt) = tmpflux(icnt)
-      flux2(i,j,k,imo1) = tmpflux(imo3)
-      flux2(i,j,k,imo2) = tmpflux(imo1)
-      flux2(i,j,k,imo3) = tmpflux(imo2)
-      flux2(i,j,k,iene) = tmpflux(iene)
+      flux2(i,j,k,icnt) = tmpflux(1)
+      flux2(i,j,k,imo1) = tmpflux(4)
+      flux2(i,j,k,imo2) = tmpflux(2)
+      flux2(i,j,k,imo3) = tmpflux(3)
+      flux2(i,j,k,iene) = tmpflux(5)
       if(mag_on)then
-       flux2(i,j,k,img1) = tmpflux(img3)
-       flux2(i,j,k,img2) = tmpflux(img1)
-       flux2(i,j,k,img3) = tmpflux(img2)
-       if(dim>1)flux2(i,j,k,i9wv) = tmpflux(i9wv)
+       flux2(i,j,k,img1) = tmpflux(8)
+       flux2(i,j,k,img2) = tmpflux(6)
+       flux2(i,j,k,img3) = tmpflux(7)
+       if(dim>1)flux2(i,j,k,i9wv) = tmpflux(9)
       end if
+      if(radswitch>0)&
+       flux2(i,j,k,irad) = tmpflux(10)
 
       if(compswitch>=2)then
        do n = 1, spn
@@ -460,7 +474,8 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch,&
+                            erl,err)
 
 !!$     if(maxval(shock(i-1:i+1,j,k:k+1))==1)then ! if supersonic
 !!$      if(max(abs(v2l),abs(v2r))>1d-1*max(abs(v1l),abs(v1r),abs(v3l),abs(v3r)))then ! and aligned
@@ -513,17 +528,19 @@ contains
 !!$      end if
 !!$     end if
 
-      flux3(i,j,k,icnt) = tmpflux(icnt)
-      flux3(i,j,k,imo1) = tmpflux(imo2)
-      flux3(i,j,k,imo2) = tmpflux(imo3)
-      flux3(i,j,k,imo3) = tmpflux(imo1)
-      flux3(i,j,k,iene) = tmpflux(iene)
+      flux3(i,j,k,icnt) = tmpflux(1)
+      flux3(i,j,k,imo1) = tmpflux(3)
+      flux3(i,j,k,imo2) = tmpflux(4)
+      flux3(i,j,k,imo3) = tmpflux(2)
+      flux3(i,j,k,iene) = tmpflux(5)
       if(mag_on)then
-       flux3(i,j,k,img1) = tmpflux(img2)
-       flux3(i,j,k,img2) = tmpflux(img3)
-       flux3(i,j,k,img3) = tmpflux(img1)
-       if(dim>1)flux3(i,j,k,i9wv) = tmpflux(i9wv)
+       flux3(i,j,k,img1) = tmpflux(7)
+       flux3(i,j,k,img2) = tmpflux(8)
+       flux3(i,j,k,img3) = tmpflux(6)
+       if(dim>1)flux3(i,j,k,i9wv) = tmpflux(9)
       end if
+      if(radswitch>0)&
+       flux3(i,j,k,irad) = tmpflux(10)
 
       if(compswitch>=2)then
        do n = 1, spn
