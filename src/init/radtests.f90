@@ -149,13 +149,13 @@ subroutine diffusion1d
 ! Find the direction of shock tube
  select case(simtype(strl:strl))
  case('x')
-  imid = (is+ie)/2
+  imid = (is_global+ie_global)/2
   erad(imid,js,ks) = Etilde/dxi1(imid)
  case('y')
-  imid = (js+je)/2
+  imid = (js_global+je_global)/2
   erad(is,imid,ks) = Etilde/dxi2(imid)
  case('z')
-  imid = (ks+ke)/2
+  imid = (ks_global+ke_global)/2
   erad(is,js,imid) = Etilde/dxi3(imid)
  end select
 
