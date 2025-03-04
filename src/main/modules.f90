@@ -16,7 +16,7 @@ module settings
 ! numerical setups
  integer:: rktype, crdnt, tnlim, start, tn_out, tn_evo, outstyle, endstyle
  integer:: gravswitch, compswitch, radswitch, frame
- integer:: eostype, spn, sigfig, outres, gbtype, grktype, maxptc
+ integer:: eostype, spn, sigfig, outres, gbtype, grktype, maxptc, rbtype
  integer:: grvsrctype, opacitytype, lambdatype
  real(8):: courant, t_end, dt_out, dt_unit_in_sec, alpha9wave
  character(len=5):: dt_unit
@@ -115,13 +115,13 @@ module physval
   real(8),allocatable,dimension(:,:,:):: cs, phi, grv1, grv2, grv3
   real(8),allocatable,dimension(:,:,:,:):: u, flux1, flux2, flux3, uorg, src
   real(8),allocatable,dimension(:,:):: mudata
-  real(8),allocatable,dimension(:,:,:,:):: spc, spcorg, gradE
+  real(8),allocatable,dimension(:,:,:,:):: spc, spcorg
   real(8),allocatable,dimension(:,:,:,:,:):: dspc, spcflx
   character(len=10),allocatable:: species(:)
   real(8),allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30
   real(8),allocatable,dimension(:,:,:,:):: spc0
 
-  real(8):: gamma, muconst, ch, c_kappa
+  real(8):: gamma, muconst, ch
 
   integer,allocatable,dimension(:,:,:):: shock
 

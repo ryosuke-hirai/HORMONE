@@ -54,13 +54,12 @@ subroutine allocations
 ! physical variables
 !  Strictly non-zero quantities
  allocate(d(is-2:ie+2,js-2:je+2,ks-2:ke+2))
- allocate(p,e,T,ptot,cs,eint,imu,mold=d)
+ allocate(p,e,T,ptot,cs,eint,erad,imu,mold=d)
 
 !  Initially zero quantities
  allocate(phi(is-2:ie+2,js-2:je+2,ks-2:ke+2))
  allocate(v1,v2,v3,b1,b2,b3,grv1,grv2,grv3,mold=phi)
  allocate(shock(is-2:ie+2,js-2:je+2,ks-2:ke+2))
- if(radswitch>0)allocate(erad,mold=eint)
 
 ! Parallel first touch for OpenMP optimization on NUMA cores
 !$omp parallel
@@ -71,13 +70,12 @@ subroutine allocations
 ! Strictly non-zero quantities
     d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
     ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0/muconst
 ! Initially zero quantities
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
     grv1(i,j,k) = 0d0; grv2(i,j,k) = 0d0; grv3(i,j,k) = 0d0
-    phi(i,j,k) = 0d0
-    if(radswitch>0)erad(i,j,k) = 0d0
+    phi(i,j,k) = 0d0; erad(i,j,k) = 0d0
     shock(i,j,k) = 0
    end do
   end do
@@ -91,7 +89,7 @@ subroutine allocations
    do i = is-2, is-1
     d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
     ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0/muconst
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -104,7 +102,7 @@ subroutine allocations
    do i = ie+1, ie+2
     d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
     ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0/muconst
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -117,7 +115,7 @@ subroutine allocations
    do i = is, ie
     d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
     ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0/muconst
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -130,7 +128,7 @@ subroutine allocations
    do i = is, ie
     d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
     ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0/muconst
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -143,7 +141,7 @@ subroutine allocations
    do i = is, ie
     d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
     ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0/muconst
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -156,7 +154,7 @@ subroutine allocations
    do i = is, ie
     d(i,j,k) = 1d0; p(i,j,k) = 1d0; e(i,j,k) = 1d0
     ptot(i,j,k) = 1d0; cs(i,j,k) = 1d0; eint(i,j,k) = 1d0
-    T(i,j,k) = 1d3; imu(i,j,k) = 1d0
+    T(i,j,k) = 1d3; imu(i,j,k) = 1d0/muconst
     v1(i,j,k) = 0d0; v2(i,j,k) = 0d0; v3(i,j,k) = 0d0
     b1(i,j,k) = 0d0; b2(i,j,k) = 0d0; b3(i,j,k) = 0d0
    end do
@@ -170,6 +168,45 @@ subroutine allocations
  allocate(dd(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:3))
  allocate(de,dphi,dm1,dm2,dm3,db1,db2,db3,dmu,mold=dd)
  if(radswitch>0)allocate(der,mold=dd)
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js, je
+   do i = is-1, ie+1
+    dd(i,j,k,1) = 0d0 ; dphi(i,j,k,1) = 0d0
+    dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
+    db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
+    dmu(i,j,k,1) = 0d0
+    if(radswitch>0)der(i,j,k,1) = 0d0
+   end do
+  end do
+ end do
+!$omp end parallel do
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
+ do k = ks, ke
+  do j = js-1, je+1
+   do i = is, ie
+    dd(i,j,k,2) = 0d0 ; dphi(i,j,k,2) = 0d0
+    dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
+    db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
+    dmu(i,j,k,2) = 0d0
+    if(radswitch>0)der(i,j,k,2) = 0d0
+   end do
+  end do
+ end do
+!$omp end parallel do
+!$omp parallel do private(i,j,k) collapse(3) schedule(static)
+ do k = ks-1, ke+1
+  do j = js, je
+   do i = is, ie
+    dd(i,j,k,3) = 0d0 ; dphi(i,j,k,3) = 0d0
+    dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
+    db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
+    dmu(i,j,k,3) = 0d0
+    if(radswitch>0)der(i,j,k,3) = 0d0
+   end do
+  end do
+ end do
+!$omp end parallel do
 
 ! conserved quantities and flux
  allocate(u(is-2:ie+2,js-2:je+2,ks-2:ke+2,1:ufnmax))
@@ -282,6 +319,8 @@ subroutine allocations
 
 ! allocate external gravitational field if necessary
  if(include_extgrv)allocate(extgrv,mold=grvphi)
+
+! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ! allocate sink particle-related variables if necessary
  if(include_sinks)then
