@@ -79,6 +79,12 @@ subroutine readbin(filename)
   call read_dummy_recordmarker(un)
  end if
 
+ if(radswitch>0)then
+  call read_dummy_recordmarker(un)
+  call read_var(un, erad, is, ie, js, je, ks, ke)
+  call read_dummy_recordmarker(un)
+ end if
+
  if(include_sinks) then
    call read_dummy_recordmarker(un)
    call read_var(un, sink, 1, nsink)
