@@ -26,9 +26,13 @@ subroutine metric
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(0)
   do i = is-1, ie+1
-   detg1(i) = 1d0; idetg1(i) = idxi1(i); g22(i) = 1d0
+   detg1(i) = 1d0; idetg1(i) = idxi1(i); g22(i) = 1d0; sx1(i) = 1d0
   end do
 
+  do j = js_global-1, je_global+1
+   scot(j)  = 1d0
+   sisin(j) = 1d0
+  end do
   do j = js-1, je+1
    do i = is-1, ie+1
     detg2(i,j) = 1d0; idetg2(i,j) = idxi2(j); g33(i,j) = 1d0
@@ -65,6 +69,10 @@ subroutine metric
   do i = is_global-1, ie_global+1
    detg1(i) = xi1(i); idetg1(i) = 2d0 / (xi1(i)**2-xi1(i-1)**2)
    sx1(i) = 2d0 / (xi1(i)+xi1(i-1)) ; g22(i) = x1(i)
+  end do
+  do j = js_global-1, je_global+1
+   scot(j)  = 1d0
+   sisin(j) = 1d0
   end do
   do j = js_global-1, je_global+1
    do i = is_global-1, ie_global+1
