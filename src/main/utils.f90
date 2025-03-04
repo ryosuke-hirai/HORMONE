@@ -176,23 +176,22 @@ contains
 
 ! PURPOSE: To calculate the Cartesian vector components from polar coordinates
 
-subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
- implicit none
+ subroutine get_vcar(xcar,x3,v1,v2,v3,vcar)
 
- real(8),intent(in):: xcar(1:3),x3,v1,v2,v3
- real(8),intent(out)::vcar(1:3)
- real(8),dimension(1:3)::uvec1,uvec2,uvec3
+  real(8),intent(in):: xcar(1:3),x3,v1,v2,v3
+  real(8),intent(out)::vcar(1:3)
+  real(8),dimension(1:3)::uvec1,uvec2,uvec3
 
 !-----------------------------------------------------------------------------
 
- uvec1 = xcar/norm2(xcar)
- uvec2 = get_uvec2(uvec1, x3)
- uvec3 = cross(uvec1,uvec2)
+  uvec1 = xcar/norm2(xcar)
+  uvec2 = get_uvec2(uvec1, x3)
+  uvec3 = cross(uvec1,uvec2)
 
- vcar = v1*uvec1 + v2*uvec2 + v3*uvec3
+  vcar = v1*uvec1 + v2*uvec2 + v3*uvec3
 
-return
-end subroutine get_vcar
+  return
+ end subroutine get_vcar
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE GET_VPOL
@@ -200,25 +199,24 @@ end subroutine get_vcar
 
 ! PURPOSE: To calculate the Polar vector components from Cartesian coordinates
 
-subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
- implicit none
+ subroutine get_vpol(xcar,x3,vcar,v1,v2,v3)
 
- real(8),intent(in):: xcar(1:3),x3,vcar(1:3)
- real(8),intent(out)::v1,v2,v3
- real(8),dimension(1:3)::uvec1,uvec2,uvec3
+  real(8),intent(in):: xcar(1:3),x3,vcar(1:3)
+  real(8),intent(out)::v1,v2,v3
+  real(8),dimension(1:3)::uvec1,uvec2,uvec3
 
 !-----------------------------------------------------------------------------
 
- uvec1 = xcar/norm2(xcar)
- uvec2 = get_uvec2(uvec1, x3)
- uvec3 = cross(uvec1,uvec2)
+  uvec1 = xcar/norm2(xcar)
+  uvec2 = get_uvec2(uvec1, x3)
+  uvec3 = cross(uvec1,uvec2)
 
- v1 = dot_product(vcar,uvec1)
- v2 = dot_product(vcar,uvec2)
- v3 = dot_product(vcar,uvec3)
+  v1 = dot_product(vcar,uvec1)
+  v2 = dot_product(vcar,uvec2)
+  v3 = dot_product(vcar,uvec3)
 
-return
-end subroutine get_vpol
+  return
+ end subroutine get_vpol
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                          SUBROUTINE GET_VCYL
@@ -226,56 +224,56 @@ end subroutine get_vpol
 
 ! PURPOSE: To calculate Cylindrical vector components from Cartesian coordinates
 
-subroutine get_vcyl(xcar,vcar,v1,v2,v3)
+ subroutine get_vcyl(xcar,vcar,v1,v2,v3)
 
- real(8),intent(in):: xcar(1:3),vcar(1:3)
- real(8),intent(out)::v1,v2,v3
- real(8),dimension(1:3)::uvec1,uvec2,uvec3
- real(8):: r
+  real(8),intent(in):: xcar(1:3),vcar(1:3)
+  real(8),intent(out)::v1,v2,v3
+  real(8),dimension(1:3)::uvec1,uvec2,uvec3
+  real(8):: r
 
 !-----------------------------------------------------------------------------
 
- r = norm2(xcar(1:2))
- uvec1 = [ xcar(1)/r,xcar(2)/r,0d0]
- uvec2 = [-xcar(2)/r,xcar(1)/r,0d0]
- uvec3 = [0d0,0d0,1d0]
+  r = norm2(xcar(1:2))
+  uvec1 = [ xcar(1)/r,xcar(2)/r,0d0]
+  uvec2 = [-xcar(2)/r,xcar(1)/r,0d0]
+  uvec3 = [0d0,0d0,1d0]
 
- v1 = dot_product(vcar,uvec1)
- v2 = dot_product(vcar,uvec2)
- v3 = vcar(3)
+  v1 = dot_product(vcar,uvec1)
+  v2 = dot_product(vcar,uvec2)
+  v3 = vcar(3)
 
-return
-end subroutine get_vcyl
+  return
+ end subroutine get_vcyl
 
 ! Compute gradient with second order accuracy
-function get_grad(u,i,j,k) result(gradu)
+ function get_grad(u,i,j,k) result(gradu)
 
- use settings,only:solve_i,solve_j,solve_k
- use grid,only:dx1,dx2,dx3,sx1,sisin
+  use settings,only:solve_i,solve_j,solve_k
+  use grid,only:dx1,dx2,dx3,sx1,sisin
 
- integer,intent(in):: i,j,k
- real(8),intent(in),allocatable:: u(:,:,:)
- real(8):: gradu(1:3)
+  integer,intent(in):: i,j,k
+  real(8),intent(in),allocatable:: u(:,:,:)
+  real(8):: gradu(1:3)
 
- gradu = 0d0
- if(solve_i) &
-  gradu(1) = ( dx1(i)**2*u(i+1,j,k)-dx1(i+1)**2*u(i-1,j,k)  &
-              +(dx1(i)+dx1(i+1))*(dx1(i+1)-dx1(i))*u(i,j,k) )&
-             / (dx1(i)*dx1(i+1)*(dx1(i)+dx1(i+1)))
+  gradu = 0d0
+  if(solve_i) &
+   gradu(1) = ( dx1(i)**2*u(i+1,j,k)-dx1(i+1)**2*u(i-1,j,k)  &
+               +(dx1(i)+dx1(i+1))*(dx1(i+1)-dx1(i))*u(i,j,k) )&
+              / (dx1(i)*dx1(i+1)*(dx1(i)+dx1(i+1)))
 
- if(solve_j) &
-  gradu(2) = ( dx2(j)**2*u(i,j+1,k)-dx2(j+1)**2*u(i,j-1,k)  &
-              +(dx2(j)+dx2(j+1))*(dx2(j)-dx2(j+1))*u(i,j,k) )&
-             / (dx2(j)*dx2(j+1)*(dx2(j)+dx2(j+1))) &
-           * sx1(i)
+  if(solve_j) &
+   gradu(2) = ( dx2(j)**2*u(i,j+1,k)-dx2(j+1)**2*u(i,j-1,k)  &
+               +(dx2(j)+dx2(j+1))*(dx2(j+1)-dx2(j))*u(i,j,k) )&
+              / (dx2(j)*dx2(j+1)*(dx2(j)+dx2(j+1))) &
+            * sx1(i)
 
- if(solve_k) &
-  gradu(3) = ( dx3(k)**2*u(i,j,k+1)-dx3(k+1)**2*u(i,j,k-1)  &
-              +(dx3(k)+dx3(k+1))*(dx3(k)-dx3(k+1))*u(i,j,k) )&
-             / (dx3(k)*dx3(k+1)*(dx3(k)+dx3(k+1))) &
-           * sx1(i)*sisin(j)
+  if(solve_k) &
+   gradu(3) = ( dx3(k)**2*u(i,j,k+1)-dx3(k+1)**2*u(i,j,k-1)  &
+               +(dx3(k)+dx3(k+1))*(dx3(k+1)-dx3(k))*u(i,j,k) )&
+              / (dx3(k)*dx3(k+1)*(dx3(k)+dx3(k+1))) &
+            * sx1(i)*sisin(j)
 
-end function get_grad
+ end function get_grad
 
 ! This function is equivalent to rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
 ! but expanded out, to reduce roundoff error
@@ -504,10 +502,16 @@ subroutine masscoordinate
 return
 end subroutine masscoordinate
 
-logical function isequal(a,b)
+pure logical function isequal(a,b)
   implicit none
   real(8),intent(in):: a,b
   isequal = abs(a-b) < epsilon(real(0.,kind=8))
 end function isequal
+
+pure function har_mean(x)
+ real(8),intent(in):: x(1:2)
+ real(8):: har_mean
+ har_mean = 2d0*x(1)*x(2)/sum(x(1:2))
+end function har_mean
 
 end module utils
