@@ -94,6 +94,9 @@ jobs:
           - polytrope
           - smearing
           - iotest
+	  - diffusion1d_x
+	  - diffusion1d_y
+	  - diffusion1d_z
         flat:
           - no
           - yes
@@ -108,6 +111,13 @@ jobs:
           # star_sph uses MICCG init, which is not compatible with MPI
           - test: star_sph
             mpi: yes
+	  # diffusion1d does not use hydro, so reconstruction is irrelevnat
+	  - test: diffusion1d_x
+	    flat: yes
+	  - test: diffusion1d_y
+	    flat: yes
+	  - test: diffusion1d_z
+	    flat: yes
 
     name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }})
 
