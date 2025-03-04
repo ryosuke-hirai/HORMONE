@@ -37,6 +37,7 @@ subroutine initialcondition
  use sn2022jli_mod
  use smearingtest_mod
  use iotest_mod
+ use radtests_mod
 
  integer:: i,j,k
 
@@ -97,6 +98,15 @@ subroutine initialcondition
 
   case('iotest')
    call iotest
+
+  case('matrad_coupling')
+   call matrad_coupling
+
+  case('radshock')
+   call radshock
+
+  case('diffusion1d_x','diffusion1d_y','diffusion1d_z')
+   call diffusion1d
 
   case default
    print*,'Chosen simtype not available, simtype = ',simtype

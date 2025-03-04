@@ -137,6 +137,14 @@ subroutine read_default
   filename='../para/parameters_iotest'
  case('matrad_coupling')
   filename='../para/parameters_matrad_coupling'
+ case('radshock')
+  filename='../para/parameters_radshock'
+ case('diffusion1d_x')
+  filename='../para/parameters_diffusion1d_x'
+ case('diffusion1d_y')
+  filename='../para/parameters_diffusion1d_y'
+ case('diffusion1d_z')
+  filename='../para/parameters_diffusion1d_z'
  case default
   print*,'This simtype does not exist yet, simtype ="',trim(simtype),'"'
   stop
@@ -160,6 +168,7 @@ subroutine read_parameters(filename)
  use settings
  use grid
  use physval
+ use opacity_mod
 
  integer:: ui,istat
  character(len=*),intent(in)::filename
@@ -185,7 +194,8 @@ subroutine read_parameters(filename)
                     grav_init_other, grav_init_relax, include_extgrv,&
                     gis, gie, gjs, gje, gks, gke
  namelist /sinkcon/ include_sinks, nsink, include_accretion
- namelist /rad_con/ radswitch, opacitytype, c_kappa, lambdatype
+ namelist /rad_con/ radswitch, opacitytype, c_kappa_p, c_kappa_r, c_kappa_f, &
+                    lambdatype, rbtype
  namelist /partcon/ include_particles, maxptc
  namelist /testcon/ test_tol, Mach_tol
 
