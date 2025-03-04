@@ -26,7 +26,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 
  select case (eostype)
  case(0) ! ideal gas
-  T = eint/(fac_egas*imu)
+  T = eint/(fac_egas*d*imu)
 
  case(1) ! ideal gas + radiation
   corr = huge
@@ -73,7 +73,6 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  end select
 
 end subroutine getT_from_de
-
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                        SUBROUTINE GETT_FROM_DP
@@ -262,6 +261,16 @@ pure function get_cf(d,cs,b1,b2,b3) result(cf)
  cf = sqrt( 0.5d0*( asq + bbsq + sqrt( (asq+bbsq)**2 - 4d0*asq*bb1 ) ) )
 
 end function get_cf
+
+! ***************************************************************************
+
+elemental function Trad(erad)
+ use constants,only:arad
+! PURPOSE: To compute radiation temperature from erad
+ real(8),intent(in):: erad
+ real(8):: Trad
+ Trad = (erad/arad)**0.25d0
+end function Trad
 
 ! ***************************************************************************
 
