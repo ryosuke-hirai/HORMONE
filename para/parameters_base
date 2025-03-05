@@ -50,12 +50,15 @@
 ! include_extforce: switch for external force provided in externalforce
 ! frame: 0=inertial frame, >0=centre on sink(frame)
 ! extrasfile: file containing model parameters
+! solve_hydro: switch to solve hydro equations. useful for testing non-hydro modules
+! fixed_dt: overrides dt with this value if fixed_dt>0
 &simucon  crdnt=0 courant=0.9d0 rktype=3 mag_on=.false.
           flux_limiter='modified_mc' alpha9wave=0.1d0
           include_cooling = .false.
   	  include_extforce= .false.
 	  frame=0
-          extrasfile='extras' /
+          extrasfile='extras'
+	  solve_hydro=.true. fixed_dt=-1d0 /
 
 ! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)

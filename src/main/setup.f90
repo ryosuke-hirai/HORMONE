@@ -186,7 +186,8 @@ subroutine read_parameters(filename)
                     write_mc
  namelist /eos_con/ eostype, gamma, eoserr, compswitch, muconst, spn
  namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, alpha9wave,&
-                    include_cooling, include_extforce, frame, extrasfile
+                    include_cooling, include_extforce, frame, extrasfile, &
+                    solve_hydro, fixed_dt
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
  namelist /gravcon/ gravswitch, grvsrctype, grverr, cgerr, &

@@ -159,13 +159,6 @@ subroutine diffusion1d
   erad(is,js,imid) = Etilde/dxi3(imid)
  end select
 
- dt = 1d-14
- do while (time<=t_end)
-  call radiation
-  tn = tn + 1
-  time = time + dt
- end do
-
  return
 end subroutine diffusion1d
 

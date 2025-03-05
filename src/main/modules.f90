@@ -26,7 +26,7 @@ module settings
 ! test tolerance
  real(8):: test_tol, Mach_tol
 ! switches
- logical:: solve_i, solve_j, solve_k
+ logical:: solve_i, solve_j, solve_k, solve_hydro
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, include_sinks, include_accretion, is_test
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
@@ -60,7 +60,7 @@ module grid
   real(8),allocatable,dimension(:):: x1, xi1, dx1, dxi1, idx1, idxi1
   real(8),allocatable,dimension(:):: x2, xi2, dx2, dxi2, idx2, idxi2
   real(8),allocatable,dimension(:):: x3, xi3, dx3, dxi3, idx3, idxi3
-  real(8):: time, dt, t_out
+  real(8):: time, dt, t_out, fixed_dt
   real(8):: xi1s, xi1e, xi2s, xi2e, xi3s, xi3e, x1min, x2min, x3min
   real(8),allocatable,dimension(:):: sinc, sini, cosc, cosi
   real(8),allocatable,dimension(:,:,:):: dvol, idetg3

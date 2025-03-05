@@ -9,7 +9,8 @@
 	  fmr_max=0 fmr_lvl(1:20)=0 /
 
 &simucon  crdnt=0 courant=0.9d0
-          flux_limiter='modified_mc' /
+          flux_limiter='modified_mc'
+	  solve_hydro=.false. fixed_dt=1d-14 /
 
 ! outdir : Output directory name
 ! outstyle/endstyle : time=1, timestep=2
@@ -18,7 +19,7 @@
 ! dt_out : Interval for output time (only when outstyle=1)
 ! tn_out : Interval for output timesteps (only when outstyle=2)
 &out_con  outdir='data' outstyle=2 endstyle=1
-          tnlim=0 t_end=4.2d-12 dt_out=1d3 tn_out=1 write_temp=.true. /
+          tnlim=10 t_end=4.2d-12 dt_out=1d3 tn_out=1 write_temp=.true. /
 
 &bouncon  bc1is=3 bc1os=3 bc1iv=3 bc1ov=3 /
 
