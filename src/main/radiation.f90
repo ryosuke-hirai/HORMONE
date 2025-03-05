@@ -26,6 +26,7 @@ subroutine radiation
  use physval
  use miccg_mod,only:cg=>cg_rad,miccg,ijk_from_l
  use profiler_mod
+ use pressure_mod,only:Trad
 
  integer:: l,i,j,k
  real(8),allocatable:: x(:)
@@ -39,7 +40,10 @@ subroutine radiation
 ! Advection and radiative acceleration terms are updated in hydro step
 
 ! Update heating/cooling term first
- call rad_heat_cool
+! print*,'before',erad(ie,is,js)
+! call rad_heat_cool
+! print*,'afterQ',erad(ie,is,js)
+
 
 ! Then update the diffusion term
  call get_diffusion_coeff(cg) ! use erad^n for diffusion coefficients
@@ -47,13 +51,20 @@ subroutine radiation
  call get_radb(cg)
 
  allocate( x(1:cg%lmax) )
- !$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k)
  do l = 1, cg%lmax
   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
   x(l) = erad(i,j,k)
  end do
 !$omp end parallel do
 
+!!$ i=1
+!!$ print*,i,cg%A(1,i)*erad(i,1,1)+cg%A(2,i)*erad(i,1,1)-rsrc(i)
+!!$ do i = 2, 10
+!!$  print*,i,cg%A(1,i)*erad(i,1,1)+cg%A(2,i)*erad(i,1,1)+cg%A(2,i-1)*erad(i-1,1,1)-rsrc(i)
+!!$ end do
+!!$
+!!$ stop
  call miccg(cg,rsrc,x) ! returns erad^{n+1}
 
 ! update erad and u
@@ -64,6 +75,8 @@ subroutine radiation
   u(i,j,k,irad) = x(l)
  end do
 !$omp end parallel do
+! print*,'afterd',erad(ie,is,js)
+
 
  call stop_clock(wtrad)
 
@@ -522,7 +535,7 @@ end subroutine radiative_force
 
 subroutine rad_heat_cool
 
- use constants,only:clight,sigma,fac_egas
+ use constants,only:clight,sigma,Cv
  use grid
  use physval
  use pressure_mod,only:get_etot_from_eint,getT_from_de,Trad
@@ -537,22 +550,21 @@ subroutine rad_heat_cool
   do j = js, je
    do i = is, ie
     kappap = kappa_p(d(i,j,k),T(i,j,k))
-    if(kappap<=0d0)cycle
+    if(kappap<=tiny(kappap))cycle
 
-    a1 = 4d0*kappap*sigma/(fac_egas*imu(i,j,k))**4/d(i,j,k)**3*dt
+    a1 = 4d0*kappap*sigma/(Cv*imu(i,j,k))**4/d(i,j,k)**3*dt
     a2 = clight*kappap*d(i,j,k)*dt
     c1 = (1d0+a2)/a1
     c2 = -c1*eint(i,j,k)-a2/a1*erad(i,j,k)
 
     eint1 = max(eint(i,j,k),erad(i,j,k))
-
     call solve_quartic(c1,c2,eint1)
     erad(i,j,k) = (a1*eint1**4+erad(i,j,k))/(1d0+a2)
     eint(i,j,k) = eint1
     e(i,j,k) = get_etot_from_eint(i,j,k)
     call getT_from_de(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))
 
-    u(i,j,k,iene) = e(i,j,k)
+    u(i,j,k,iene) = e   (i,j,k)
     u(i,j,k,irad) = erad(i,j,k)
    end do
   end do

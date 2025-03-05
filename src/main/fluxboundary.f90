@@ -42,7 +42,7 @@ end subroutine fluxboundary
 subroutine fluxboundary3i
 
  use settings,only:compswitch,extrasfile
- use constants,only:Rgas,fac_egas
+ use constants,only:Rgas,Cv
  use grid
  use physval,only:flux3,spcflx,muconst,imo3,iene,icnt
  use input_mod,only:error_extras,error_nml
@@ -63,7 +63,7 @@ subroutine fluxboundary3i
   read(n,NML=wtnlcon,iostat=istat)
   if(istat/=0)call error_nml('windtunnel',extrasfile)
   close(n)
-  ewind = fac_egas/muconst*dwind*Twind + 0.5d0*dwind*vwind**2
+  ewind = Cv/muconst*dwind*Twind + 0.5d0*dwind*vwind**2
   pwind = Rgas/muconst*dwind*Twind
   read_wind = .true.
  end if

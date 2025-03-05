@@ -1,5 +1,5 @@
 module pressure_mod
- use constants,only:fac_egas,Rgas,arad,huge
+ use constants,only:Cv,Rgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr
  implicit none
@@ -26,13 +26,13 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 
  select case (eostype)
  case(0) ! ideal gas
-  T = eint/(fac_egas*d*imu)
+  T = eint/(Cv*d*imu)
 
  case(1) ! ideal gas + radiation
   corr = huge
   do n = 1, 500
-   corr = (eint-(arad*T**3+d*fac_egas*imu)*T) &
-        / ( -4d0*arad*T**3-d*fac_egas*imu)
+   corr = (eint-(arad*T**3+d*Cv*imu)*T) &
+        / ( -4d0*arad*T**3-d*Cv*imu)
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
@@ -49,8 +49,8 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
    end if
-   corr = (eint-(arad*T**3+d*fac_egas*imu)*T-d*erec) &
-        / ( -4d0*arad*T**3-d*(fac_egas*(imu+dimurecdT*T)+derecdT) )
+   corr = (eint-(arad*T**3+d*Cv*imu)*T-d*erec) &
+        / ( -4d0*arad*T**3-d*(Cv*(imu+dimurecdT*T)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr
@@ -160,8 +160,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
  select case (eostype)
  case(0) ! ideal gas
   p = eos_p(d,eint,T,imu)
-  gamma_eff = 1d0+p/eint
-  cs2 = gamma_eff*p/d
+  cs2 = gamma*p/d
   if(present(erad))cs2 = cs2 + 4d0*erad/(9d0*d)
 
   cs = sqrt(cs2)
@@ -232,11 +231,11 @@ function eos_e(d,p,T,imu,X,Y)
 
  case(1) ! ideal gas + radiation
   call getT_from_dp(d,p,T,imu)
-  eos_e = ( fac_egas*imu*d + arad*T**3 )*T
+  eos_e = ( Cv*imu*d + arad*T**3 )*T
 
  case(2) ! ideal gas + radiation + recombination
   call getT_from_dp(d,p,T,imu,X,Y,erec)
-  eos_e = ( fac_egas*imu*d + arad*T**3 )*T + d*erec
+  eos_e = ( Cv*imu*d + arad*T**3 )*T + d*erec
 
  case default
   stop 'Error in eostype'
@@ -478,7 +477,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
 
  case(1) ! ideal gas + radiation (fully ionized, uniform composition)
   e = 1d-8 ! initial guess
-  T = e/(fac_egas*d*imu)
+  T = e/(Cv*d*imu)
   corr=1d99
   do n = 1, 500 ! Newton-Raphson iteration to get internal energy
    ep = e*(1d0+dfac)

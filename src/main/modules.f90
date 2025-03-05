@@ -98,7 +98,7 @@ module constants
   real(8),parameter:: au = 1.49597870700d13
 ! Others
   real(8),parameter:: huge = 1d99, tiny = 1d-99
-  real(8):: fac_egas
+  real(8):: Cv
 
 end module constants
 
