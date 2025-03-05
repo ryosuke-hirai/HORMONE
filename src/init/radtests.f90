@@ -126,7 +126,7 @@ end subroutine radshock
 
 subroutine diffusion1d
 
- use settings,only:t_end,simtype
+ use settings,only:simtype
  use grid
  use physval
  use output_mod
