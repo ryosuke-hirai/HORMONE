@@ -461,7 +461,7 @@ subroutine radiative_force
  use physval
 
  integer:: i,j,k,l,m
- real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork
+ real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork,kappar
  real(8),dimension(1:3):: frad,gradv1,gradv2,gradv3,nn
 
 !-----------------------------------------------------------------------------
@@ -471,8 +471,9 @@ subroutine radiative_force
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    RR = norm2(gradE(1:3,i,j,k)) &
-       / (d(i,j,k)*kappa_r(d(i,j,k),T(i,j,k))*erad(i,j,k))
+    kappar = kappa_r(d(i,j,k),T(i,j,k))
+    if(kappar<=tiny(kappar))cycle
+    RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
     ff = ll + (ll*RR)**2
 
