@@ -195,7 +195,7 @@ contains
        if(dim>1)flux1(i,j,k,i9wv) = tmpflux(9)
       end if
       if(radswitch>0)&
-       flux1(i,j,k,iene) = tmpflux(10)
+       flux1(i,j,k,irad) = tmpflux(10)
 
       if(compswitch>=2)then
        do n = 1, spn
