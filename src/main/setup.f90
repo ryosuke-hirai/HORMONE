@@ -58,15 +58,6 @@ contains
   return
  end subroutine is_it_test
 
- function parameterfilename(simtype) result(file)
-  use settings,only:flux_limiter
-  character(len=*),intent(in)::simtype
-  character(40)::file
-
-  file = '../para/'//trim(simtype)
-
- end function parameterfilename
-
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                        SUBROUTINE READ_DEFAULT
