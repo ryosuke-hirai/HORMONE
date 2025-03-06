@@ -58,6 +58,14 @@ contains
   return
  end subroutine is_it_test
 
+ function parameterfilename(simtype) result(file)
+  use settings,only:flux_limiter
+  character(len=*),intent(in)::simtype
+  character(40)::file
+
+  file = '../para/'//trim(simtype)
+
+ end function parameterfilename
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -73,6 +81,7 @@ subroutine read_default
  use grid
 
  character(len=50):: filename, basefile
+ logical:: parafile_available
 
 !-----------------------------------------------------------------------------
 ! Read base file to set all parameters to default
@@ -80,75 +89,14 @@ subroutine read_default
  call read_parameters(basefile)
 
 ! Read default file relevant for the simtype
- select case(simtype)
- case('eostest')
-  filename='../para/parameters_eostest'
- case('orszagtang_xy')
-  filename='../para/parameters_orszagtang_xy'
- case('orszagtang_yz')
-  filename='../para/parameters_orszagtang_yz'
- case('orszagtang_xz')
-  filename='../para/parameters_orszagtang_xz'
- case('sodshock_x')
-  filename='../para/parameters_sodshock_x'
- case('sodshock_y')
-  filename='../para/parameters_sodshock_y'
- case('sodshock_z')
-  filename='../para/parameters_sodshock_z'
- case('briowushock_x')
-  filename='../para/parameters_briowushock_x'
- case('briowushock_y')
-  filename='../para/parameters_briowushock_y'
- case('briowushock_z')
-  filename='../para/parameters_briowushock_z'
- case('other_shocktube_x')
-  filename='../para/parameters_othershock_x'
- case('other_shocktube_y')
-  filename='../para/parameters_othershock_y'
- case('other_shocktube_z')
-  filename='../para/parameters_othershock_z'
- case('sedov_default','sedov_other')
-  filename='../para/parameters_sedov_default'
- case('eruption')
-  filename='../para/parameters_eruption'
- case('KHinstability')
-  filename='../para/parameters_KHinstability'
- case('rad_box')
-  filename='../para/parameters_rad_box'
- case('star_sph')
-  filename='../para/parameters_star_sph'
- case('rsg_sph')
-  filename='../para/parameters_rsg_sph'
- case('polytrope')
-  filename='../para/parameters_polytrope'
- case('agndisk')
-  filename='../para/parameters_agndisk'
- case('windtunnel')
-  filename='../para/parameters_windtunnel'
- case('stellarcollision')
-  filename='../para/parameters_stellarcollision'
- case('sn2022jli')
-  filename='../para/parameters_sn2022jli'
- case('modify')
-  filename='../para/parameters_rsg_sph'!temporary
- case('smearing')
-  filename='../para/parameters_smearing'
- case('iotest')
-  filename='../para/parameters_iotest'
- case('matrad_coupling')
-  filename='../para/parameters_matrad_coupling'
- case('radshock')
-  filename='../para/parameters_radshock'
- case('diffusion1d_x')
-  filename='../para/parameters_diffusion1d_x'
- case('diffusion1d_y')
-  filename='../para/parameters_diffusion1d_y'
- case('diffusion1d_z')
-  filename='../para/parameters_diffusion1d_z'
- case default
-  print*,'This simtype does not exist yet, simtype ="',trim(simtype),'"'
+ filename = '../para/parameters_'//trim(simtype)
+ inquire(file=filename,exist=parafile_available)
+
+ if(.not.parafile_available)then
+  print*,'This simtype does not exist yet'
+  print'(3a)',' simtype = "',trim(simtype),'"'
   stop
- end select
+ end if
 
  call read_parameters(filename)
 

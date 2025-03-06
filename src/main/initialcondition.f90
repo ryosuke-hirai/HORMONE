@@ -102,11 +102,11 @@ subroutine initialcondition
   case('matrad_coupling')
    call matrad_coupling
 
-  case('radshock')
-   call radshock
-
   case('diffusion1d_x','diffusion1d_y','diffusion1d_z')
    call diffusion1d
+
+  case('radshock_x','radshock_y','radshock_z')
+   call radshock
 
   case default
    print*,'Chosen simtype not available, simtype = ',simtype
