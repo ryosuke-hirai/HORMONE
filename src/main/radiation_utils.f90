@@ -135,4 +135,21 @@ subroutine solve_quartic(c1,c2,x)
 return
 end subroutine solve_quartic
 
+
+function update_Tgas(d,erad,T,dt) result(Tnew)
+! PURPOSE: Update Tgas based on linear approximation
+ use constants,only:a=>arad,c=>clight,Cv
+ use opacity_mod,only:kappa_p
+
+ real(8),intent(in):: d,erad,T,dt
+ real(8):: Tnew,kappap
+
+!-----------------------------------------------------------------------------
+
+ kappap = kappa_p(d,T)
+
+ Tnew = (kappap*c*(3d0*a*T**4+erad)*dt+Cv*T)/(Cv+4d0*kappap*c*a*T**3*dt)
+
+end function update_Tgas
+
 end module radiation_utils

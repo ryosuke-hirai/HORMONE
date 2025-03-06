@@ -22,11 +22,13 @@ contains
 
 subroutine radiation
 
+ use settings,only:radswitch
+ use constants,only:Cv,Rgas
  use grid
  use physval
  use miccg_mod,only:cg=>cg_rad,miccg,ijk_from_l
  use profiler_mod
- use pressure_mod,only:Trad
+ use pressure_mod,only:Trad,get_etot_from_eint
 
  integer:: l,i,j,k
  real(8),allocatable:: x(:)
@@ -39,11 +41,8 @@ subroutine radiation
 
 ! Advection and radiative acceleration terms are updated in hydro step
 
-! Update heating/cooling term first
-! print*,'before',erad(ie,is,js)
-! call rad_heat_cool
-! print*,'afterQ',erad(ie,is,js)
-
+! Update heating/cooling term first if following Moens+2022
+ if(radswitch==2)call rad_heat_cool
 
 ! Then update the diffusion term
  call get_diffusion_coeff(cg) ! use erad^n for diffusion coefficients
@@ -58,25 +57,21 @@ subroutine radiation
  end do
 !$omp end parallel do
 
-!!$ i=1
-!!$ print*,i,cg%A(1,i)*erad(i,1,1)+cg%A(2,i)*erad(i,1,1)-rsrc(i)
-!!$ do i = 2, 10
-!!$  print*,i,cg%A(1,i)*erad(i,1,1)+cg%A(2,i)*erad(i,1,1)+cg%A(2,i-1)*erad(i-1,1,1)-rsrc(i)
-!!$ end do
-!!$
-!!$ stop
  call miccg(cg,rsrc,x) ! returns erad^{n+1}
 
 ! update erad and u
 !$omp parallel do private(l,i,j,k)
  do l = 1, cg%lmax
   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-  erad(i,j,k)   = x(l)
-  u(i,j,k,irad) = x(l)
+  erad(i,j,k) = x(l)
+  T   (i,j,k) = update_Tgas(d(i,j,k),erad(i,j,k),T(i,j,k),dt)
+  eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
+  p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
+  e   (i,j,k) = get_etot_from_eint(i,j,k)
+  u(i,j,k,iene) = e   (i,j,k)
+  u(i,j,k,irad) = erad(i,j,k)
  end do
 !$omp end parallel do
-! print*,'afterd',erad(ie,is,js)
-
 
  call stop_clock(wtrad)
 
@@ -131,12 +126,16 @@ end subroutine get_diffusion_coeff
 
 subroutine get_radA(cg)
 
+ use settings,only:radswitch
+ use constants,only:arad,clight,Cv
  use utils,only:har_mean
  use grid,only:dt,dvol
+ use physval
  use miccg_mod,only:ijk_from_l,get_preconditioner
 
  type(cg_set),intent(inout)::cg
  integer:: i,j,k,l,dim
+ real(8):: kappap
 
 !-----------------------------------------------------------------------------
 
@@ -159,7 +158,7 @@ subroutine get_radA(cg)
  select case(dim)
  case(11) ! 1D x-direction
 
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 
@@ -168,6 +167,14 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) + geo(1,i-1,j,k)*har_mean(radK(i-1:i,j,k))
    if(i<cg%ie)& ! gradient term in x+ direction
     cg%A(1,l) = cg%A(1,l) + geo(1,i  ,j,k)*har_mean(radK(i:i+1,j,k))
+   if(radswitch==1)then ! coupling term
+    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    cg%A(1,l) = cg%A(1,l) &
+              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
+               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
+                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                - 1d0 )
+   end if
 
    cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
    if(i==cg%ie)cg%A(2,l) = 0d0
@@ -176,7 +183,7 @@ subroutine get_radA(cg)
 
  case(12) ! 1D y-direction
 
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 
@@ -185,6 +192,14 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
    if(j<cg%je)& ! gradient term in y+ direction
     cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
+   if(radswitch==1)then ! coupling term
+    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    cg%A(1,l) = cg%A(1,l) &
+              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
+               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
+                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                - 1d0 )
+   end if
 
    cg%A(2,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
    if(j==cg%je)cg%A(2,l) = 0d0
@@ -193,7 +208,7 @@ subroutine get_radA(cg)
 
  case(13) ! 1D z-direction
 
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 
@@ -202,6 +217,14 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
    if(k<cg%ke)& ! gradient term in z+ direction
     cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
+   if(radswitch==1)then ! coupling term
+    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    cg%A(1,l) = cg%A(1,l) &
+              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
+               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
+                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                - 1d0 )
+   end if
 
    cg%A(2,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
    if(k==cg%ke)cg%A(2,l) = 0d0
@@ -210,7 +233,7 @@ subroutine get_radA(cg)
 
  case(22) ! 2D xy-plane
 
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 
@@ -223,6 +246,14 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
    if(j<cg%je)&
     cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
+   if(radswitch==1)then ! coupling term
+    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    cg%A(1,l) = cg%A(1,l) &
+              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
+               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
+                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                - 1d0 )
+   end if
 
    cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
    cg%A(3,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
@@ -233,7 +264,7 @@ subroutine get_radA(cg)
 
  case(23) ! xz-plane
 
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 
@@ -246,6 +277,14 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) + geo(3,i,j-1,k)*har_mean(radK(i,j,k-1:k))
    if(k<cg%ke)&
     cg%A(1,l) = cg%A(1,l) + geo(3,i,j  ,k)*har_mean(radK(i,j,k:k+1))
+   if(radswitch==1)then ! coupling term
+    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    cg%A(1,l) = cg%A(1,l) &
+              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
+               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
+                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                - 1d0 )
+   end if
 
    cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
    cg%A(3,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
@@ -256,7 +295,7 @@ subroutine get_radA(cg)
 
  case(3) ! 3D
 
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 
@@ -273,6 +312,14 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) + geo(3,i,j-1,k)*har_mean(radK(i,j,k-1:k))
    if(k<cg%ke)&
     cg%A(1,l) = cg%A(1,l) + geo(3,i,j  ,k)*har_mean(radK(i,j,k:k+1))
+   if(radswitch==1)then ! coupling term
+    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    cg%A(1,l) = cg%A(1,l) &
+              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
+               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
+                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                - 1d0 )
+   end if
 
    cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
    cg%A(3,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
@@ -294,7 +341,7 @@ end subroutine get_radA
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE GET_RADB
+!                          SUBROUTINE GET_RADB
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -302,20 +349,26 @@ end subroutine get_radA
 
 subroutine get_radb(cg)
 
+ use settings,only:radswitch
+ use constants,only:clight,arad
  use grid,only:dvol,dt
- use physval,only:erad
+ use physval
  use miccg_mod,only:cg_set,ijk_from_l
 
  type(cg_set),intent(inout):: cg
  integer:: i,j,k,l
-
+ real(8):: kappap
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 ! Note: Dirichlet boundary conditions should be included here.
+   kappap = kappa_p(d(i,j,k),T(i,j,k))
    rsrc(l) = erad(i,j,k)*dvol(i,j,k)/dt
+   if(radswitch==1) &
+    rsrc(l) = rsrc(l) + clight*kappap*d(i,j,k)*dvol(i,j,k)*arad &
+     * (4d0*T(i,j,k)**3*update_Tgas(d(i,j,k),0d0,T(i,j,k),dt)-3d0*T(i,j,k)**4)
   end do
 !$omp end parallel do
 
@@ -449,7 +502,7 @@ subroutine radiation_setup
 
 !-----------------------------------------------------------------------------
 
- if(radswitch==1)then
+ if(radswitch==1.or.radswitch==2)then
   call setup_radcg(is,ie,js,je,ks,ke,cg)
   call get_geo
   allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is:ie,js:je,ks:ke),&
@@ -480,7 +533,7 @@ subroutine radiative_force
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,RR,ll,ff,frad,vdotfrad,gradv1,gradv2,gradv3,&
-!$omp nn,l,m,radwork,Pedd) collapse(3)
+!$omp nn,l,m,radwork,Pedd,kappar) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
@@ -492,7 +545,7 @@ subroutine radiative_force
 
     frad(1:3) = -ll*gradE(1:3,i,j,k)
     vdotfrad = frad(1)*v1(i,j,k) + frad(2)*v2(i,j,k) + frad(3)*v3(i,j,k)
-
+!if(i==is.or.i==is+1)print*,frad(1:3),gradE(1:3,i,j,k)
     gradv1 = get_grad(v1,i,j,k)
     gradv2 = get_grad(v2,i,j,k)
     gradv3 = get_grad(v3,i,j,k)
@@ -503,9 +556,9 @@ subroutine radiative_force
       if(l>m)cycle
       Pedd(l,m) = (3d0*ff-1d0)*nn(l)*nn(m)
       if(l==m)Pedd(l,m) = Pedd(l,m) + (1d0-ff)
-      Pedd(l,m) = 0.5d0*Pedd(l,m)
      end do
     end do
+    Pedd = 0.5d0*erad(i,j,k)*Pedd
     radwork = Pedd(1,1)*gradv1(1) + Pedd(1,2)*gradv1(2) + Pedd(1,3)*gradv1(3) &
             + Pedd(1,2)*gradv2(1) + Pedd(2,2)*gradv2(2) + Pedd(2,3)*gradv2(3) &
             + Pedd(1,3)*gradv3(1) + Pedd(2,3)*gradv3(2) + Pedd(3,3)*gradv3(3)
@@ -583,6 +636,9 @@ end subroutine rad_heat_cool
 ! PURPOSE: To set boundary conditions for erad
 
 subroutine rad_boundary
+
+ use grid
+ use physval
 
 !-----------------------------------------------------------------------------
 
