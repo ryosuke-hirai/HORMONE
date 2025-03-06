@@ -103,29 +103,52 @@ end subroutine matrad_coupling
 
 subroutine radshock
 
+ use settings,only:simtype,extrasfile
  use constants,only:arad,Rgas
  use grid
  use physval
  use opacity_mod
 
- real(8):: Teq
+ integer:: ui,strl,istat
+ real(8):: d_back,Teq,v_piston,kapparho
 
 !-----------------------------------------------------------------------------
 
- Teq = 10d0 ! K
- d = 7.78d-10
- v1 = -6d5
+ namelist /rshocon/ d_back,Teq,v_piston,kapparho
+
+! Set default values
+ open(newunit=ui,file='../para/extras_radshock',status='old')
+ read(ui,NML=rshocon)
+ close(ui)
+
+! Override with user-set values if present
+ open(newunit=ui,file=extrasfile,status='old',iostat=istat)
+ if(istat==0)read(ui,NML=rshocon,iostat=istat)
+ close(ui)
+
+ d = d_back
  p = Rgas*d*Teq/muconst
  erad = arad*Teq**4
- c_kappa_p = 3.1d-10/d(1,1,1)
+ c_kappa_p = kapparho/d_back
  c_kappa_r = c_kappa_p
+
+! Find the direction of shock tube
+ strl = len(trim(simtype))
+ select case(simtype(strl:strl))
+ case('x')
+  v1 = -v_piston
+ case('y')
+  v2 = -v_piston
+ case('z')
+  v3 = -v_piston
+ end select
 
  return
 end subroutine radshock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE DIFFUSION
+!                           SUBROUTINE DIFFUSION
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

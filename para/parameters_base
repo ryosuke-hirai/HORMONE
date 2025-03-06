@@ -92,7 +92,7 @@
 &sinkcon include_sinks=.false. nsink=0 include_accretion=.false.
          jet_ang = 45d0 /
 
-! radswitch:0=off,1=flux limited diffusion
+! radswitch:0=off,1=FLD (Commercon+2011), 2=FLD (Moens+2022)
 ! opacitytype:0=fixed,1=ionisation
 ! c_kappa_{r,p,f}: values for fixed opacity (Rosseland, Planck, flux-weighted mean)
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
