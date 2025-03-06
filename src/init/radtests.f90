@@ -126,9 +126,9 @@ subroutine radshock
  if(istat==0)read(ui,NML=rshocon,iostat=istat)
  close(ui)
 
- d = d_back
- p = Rgas*d*Teq/muconst
- erad = arad*Teq**4
+ d(is:ie,js:je,ks:ke) = d_back
+ p(is:ie,js:je,ks:ke) = Rgas*d(is:ie,js:je,ks:ke)*Teq/muconst
+ erad(is:ie,js:je,ks:ke) = arad*Teq**4
  c_kappa_p = kapparho/d_back
  c_kappa_r = c_kappa_p
 

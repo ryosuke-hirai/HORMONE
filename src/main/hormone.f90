@@ -39,6 +39,7 @@ program hormone
   use source_mod
   use dirichlet_mod
   use gravmod
+  use miccg_mod
   use sink_mod
   use composition_mod
   use hydro_mod
@@ -123,11 +124,12 @@ program hormone
 
     call timestep
 
+    call terminal_output
+
     call gravity
+    if(radswitch>0)  call get_gradE(cg_rad)
     if(include_sinks)call get_sink_acc(sink) ! updates dt
     call set_frame_acc
-
-    call terminal_output
 
 !######### Main hydro step #########!
     if(solve_hydro)call hydro_step  !

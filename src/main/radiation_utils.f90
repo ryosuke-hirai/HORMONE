@@ -82,9 +82,9 @@ subroutine get_geo
  do k = ks-1, ke
   do j = js-1, je
    do i = is-1, ie
-    geo(1,i,j,k) = sa1(i  ,j,k) /  dx1(i+1)
-    geo(2,i,j,k) = sa2(i,j  ,k) / (dx2(j+1)*g22(i))
-    geo(3,i,j,k) = sa3(i,j,k  ) / (dx3(k+1)*g33(i,j))
+    geo(1,i,j,k) = sa1(i,j,k) /  dx1(i+1)
+    geo(2,i,j,k) = sa2(i,j,k) / (dx2(j+1)*g22(i))
+    geo(3,i,j,k) = sa3(i,j,k) / (dx3(k+1)*g33(i,j))
    end do
   end do
  end do

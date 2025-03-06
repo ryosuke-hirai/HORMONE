@@ -6,7 +6,7 @@ module radiation_mod
 
  implicit none
 
- public :: radiation,radiation_setup,radiative_force,rad_heat_cool
+ public :: radiation,radiation_setup,radiative_force,rad_heat_cool,get_gradE
  private:: setup_radcg,get_diffusion_coeff,get_radA,get_radb
  real(8),allocatable,private:: rsrc(:),radK(:,:,:),gradE(:,:,:,:)
 
@@ -37,14 +37,13 @@ subroutine radiation
 
  call start_clock(wtrad)
 
- call rad_boundary
-
 ! Advection and radiative acceleration terms are updated in hydro step
 
 ! Update heating/cooling term first if following Moens+2022
  if(radswitch==2)call rad_heat_cool
 
 ! Then update the diffusion term
+ call get_gradE(cg)
  call get_diffusion_coeff(cg) ! use erad^n for diffusion coefficients
  call get_radA(cg)
  call get_radb(cg)
@@ -78,6 +77,38 @@ subroutine radiation
 return
 end subroutine radiation
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                         SUBROUTINE GET_GRADE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute gradE on each cell
+
+subroutine get_gradE(cg)
+
+ use utils,only:get_grad
+ use physval,only:erad
+
+ type(cg_set),intent(in)::cg
+ integer:: i,j,k
+
+!-----------------------------------------------------------------------------
+
+ call rad_boundary
+
+!$omp parallel do private(i,j,k) collapse(3)
+ do k = cg%ks, cg%ke
+  do j = cg%js, cg%je
+   do i = cg%is, cg%ie
+    gradE(1:3,i,j,k) = get_grad(erad,i,j,k)
+   end do
+  end do
+ end do
+!$omp end parallel do
+
+return
+end subroutine get_gradE
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -85,7 +116,7 @@ end subroutine radiation
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To compute gradE on each cell
+! PURPOSE: To compute diffusion coefficients on each cell
 
 subroutine get_diffusion_coeff(cg)
 
@@ -103,7 +134,6 @@ subroutine get_diffusion_coeff(cg)
  do k = cg%ks, cg%ke
   do j = cg%js, cg%je
    do i = cg%is, cg%ie
-    gradE(1:3,i,j,k) = get_grad(erad,i,j,k)
     kappar = kappa_r(d(i,j,k),T(i,j,k))
     RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
@@ -192,6 +222,8 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
    if(j<cg%je)& ! gradient term in y+ direction
     cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
+
+
    if(radswitch==1)then ! coupling term
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = cg%A(1,l) &
@@ -213,6 +245,7 @@ subroutine get_radA(cg)
    call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
 
    cg%A(1,l) = dvol(i,j,k)/dt
+
    if(k>cg%ks)& ! gradient term in z- direction
     cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
    if(k<cg%ke)& ! gradient term in z+ direction
@@ -545,7 +578,7 @@ subroutine radiative_force
 
     frad(1:3) = -ll*gradE(1:3,i,j,k)
     vdotfrad = frad(1)*v1(i,j,k) + frad(2)*v2(i,j,k) + frad(3)*v3(i,j,k)
-!if(i==is.or.i==is+1)print*,frad(1:3),gradE(1:3,i,j,k)
+
     gradv1 = get_grad(v1,i,j,k)
     gradv2 = get_grad(v2,i,j,k)
     gradv3 = get_grad(v3,i,j,k)
@@ -640,9 +673,36 @@ subroutine rad_boundary
  use grid
  use physval
 
+ integer:: i,j,k
+
 !-----------------------------------------------------------------------------
 
-! Not needed for now
+! Only zero-flux boundary for now
+
+!$omp parallel do private(j,k) collapse(2)
+ do k = ks, ke
+  do j = js, je
+   erad(is-1,j,k) = erad(is,j,k)
+   erad(ie+1,j,k) = erad(ie,j,k)
+  end do
+ end do
+!$omp end parallel do
+!$omp parallel do private(i,k) collapse(2)
+ do k = ks, ke
+  do i = is, ie
+   erad(i,js-1,k) = erad(i,js,k)
+   erad(i,je+1,k) = erad(i,je,k)
+  end do
+ end do
+!$omp end parallel do
+!$omp parallel do private(i,j) collapse(2)
+ do j = js, je
+  do i = is, ie
+   erad(i,j,ks-1) = erad(i,j,ks)
+   erad(i,j,ke+1) = erad(i,j,ke)
+  end do
+ end do
+!$omp end parallel do
 
 return
 end subroutine rad_boundary
