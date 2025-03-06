@@ -1,9 +1,43 @@
-module fluxlimiter
+module fluxlimiter_mod
+
+ implicit none
+
+ public:: fluxlimiter
+ private:: minmod,modified_mc
 
 contains
-subroutine minmod(mm,u,dx)
 
-  implicit none
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE FLUXLIMITER
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To apply flux limiter for Godunov flux
+
+subroutine fluxlimiter(uu,dx,x,xi,du)
+
+ use settings,only:flux_limiter
+
+ real(8),intent(in):: uu(1:3),dx(1:2),x(1:3),xi(1:2)
+ real(8),intent(out):: du
+
+!-----------------------------------------------------------------------------
+
+ select case(flux_limiter)
+ case('minmod')
+  call minmod(du,uu,dx)
+ case('modified_mc')
+  call modified_mc(du,uu,x,xi)
+ case default
+  print*, "Error in flux_limiter",flux_limiter
+  stop
+ end select
+
+return
+end subroutine fluxlimiter
+
+subroutine minmod(mm,u,dx)
 
   real(8),intent(in ):: u(1:3),dx(1:2)
   real(8),intent(out):: mm
@@ -11,24 +45,17 @@ subroutine minmod(mm,u,dx)
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+! Generalized minmod
   x = 1.4d0*(u(3) - u(2))*dx(2)
   y = 1.4d0*(u(2) - u(1))*dx(1)
   z = (u(3)-u(1))*dx(1)*dx(2)/sum(dx)
 
   mm = sign(1d0,x) * max(0.d0,min(abs(x),sign(1d0,x)*y,sign(1d0,x)*z))
 
-!!$
-!!$  x = (u(3)-u(2))*dx(2)
-!!$  y = (u(2)-u(1))*dx(1)
-!!$
-!!$  mm = (sign(0.5d0,x)+sign(0.5d0,y))*min(abs(x),abs(y))
-
 return
 end subroutine minmod
 
 subroutine modified_mc(mm,u,x,xi)
-
- implicit none
 
  real(8),intent(in ):: u(1:3),x(1:3),xi(1:2)
  real(8),intent(out):: mm
@@ -47,4 +74,4 @@ subroutine modified_mc(mm,u,x,xi)
 return
 end subroutine modified_mc
 
-end module fluxlimiter
+end module fluxlimiter_mod
