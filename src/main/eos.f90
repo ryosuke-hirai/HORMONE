@@ -698,7 +698,7 @@ function get_etot_from_eint(i,j,k) result(e)
  use physval,only:eint,d,v1,v2,v3,b1,b2,b3
  integer,intent(in):: i,j,k
  real(8):: e
- e = eint(i,j,k) + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**3)
+ e = eint(i,j,k) + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
  if(mag_on)e = e + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**3)
 end function get_etot_from_eint
 
