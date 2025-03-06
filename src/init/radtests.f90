@@ -16,30 +16,33 @@ subroutine matrad_coupling
  use constants
  use grid
  use physval
- use radiation_mod,only:rad_heat_cool
+ use radiation_mod,only:radiation
  use pressure_mod,only:Trad
 
  real(8):: d_0,erad0,eint0,dt0,eint_equil,Tgas,TTrad,error
- real(8),parameter:: tolerance=1d-12
+ real(8),parameter:: tolerance=1d-5
 
 !-----------------------------------------------------------------------------
 
  d_0   = 1d-7
  erad0 = 1d12
- dt0   = 1d-12
+ dt0   = 1d-19
 
 ! Heating test ===============================================================
- eint0 = 1d2 ! start from low gas temperature
+ eint0 = 1d6 ! start from low gas temperature
 
- d=d_0;erad=erad0-eint0;eint=eint0;dt=dt0
+ d=d_0;erad=erad0-eint0;eint=eint0;e=eint0;T=eint/(d*Cv*imu);dt=dt0
+ p=(gamma-1d0)*eint
  time=0d0
  do while(time<=1d-6)
-  call rad_heat_cool
+  call radiation
   time = time + dt
-!  write(60,*)time,eint(1,1,1)/(fac_egas*d(1,1,1)*imu(1,1,1)),Trad(erad(1,1,1))
+  dt = dt * 1.01d0
+!  write(60,*)time,eint(1,1,1)/(Cv*d(1,1,1)*imu(1,1,1)),Trad(erad(1,1,1))
  end do
- eint_equil = fac_egas*d_0*imu(1,1,1)*Trad(erad(1,1,1))
- Tgas=eint(1,1,1)/(fac_egas*d(1,1,1)*imu(1,1,1))
+
+ eint_equil = Cv*d_0*imu(1,1,1)*Trad(erad(1,1,1))
+ Tgas=eint(1,1,1)/(Cv*d(1,1,1)*imu(1,1,1))
  TTrad=Trad(erad(1,1,1))
 
  print*,'================================================='
@@ -59,22 +62,23 @@ subroutine matrad_coupling
 ! Cooling test ===============================================================
  eint0 = 1d10 ! start from high gas temperature
 
- d=d_0;erad=erad0-eint0;eint=eint0;dt=dt0
+ d=d_0;erad=erad0-eint0;eint=eint0;e=eint0;T=eint/(d*Cv*imu);dt=dt0
  time=0d0
  do while(time<=1d-6)
-  call rad_heat_cool
+  call radiation
   time = time + dt
-!  write(70,*)time,eint(1,1,1)/(fac_egas*d(1,1,1)*imu(1,1,1)),Trad(erad(1,1,1))
+  dt = dt * 1.01d0
+!  write(70,*)time,eint(1,1,1)/(Cv*d(1,1,1)*imu(1,1,1)),Trad(erad(1,1,1))
  end do
- stop
- eint_equil = fac_egas*d_0*imu(1,1,1)*Trad(erad(1,1,1))
- Tgas=eint(1,1,1)/(fac_egas*d(1,1,1)*imu(1,1,1))
+
+ eint_equil = Cv*d_0*imu(1,1,1)*Trad(erad(1,1,1))
+ Tgas=eint(1,1,1)/(Cv*d(1,1,1)*imu(1,1,1))
  TTrad=Trad(erad(1,1,1))
 
  print*,'================================================='
  print*,'Cooling test'
  print*,'================================================='
- print*,'Tgas/K =',eint(1,1,1)/(fac_egas*d(1,1,1)*imu(1,1,1))
+ print*,'Tgas/K =',eint(1,1,1)/(Cv*d(1,1,1)*imu(1,1,1))
  print*,'Trad/K =',TTrad
  error = abs(Tgas/TTrad-1d0)
  print*,'Equilibriation level is: abs(e_int/e_equil-1) =',error
@@ -102,6 +106,7 @@ subroutine radshock
  use constants,only:arad,Rgas
  use grid
  use physval
+ use opacity_mod
 
  real(8):: Teq
 
@@ -112,8 +117,10 @@ subroutine radshock
  v1 = -6d5
  p = Rgas*d*Teq/muconst
  erad = arad*Teq**4
+ c_kappa_p = 3.1d-10/d(1,1,1)
+ c_kappa_r = c_kappa_p
 
-return
+ return
 end subroutine radshock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
