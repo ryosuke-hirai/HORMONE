@@ -23,17 +23,17 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'star_sph': Do something with a star on spherical coordinates
 'polytrope': Polytropic star on spherical coordinates
 'smearing': Test the smearing module
+'radshock_{x,y,z}': Radiative shocktube in the x/y/z direction
 
 ** Test files NOT available **
 'sedov_other': Sedov blast wave. Set model parameters in extras file.
 'eruption': 1D eruption of stars (Owocki+2019)
-'other_shocktube_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
+'othershock_{x,y,z}': User-specified shocktube problem in the x/y/z direction. Set model parameters in extras file.
 'rsg_sph': Do something with a red supergiant on spherical coordinates
 'agndisk': Explosions in AGN disks (Grishin+2021)
 'windtunnel': Wind tunnel simulations
 'stellarcollision': Stellar collision simulation (Hirai & Podsiadlowski 2022)
 'sn2022jli': Stellar collision in companion frame + SN heating
-'modify': Modify and restart from an existing binfile
 
 ** Unit tests **
 'eostest': Forwards and backwards consistency test for EoS

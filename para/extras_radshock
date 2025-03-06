@@ -1,0 +1,8 @@
+! Model parameters for radshock
+
+&rshocon
+ d_back = 7.78d-10 ! background density
+ Teq    = 10d0     ! Kelvin
+ kapparho = 3.1d-10! kappa*rho
+ v_piston = 20d5   ! "supercritical" value from Commercon+2011. "subcritical is 6d5
+/
