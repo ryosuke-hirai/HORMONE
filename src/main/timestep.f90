@@ -149,7 +149,7 @@ subroutine dti_cell(i,j_,k_,dti,jb,kb,cfmax)
    call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
                  p(i,j,k), cs(i,j,k), erad=erad(i,j,k), ierr=ierr )
   end if
-  case(2)
+ case(2)
   call eos_p_cs(d(i,j,k), eint(i,j,k), T(i,j,k), imu(i,j,k), &
                 p(i,j,k), cs(i,j,k), spc(1,i,j,k), spc(2,i,j,k), ierr=ierr )
  end select

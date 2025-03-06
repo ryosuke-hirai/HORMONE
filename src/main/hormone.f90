@@ -129,8 +129,9 @@ program hormone
 
     call terminal_output
 
-! Main hydro step !!!
-    if(solve_hydro)call hydro_step
+!######### Main hydro step #########!
+    if(solve_hydro)call hydro_step  !
+!###################################!
 
 ! All other effects included by operator splitting
     if(mag_on.and.dim>1) call phidamp
