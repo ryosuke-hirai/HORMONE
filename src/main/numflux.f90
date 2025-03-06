@@ -14,7 +14,7 @@ contains
  subroutine numflux
 
   use settings,only:solve_i,solve_j,solve_k,&
-                    compswitch,spn,eostype,mag_on,fluxbound_on,&
+                    compswitch,spn,eostype,mag_on,fluxbound_on,radswitch,&
                     bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
   use grid
   use physval
@@ -27,8 +27,8 @@ contains
 
   real(8)::cfl, cfr, v1l, v1r, dl, dr, ptl, ptr, el, er, Tl, Tr, imul, imur, &
            b1l=0., b1r=0., b2l=0., b2r=0., b3l=0., b3r=0., phil=0., phir=0., &
-           v2l, v2r, v3l, v3r, eil, eir, csl, csr
-  real(8),dimension(1:9)::tmpflux
+           v2l, v2r, v3l, v3r, eil, eir, erl, err, csl, csr
+  real(8),dimension(1:10)::tmpflux
   real(8),dimension(1:2):: dx
   real(8),dimension(1:spn):: spcl,spcr
   real(8):: signdflx,fix,ul,ur,fl,fr,rinji
@@ -47,13 +47,14 @@ contains
 !$omp parallel
   if(solve_i)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,erl,err,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks,ke
     do j = js,je
      do i = is-1,ie
 
+      ! Don't bother calculating fluxes for flux boundaries
       if(i==is-1)then
        if(bc1is==10)cycle
       end if
@@ -99,19 +100,26 @@ contains
       eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
       eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
+      if(radswitch>0)then
+       erl = erad(i  ,j,k) + dx(1) * der(i  ,j,k,1)
+       err = erad(i+1,j,k) - dx(2) * der(i+1,j,k,1)
+      else
+       erl = 0d0 ; err = 0d0
+      end if
+
       select case (eostype)
       case(0:1) ! without recombination
        imul = 1d0/imu(i  ,j,k) + dx(1) * dmu(i  ,j,k,1)
        imur = 1d0/imu(i+1,j,k) - dx(2) * dmu(i+1,j,k,1)
        imul = 1d0/imul ; imur = 1d0/imur
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,erad=erl,ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,erad=err,ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,1,ierr)
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i  ,j,k) + dx(1) * dspc(1:2,i  ,j,k,1)
        spcr(1:2) = spc(1:2,i+1,j,k) - dx(2) * dspc(1:2,i+1,j,k,1)
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,1,ierr)
       end select
       ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
@@ -121,7 +129,8 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch,&
+                            erl,err)
 
 !!$     if(maxval(shock(i:i+1,j-1:j+1,k-1:k+1))==1)then ! if supersonic
 !!$      if(max(abs(v3l),abs(v3r))>1d-1*max(abs(v2l),abs(v2r),abs(v1l),abs(v1r)))then ! and aligned
@@ -174,9 +183,19 @@ contains
 !!$      end if
 !!$     end if
 
-      do n = 1,ufnmax
-       flux1(i,j,k,n) = tmpflux(n)
-      end do
+      flux1(i,j,k,icnt) = tmpflux(1)
+      flux1(i,j,k,imo1) = tmpflux(2)
+      flux1(i,j,k,imo2) = tmpflux(3)
+      flux1(i,j,k,imo3) = tmpflux(4)
+      flux1(i,j,k,iene) = tmpflux(5)
+      if(mag_on)then
+       flux1(i,j,k,img1) = tmpflux(6)
+       flux1(i,j,k,img2) = tmpflux(7)
+       flux1(i,j,k,img3) = tmpflux(8)
+       if(dim>1)flux1(i,j,k,i9wv) = tmpflux(9)
+      end if
+      if(radswitch>0)&
+       flux1(i,j,k,irad) = tmpflux(10)
 
       if(compswitch>=2)then
        do n = 1, spn
@@ -201,13 +220,14 @@ contains
 ! flux2 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(solve_j)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,erl,err,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks,ke
     do j = js-1,je
      do i = is,ie
 
+      ! Don't bother calculating fluxes for flux boundaries
       if(j==js-1)then
        if(bc2is==10)cycle
       end if
@@ -253,19 +273,26 @@ contains
       eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
       eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
+      if(radswitch>0)then
+       erl = erad(i,j  ,k) + dx(1) * der(i,j  ,k,2)
+       err = erad(i,j+1,k) - dx(2) * der(i,j+1,k,2)
+      else
+       erl = 0d0 ; err = 0d0
+      end if
+      
       select case (eostype)
       case(0:1) ! without recombination
        imul = 1d0/imu(i,j  ,k) + dx(1) * dmu(i,j  ,k,2)
        imur = 1d0/imu(i,j+1,k) - dx(2) * dmu(i,j+1,k,2)
        imul = 1d0/imul ; imur = 1d0/imur
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,erad=erl,ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,erad=err,ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,2,ierr)
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i,j  ,k) + dx(1) * dspc(1:2,i,j  ,k,2)
        spcr(1:2) = spc(1:2,i,j+1,k) - dx(2) * dspc(1:2,i,j+1,k,2)
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,2,ierr)
       end select
       ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
@@ -274,7 +301,8 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch,&
+                            erl,err)
 
 
 !!$     if(maxval(shock(i-1:i+1,j:j+1,k-1:k+1))==1)then ! if shock
@@ -328,17 +356,19 @@ contains
 !!$      end if
 !!$     end if
 
-      flux2(i,j,k,icnt) = tmpflux(icnt)
-      flux2(i,j,k,imo1) = tmpflux(imo3)
-      flux2(i,j,k,imo2) = tmpflux(imo1)
-      flux2(i,j,k,imo3) = tmpflux(imo2)
-      flux2(i,j,k,iene) = tmpflux(iene)
+      flux2(i,j,k,icnt) = tmpflux(1)
+      flux2(i,j,k,imo1) = tmpflux(4)
+      flux2(i,j,k,imo2) = tmpflux(2)
+      flux2(i,j,k,imo3) = tmpflux(3)
+      flux2(i,j,k,iene) = tmpflux(5)
       if(mag_on)then
-       flux2(i,j,k,img1) = tmpflux(img3)
-       flux2(i,j,k,img2) = tmpflux(img1)
-       flux2(i,j,k,img3) = tmpflux(img2)
-       if(dim>1)flux2(i,j,k,i9wv) = tmpflux(i9wv)
+       flux2(i,j,k,img1) = tmpflux(8)
+       flux2(i,j,k,img2) = tmpflux(6)
+       flux2(i,j,k,img3) = tmpflux(7)
+       if(dim>1)flux2(i,j,k,i9wv) = tmpflux(9)
       end if
+      if(radswitch>0)&
+       flux2(i,j,k,irad) = tmpflux(10)
 
       if(compswitch>=2)then
        do n = 1, spn
@@ -363,13 +393,14 @@ contains
 ! flux3 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   if(solve_k)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,v1l,v1r,v2l,v2r,v3l,v3r,eil,eir,&
-!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,&
+!$omp b1l,b1r,b2l,b2r,b3l,b3r,cfl,cfr,phil,phir,tmpflux,dx,Tl,Tr,erl,err,&
 !$omp imul,imur,csl,csr,fix,spcl,spcr,signdflx,n,ul,ur,fl,fr,rinji,ierr) &
 !$omp collapse(3)
    do k = ks-1,ke
     do j = js,je
      do i = is,ie
 
+      ! Don't bother calculating fluxes for flux boundaries
       if(k==ks-1)then
        if(bc3is==10)cycle
       end if
@@ -415,19 +446,26 @@ contains
       eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
       eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
+      if(radswitch>0)then
+       erl = erad(i,j,k  ) + dx(1) * der(i,j,k  ,3)
+       err = erad(i,j,k+1) - dx(2) * der(i,j,k+1,3)
+      else
+       erl = 0d0 ; err = 0d0
+      end if
+
       select case (eostype)
       case(0:1) ! without recombination
        imul = 1d0/imu(i,j,k  ) + dx(1) * dmu(i,j,k  ,3)
        imur = 1d0/imu(i,j,k+1) - dx(2) * dmu(i,j,k+1,3)
        imul = 1d0/imul ; imur = 1d0/imur
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,ierr=ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,ierr=ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,erad=erl,ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,erad=err,ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,3,ierr)
       case(2) ! with recombination
        spcl(1:2) = spc(1:2,i,j,k  ) + dx(1) * dspc(1:2,i,j,k  ,3)
        spcr(1:2) = spc(1:2,i,j,k+1) - dx(2) * dspc(1:2,i,j,k+1,3)
-       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr)
-       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr)
+       call eos_p_cs(dl,eil,Tl,imul,ptl,csl,spcl(1),spcl(2),ierr=ierr)
+       call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,3,ierr)
       end select
       ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
@@ -436,7 +474,8 @@ contains
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
       call hlldflux(tmpflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr, &
-                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
+                            el,er,ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch,&
+                            erl,err)
 
 !!$     if(maxval(shock(i-1:i+1,j,k:k+1))==1)then ! if supersonic
 !!$      if(max(abs(v2l),abs(v2r))>1d-1*max(abs(v1l),abs(v1r),abs(v3l),abs(v3r)))then ! and aligned
@@ -489,17 +528,19 @@ contains
 !!$      end if
 !!$     end if
 
-      flux3(i,j,k,icnt) = tmpflux(icnt)
-      flux3(i,j,k,imo1) = tmpflux(imo2)
-      flux3(i,j,k,imo2) = tmpflux(imo3)
-      flux3(i,j,k,imo3) = tmpflux(imo1)
-      flux3(i,j,k,iene) = tmpflux(iene)
+      flux3(i,j,k,icnt) = tmpflux(1)
+      flux3(i,j,k,imo1) = tmpflux(3)
+      flux3(i,j,k,imo2) = tmpflux(4)
+      flux3(i,j,k,imo3) = tmpflux(2)
+      flux3(i,j,k,iene) = tmpflux(5)
       if(mag_on)then
-       flux3(i,j,k,img1) = tmpflux(img2)
-       flux3(i,j,k,img2) = tmpflux(img3)
-       flux3(i,j,k,img3) = tmpflux(img1)
-       if(dim>1)flux3(i,j,k,i9wv) = tmpflux(i9wv)
+       flux3(i,j,k,img1) = tmpflux(7)
+       flux3(i,j,k,img2) = tmpflux(8)
+       flux3(i,j,k,img3) = tmpflux(6)
+       if(dim>1)flux3(i,j,k,i9wv) = tmpflux(9)
       end if
+      if(radswitch>0)&
+       flux3(i,j,k,irad) = tmpflux(10)
 
       if(compswitch>=2)then
        do n = 1, spn

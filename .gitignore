@@ -2,5 +2,5 @@
 *.mod
 hormone
 .vscode
-*.bin
+**/data/*.bin
 *.dat

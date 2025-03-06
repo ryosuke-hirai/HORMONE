@@ -751,6 +751,12 @@ subroutine write_bin
   call write_dummy_recordmarker(un)
  end if
 
+ if(radswitch>0) then
+  call write_dummy_recordmarker(un)
+  call write_var(un, erad, is, ie, js, je, ks, ke)
+  call write_dummy_recordmarker(un)
+ end if
+
  if(include_sinks) then
    call write_dummy_recordmarker(un)
    call write_var(un, sink, 1, nsink)
@@ -1420,7 +1426,14 @@ subroutine get_header(header,columns)
  end if
 
 ! Output temperature
- if(write_temp)call add_column('T',columns,header)
+ if(write_temp)then
+  if(radswitch>0)then
+   call add_column('Tgas',columns,header)
+   call add_column('Trad',columns,header)
+  else
+   call add_column('T',columns,header)
+  end if
+ end if
 
 ! Output gravitational potential if gravswitch>=1
  if(gravswitch>=1)then
@@ -1432,6 +1445,10 @@ subroutine get_header(header,columns)
    call add_column('totphi',columns,header)
   end if
  end if
+
+! Output radiation energy density if radswitch>=1
+ if(radswitch>0) &
+  call add_column('erad',columns,header)
 
 ! Output mean molecular weight if compswitch>=1
  if(compswitch>=1)then
@@ -1484,6 +1501,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  use settings,only:spn
  use physval
  use gravmod,only:grvphi,extgrv,totphi,mc
+ use pressure_mod,only:Trad
  use mpi_domain,only:is_my_domain
  use mpi_utils,only:barrier_mpi
  use io,only:write_string
@@ -1519,12 +1537,18 @@ subroutine write_val(ui,i,j,k,forme,header)
    call write_anyval(ui,forme,b3(i,j,k))
   case('T')!temperature
    call write_anyval(ui,forme,T(i,j,k))
+  case('Tgas')!gas temperature
+   call write_anyval(ui,forme,T(i,j,k))
+  case('Trad')!radiation temperature
+   call write_anyval(ui,forme,Trad(erad(i,j,k)))
   case('phi')!gravitational potential
    call write_anyval(ui,forme,grvphi(i,j,k))
   case('extphi')!external gravitational potential
    call write_anyval(ui,forme,extgrv(i,j,k))
   case('totphi')!total gravitational potential
    call write_anyval(ui,forme,totphi(i,j,k))
+  case('erad')!radiation energy
+   call write_anyval(ui,forme,erad(i,j,k))
   case('mu')!mean molecular weight
    call write_anyval(ui,forme,1d0/imu(i,j,k))
   case('shock')!shock position

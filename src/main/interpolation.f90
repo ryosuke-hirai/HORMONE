@@ -15,18 +15,18 @@ contains
 subroutine interpolation
 
  use settings,only:compswitch,spn,mag_on,flux_limiter,solve_i,solve_j,solve_k,&
-                   bc1is,bc1os,bc2is,bc2os,bc3is,bc3os
+                   bc1is,bc1os,bc2is,bc2os,bc3is,bc3os,radswitch
 !  use settings, only:eostype
  use grid
  use physval
- use fluxlimiter
+ use fluxlimiter_mod
  use pressure_mod
  use profiler_mod
 
  integer:: i,j,k,n
  real(8):: dl, dr, ptl, ptr, el, er, m1l, m1r, m2l, m2r, m3l, m3r
  real(8):: b1l, b1r, b2l, b2r, b3l, b3r, phil, phir, eintl, eintr,imul,imur
- real(8):: uu(1:3), du, Xl, Xr, Yl, Yr, Tini
+ real(8):: uu(1:3), du, Xl, Xr, Yl, Yr, Tini, eradl, eradr
  real(8):: dx(1:2), x(1:3), xi(1:2)
 
 !-----------------------------------------------------------------------------
@@ -34,13 +34,12 @@ subroutine interpolation
  call start_clock(wtint)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! Notations !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! slopes : dd, de, dm1, dm2, dm3, db1, db2, db3
+! slopes : dd, de, dm1, dm2, dm3, db1, db2, db3, der
 ! *l, *r are cell boundary values at left and right looking from x1(i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Flat reconstruction
  if(flux_limiter=='flat')then
-  dd=0d0;de=0d0;dm1=0d0;dm2=0d0;dm3=0d0;db1=0d0;db2=0d0;db3=0d0;dphi=0d0
   call stop_clock(wtint)
   return
  end if
@@ -51,7 +50,7 @@ subroutine interpolation
 if(solve_i)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
+!$omp Xl,Xr,Yl,Yr,eradl,eradr,Tini) collapse(3)
  do k = ks,ke
   do j = js,je
    do i = is-1,ie+1
@@ -67,45 +66,58 @@ if(solve_i)then
     x(1:3) = x1(i-1:i+1) ; xi(1:2) = xi1(i-1:i)
 
     uu(1:3) = d(i-1:i+1,j,k)
-!    call minmod(du,uu,dx) ; dd(i,j,k,1) = du
-    call modified_mc(du,uu,x,xi) ; dd(i,j,k,1) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dd(i,j,k,1) = du
     dl = uu(2) - (x1(i)-xi1(i-1))*du ; dr = uu(2) + (xi1(i)-x1(i))*du
 
     uu(1:3) = e(i-1:i+1,j,k)
-!    call minmod(du,uu,dx) ; de(i,j,k,1) = du
-    call modified_mc(du,uu,x,xi) ; de(i,j,k,1) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    de(i,j,k,1) = du
     el = uu(2) - (x1(i)-xi1(i-1))*du ; er = uu(2) + (xi1(i)-x1(i))*du
 
     uu(1:3) = d(i-1:i+1,j,k)*v1(i-1:i+1,j,k)
-!    call minmod(du,uu,dx) ; dm1(i,j,k,1) = du
-    call modified_mc(du,uu,x,xi) ; dm1(i,j,k,1) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm1(i,j,k,1) = du
     m1l = uu(2) - (x1(i)-xi1(i-1))*du ; m1r = uu(2) + (xi1(i)-x1(i))*du
 
     uu(1:3) = d(i-1:i+1,j,k)*v2(i-1:i+1,j,k)
-!    call minmod(du,uu,dx) ; dm2(i,j,k,1) = du
-    call modified_mc(du,uu,x,xi) ; dm2(i,j,k,1) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm2(i,j,k,1) = du
     m2l = uu(2) - (x1(i)-xi1(i-1))*du ; m2r = uu(2) + (xi1(i)-x1(i))*du
 
     uu(1:3) = d(i-1:i+1,j,k)*v3(i-1:i+1,j,k)
-!    call minmod(du,uu,dx) ; dm3(i,j,k,1) = du
-    call modified_mc(du,uu,x,xi) ; dm3(i,j,k,1) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm3(i,j,k,1) = du
     m3l = uu(2) - (x1(i)-xi1(i-1))*du ; m3r = uu(2) + (xi1(i)-x1(i))*du
 
 ! if magnetic fields are on
     if(mag_on)then
      uu(1:3) = b1(i-1:i+1,j,k)
-     call minmod(du,uu,dx) ; db1(i,j,k,1) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db1(i,j,k,1) = du
      b1l = uu(2) - (x1(i)-xi1(i-1))*du ; b1r = uu(2) + (xi1(i)-x1(i))*du
 
      uu(1:3) = b2(i-1:i+1,j,k)
-     call minmod(du,uu,dx) ; db2(i,j,k,1) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db2(i,j,k,1) = du
      b2l = uu(2) - (x1(i)-xi1(i-1))*du ; b2r = uu(2) + (xi1(i)-x1(i))*du
 
      uu(1:3) = b3(i-1:i+1,j,k)
-     call minmod(du,uu,dx) ; db3(i,j,k,1) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db3(i,j,k,1) = du
      b3l = uu(2) - (x1(i)-xi1(i-1))*du ; b3r = uu(2) + (xi1(i)-x1(i))*du
     else
      b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
+    end if
+
+! if radiation transport is on
+    if(radswitch>0)then
+     uu(1:3) = erad(i-1:i+1,j,k)
+     call fluxlimiter(uu,dx,x,xi,du)
+     der(i,j,k,1) = du
+     eradl = uu(2) - (x1(i)-xi1(i-1))*du ; eradr = uu(2) + (xi1(i)-x1(i))*du
+    else
+     eradl = 0d0 ; eradr = 0d0
     end if
 
 
@@ -116,13 +128,15 @@ if(solve_i)then
      imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,1) = 0d0
     case(1:2) ! nonuniform composition
      uu(1:3) = 1d0/imu(i-1:i+1,j,k)
-     call minmod(du,uu,dx) ; dmu(i,j,k,1) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     dmu(i,j,k,1) = du
      imul = uu(2) - (x1(i)-xi1(i-1))*du ; imur = uu(2) + (xi1(i)-x1(i))*du
      imul = 1d0/imul ; imur = 1d0/imur
      if(compswitch==2)then
       do n = 1, spn
        uu(1:3) = spc(n,i-1:i+1,j,k)
-       call minmod(du,uu,dx) ; dspc(n,i,j,k,1) = du
+       call fluxlimiter(uu,dx,x,xi,du)
+       dspc(n,i,j,k,1) = du
       end do
      end if
     case default
@@ -136,12 +150,17 @@ if(solve_i)then
      eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
      eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
     end if
+    if(radswitch>0)then
+     eintl = eintl + eradl
+     eintr = eintr + eradr
+    end if
     if( eintl>=maxval(eint(i-1:i,j,k)).or.eintl<=minval(eint(i-1:i,j,k)).or.&
         eintr>=maxval(eint(i:i+1,j,k)).or.eintr<=minval(eint(i:i+1,j,k)))then
      dd (i,j,k,1) = 0d0 ; de (i,j,k,1) = 0d0
      dm1(i,j,k,1) = 0d0 ; dm2(i,j,k,1) = 0d0 ; dm3(i,j,k,1) = 0d0
      db1(i,j,k,1) = 0d0 ; db2(i,j,k,1) = 0d0 ; db3(i,j,k,1) = 0d0
      dphi(i,j,k,1) = 0d0
+     if(radswitch>0)der(i,j,k,1) = 0d0
     else
 !!$     Tini = T(i,j,k)
 !!$     select case (eostype)! Get thermal pressure
@@ -178,7 +197,7 @@ end if
 if(solve_j)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
+!$omp Xl,Xr,Yl,Yr,eradl,eradr,Tini) collapse(3)
  do k = ks,ke
   do j = js-1,je+1
    do i = is,ie
@@ -194,44 +213,57 @@ if(solve_j)then
     x(1:3) = x2(j-1:j+1) ; xi(1:2) = xi2(j-1:j)
 
     uu(1:3) = d(i,j-1:j+1,k)
-!    call minmod(du,uu,dx) ; dd(i,j,k,2) = du
-    call modified_mc(du,uu,x,xi) ; dd(i,j,k,2) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dd(i,j,k,2) = du
     dl = uu(2) - (x2(j)-xi2(j-1))*du ; dr = uu(2) + (xi2(j)-x2(j))*du
 
     uu(1:3) = e(i,j-1:j+1,k)
-!    call minmod(du,uu,dx) ; de(i,j,k,2) = du
-    call modified_mc(du,uu,x,xi) ; de(i,j,k,2) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    de(i,j,k,2) = du
     el = uu(2) - (x2(j)-xi2(j-1))*du ; er = uu(2) + (xi2(j)-x2(j))*du
 
     uu(1:3) = d(i,j-1:j+1,k)*v1(i,j-1:j+1,k)
-!    call minmod(du,uu,dx) ; dm1(i,j,k,2) = du
-    call modified_mc(du,uu,x,xi) ; dm1(i,j,k,2) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm1(i,j,k,2) = du
     m1l = uu(2) - (x2(j)-xi2(j-1))*du ; m1r = uu(2) + (xi2(j)-x2(j))*du
 
     uu(1:3) = d(i,j-1:j+1,k)*v2(i,j-1:j+1,k)
-!    call minmod(du,uu,dx) ; dm2(i,j,k,2) = du
-    call modified_mc(du,uu,x,xi) ; dm2(i,j,k,2) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm2(i,j,k,2) = du
     m2l = uu(2) - (x2(j)-xi2(j-1))*du ; m2r = uu(2) + (xi2(j)-x2(j))*du
 
     uu(1:3) = d(i,j-1:j+1,k)*v3(i,j-1:j+1,k)
-!    call minmod(du,uu,dx) ; dm3(i,j,k,2) = du
-    call modified_mc(du,uu,x,xi) ; dm3(i,j,k,2) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm3(i,j,k,2) = du
     m3l = uu(2) - (x2(j)-xi2(j-1))*du ; m3r = uu(2) + (xi2(j)-x2(j))*du
 
     if(mag_on)then
      uu(1:3) = b1(i,j-1:j+1,k)
-     call minmod(du,uu,dx) ; db1(i,j,k,2) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db1(i,j,k,2) = du
      b1l = uu(2) - (x2(j)-xi2(j-1))*du ; b1r = uu(2) + (xi2(j)-x2(j))*du
 
      uu(1:3) = b2(i,j-1:j+1,k)
-     call minmod(du,uu,dx) ; db2(i,j,k,2) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db2(i,j,k,2) = du
      b2l = uu(2) - (x2(j)-xi2(j-1))*du ; b2r = uu(2) + (xi2(j)-x2(j))*du
 
      uu(1:3) = b3(i,j-1:j+1,k)
-     call minmod(du,uu,dx) ; db3(i,j,k,2) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db3(i,j,k,2) = du
      b3l = uu(2) - (x2(j)-xi2(j-1))*du ; b3r = uu(2) + (xi2(j)-x2(j))*du
     else
      b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
+    end if
+
+    ! if radiation transport is on
+    if(radswitch>0)then
+     uu(1:3) = erad(i,j-1:j+1,k)
+     call fluxlimiter(uu,dx,x,xi,du)
+     der(i,j,k,2) = du
+     eradl = uu(2) - (x2(j)-xi2(j-1))*du ; eradr = uu(2) + (xi2(j)-x2(j))*du
+    else
+     eradl = 0d0 ; eradr = 0d0
     end if
 
 ! check stability at cell boundary ---------------------------------------- !
@@ -241,13 +273,15 @@ if(solve_j)then
      imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,2) = 0d0
     case(1:2) ! nonuniform composition
      uu(1:3) = 1d0/imu(i,j-1:j+1,k)
-     call minmod(du,uu,dx) ; dmu(i,j,k,2) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     dmu(i,j,k,2) = du
      imul = uu(2) - (x2(j)-xi2(j-1))*du ; imur = uu(2) + (xi2(j)-x2(j))*du
      imul = 1d0/imul ; imur = 1d0/imur
      if(compswitch==2)then
       do n = 1, spn
        uu(1:3) = spc(n,i,j-1:j+1,k)
-       call minmod(du,uu,dx) ; dspc(n,i,j,k,2) = du
+       call fluxlimiter(uu,dx,x,xi,du)
+       dspc(n,i,j,k,2) = du
       end do
      end if
     case default
@@ -261,12 +295,17 @@ if(solve_j)then
      eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
      eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
     end if
+    if(radswitch>0)then
+     eintl = eintl + eradl
+     eintr = eintr + eradr
+    end if
     if( eintl>=maxval(eint(i,j-1:j,k)).or.eintl<=minval(eint(i,j-1:j,k)).or.&
         eintr>=maxval(eint(i,j:j+1,k)).or.eintr<=minval(eint(i,j:j+1,k)))then
      dd (i,j,k,2) = 0d0 ; de (i,j,k,2) = 0d0
      dm1(i,j,k,2) = 0d0 ; dm2(i,j,k,2) = 0d0 ; dm3(i,j,k,2) = 0d0
      db1(i,j,k,2) = 0d0 ; db2(i,j,k,2) = 0d0 ; db3(i,j,k,2) = 0d0
      dphi(i,j,k,2) = 0d0
+     if(radswitch>0)der(i,j,k,2) = 0d0
     else
 !!$     Tini = T(i,j,k)
 !!$     select case (eostype)
@@ -303,7 +342,7 @@ end if
 if(solve_k)then
 !$omp do private(i,j,k,ptl,ptr,dl,dr,el,er,m1l,m1r,m2l,m2r,m3l,m3r,&
 !$omp b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,uu,du,dx,eintl,eintr,imul,imur,n,x,xi,&
-!$omp Xl,Xr,Yl,Yr,Tini) collapse(3)
+!$omp Xl,Xr,Yl,Yr,eradl,eradr,Tini) collapse(3)
 
  do k = ks-1,ke+1
   do j = js,je
@@ -320,44 +359,57 @@ if(solve_k)then
     x(1:3) = x3(k-1:k+1) ; xi(1:2) = xi3(k-1:k)
 
     uu(1:3) = d(i,j,k-1:k+1)
-!    call minmod(du,uu,dx) ; dd(i,j,k,3) = du
-    call modified_mc(du,uu,x,xi) ; dd(i,j,k,3) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dd(i,j,k,3) = du
     dl = uu(2) - (x3(k)-xi3(k-1))*du ; dr = uu(2) + (xi3(k)-x3(k))*du
 
     uu(1:3) = e(i,j,k-1:k+1)
-    !    call minmod(du,uu,dx) ; de(i,j,k,3) = du
-    call modified_mc(du,uu,x,xi) ; de(i,j,k,3) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    de(i,j,k,3) = du
     el = uu(2) - (x3(k)-xi3(k-1))*du ; er = uu(2) + (xi3(k)-x3(k))*du
 
     uu(1:3) = d(i,j,k-1:k+1)*v1(i,j,k-1:k+1)
-!    call minmod(du,uu,dx) ; dm1(i,j,k,3) = du
-    call modified_mc(du,uu,x,xi) ; dm1(i,j,k,3) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm1(i,j,k,3) = du
     m1l = uu(2) - (x3(k)-xi3(k-1))*du ; m1r = uu(2) + (xi3(k)-x3(k))*du
 
     uu(1:3) = d(i,j,k-1:k+1)*v2(i,j,k-1:k+1)
-!    call minmod(du,uu,dx) ; dm2(i,j,k,3) = du
-    call modified_mc(du,uu,x,xi) ; dm2(i,j,k,3) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm2(i,j,k,3) = du
     m2l = uu(2) - (x3(k)-xi3(k-1))*du ; m2r = uu(2) + (xi3(k)-x3(k))*du
 
     uu(1:3) = d(i,j,k-1:k+1)*v3(i,j,k-1:k+1)
-!    call minmod(du,uu,dx) ; dm3(i,j,k,3) = du
-    call modified_mc(du,uu,x,xi) ; dm3(i,j,k,3) = du
+    call fluxlimiter(uu,dx,x,xi,du)
+    dm3(i,j,k,3) = du
     m3l = uu(2) - (x3(k)-xi3(k-1))*du ; m3r = uu(2) + (xi3(k)-x3(k))*du
 
     if(mag_on)then
      uu(1:3) = b1(i,j,k-1:k+1)
-     call minmod(du,uu,dx) ; db1(i,j,k,3) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db1(i,j,k,3) = du
      b1l = uu(2) - (x3(k)-xi3(k-1))*du ; b1r = uu(2) + (xi3(k)-x3(k))*du
 
      uu(1:3) = b2(i,j,k-1:k+1)
-     call minmod(du,uu,dx) ; db2(i,j,k,3) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db2(i,j,k,3) = du
      b2l = uu(2) - (x3(k)-xi3(k-1))*du ; b2r = uu(2) + (xi3(k)-x3(k))*du
 
      uu(1:3) = b3(i,j,k-1:k+1)
-     call minmod(du,uu,dx) ; db3(i,j,k,3) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     db3(i,j,k,3) = du
      b3l = uu(2) - (x3(k)-xi3(k-1))*du ; b3r = uu(2) + (xi3(k)-x3(k))*du
     else
      b1l = 0d0; b1r = 0d0; b2l = 0d0; b2r = 0d0; b3l = 0d0; b3r = 0d0
+    end if
+
+! if radiation transport is on
+    if(radswitch>0)then
+     uu(1:3) = erad(i,j,k-1:k+1)
+     call fluxlimiter(uu,dx,x,xi,du)
+     der(i,j,k,3) = du
+     eradl = uu(2) - (x3(k)-xi3(k-1))*du ; eradr = uu(2) + (xi3(k)-x3(k))*du
+    else
+     eradl = 0d0 ; eradr = 0d0
     end if
 
 ! check stability at cell boundary ---------------------------------------- !
@@ -367,13 +419,15 @@ if(solve_k)then
      imul = 1d0/muconst ; imur = 1d0/muconst ; dmu(i,j,k,3) = 0d0
     case(1:2) ! nonuniform composition
      uu(1:3) = 1d0/imu(i,j,k-1:k+1)
-     call minmod(du,uu,dx) ; dmu(i,j,k,3) = du
+     call fluxlimiter(uu,dx,x,xi,du)
+     dmu(i,j,k,3) = du
      imul = uu(2) - (x3(k)-xi3(k-1))*du ; imur = uu(2) + (xi3(k)-x3(k))*du
      imul = 1d0/imul ; imur = 1d0/imur
      if(compswitch==2)then
       do n = 1, spn
        uu(1:3) = spc(n,i,j,k-1:k+1)
-       call minmod(du,uu,dx) ; dspc(n,i,j,k,3) = du
+       call fluxlimiter(uu,dx,x,xi,du)
+       dspc(n,i,j,k,3) = du
       end do
      end if
     case default
@@ -387,12 +441,17 @@ if(solve_k)then
      eintl = eintl - 0.5d0*(b1l**2+b2l**2+b3l**2)
      eintr = eintr - 0.5d0*(b1r**2+b2r**2+b3r**2)
     end if
+    if(radswitch>0)then
+     eintl = eintl + eradl
+     eintr = eintr + eradr
+    end if
     if( eintl>=maxval(eint(i,j,k-1:k)).or.eintl<=minval(eint(i,j,k-1:k)).or.&
         eintr>=maxval(eint(i,j,k:k+1)).or.eintr<=minval(eint(i,j,k:k+1)))then
      dd (i,j,k,3) = 0d0 ; de (i,j,k,3) = 0d0
      dm1(i,j,k,3) = 0d0 ; dm2(i,j,k,3) = 0d0 ; dm3(i,j,k,3) = 0d0
      db1(i,j,k,3) = 0d0 ; db2(i,j,k,3) = 0d0 ; db3(i,j,k,3) = 0d0
      dphi(i,j,k,3) = 0d0
+     if(radswitch>0)der(i,j,k,3) = 0d0
     else
 !!$     Tini = T(i,j,k)
 !!$     select case (eostype)

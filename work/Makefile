@@ -54,7 +54,7 @@ TARGETA = ascii_output
 TARGETL = lightcurve
 
 # compile modules that are being depended on first
-MOD = mpi_utils.F90 modules.f90 profiler.f90 mpi_domain.F90 io.F90 utils.f90 conserve.f90 ionization.f90 eos.f90 miccg.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 radiation.f90 cooling.f90 sinks.f90 composition.f90 star.f90 shockfind.f90 output.f90 smear.f90 input.f90 setup.f90 readbin.f90  restart.f90 fluxboundary.f90 rungekutta.f90 timestep.f90 tests.f90 gridset.f90 gravbound.f90 gravity_hyperbolic.f90 gravity_miccg.f90
+MOD = mpi_utils.F90 modules.f90 profiler.f90 mpi_domain.F90 io.F90 utils.f90 conserve.f90 ionization.f90 eos.f90 miccg.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 opacity.f90 radiation_utils.f90 radiation.f90 cooling.f90 sinks.f90 composition.f90 star.f90 shockfind.f90 output.f90 smear.f90 input.f90 setup.f90 readbin.f90  restart.f90 fluxboundary.f90 rungekutta.f90 timestep.f90 tests.f90 gridset.f90 gravbound.f90 gravity_hyperbolic.f90 gravity_miccg.f90 interpolation.f90 numflux.f90 externalforce.f90 source.f90 
 MODF= $(patsubst %,$(SRC_DIR)/%,$(MOD))
 
 # Initial condition routines should be compiled before initialcondition.f90

@@ -35,21 +35,19 @@ program hormone
   use metric_mod
   use initialcondition_mod
   use output_mod
+  use boundary_mod
+  use source_mod
+  use dirichlet_mod
   use gravmod
+  use miccg_mod
   use sink_mod
   use composition_mod
-  use boundary_mod
-  use numflux_mod
-  use source_mod
-  use rungekutta_mod
-
+  use hydro_mod
   use gravity_mod
   use radiation_mod
   use particle_mod
   use cooling_mod
   use frame_mod
-  use dirichlet_mod
-  use shockfind_mod
   use tests_mod
 
   use profiler_mod
@@ -126,27 +124,18 @@ program hormone
 
     call timestep
 
+    call terminal_output
+
     call gravity
+    if(radswitch>0)  call get_gradE(cg_rad)
     if(include_sinks)call get_sink_acc(sink) ! updates dt
     call set_frame_acc
 
-    call terminal_output
+!######### Main hydro step #########!
+    if(solve_hydro)call hydro_step  !
+!###################################!
 
-    call start_clock(wthyd)
-
-    if(dirichlet_on) call dirichletbound
-    call shockfind
-
-    do rungen = 1, rktype
-     call exchange_mpi
-     call boundarycondition
-     call numflux
-     call source
-     call rungekutta
-    end do
-
-    call stop_clock(wthyd)
-
+! All other effects included by operator splitting
     if(mag_on.and.dim>1) call phidamp
     if(radswitch>0)      call radiation
     if(include_cooling)  call cooling

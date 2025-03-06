@@ -17,7 +17,7 @@ subroutine tools
  use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_max,fmr_lvl
  use physval,only:gamma,imu,muconst
  use gravmod,only:llmax,Plc,Pl,dtg_unit
- use constants,only:fac_egas,Rgas
+ use constants,only:Cv,Rgas
  use timestep_mod,only:dtgrav_cell
  use ionization_mod,only:ionization_setup
  use cooling_mod,only:cooling_setup
@@ -133,7 +133,7 @@ subroutine tools
 !!$ comp_ej(0:8,1:compsize) = dat(0:8,compsize:1:-1)
 
 ! EoS parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- fac_egas = Rgas/(gamma-1d0) ! frequently used factor for egas
+ Cv = Rgas/(gamma-1d0) ! frequently used factor for egas
  imu(is-2:ie+2,js-2:je+2,ks-2:ke+2) = 1d0/muconst
 
  if(eostype==2) call ionization_setup

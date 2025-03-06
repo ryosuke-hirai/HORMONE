@@ -17,17 +17,18 @@ contains
 !          See Miyoshi & Kusano 2005 for details
 
  pure subroutine hlldflux(fflux,cfl,cfr,v1l,v1r,v2l,v2r,v3l,v3r,dl,dr,el,er,&
-                                ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch)
+                                ptl,ptr,b1l,b1r,b2l,b2r,b3l,b3r,phil,phir,ch,&
+                                erl,err)
 
   implicit none
 
   real(8),intent(in):: cfl, cfr, v1l, v1r, v2l, v2r, v3l, v3r, &
                        dl, dr, ptl, ptr, el, er, b1l, b1r, b2l, b2r, b3l, b3r
-  real(8),intent(in):: phil, phir, ch
-  real(8),dimension(9),intent(inout):: fflux
+  real(8),intent(in):: phil, phir, ch, erl, err
+  real(8),dimension(10),intent(inout):: fflux
   real(8):: sl, sr, sm, sla, sra
   real(8):: dla, dra, v2la, v2ra, v3la, v3ra, b2la, b2ra, b3la, b3ra
-  real(8):: ela, era, pta
+  real(8):: ela, era, pta, erla, erra
   real(8):: v2aa, v3aa, b2aa, b3aa, elaa, eraa
   real(8):: signsm, sortsla, sortslr, sortsra
   real(8):: phi, b1 ! for 9-wave method
@@ -50,6 +51,9 @@ contains
 
   dla = dl * (sl-v1l)/(sl-sm)
   dra = dr * (sr-v1r)/(sr-sm)
+
+  erla = erl * (sl-v1l)/(sl-sm)
+  erra = err * (sr-v1r)/(sr-sm)
 
   sla = sm - abs(b1)/sqrt(dla)
   sra = sm + abs(b1)/sqrt(dra)
@@ -116,6 +120,9 @@ contains
   dla  =   (0.5d0+signsm) * dla  &
          + (0.5d0-signsm) * dra
 
+  erla =   (0.5d0+signsm) * erla  &
+         + (0.5d0-signsm) * erra
+
   v2la =   sortsla * v2la &
          + sortslr * v2aa &
          + sortsra * v2ra
@@ -137,7 +144,7 @@ contains
          + (0.5d0+sign(0.5d0,-sm*sra)) * eraa &
          + (0.5d0-sign(0.5d0,sra)) * era
 
-  call fstar(fflux,dla,sm,v2la,v3la,b1,b2la,b3la,ela,pta,phi,ch)
+  call fstar(fflux,dla,sm,v2la,v3la,b1,b2la,b3la,ela,pta,phi,ch,erla)
 
   return
  end subroutine hlldflux
@@ -146,12 +153,12 @@ contains
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
- pure subroutine fstar(tmpflux,d,v1,v2,v3,b1,b2,b3,e,p,phi,ch)
+ pure subroutine fstar(tmpflux,d,v1,v2,v3,b1,b2,b3,e,p,phi,ch,er)
 
   implicit none
 
-  real(8),dimension(9),intent(out)::tmpflux
-  real(8),intent(in)::d,v1,v2,v3,b1,b2,b3,e,p,phi,ch
+  real(8),dimension(10),intent(out)::tmpflux
+  real(8),intent(in)::d,v1,v2,v3,b1,b2,b3,e,p,phi,ch,er
 
 !----------------------------------------------------------------------------
 
@@ -165,7 +172,9 @@ contains
   tmpflux(8) = b3*v1 - b1*v3
 ! for 9wave method
   tmpflux(9) = ch**2 * b1
-! end 9wave method
+! for radiation transport
+  tmpflux(10)= er*v1
+
   return
  end subroutine fstar
 

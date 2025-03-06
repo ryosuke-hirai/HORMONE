@@ -192,7 +192,7 @@ end subroutine get_runge_coeff
 
  subroutine primitive
 
-  use settings,only:mag_on
+  use settings,only:mag_on,radswitch
   use grid
   use physval
   use pressure_mod,only:pressure
@@ -211,13 +211,15 @@ end subroutine get_runge_coeff
      v2(i,j,k) = u(i,j,k,imo2) / d(i,j,k)
      v3(i,j,k) = u(i,j,k,imo3) / d(i,j,k)
      e(i,j,k)  = u(i,j,k,iene)
-     if(.not.mag_on)cycle
-     b1(i,j,k) = u(i,j,k,img1)
-     b2(i,j,k) = u(i,j,k,img2)
-     b3(i,j,k) = u(i,j,k,img3)
-     if(dim==1)cycle
-     ! for 9 wave method
-     phi(i,j,k)= u(i,j,k,i9wv)
+     if(mag_on)then
+      b1(i,j,k) = u(i,j,k,img1)
+      b2(i,j,k) = u(i,j,k,img2)
+      b3(i,j,k) = u(i,j,k,img3)
+      if(dim>1)&! for 9 wave method
+       phi(i,j,k)= u(i,j,k,i9wv)
+     end if
+     if(radswitch>0)&
+      erad(i,j,k) = u(i,j,k,irad)
     end do
    end do
   end do

@@ -47,7 +47,7 @@ contains
 
   use utils,only:isequal
   use mpi_utils,only:myrank
-  use settings,only:simtype,mag_on,test_tol,Mach_tol,compswitch,spn
+  use settings,only:simtype,mag_on,test_tol,Mach_tol,compswitch,spn,radswitch
   use grid,only:is,ie,js,je,ks,ke,dim
   use physval
   use gravmod
@@ -56,7 +56,7 @@ contains
 
   logical, intent(out) :: passed
   integer:: n
-  integer,parameter:: nn = 10
+  integer,parameter:: nn = 11
   character(40):: testfile
   real(8),allocatable:: error(:)
   real(8),allocatable,dimension(:,:,:,:):: val,valorg,scale
@@ -80,14 +80,16 @@ contains
   label( 8) = 'b3'
   label( 9) = 'divB'
   label(10) = 'gravity'
+  label(11) = 'erad'
   if(compswitch>=2)then ! Chemical elements
    do n = 1, spn
-    label(10+n) = trim(species(n))
+    label(nn+n) = trim(species(n))
    end do
   end if
   if(.not.mag_on)       label(6:9) = 'aaa'   ! No magnetic field
   if(mag_on.and.dim==1) label(9) = 'aaa'     ! 1D MHD
   if(gravswitch==0)     label(10) = 'aaa'    ! No gravity
+  if(radswitch==0)       label(11) = 'aaa'    ! No radiation
 
 ! First record simulated variables
   val(:,:,:,1) = d (is:ie,js:je,ks:ke)
@@ -98,8 +100,9 @@ contains
   val(:,:,:,6) = b1(is:ie,js:je,ks:ke)
   val(:,:,:,7) = b2(is:ie,js:je,ks:ke)
   val(:,:,:,8) = b3(is:ie,js:je,ks:ke)
-  if(mag_on.and.dim>=2) val(:,:,:,9) = phi(is:ie,js:je,ks:ke)
-  if(gravswitch>0) val(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
+  if(mag_on.and.dim>=2) val(:,:,:, 9) = phi   (is:ie,js:je,ks:ke)
+  if(gravswitch>0)      val(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
+  if(radswitch>0)       val(:,:,:,11) = erad  (is:ie,js:je,ks:ke)
   if(compswitch>=2)then
    do n = 1, spn
     val(:,:,:,10+n) = spc(n,is:ie,js:je,ks:ke)
@@ -120,8 +123,9 @@ contains
   valorg(:,:,:,6) = b1(is:ie,js:je,ks:ke)
   valorg(:,:,:,7) = b2(is:ie,js:je,ks:ke)
   valorg(:,:,:,8) = b3(is:ie,js:je,ks:ke)
-  if(mag_on.and.dim>=2) valorg(:,:,:,9) = phi(is:ie,js:je,ks:ke)
-  if(gravswitch>0) valorg(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
+  if(mag_on.and.dim>=2) valorg(:,:,:, 9) = phi   (is:ie,js:je,ks:ke)
+  if(gravswitch>0)      valorg(:,:,:,10) = grvphi(is:ie,js:je,ks:ke)
+  if(radswitch>0)       valorg(:,:,:,11) = erad  (is:ie,js:je,ks:ke)
   if(compswitch>=2)then
    do n = 1, spn
     valorg(:,:,:,10+n) = spc(n,is:ie,js:je,ks:ke)

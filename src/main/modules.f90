@@ -16,18 +16,17 @@ module settings
 ! numerical setups
  integer:: rktype, crdnt, tnlim, start, tn_out, tn_evo, outstyle, endstyle
  integer:: gravswitch, compswitch, radswitch, frame
- integer:: eostype, spn, sigfig, outres, gbtype, grktype, maxptc
+ integer:: eostype, spn, sigfig, outres, gbtype, grktype, maxptc, rbtype
  integer:: grvsrctype, opacitytype, lambdatype
  real(8):: courant, t_end, dt_out, dt_unit_in_sec, alpha9wave
  character(len=5):: dt_unit
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl, alphagrv
  integer:: imesh, jmesh, kmesh
  integer:: nsink, maxtngrv
- real(8):: jet_ang
 ! test tolerance
  real(8):: test_tol, Mach_tol
 ! switches
- logical:: solve_i, solve_j, solve_k
+ logical:: solve_i, solve_j, solve_k, solve_hydro
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, include_sinks, include_accretion, is_test
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
@@ -61,7 +60,7 @@ module grid
   real(8),allocatable,dimension(:):: x1, xi1, dx1, dxi1, idx1, idxi1
   real(8),allocatable,dimension(:):: x2, xi2, dx2, dxi2, idx2, idxi2
   real(8),allocatable,dimension(:):: x3, xi3, dx3, dxi3, idx3, idxi3
-  real(8):: time, dt, t_out
+  real(8):: time, dt, t_out, fixed_dt
   real(8):: xi1s, xi1e, xi2s, xi2e, xi3s, xi3e, x1min, x2min, x3min
   real(8),allocatable,dimension(:):: sinc, sini, cosc, cosi
   real(8),allocatable,dimension(:,:,:):: dvol, idetg3
@@ -99,21 +98,20 @@ module constants
   real(8),parameter:: au = 1.49597870700d13
 ! Others
   real(8),parameter:: huge = 1d99, tiny = 1d-99
-  real(8):: fac_egas
+  real(8):: Cv
 
 end module constants
-
 
 !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 module physval
 
   implicit none
 
-  integer:: icnt,imo1,imo2,imo3,iene,img1,img2,img3,i9wv,ufnmax
+  integer:: icnt,imo1,imo2,imo3,iene,img1,img2,img3,i9wv,irad,ufnmax
   real(8),allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3, ptot
-  real(8),allocatable,dimension(:,:,:):: T, eint, imu
+  real(8),allocatable,dimension(:,:,:):: T, eint, erad, imu
   real(8),allocatable,dimension(:,:,:,:):: dd, de, dm1, dm2, dm3
-  real(8),allocatable,dimension(:,:,:,:):: db1, db2, db3, dphi, dmu
+  real(8),allocatable,dimension(:,:,:,:):: db1, db2, db3, dphi, dmu, der
   real(8),allocatable,dimension(:,:,:):: cs, phi, grv1, grv2, grv3
   real(8),allocatable,dimension(:,:,:,:):: u, flux1, flux2, flux3, uorg, src
   real(8),allocatable,dimension(:,:):: mudata
@@ -173,8 +171,8 @@ module derived_types
  type sink_prop
   sequence
   integer:: i,j,k,pad ! pad is added to align memory for 64-bit machines
-  real(8):: mass, softfac, lsoft, laccr, locres, dt, mdot, racc, facc
-  real(8),dimension(1:3):: x,v,a,xpol,Jspin,jdot
+  real(8):: mass, softfac, lsoft, laccr, locres, dt, mdot, racc, facc, jet_ang
+  real(8),dimension(1:3):: x,v,a,xpol,Jspin,jdot,jet_dir
  end type sink_prop
 
 contains
@@ -194,12 +192,14 @@ contains
   sink%mdot=0d0
   sink%racc=0d0
   sink%facc=0d0
+  sink%jet_ang=0d0
   sink%x=0d0
   sink%v=0d0
   sink%a=0d0
   sink%xpol=0d0
   sink%Jspin=0d0
   sink%jdot=0d0
+  sink%jet_dir=[0d0,0d0,1d0]
  end subroutine null_sink
 
 end module derived_types

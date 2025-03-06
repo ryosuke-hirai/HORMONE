@@ -1,5 +1,5 @@
 module pressure_mod
- use constants,only:fac_egas,Rgas,arad,huge
+ use constants,only:Cv,Rgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr
  implicit none
@@ -26,13 +26,13 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 
  select case (eostype)
  case(0) ! ideal gas
-  T = eint/(fac_egas*imu)
+  T = eint/(Cv*d*imu)
 
  case(1) ! ideal gas + radiation
   corr = huge
   do n = 1, 500
-   corr = (eint-(arad*T**3+d*fac_egas*imu)*T) &
-        / ( -4d0*arad*T**3-d*fac_egas*imu)
+   corr = (eint-(arad*T**3+d*Cv*imu)*T) &
+        / ( -4d0*arad*T**3-d*Cv*imu)
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
@@ -49,8 +49,8 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
    end if
-   corr = (eint-(arad*T**3+d*fac_egas*imu)*T-d*erec) &
-        / ( -4d0*arad*T**3-d*(fac_egas*(imu+dimurecdT*T)+derecdT) )
+   corr = (eint-(arad*T**3+d*Cv*imu)*T-d*erec) &
+        / ( -4d0*arad*T**3-d*(Cv*(imu+dimurecdT*T)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr
@@ -73,7 +73,6 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  end select
 
 end subroutine getT_from_de
-
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                        SUBROUTINE GETT_FROM_DP
@@ -139,15 +138,15 @@ end subroutine getT_from_dp
 
 ! PURPOSE: To calculate pressure and thermal sound speed from d and eint
 
-subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
+subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
 
  implicit none
  real(8),intent( in):: d,eint
- real(8),intent( in),optional:: X,Y
+ real(8),intent( in),optional:: X,Y,erad
  real(8),intent(inout):: T,imu
  real(8),intent(out):: p,cs
  integer,intent(out):: ierr
- real(8):: gamma_eff,erec,Ttemp
+ real(8):: gamma_eff,erec,Ttemp,cs2
 
 !-----------------------------------------------------------------------------
 
@@ -161,9 +160,10 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,ierr)
  select case (eostype)
  case(0) ! ideal gas
   p = eos_p(d,eint,T,imu)
-  gamma_eff = 1d0+p/eint
+  cs2 = gamma*p/d
+  if(present(erad))cs2 = cs2 + 4d0*erad/(9d0*d)
 
-  cs = sqrt(gamma_eff*p/d)
+  cs = sqrt(cs2)
 
  case(1) ! ideal gas + radiation pressure
   p = eos_p(d,eint,T,imu)
@@ -231,11 +231,11 @@ function eos_e(d,p,T,imu,X,Y)
 
  case(1) ! ideal gas + radiation
   call getT_from_dp(d,p,T,imu)
-  eos_e = ( fac_egas*imu*d + arad*T**3 )*T
+  eos_e = ( Cv*imu*d + arad*T**3 )*T
 
  case(2) ! ideal gas + radiation + recombination
   call getT_from_dp(d,p,T,imu,X,Y,erec)
-  eos_e = ( fac_egas*imu*d + arad*T**3 )*T + d*erec
+  eos_e = ( Cv*imu*d + arad*T**3 )*T + d*erec
 
  case default
   stop 'Error in eostype'
@@ -260,6 +260,16 @@ pure function get_cf(d,cs,b1,b2,b3) result(cf)
  cf = sqrt( 0.5d0*( asq + bbsq + sqrt( (asq+bbsq)**2 - 4d0*asq*bb1 ) ) )
 
 end function get_cf
+
+! ***************************************************************************
+
+elemental function Trad(erad)
+ use constants,only:arad
+! PURPOSE: To compute radiation temperature from erad
+ real(8),intent(in):: erad
+ real(8):: Trad
+ Trad = (erad/arad)**0.25d0
+end function Trad
 
 ! ***************************************************************************
 
@@ -467,7 +477,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
 
  case(1) ! ideal gas + radiation (fully ionized, uniform composition)
   e = 1d-8 ! initial guess
-  T = e/(fac_egas*d*imu)
+  T = e/(Cv*d*imu)
   corr=1d99
   do n = 1, 500 ! Newton-Raphson iteration to get internal energy
    ep = e*(1d0+dfac)
@@ -681,5 +691,15 @@ function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
  if(present(ierr).and.eint<=0d0)ierr=1
 
 end function get_eint
+
+function get_etot_from_eint(i,j,k) result(e)
+!PURPOSE: To calculate etot from eint
+ use settings,only:mag_on
+ use physval,only:eint,d,v1,v2,v3,b1,b2,b3
+ integer,intent(in):: i,j,k
+ real(8):: e
+ e = eint(i,j,k) + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
+ if(mag_on)e = e + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**3)
+end function get_etot_from_eint
 
 end module pressure_mod

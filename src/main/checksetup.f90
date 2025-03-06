@@ -69,6 +69,8 @@ subroutine checksetup
    if(dim>1)&
     call add_equation(i9wv,ufnmax) ! Divergence cleaning (9-wave method)
   end if
+  if(radswitch>0)&
+   call add_equation(irad,ufnmax) ! Radiation transport
 
 ! Set uniform mesh if that dimension is not used
   if(.not.solve_i)imesh=0
@@ -196,11 +198,11 @@ subroutine checksetup
    stop
   end select
   dt_out = dt_out*dt_unit_in_sec
-  t_out = dt_out
+  t_out = min(dt_out,t_end)
   t_end = t_end*dt_unit_in_sec
   if(is_test)then
-   t_out  = 2d0*t_end
-   tn_out = 2*tnlim
+   t_out  = t_end
+   tn_out = tnlim
   end if
 
 ! Spherical composition only for spherical coordinates
@@ -236,7 +238,7 @@ subroutine checksetup
   end if
 
 ! EoS can only be specific types if radiation is switched on
-  if(radswitch>0.and.eostype==1)then
+  if(radswitch>0.and.eostype/=0)then
    print*,'Cannot select gas+radiation EoS if radswitch>0'
    print*,'eostype=',eostype
    stop
