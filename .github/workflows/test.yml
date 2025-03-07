@@ -97,6 +97,9 @@ jobs:
           - diffusion1d_x
           - diffusion1d_y
           - diffusion1d_z
+          - radshock_x
+          - radshock_y
+          - radshock_z
         flat:
           - no
           - yes
@@ -111,14 +114,20 @@ jobs:
           # star_sph uses MICCG init, which is not compatible with MPI
           - test: star_sph
             mpi: yes
-          # diffusion1d uses MICCG, which is not compatible with MPI yet
+          # radiation tests use MICCG, which is not compatible with MPI yet
           - test: diffusion1d_x
             mpi: yes
           - test: diffusion1d_y
             mpi: yes
           - test: diffusion1d_z
             mpi: yes
-          # diffusion1d does not use hydro, so reconstruction is irrelevnat
+          - test: radshock_x
+            mpi: yes
+          - test: radshock_y
+            mpi: yes
+          - test: radshock_z
+            mpi: yes
+          # diffusion1d does not use hydro, so reconstruction is irrelevant
           - test: diffusion1d_x
             flat: yes
           - test: diffusion1d_y

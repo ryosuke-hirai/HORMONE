@@ -31,3 +31,5 @@
 ! opacitytype:0=fixed,1=ionisation
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
 &rad_con radswitch=1 opacitytype=0 c_kappa_p=3.9845758354d-1 c_kappa_r=3.9845758354d-1 lambdatype=1 rbtype=0 /
+
+&testcon test_tol=5d-12 /

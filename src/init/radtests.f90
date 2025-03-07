@@ -170,23 +170,23 @@ subroutine diffusion1d
  strl = len(trim(simtype))
 
  Etilde = 1d5
- d = 1d0
- p = 1d0
- eint = p/(gamma-1d0)
- e = eint
- erad = 1d0
+ d(is:ie,js:je,ks:ke) = 1d0
+ p(is:ie,js:je,ks:ke) = 1d0
+ eint(is:ie,js:je,ks:ke) = p(is:ie,js:je,ks:ke)/(gamma-1d0)
+ e(is:ie,js:je,ks:ke) = eint(is:ie,js:je,ks:ke)
+ erad(is:ie,js:je,ks:ke) = 1d0
  
 ! Find the direction of shock tube
  select case(simtype(strl:strl))
  case('x')
   imid = (is_global+ie_global)/2
-  erad(imid,js,ks) = Etilde/dxi1(imid)
+  erad(imid,js:je,ks:ke) = Etilde/dxi1(imid)
  case('y')
   imid = (js_global+je_global)/2
-  erad(is,imid,ks) = Etilde/dxi2(imid)
+  erad(is:ie,imid,ks:ke) = Etilde/dxi2(imid)
  case('z')
   imid = (ks_global+ke_global)/2
-  erad(is,js,imid) = Etilde/dxi3(imid)
+  erad(is:ie,js:je,imid) = Etilde/dxi3(imid)
  end select
 
  return
