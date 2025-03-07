@@ -122,11 +122,11 @@ jobs:
           - test: diffusion1d_z
             mpi: yes
           - test: radshock_x
-            mpi:yes
+            mpi: yes
           - test: radshock_y
-            mpi:yes
+            mpi: yes
           - test: radshock_z
-            mpi:yes
+            mpi: yes
           # diffusion1d does not use hydro, so reconstruction is irrelevant
           - test: diffusion1d_x
             flat: yes
