@@ -97,6 +97,9 @@ jobs:
           - diffusion1d_x
           - diffusion1d_y
           - diffusion1d_z
+          - radshock_x
+          - radshock_y
+          - radshock_z
         flat:
           - no
           - yes
@@ -118,7 +121,7 @@ jobs:
             mpi: yes
           - test: diffusion1d_z
             mpi: yes
-          # diffusion1d does not use hydro, so reconstruction is irrelevnat
+          # diffusion1d does not use hydro, so reconstruction is irrelevant
           - test: diffusion1d_x
             flat: yes
           - test: diffusion1d_y
