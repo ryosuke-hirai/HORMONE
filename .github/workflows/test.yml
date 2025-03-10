@@ -97,6 +97,9 @@ jobs:
           - diffusion1d_x
           - diffusion1d_y
           - diffusion1d_z
+          - diffusion2d_xy
+          - diffusion2d_xz
+          - diffusion2d_yz
           - radshock_x
           - radshock_y
           - radshock_z
@@ -121,6 +124,12 @@ jobs:
             mpi: yes
           - test: diffusion1d_z
             mpi: yes
+          - test: diffusion2d_xy
+            mpi: yes
+          - test: diffusion2d_xz
+            mpi: yes
+          - test: diffusion2d_yz
+            mpi: yes
           - test: radshock_x
             mpi: yes
           - test: radshock_y
@@ -133,6 +142,12 @@ jobs:
           - test: diffusion1d_y
             flat: yes
           - test: diffusion1d_z
+            flat: yes
+          - test: diffusion2d_xy
+            flat: yes
+          - test: diffusion2d_xz
+            flat: yes
+          - test: diffusion2d_yz
             flat: yes
 
     name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }})
