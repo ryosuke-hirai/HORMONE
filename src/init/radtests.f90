@@ -154,7 +154,7 @@ end subroutine radshock
 
 ! PURPOSE: Linear diffusion test
 
-subroutine diffusion1d
+subroutine lin_diffusion
 
  use settings,only:simtype
  use grid
@@ -162,7 +162,7 @@ subroutine diffusion1d
  use output_mod
  use radiation_mod,only:radiation
 
- integer:: strl, imid
+ integer:: strl, imid, i,j,k
  real(8):: Etilde
 
 !-----------------------------------------------------------------------------
@@ -177,19 +177,43 @@ subroutine diffusion1d
  erad(is:ie,js:je,ks:ke) = 1d0
  
 ! Find the direction of shock tube
- select case(simtype(strl:strl))
- case('x')
+ select case(simtype(strl-1:strl))
+ case('_x') ! 1D x direction
   imid = (is_global+ie_global)/2
   erad(imid,js:je,ks:ke) = Etilde/dxi1(imid)
- case('y')
+ case('_y') ! 1D y direction
   imid = (js_global+je_global)/2
   erad(is:ie,imid,ks:ke) = Etilde/dxi2(imid)
- case('z')
+ case('_z') ! 1D z direction
   imid = (ks_global+ke_global)/2
   erad(is:ie,js:je,imid) = Etilde/dxi3(imid)
+ case('xy') ! 2D xy plane
+  do j = js, je
+   do i = is, ie
+    if(i==j)then
+     erad(i,j,ks) = Etilde/dxi1(is)
+    end if
+   end do
+  end do
+ case('xz') ! 2D xz plane
+  do k = ks, ke
+   do i = is, ie
+    if(i==k)then
+     erad(i,js,k) = Etilde/dxi1(is)
+    end if
+   end do
+  end do
+ case('yz') ! 2D yz plane
+  do k = ks, ke
+   do j = js, je
+    if(j==k)then
+     erad(is,j,k) = Etilde/dxi2(js)
+    end if
+   end do
+  end do
  end select
 
- return
-end subroutine diffusion1d
+return
+end subroutine lin_diffusion
 
 end module radtests_mod
