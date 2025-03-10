@@ -102,8 +102,9 @@ subroutine initialcondition
   case('matrad_coupling')
    call matrad_coupling
 
-  case('diffusion1d_x','diffusion1d_y','diffusion1d_z')
-   call diffusion1d
+  case('diffusion1d_x','diffusion1d_y','diffusion1d_z',&
+       'diffusion2d_xy','diffusion2d_xz','diffusion2d_yz')
+   call lin_diffusion
 
   case('radshock_x','radshock_y','radshock_z')
    call radshock

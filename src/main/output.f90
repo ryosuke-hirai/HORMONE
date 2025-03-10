@@ -476,6 +476,7 @@ subroutine write_grid_dat
   if(ie_global>is_global)then
    write(str,formhead)'  i','x1','dvol'
    call write_string_master(ui,str)
+   call write_string_master(ui, '')
    j=js_global;k=ks_global
    do i = is_global, ie_global
     call write_my_grid_1d(ui,formval,i,x1(i),dvol,i,j,k)
@@ -484,6 +485,7 @@ subroutine write_grid_dat
   elseif(je_global>js_global)then
    write(str,formhead)'  j','x2','dvol'
    call write_string_master(ui,str)
+   call write_string_master(ui, '')
    i=is_global;k=ks_global
    do j = js_global, je_global
     call write_my_grid_1d(ui,formval,j,x2(j),dvol,i,j,k)
@@ -492,6 +494,7 @@ subroutine write_grid_dat
   elseif(ke_global>ks_global)then
    write(str,formhead)'  k','x3','dvol'
    call write_string_master(ui,str)
+   call write_string_master(ui, '')
    i=is_global;j=js_global
    do k = ks_global, ke_global
     call write_my_grid_1d(ui,formval,k,x3(k),dvol,i,j,k)
@@ -508,6 +511,7 @@ subroutine write_grid_dat
   if(ke_global==ks_global)then! For 2D Cartesian, polar or axisymmetrical spherical
    write(str,formhead)'  i','j','x1','x2','dvol'
    call write_string_master(ui,str)
+   call write_string_master(ui, '')
    k=ks_global
 
    ! output coordinate axis if cylindrical or spherical coordinates
@@ -538,6 +542,7 @@ subroutine write_grid_dat
   elseif(je_global==js_global)then! mainly for 2D Cartesian or axisymmetrical cylindrical
    write(str,formhead)'  i','k','x1','x3','dvol'
    call write_string_master(ui,str)
+   call write_string_master(ui, '')
    j=js_global
    do k = ks_global, ke_global, outres
 
@@ -556,6 +561,7 @@ subroutine write_grid_dat
   !CAUTION: Not designed for cylindrical or spherical yet
    write(str,formhead)'  j','k','x2','x3','dvol'
    call write_string_master(ui,str)
+   call write_string_master(ui, '')
    i=is_global
    do k = ks_global, ke_global
     do j = js_global, je_global
@@ -572,6 +578,7 @@ subroutine write_grid_dat
 
   write(str,formhead)'  i','j','k','x1','x2','x3','dvol'
   call write_string_master(ui,str)
+  call write_string_master(ui, '')
   if(crdnt==2)then
    k=ks_global-1
    do j = je_global, je_global
@@ -820,6 +827,7 @@ subroutine write_plt
   write(str,forma) trim(adjustl(header(n)))
   call write_string_master(ui,str,advance=.false.)
  end do
+ call write_string_master(ui, '')
  call write_string_master(ui, '')
 
 ! Write file

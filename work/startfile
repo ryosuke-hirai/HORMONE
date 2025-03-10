@@ -24,6 +24,8 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'polytrope': Polytropic star on spherical coordinates
 'smearing': Test the smearing module
 'radshock_{x,y,z}': Radiative shocktube in the x/y/z direction
+'diffusion1d_{x,y,z}': Test the 1D radiative diffusion module
+'diffusion2d_{xy,xz,yz}': Test the 2D radiative diffusion module
 
 ** Test files NOT available **
 'sedov_other': Sedov blast wave. Set model parameters in extras file.
@@ -39,4 +41,3 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'eostest': Forwards and backwards consistency test for EoS
 'iotest': Test the read/write routines
 'matrad_coupling': Test the matter-radiation coupling routine
-'diffusion1d_{x,y,z}': Test the radiative diffusion module

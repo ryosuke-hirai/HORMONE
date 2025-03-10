@@ -172,8 +172,10 @@ subroutine get_radA(cg)
  if(cg%in>1.and.cg%jn>1.and.cg%kn>1)then
   dim=3
  elseif(cg%in>1.and.cg%jn>1.and.cg%kn==1)then
-  dim=22
+  dim=21
  elseif(cg%in>1.and.cg%jn==1.and.cg%kn>1)then
+  dim=22
+ elseif(cg%in==1.and.cg%jn>1.and.cg%kn>1)then
   dim=23
  elseif(cg%in>1.and.cg%jn==1.and.cg%kn==1)then
   dim=11
@@ -264,7 +266,7 @@ subroutine get_radA(cg)
   end do
 !$omp end parallel do
 
- case(22) ! 2D xy-plane
+ case(21) ! 2D xy-plane
 
 !$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
@@ -295,7 +297,7 @@ subroutine get_radA(cg)
   end do
 !$omp end parallel do
 
- case(23) ! xz-plane
+ case(22) ! xz-plane
 
 !$omp parallel do private(l,i,j,k,kappap)
   do l = 1, cg%lmax
@@ -307,9 +309,9 @@ subroutine get_radA(cg)
    if(i<cg%ie)&
     cg%A(1,l) = cg%A(1,l) + geo(1,i  ,j,k)*har_mean(radK(i:i+1,j,k))
    if(k>cg%ks)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j-1,k)*har_mean(radK(i,j,k-1:k))
+    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
    if(k<cg%ke)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j  ,k)*har_mean(radK(i,j,k:k+1))
+    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
    if(radswitch==1)then ! coupling term
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = cg%A(1,l) &
@@ -322,6 +324,37 @@ subroutine get_radA(cg)
    cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
    cg%A(3,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
    if(i==cg%ie)cg%A(2,l) = 0d0
+   if(k==cg%ke)cg%A(3,l) = 0d0
+  end do
+!$omp end parallel do
+
+ case(23) ! yz-plane
+
+!$omp parallel do private(l,i,j,k,kappap)
+  do l = 1, cg%lmax
+   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
+
+   cg%A(1,l) = dvol(i,j,k)/dt
+   if(j>cg%js)&
+    cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
+   if(j<cg%je)&
+    cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
+   if(k>cg%ks)&
+    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
+   if(k<cg%ke)&
+    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
+   if(radswitch==1)then ! coupling term
+    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    cg%A(1,l) = cg%A(1,l) &
+              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
+               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
+                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                - 1d0 )
+   end if
+
+   cg%A(2,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
+   cg%A(3,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
+   if(j==cg%je)cg%A(2,l) = 0d0
    if(k==cg%ke)cg%A(3,l) = 0d0
   end do
 !$omp end parallel do
@@ -422,7 +455,7 @@ subroutine setup_radcg(is,ie,js,je,ks,ke,cg)
 
  integer,intent(in)::is,ie,js,je,ks,ke
  type(cg_set),intent(out):: cg
- integer:: in,jn,kn,lmax,dim
+ integer:: in,jn,kn,ln,lmax,dim
 
 !-----------------------------------------------------------------------------
 
@@ -432,7 +465,11 @@ subroutine setup_radcg(is,ie,js,je,ks,ke,cg)
  lmax = in*jn*kn; cg%lmax=lmax
  if(ie>is.and.je>js.and.ke>ks)then
   dim=3
- elseif(ie>is.and.(je>js.or.ke>ks))then
+ elseif(ie>is.and.je>js.and.ke==ks)then
+  dim=2
+ elseif(ie>is.and.je==js.and.ke>ks)then
+  dim=2
+ elseif(ie==is.and.je>js.and.ke>ks)then
   dim=2
  elseif(ie>is.and.je==js.and.ke==ks)then
   dim=1
@@ -460,32 +497,21 @@ subroutine setup_radcg(is,ie,js,je,ks,ke,cg)
   cg%alpha = 0.99d0
 
  case(2) ! 2D
-! 2D cylindrical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  if(crdnt==1.and.je==js.and.ke>ks)then
-   cg%Adiags = 3
-   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
-   cg%ia(1) = 0
-   cg%ia(2) = 1
-   cg%ia(3) = in
-
-! 2D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  elseif(crdnt==2.and.ie>is.and.je>js.and.ke==ks)then
-
-   cg%Adiags = 3
-   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
-   cg%ia(1) = 0
-   cg%ia(2) = 1
-   cg%ia(3) = in
-
-  end if
+! 2D coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  cg%Adiags = 3
+  ln=in; if(in==1)ln=jn
+  allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
+  cg%ia(1) = 0
+  cg%ia(2) = 1
+  cg%ia(3) = ln
 
 ! Pre-conditioner matrix with MICCG(1,2) method
   cg%cdiags = 4
   allocate(cg%ic(1:cg%cdiags),cg%c(1:cg%cdiags,1:lmax))
   cg%ic(1) = 0
   cg%ic(2) = 1
-  cg%ic(3) = in-1
-  cg%ic(4) = in
+  cg%ic(3) = ln-1
+  cg%ic(4) = ln
   cg%alpha = 0.99d0
 
 
@@ -662,7 +688,7 @@ end subroutine rad_heat_cool
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE RAD_BOUNDARY
+!                         SUBROUTINE RAD_BOUNDARY
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
