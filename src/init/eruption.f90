@@ -20,7 +20,7 @@ subroutine eruption
  use input_mod
  use star_mod
  use pressure_mod,only:eos_e,pressure
- use composition_mod,only:meanmolweight
+ use composition_mod,only:meanmolweight,get_imu
  use gravmod,only:mc
 
  character(len=100):: mesafile
@@ -28,7 +28,7 @@ subroutine eruption
  real(8),allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
  character(len=10)::spc_list(1:1000)
- integer::i,j,k,nn,sn,istat,i_inj_in,i_inj_out
+ integer::i,j,k,nn,sn,istat,i_inj_in,i_inj_out,ih1,ihe4
  real(8)::dbg,mass,radius,spc_bg(1:spn),Eexp,Ebind,ene,Temp,&
           inj_in,inj_out,imu_local,ecell
 
@@ -70,6 +70,10 @@ subroutine eruption
   call read_mesa(mesafile,r,m,rho,pres,mu=mudata)
  case(2)
   call read_mesa(mesafile,r,m,rho,pres,comp=comp,comp_list=comp_list)
+  do i = 1, size(comp_list)
+   if(comp_list(i)=='h1')ih1=i
+   if(comp_list(i)=='he4')ihe4=i
+  end do
  case default
   call read_mesa(mesafile,r,m,rho,pres)
  end select
@@ -82,18 +86,29 @@ subroutine eruption
 ! Compute binding energy
  Ebind = 0d0
  do i = 2, size(rho)-1
+  ! Get local mean molecular weight
+  select case(compswitch)
+  case(1)
+   imu_local = 1d0/mudata(i,1)
+  case(2)
+   imu_local = get_imu([comp(ih1,i),comp(ihe4,i)])
+  case default
+   imu_local = 1d0/muconst
+  end select
+
   ! Get local internal energy
   select case (eostype)
   case(1)
-   imu_local = 1d0/mudata(i,1)
    ene = eos_e(rho(i),pres(i),Temp,imu_local)
   case(2)
-   ene = eos_e(rho(i),pres(i),Temp,imu_local,X=comp(1,i),Y=comp(2,i))
+   ene = eos_e(rho(i),pres(i),Temp,imu_local,X=comp(ih1,i),Y=comp(ihe4,i))
   case default
    ene = eos_e(rho(i),pres(i),Temp,imu_local)
   end select
+
   Ebind = Ebind - G*m(i-1)*(m(i)-m(i-1)) / r(i-1) + ene/rho(i)*(m(i)-m(i-1))
  end do
+
 
 ! Set explosion energy to fraction of binding energy
  Eexp = - Ebind * Eexp
