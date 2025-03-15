@@ -92,7 +92,7 @@ subroutine eruption
   case default
    ene = eos_e(rho(i),pres(i),Temp,imu_local)
   end select
-  Ebind = Ebind - G*m(i-1)*(m(i)-m(i-1)) / r(i-1) + ene*(m(i)-m(i-1))
+  Ebind = Ebind - G*m(i-1)*(m(i)-m(i-1)) / r(i-1) + ene/rho(i)*(m(i)-m(i-1))
  end do
 
 ! Set explosion energy to fraction of binding energy
