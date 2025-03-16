@@ -39,13 +39,13 @@ subroutine sn2022jli
  real(8)::nsmass,nssoft,asep,dis,Porb,mprog,orbv,ecc
  real(8),allocatable:: comptmp(:),p1d(:)
  logical::isentropic
- real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT,dnow,phinow(3),newphi
+ real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT,dnow,phinow(3),newphi,ns_jet_ang
  real(8),parameter:: err=1d-8
 
 !-----------------------------------------------------------------------------
 
  namelist /jli_con/ mesafile,spc_list,rcore,isentropic,&
-                    nsmass,nssoft,dis,mprog,Porb,Eexp
+                    nsmass,nssoft,dis,mprog,Porb,Eexp,ns_jet_ang
 
  spc_list='aaa'
 ! Specify input file, elements you want to track, and a softening length
@@ -186,8 +186,8 @@ subroutine sn2022jli
  sink(2)%facc = 0d0
  sink(2)%jdot = 0d0
  sink(2)%Jspin = 0d0
- sink(2)%jet_ang = 45d0
- sink(2)%jet_dir = [sin(0.25d0*pi),0d0,cos(0.25d0*pi)]
+ sink(2)%jet_ang = ns_jet_ang
+ sink(2)%jet_dir = [0d0,0d0,1d0]
 
 ! For SN2022jli
  asep = (G*(mass+nsmass)*(Porb*3600d0*24d0/2d0/pi)**2)**(1d0/3d0)

@@ -10,6 +10,7 @@
 ! mprog: Pre-SN mass of colliding object in Msun
 ! Porb: Orbital period of post-SN orbit in days
 ! Eexp: Explosion energy of SN (used for energy injection by ECI) in erg
+! ns_jet_ang: Neutron star jet opening angle in degrees
 
 &jli_con
  mesafile='5Msun_earlyMS.data'
@@ -22,4 +23,5 @@
  mprog=5d0
  Porb=12.5d0
  Eexp=1d51
+ ns_jet_ang=45d0
 /
