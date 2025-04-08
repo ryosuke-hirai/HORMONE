@@ -20,7 +20,6 @@
  nsmass=1.4d0
  nssoft=1d0
  dis=-1d0
- mprog=5d0
  Porb=12.5d0
  Eexp=1d51
  ecc=0.5d0
