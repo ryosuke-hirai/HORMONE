@@ -6,20 +6,24 @@
 ! isentropic: Make an isentropic star
 ! nsmass: Mass of colliding object in Msun
 ! nssoft: Softening length of neutron star in Rsun
-! dis: Pre-SN separation between colliding object and star in Rsun
-! mprog: Pre-SN mass of colliding object in Msun
+! nsrad : Radius of neutron star in km
+! dis: Pre-SN separation between colliding object and star in Rsun (ignore if <0)
 ! Porb: Orbital period of post-SN orbit in days
 ! Eexp: Explosion energy of SN (used for energy injection by ECI) in erg
+! ecc: Post-SN orbital eccentricity (not used if dis>0d0)
+! ns_jet_ang: Neutron star jet opening angle in degrees (no jet feedback if <0)
 
 &jli_con
  mesafile='5Msun_earlyMS.data'
- spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
+! spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
  rcore=0d0
  isentropic=.false.
  nsmass=1.4d0
  nssoft=1d0
- dis=20d0
- mprog=5d0
+ nsrad=12d0
+ dis=-1d0
  Porb=12.5d0
  Eexp=1d51
+ ecc=0.5d0
+ ns_jet_ang=45d0
 /

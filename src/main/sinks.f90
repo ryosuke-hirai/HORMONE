@@ -137,12 +137,14 @@ subroutine sink_accretion
      accang = accang + cross(car_x(:,i,j,k)-sink(n)%x,vcell-sink(n)%v)*dm
 
 ! Calculate jet quantities
-     perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
-     ang_to_ns = asin(perp/dis)/pi*180d0
+     if(sink(n)%jet_ang>0d0)then
+      perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
+      ang_to_ns = asin(perp/dis)/pi*180d0
 
-     if(ang_to_ns<=sink(n)%jet_ang)then
-      mjet = mjet + newd*dvol(i,j,k)
-      Ejet = Ejet + 0.5d0*newd*dvol(i,j,k)*dot_product(vcell,vcell)
+      if(ang_to_ns<=sink(n)%jet_ang)then
+       mjet = mjet + newd*dvol(i,j,k)
+       Ejet = Ejet + 0.5d0*newd*dvol(i,j,k)*dot_product(vcell,vcell)
+      end if
      end if
 
 ! Update primitive variables
@@ -168,6 +170,7 @@ subroutine sink_accretion
               accmom(1),accmom(2),accmom(3),&
               accang(1),accang(2),accang(3),&
               mjet,Ejet]
+
   call allreduce_mpi('sum',exchange)
   accmass = exchange(1)
   accmom = exchange(2:4)
@@ -185,39 +188,43 @@ subroutine sink_accretion
    Ejet = 2d0*Ejet
   end if
 
-  Ejet = Ejet + G*sink(n)%mass*accmass/sink(n)%racc!*sink(n)%facc
-  vjet = sqrt(2d0*Ejet/mjet)
+! Apply bipolar outflow from sink
+  if(sink(n)%jet_ang>0d0)then
+
+   Ejet = Ejet + G*sink(n)%mass*accmass/sink(n)%racc
+   vjet = sqrt(2d0*Ejet/mjet)
 
 !$omp parallel do private(i,j,k,dis,vcell,ang_to_ns,perp) collapse(3)
-  do k = ks, ke
-   do j = js, je
-    do i = is, ie
-     dis = norm2(car_x(:,i,j,k)-sink(n)%x)
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      dis = norm2(car_x(:,i,j,k)-sink(n)%x)
 
-     if(dis>r_acc)cycle
+      if(dis>r_acc)cycle
 
-     ! Calculate jet quantities
-     perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
-     ang_to_ns = asin(perp/dis)/pi*180d0
+      ! Calculate jet quantities
+      perp = sqrt(dis**2 - (car_x(3,i,j,k)-sink(n)%x(3))**2)
+      ang_to_ns = asin(perp/dis)/pi*180d0
 
-     if(ang_to_ns>sink(n)%jet_ang)cycle
-     vcell = vjet*(car_x(:,i,j,k)-sink(n)%x)/dis + sink(n)%v
-     call get_vpol(car_x(:,i,j,k),x3(k),vcell,v1(i,j,k),v2(i,j,k),v3(i,j,k))
+      if(ang_to_ns>sink(n)%jet_ang)cycle
+      vcell = vjet*(car_x(:,i,j,k)-sink(n)%x)/dis + sink(n)%v
+      call get_vpol(car_x(:,i,j,k),x3(k),vcell,v1(i,j,k),v2(i,j,k),v3(i,j,k))
 
-     e(i,j,k) = eint(i,j,k) &
-              + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
-     if(mag_on) &
-      e(i,j,k) = e(i,j,k) + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2)
+      e(i,j,k) = eint(i,j,k) &
+               + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
+      if(mag_on) &
+       e(i,j,k) = e(i,j,k) + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2)
 
 ! Update conservative variables
-     u(i,j,k,imo1) = d(i,j,k)*v1(i,j,k)
-     u(i,j,k,imo2) = d(i,j,k)*v2(i,j,k)
-     u(i,j,k,imo3) = d(i,j,k)*v3(i,j,k)
-     u(i,j,k,iene) = e(i,j,k)
+      u(i,j,k,imo1) = d(i,j,k)*v1(i,j,k)
+      u(i,j,k,imo2) = d(i,j,k)*v2(i,j,k)
+      u(i,j,k,imo3) = d(i,j,k)*v3(i,j,k)
+      u(i,j,k,iene) = e(i,j,k)
+     end do
     end do
    end do
-  end do
 !$omp end parallel do
+  end if
 
 ! Update sink properties in response to accretion
   totmom = sink(n)%mass*sink(n)%v + accmom
