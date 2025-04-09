@@ -170,6 +170,7 @@ subroutine sink_accretion
               accmom(1),accmom(2),accmom(3),&
               accang(1),accang(2),accang(3),&
               mjet,Ejet]
+
   call allreduce_mpi('sum',exchange)
   accmass = exchange(1)
   accmom = exchange(2:4)
