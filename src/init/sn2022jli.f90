@@ -36,7 +36,7 @@ subroutine sn2022jli
  character(len=10)::spc_list(1:1000)
  integer:: i,j,k,istat,nn,sn,ih1,ihe4,which
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const,gradphi
- real(8)::nsmass,nssoft,asep,dis,Porb,orbv,ecc
+ real(8)::nsmass,nssoft,nsrad,asep,dis,Porb,orbv,ecc
  real(8),allocatable:: comptmp(:),p1d(:)
  logical::isentropic
  real(8):: Eexp,Ebind,Ebind0,entr,entr0,mheat,Omega,Eheat,fac,dfac,TT,dnow,phinow(3),newphi,ns_jet_ang
@@ -45,7 +45,7 @@ subroutine sn2022jli
 !-----------------------------------------------------------------------------
 
  namelist /jli_con/ mesafile,spc_list,rcore,isentropic,&
-                    nsmass,nssoft,dis,Porb,Eexp,ecc,ns_jet_ang
+                    nsmass,nssoft,nsrad,dis,Porb,Eexp,ecc,ns_jet_ang
 
  spc_list='aaa'
 ! Specify input file, elements you want to track, and a softening length
@@ -58,6 +58,7 @@ subroutine sn2022jli
  rcore = rcore*rsun
  nsmass = nsmass*msun
  nssoft = nssoft*rsun
+ nsrad  = nsrad *1d5
 
 ! Re-count spn based on spc_list and reallocate relevant arrays
  if(compswitch==2)then
@@ -181,7 +182,7 @@ subroutine sn2022jli
  sink(2)%softfac = 3d0
  sink(2)%laccr = nssoft
  sink(2)%mdot = 0d0
- sink(2)%racc = 0d0
+ sink(2)%racc = nsrad
  sink(2)%facc = 0d0
  sink(2)%jdot = 0d0
  sink(2)%Jspin = 0d0
