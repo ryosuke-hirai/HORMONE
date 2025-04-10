@@ -30,6 +30,7 @@ program write_ascii
   use readbin_mod
   use output_mod
   use gridset_mod
+  use source_mod
   use profiler_mod
 
   implicit none
@@ -81,6 +82,9 @@ program write_ascii
    call set_file_name('bin',outtn,outtime,file)
    print*,'Reading ',file
    call readbin(file)
+   call set_file_name('plt',outtn,outtime,file)
+   if(gravswitch>=2)call get_totphi
+   print*,'Writing ',file
    call write_plt
    outtime = outtime + dt_out
    outtn = outtn + tn_out
