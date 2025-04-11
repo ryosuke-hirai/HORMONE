@@ -5,7 +5,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                             SUBROUTINE SOURCE
+!                           SUBROUTINE SOURCE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -14,12 +14,11 @@ contains
 subroutine source
 
  use grid
- use settings,only:eq_sym,include_extforce,mag_on,radswitch,include_sinks
+ use settings,only:eq_sym,include_extforce,mag_on,radswitch
  use physval
  use constants
  use utils,only:masscoordinate
  use gravmod
- use sink_mod,only:sinkfield
  use radiation_mod,only:radiative_force
  use externalforce_mod
  use profiler_mod
@@ -45,19 +44,7 @@ subroutine source
 
  elseif(gravswitch==2.or.gravswitch==3)then
 
-!$omp parallel do private(i,j,k) collapse(3)
-  do k = ks-1, ke+1
-   do j = js-1, je+1
-    do i = is-1, ie+1
-     totphi(i,j,k) = grvphi(i,j,k)
-    end do
-   end do
-  end do
-!$omp end parallel do
-
-  if(include_extgrv)call externalfield
-  if(include_sinks) call sinkfield
-
+  call get_totphi
   call get_fieldforce(totphi,d,grv1,grv2,grv3)
 
   if(eq_sym.and.crdnt==1)grv3(is:ie,js:je,ks) = 0d0
@@ -260,5 +247,41 @@ subroutine phidamp
 
 return
 end subroutine phidamp
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE GET_TOTPHI
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute total gravitational potential
+
+subroutine get_totphi
+
+ use settings,only:include_sinks,include_extgrv
+ use grid,only:is,ie,js,je,ks,ke
+ use gravmod,only:totphi,grvphi
+ use externalforce_mod,only:externalfield
+ use sink_mod,only:sinkfield
+
+ integer:: i,j,k
+
+!-----------------------------------------------------------------------------
+
+!$omp parallel do private(i,j,k) collapse(3)
+  do k = ks-1, ke+1
+   do j = js-1, je+1
+    do i = is-1, ie+1
+     totphi(i,j,k) = grvphi(i,j,k)
+    end do
+   end do
+  end do
+!$omp end parallel do
+
+  if(include_extgrv)call externalfield
+  if(include_sinks) call sinkfield
+
+return
+end subroutine get_totphi
 
 end module source_mod

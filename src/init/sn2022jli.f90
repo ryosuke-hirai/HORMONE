@@ -258,28 +258,29 @@ subroutine sn2022jli
 
 ! Find the right entropy normalization through the bisection method
  do
-
   Ebind = 0d0
 !$omp parallel do private(i,j,k,entr,TT) collapse(3) reduction(+:Ebind)
   do k = ks, ke
    do j = js, je
     do i = is, ie
-     if(x1(i)<=radius)then
+     if(mc(i)>mass)cycle
 
-      entr = entropy_from_dT(d(i,j,k),T(i,j,k),imu(i,j,k),spc(1,i,j,k),spc(2,i,j,k))
+     entr = entropy_from_dT(d(i,j,k),T(i,j,k),imu(i,j,k),&
+                            spc(1,i,j,k),spc(2,i,j,k))
 
-      entr = entr + entr0*min(1d0,mheat/((mass-mc(i))+tiny))
-      eint(i,j,k) = get_e_from_ds(d(i,j,k),entr,imu(i,j,k),spc(1,i,j,k),spc(2,i,j,k))
-      TT = T(i,j,k)
-      select case(eostype)
-      case(0,1)
-       p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),TT,imu(i,j,k))
-      case(2)
-       p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),TT,imu(i,j,k),&
+     entr = entr + entr0*min(1d0,mheat/((mass-mc(i))+tiny))
+     eint(i,j,k) = get_e_from_ds(d(i,j,k),entr,imu(i,j,k),&
+                                 spc(1,i,j,k),spc(2,i,j,k))
+     TT = T(i,j,k)
+     select case(eostype)
+     case(0,1)
+      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),TT,imu(i,j,k))
+     case(2)
+      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),TT,imu(i,j,k),&
                        spc(1,i,j,k),spc(2,i,j,k))
-      end select
-      Ebind = Ebind + (eint(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)*fac
-     end if
+     end select
+     Ebind = Ebind + (eint(i,j,k)+0.5d0*d(i,j,k)*grvphi(i,j,k))*dvol(i,j,k)*fac
+
     end do
    end do
   end do

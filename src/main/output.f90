@@ -187,54 +187,31 @@ subroutine evo_output
   if(eq_sym) Ebtot = 2d0*Ebtot
  end if
  if(gravswitch>=1)then
-  if(include_extgrv)then
 ! grvphi is self-gravity so is double counted, whereas extgrv is not
-   Egtot = sum(d(is:ie,js:je,ks:ke) &
-              *(0.5d0*grvphi(is:ie,js:je,ks:ke)+extgrv(is:ie,js:je,ks:ke)) &
+  Egtot = sum(d(is:ie,js:je,ks:ke) &
+              *(totphi(is:ie,js:je,ks:ke)-0.5d0*grvphi(is:ie,js:je,ks:ke)) &
               *dvol(is:ie,js:je,ks:ke))
-   if (is==is_global) Mtot = Mtot + mc(is-1)
+  if (is==is_global) Mtot = Mtot + mc(is-1)
 
-   Mbound=0d0;Ebound=0d0;Jbound=0d0
-   do k = ks, ke
-    do j = js, je
-     do i = is, ie
-      if(grvphi(i,j,k)+extgrv(i,j,k)+(e(i,j,k)-eint(i,j,k))/d(i,j,k)<=0d0)then
-       Mbound = Mbound + d(i,j,k)*dvol(i,j,k)
-       Ebound = Ebound + (e(i,j,k)+d(i,j,k)*(0.5d0*grvphi(i,j,k)+extgrv(i,j,k))) &
-                         *dvol(i,j,k)
-       select case(crdnt)
-       case(1)
-        Jbound = Jbound + d(i,j,k)*x1(i)*v2(i,j,k)*dvol(i,j,k)
-       case(2)
-        Jbound = Jbound + d(i,j,k)*x1(i)*sinc(j)*v3(i,j,k)*dvol(i,j,k)
-       end select
-      end if
-     end do
+  Mbound=0d0;Ebound=0d0;Jbound=0d0
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
+     if(totphi(i,j,k)+(e(i,j,k)-eint(i,j,k))/d(i,j,k)<=0d0)then
+      Mbound = Mbound + d(i,j,k)*dvol(i,j,k)
+      Ebound = Ebound + (e(i,j,k)+d(i,j,k)*(totphi(i,j,k)-0.5d0*grvphi(i,j,k)))&
+                        *dvol(i,j,k)
+      select case(crdnt)
+      case(1)
+       Jbound = Jbound + d(i,j,k)*x1(i)*v2(i,j,k)*dvol(i,j,k)
+      case(2)
+       Jbound = Jbound + d(i,j,k)*x1(i)*sinc(j)*v3(i,j,k)*dvol(i,j,k)
+      end select
+     end if
     end do
    end do
-  else
-   Egtot = 0.5d0*sum(d(is:ie,js:je,ks:ke)*grvphi(is:ie,js:je,ks:ke) &
-                    *dvol(is:ie,js:je,ks:ke))
+  end do
 
-   Mbound=0d0;Ebound=0d0
-   do k = ks, ke
-    do j = js, je
-     do i = is, ie
-      if(grvphi(i,j,k)+(e(i,j,k)-eint(i,j,k))/d(i,j,k)<=0d0)then
-       Mbound = Mbound + d(i,j,k)*dvol(i,j,k)
-       Ebound = Ebound + (e(i,j,k)+d(i,j,k)*0.5d0*grvphi(i,j,k)) &
-                         *dvol(i,j,k)
-       select case(crdnt)
-       case(1)
-        Jbound = Jbound + d(i,j,k)*x1(i)*v2(i,j,k)*dvol(i,j,k)
-       case(2)
-        Jbound = Jbound + d(i,j,k)*x1(i)*sinc(j)*v3(i,j,k)*dvol(i,j,k)
-       end select
-      end if
-     end do
-    end do
-   end do
-  end if
   if(eq_sym)then
    Egtot  = 2d0*Egtot
    Mbound = 2d0*Mbound
