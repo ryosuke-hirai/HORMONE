@@ -25,7 +25,9 @@ subroutine gravity_miccg
  use miccg_mod,only:cg=>cg_grv,miccg,l_from_ijk,ijk_from_l
  use timestep_mod,only:timestep
  use profiler_mod
-
+#ifdef USE_PETSC
+ use petsc_solver_mod,only:init_petsc,finalise_petsc
+#endif
  integer:: i,j,k,l
  real(8),allocatable,dimension(:):: x, cgsrc
 
@@ -106,7 +108,18 @@ subroutine gravity_miccg
 ! ############################################################################
 
 ! Solve Poisson equation with the conjugate gradient method
- call miccg(cg,cgsrc,x)
+#ifdef USE_PETSC
+  !--- PETSc solver branch ---
+  ! call init_petsc()
+  ! call finalise_petsc()
+  ! call setup_gravity_matrix_petsc  ! all matrix entries written to A_petsc
+  ! call solve_system_petsc(cg, cgsrc, x)
+  ! call finalise_petsc()
+  stop "finished petsc solver"
+#else
+  !--- Original MICCG solver branch ---
+  call miccg(cg, cgsrc, x)
+#endif
 
 !-------------------------------------------------------------------------
 
