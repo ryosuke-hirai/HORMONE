@@ -77,9 +77,8 @@ subroutine gravsetup
  use utils,only:isequal
  use grid
  use gravmod
- use miccg_mod,only:cg_grv
  use gravity_hyperbolic_mod,only:setup_grv_hyperbolic
- use gravity_miccg_mod,only:setup_grvcg
+ use matrix_utils,only:setup_grvA
 
 ! set initial x0
  if(tn==0 .and. isequal(maxval(grvphi(gis:gie,gjs:gje,gks:gke)), 0d0))&
@@ -88,7 +87,7 @@ subroutine gravsetup
  if(tn==0) cgrav_old = cgrav
 
  if(gravswitch==2.or.gravswitch==3)then
-  call setup_grvcg(gis,gie,gjs,gje,gks,gke,cg_grv)
+  call setup_grvA ! writes to cg_grv or PETSc arrays
  end if
 
 ! For Hyperbolic gravity solver ----------------------------------------------
