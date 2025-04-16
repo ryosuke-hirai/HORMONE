@@ -111,7 +111,7 @@ subroutine gravity_miccg
 ! Solve Poisson equation with the conjugate gradient method
 #ifdef USE_PETSC
   !--- PETSc solver branch ---
-  call init_petsc()
+  ! call init_petsc()
   ! call solve_system_petsc(cg, cgsrc, x)
   call finalise_petsc()
   stop "petsc solver not implemented"

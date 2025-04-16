@@ -78,6 +78,7 @@ subroutine gravsetup
  use grid
  use gravmod
  use gravity_hyperbolic_mod,only:setup_grv_hyperbolic
+ use petsc_solver_mod,only:init_petsc
  use matrix_utils,only:setup_grvA
 
 ! set initial x0
@@ -87,6 +88,7 @@ subroutine gravsetup
  if(tn==0) cgrav_old = cgrav
 
  if(gravswitch==2.or.gravswitch==3)then
+  call init_petsc
   call setup_grvA ! writes to cg_grv or PETSc arrays
  end if
 
