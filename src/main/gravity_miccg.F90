@@ -25,9 +25,6 @@ subroutine gravity_miccg
  use miccg_mod,only:miccg,l_from_ijk,ijk_from_l
  use timestep_mod,only:timestep
  use profiler_mod
-#ifdef USE_PETSC
- use petsc_solver_mod,only:init_petsc,finalise_petsc,solve_system_petsc
-#endif
  use matrix_solver,only:lmax,solve_system
  integer:: i,j,k,l
  real(8),allocatable,dimension(:):: x, cgsrc
