@@ -4,5 +4,5 @@
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
-&eos_con  eoserr=1d-15 /
+&eos_con  eoserr=2d-15 /
 

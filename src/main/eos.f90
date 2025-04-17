@@ -11,14 +11,13 @@ contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
- use ionization_mod,only:get_erec_imurec
+ use ionization_mod,only:get_erec_cvimubar,get_imurec
 ! PURPOSE: To calculate temperature from density and internal energy
- implicit none
  real(8),intent(in):: d,eint
  real(8),intent(inout):: T,imu
  real(8),intent(in),optional:: X,Y
  real(8),intent(out),optional:: erec_out
- real(8):: corr, erec, derecdT, dimurecdT, Tdot, logd, dt
+ real(8):: corr, erec, Cvimubar, derecdT, dcvimubardT, Tdot, logd, dt
  real(8),parameter:: W4err = 1d-2
  integer:: n
 
@@ -45,12 +44,12 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  case(2) ! ideal gas + radiation + recombination
   corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
   do n = 1, 500
-   call get_erec_imurec(logd,T,X,Y,erec,imu,derecdT,dimurecdT)
+   call get_erec_cvimubar(logd,T,X,Y,erec,cvimubar,derecdT,dcvimubardT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
    end if
-   corr = (eint-(arad*T**3+d*Cv*imu)*T-d*erec) &
-        / ( -4d0*arad*T**3-d*(Cv*(imu+dimurecdT*T)+derecdT) )
+   corr = (eint-(arad*T**3+d*Rgas*cvimubar)*T-d*erec) &
+        / ( -4d0*arad*T**3-d*(Rgas*(cvimubar+dcvimubardT*T)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr
@@ -63,9 +62,10 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
   end do
   if(n>500)then
    print*,'Error in getT_from_de, eostype=',eostype
-   print*,'d=',d,'eint=',eint,'mu=',1d0/imu
+   print'(4(a6,1PE13.6e2))','d=',d,'eint=',eint,'X=',X,'Y=',Y
    stop
   end if
+  call get_imurec(logd,T,X,Y,imu)
   if(present(erec_out)) erec_out = erec
 
  case default
@@ -78,14 +78,14 @@ end subroutine getT_from_de
 !                        SUBROUTINE GETT_FROM_DP
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
- use ionization_mod,only:get_erec,get_imurec
+subroutine getT_from_dp(d,p,T,imu,X,Y,cvimubar,erec)
+ use ionization_mod,only:get_erec_cvimubar,get_imurec
 ! PURPOSE: To calculate temperature from density and pressure
  implicit none
  real(8),intent(in):: d,p
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: T,imu
- real(8),intent(out),optional:: erec
+ real(8),intent(out),optional:: erec, cvimubar
  real(8):: corr, imurec, dimurecdT, logd
  integer:: n
 
@@ -93,7 +93,7 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
 
  select case (eostype)
  case(0) ! ideal gas
-  T = p/(Rgas*imu)
+  T = p/(Rgas*d*imu)
 
  case(1) ! ideal gas + radiation
   corr = huge
@@ -124,7 +124,9 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
    stop
   end if
   imu = imurec
-  if(present(erec)) erec = get_erec(logd,T,X,Y)
+  if(present(erec))then
+   call get_erec_cvimubar(logd,T,X,Y,erec,cvimubar)
+  end if
 
  case default
   stop 'Error in eostype'
@@ -222,7 +224,7 @@ function eos_e(d,p,T,imu,X,Y)
  real(8),intent(in):: d,p
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: imu,T
- real(8):: eos_e, erec
+ real(8):: eos_e, cvimubar, erec
 
  select case (eostype)
  case(0) ! ideal gas
@@ -234,8 +236,8 @@ function eos_e(d,p,T,imu,X,Y)
   eos_e = ( Cv*imu*d + arad*T**3 )*T
 
  case(2) ! ideal gas + radiation + recombination
-  call getT_from_dp(d,p,T,imu,X,Y,erec)
-  eos_e = ( Cv*imu*d + arad*T**3 )*T + d*erec
+  call getT_from_dp(d,p,T,imu,X,Y,cvimubar,erec)
+  eos_e = ( Rgas*cvimubar*d + arad*T**3 )*T + d*erec
 
  case default
   stop 'Error in eostype'

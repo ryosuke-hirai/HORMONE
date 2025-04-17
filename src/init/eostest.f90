@@ -194,7 +194,8 @@ subroutine eostest
    T = T0
 
    d = 10d0**(log10(Q)+2d0*log10(T)-12d0)
-   call get_erec_imurec(log10(d),T,X,Y,erec,imu)
+   call get_imurec(log10(d),T,X,Y,imu)
+   erec = get_erec(log10(d),T,X,Y)
 
    p = Rgas*imu*d*T+arad*T**4/3d0
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3

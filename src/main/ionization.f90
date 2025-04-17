@@ -3,12 +3,14 @@ module ionization_mod
 
  real(8),allocatable,public,dimension(:):: eion
  real(8),allocatable,private,dimension(:):: logeion, &
-                                   arec, brec, crec, drec, arec1c, brec1c
- real(8),private:: frec, edge, tanh_c, dtanh_c
- real(8),parameter,private:: tanh_edge = 3.64673859532966d0
+                                       arec, brec, crec, drec, arec1c, brec1c
+ real(8),private:: frec, edge, tanh_c, dtanh_c, Trot, Tvib, sigrot, sigvib
+ real(8),parameter,private:: tanh_edge = 3.64673859532966d0, &
+                             sigm_edge = 1.43713233658279d0, &
+                             dlogT=1d-4, dtemp=log(dlogT)
 
- public::ionization_setup,get_xion,get_erec_imurec,get_erec,get_imurec
- private::rapid_tanh,rapid_dtanh,arec1,brec1
+ public::ionization_setup,get_xion,get_erec,get_imurec,get_erec_cvimubar
+ private::rapid_tanh,rapid_dtanh,arec1,brec1,rapid_sigm,cvmol,cvimubar
 
 contains
 ! **************************************************************************
@@ -45,9 +47,25 @@ contains
  end function rapid_dtanh
 
 ! **************************************************************************
+ pure elemental function rapid_sigm(x)
+! Rapid sigmoidal function x/(1+|x|^n)^(1/n)
+  real(8),intent(in)::x
+  real(8):: a,b,x2,rapid_sigm
+
+  if(abs(x)>=sigm_edge)then
+   rapid_sigm = sign(1d0,x)
+  else
+   x2=x**2
+   a = 1.01892853d0+(0.61598944d0+0.12291505d0*x2)*x2
+   b = 1d0+(0.481799d0+0.480846d0*x2)*x2
+   rapid_sigm = x*a/b
+  end if
+ end function rapid_sigm
+ 
+! **************************************************************************
  subroutine ionization_setup
 ! PURPOSE: Set up all fitting coefficients
-  use constants,only:amu,kbol
+  use constants,only:Rgas
   real(8):: x
 
   if(allocated(eion))return ! skip if already called
@@ -59,7 +77,7 @@ contains
   eion(2) = 1.312d13  ! HI   [erg/mol]
   eion(3) = 2.3723d13 ! HeI  [erg/mol]
   eion(4) = 5.2505d13 ! HeII [erg/mol]
-  logeion(1:4) = log10(eion(1:4)*amu/kbol)
+  logeion(1:4) = log10(eion(1:4)/Rgas)
 
 ! These fitting parameters are tuned for eosDT in the range X=0.6-0.8
   frec = 0.005d0
@@ -77,6 +95,12 @@ contains
   tanh_c = x*(1d0-((x*x+105d0)*x*x+945d0)*x/(((x*x+28d0)*x*x+63d0)*15d0))
   dtanh_c= x*x*((((x*x-21d0)*x*x+420d0)*x*x-6615d0)*x*x+59535d0)&
                / (15d0*((x*x+28d0)*x*x+63d0)**2)
+
+! Parameters for molecular hydrogen specific heat capacity
+  Trot = log(130d0) ! Rotation temperature
+  Tvib = log(2000d0)! Vibration temperature
+  sigrot = 0.7d0
+  sigvib = 0.7d0
 
   return
  end subroutine ionization_setup
@@ -105,7 +129,35 @@ contains
   end if
  end function brec1
 ! ***************************************************************************
+ pure function cvmol(logT)
+! molecular hydrogen specific heat capacity
+  real(8),intent(in):: logT
+  real(8):: cvmol
+  cvmol = 0.5d0 * ( rapid_sigm((logT-Trot)/sigrot) &
+                  + rapid_sigm((logT-Tvib)/sigvib) &
+                  + 5d0 )
+ end function cvmol
 
+! ***************************************************************************
+ pure function cvimubar(logT,xion,X,Y)
+! Compute Cv/(mu*Rgas). Becomes complicated when H2 is present.
+  real(8),intent(in):: logT,xion(1:4),X,Y
+  real(8):: cvimubar, imup, Xmol,Xbar,Ybar
+
+  if(xion(1)<1d0)then
+   Xmol = (1d0-xion(1))*X
+   Xbar = xion(1)*X/(1d0-Xmol) ! Hydrogen mass fraction of monatomic part
+   Ybar = Y/(1d0-Xmol)         ! Helium mass fraction of monatomic part
+   imup = 0.5d0*(1d0+2d0*xion(2))*Xbar+0.25d0*(xion(3)+xion(4)-1d0)*Ybar+0.5d0
+   cvimubar = cvmol(logT)/2d0*Xmol+1.5d0*imup*(1d0-Xmol)
+  else
+   imup = 0.5d0*(xion(1)+2d0*xion(2))*X+0.25d0*(xion(3)+xion(4)-1d0)*Y+0.5d0
+   cvimubar = 1.5d0*imup
+  end if
+  
+ end function cvimubar
+ 
+! *************************************************************************** 
  pure subroutine get_xion(logd,T,Y,xion,dxion)
 ! PURPOSE: Get ionization fractions (and dxdT) given rho and T
   real(8),intent(in):: logd,T,Y
@@ -141,12 +193,13 @@ contains
 
 ! ***************************************************************************
 
- pure subroutine get_erec_imurec(logd,T,X,Y,erec,imurec,derecdT,dimurecdT)
-! PURPOSE: Get recombination energy and mean molecular weight given rho and T
+ pure subroutine get_erec_cvimubar(logd,T,X,Y,erec,cvimu,derecdT,dcvimubardT)
+! PURPOSE: Get recombination energy and Cv/mu given rho and T
   real(8),intent(in):: logd,T,X,Y
-  real(8),intent(out):: erec, imurec
-  real(8),intent(out),optional:: derecdT, dimurecdT
+  real(8),intent(out):: erec, cvimu
+  real(8),intent(out),optional:: derecdT, dcvimubardT
   real(8),dimension(1:4):: e, xi, zi
+  real(8):: logT,cvimu2
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
@@ -156,7 +209,7 @@ contains
   e(3) = eion(3)*Y*0.25d0
   e(4) = eion(4)*Y*0.25d0
 
-  if(present(derecdT).or.present(dimurecdT))then
+  if(present(derecdT).or.present(dcvimubardT))then
    call get_xion(logd,T,Y,xi,zi)
   else
    call get_xion(logd,T,Y,xi)
@@ -167,13 +220,15 @@ contains
    derecdT = sum(e(1:4)*zi(1:4))
   end if
 
-  imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
-  if(present(dimurecdT))then
-   dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
+  logT = log(T)
+  cvimu = cvimubar(logT,xi,X,Y)
+  if(present(dcvimubardT))then
+   cvimu2 = cvimubar(logT+dlogT,xi,X,Y)
+   dcvimubardT = (cvimu2-cvimu)/(T*dtemp)
   end if
 
   return
- end subroutine get_erec_imurec
+ end subroutine get_erec_cvimubar
 
 ! ***************************************************************************
 
