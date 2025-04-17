@@ -54,10 +54,8 @@ PETSC_PC = $(shell pkg-config --path petsc || pkg-config --path PETSc || if [ -n
 PETSC_INCLUDE ?= $(shell pkg-config --cflags $(PETSC_PC) 2>/dev/null)
 PETSC_LDFLAGS ?= $(shell pkg-config $(STATIC) --libs $(PETSC_PC) 2>/dev/null)
 
-FCFLAG += $(PETSC_INCLUDE)
 LDFLAGS += $(PETSC_LDFLAGS)
-
-FPPFLAG += -DUSE_PETSC
+FPPFLAG += -DUSE_PETSC $(PETSC_INCLUDE)
 endif
 
 # directories
