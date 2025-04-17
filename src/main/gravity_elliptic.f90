@@ -1,21 +1,21 @@
-module gravity_miccg_mod
+module gravity_elliptic_mod
 
  implicit none
  private
 
- public :: gravity_miccg
+ public :: gravity_elliptic
 
  contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                           SUBROUTINE GRAVITY_MICCG
+!                           SUBROUTINE GRAVITY_ELLIPTIC
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-! PURPOSE: To compute gravitational forces using the MICCG method
+! PURPOSE: To compute gravitational forces using the sparse matrix method.
 
-subroutine gravity_miccg
+subroutine gravity_elliptic
 
  use grid
  use constants
@@ -25,9 +25,6 @@ subroutine gravity_miccg
  use miccg_mod,only:miccg,l_from_ijk,ijk_from_l
  use timestep_mod,only:timestep
  use profiler_mod
-#ifdef USE_PETSC
- use petsc_solver_mod,only:init_petsc,finalise_petsc,solve_system_petsc
-#endif
  use matrix_solver,only:lmax,solve_system
  integer:: i,j,k,l
  real(8),allocatable,dimension(:):: x, cgsrc
@@ -169,6 +166,6 @@ subroutine gravity_miccg
  end if
 
  call stop_clock(wtpoi)
-end subroutine gravity_miccg
+end subroutine gravity_elliptic
 
-end module gravity_miccg_mod
+end module gravity_elliptic_mod

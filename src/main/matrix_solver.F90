@@ -7,15 +7,18 @@ module matrix_solver
   INSERT_VALUES, MAT_FINAL_ASSEMBLY, PETSC_DECIDE, PETSC_COMM_WORLD
 #endif
   implicit none
-  public :: setup_grvA
+  public :: setup_A_grv
 
   integer, public :: lmax
+
+  integer, parameter :: igrv = 1
+  integer, parameter :: irad = 2
 
   contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                          SUBROUTINE SETUP_GRVA
+!                          SUBROUTINE SETUP_A_GRV
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -28,15 +31,15 @@ module matrix_solver
 !
 ! TODO: This needs to be generalised to handle the radiation matrix as well
 
-subroutine setup_grvA
+subroutine setup_A_grv
 
 #ifdef USE_PETSC
-  call setup_petsc_A
+  call setup_petsc_A(igrv)
 #else
-  call setup_cg
+  call setup_cg(igrv)
 #endif
 
-end subroutine setup_grvA
+end subroutine setup_A_grv
 
 subroutine solve_system(cgsrc, x)
   use petsc_solver_mod
@@ -53,6 +56,20 @@ subroutine solve_system(cgsrc, x)
 
 end subroutine solve_system
 
+subroutine compute_coeffs(system, dim, i, j, k, ie, kn, coeffs)
+  integer, intent(in) :: system
+  integer, intent(in) :: dim, i, j, k, ie, kn
+  real(8), intent(out) :: coeffs(5)
+
+  if (system == igrv) then
+    ! Compute coefficients for gravity system
+    call compute_coeffs_gravity(dim, i, j, k, ie, kn, coeffs)
+  else if (system == irad) then
+    ! Compute coefficients for radiation system
+    ! call compute_coeffs_radiation(dim, i, j, k, ie, kn, coeffs)
+  end if
+end subroutine compute_coeffs
+
 #ifdef USE_PETSC
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -65,9 +82,10 @@ end subroutine solve_system
 !          then insert the values directly into the PETSc matrix (A_petsc).
 !          Preconditioning is handled by PETSc, so we do not compute it here.
 
-subroutine setup_petsc_A
+subroutine setup_petsc_A(system)
   use grid,only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
   use petsc_solver_mod,only:A_petsc
+  integer, intent(in) :: system
   integer :: in, jn, kn, dim, i, j, k, l, ncoeff, m
   real(8) :: coeffs(5)
   integer :: row, col
@@ -106,13 +124,14 @@ subroutine setup_petsc_A
   ! Loop over all grid points.
   do l = 1, lmax
     call ijk_from_l(l, is, js, ks, in, jn, i, j, k)
-    call compute_coeffs_gravity(dim, i, j, k, ie, kn, coeffs)
+    call compute_coeffs(system, dim, i, j, k, ie, kn, coeffs)
 
     ! As the dimension increases, additional diagonals are added, but the
     ! offsets of existing diagonals are not changed.
     ! In 1D, the offsets are at 0, 1.
     ! In 2D, the offsets are at 0, 1, in
     ! In 3D, the offsets are at 0, 1, in, in*jn, in*jn*(kn-1)
+    ! These are the same for gravity and radiation
     do m = 1, ncoeff
       select case(m)
       case(1)
@@ -159,9 +178,10 @@ end subroutine setup_petsc_A
 !          the preconditioner is computed as well.
 !          The resulting data is stored in the cg object.
 
-subroutine setup_cg
+subroutine setup_cg(system)
   use grid,only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
   use miccg_mod, only: cg=>cg_grv
+  integer, intent(in) :: system
   integer :: in, jn, kn, dim, i, j, k, l
   real(8), allocatable :: coeffs(:)
 
@@ -202,6 +222,8 @@ subroutine setup_cg
   ! Allocate the equation matrix and set the offsets.
   allocate(cg%ia(1:cg%Adiags))
   allocate(cg%A(1:cg%Adiags, 1:lmax))
+
+  ! These are the same for gravity and radiation
   select case(dim)
   case(1)
     cg%ia(1) = 0
@@ -223,7 +245,7 @@ subroutine setup_cg
   allocate(coeffs(cg%Adiags))
   do l = 1, lmax
     call ijk_from_l(l, is, js, ks, in, jn, i, j, k)
-    call compute_coeffs_gravity(dim, i, j, k, ie, kn, coeffs)
+    call compute_coeffs(system, dim, i, j, k, ie, kn, coeffs)
     ! Save the computed coefficients into the equation matrix.
     cg%A(:, l) = coeffs
   end do
