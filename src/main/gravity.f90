@@ -79,7 +79,7 @@ subroutine gravsetup
  use gravmod
  use gravity_hyperbolic_mod,only:setup_grv_hyperbolic
  use petsc_solver_mod,only:init_petsc
- use matrix_utils,only:setup_grvA
+ use matrix_solver,only:setup_grvA
 
 ! set initial x0
  if(tn==0 .and. isequal(maxval(grvphi(gis:gie,gjs:gje,gks:gke)), 0d0))&

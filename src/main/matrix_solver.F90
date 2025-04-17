@@ -1,6 +1,6 @@
-module matrix_utils
+module matrix_solver
   use miccg_mod, only: cg_set, ijk_from_l, get_preconditioner
-  use gravity_miccg_mod, only: compute_coeffs
+  use matrix_coeffs_mod, only: compute_coeffs_gravity
 #ifdef USE_PETSC
 #include <petsc/finclude/petsc.h>
   use petsc, only: MatSetValue, MatAssemblyBegin, MatAssemblyEnd, &
@@ -8,6 +8,8 @@ module matrix_utils
 #endif
   implicit none
   public :: setup_grvA
+
+  integer, public :: lmax
 
   contains
 
@@ -36,6 +38,21 @@ subroutine setup_grvA
 
 end subroutine setup_grvA
 
+subroutine solve_system(cgsrc, x)
+  use petsc_solver_mod
+  real(8), allocatable, intent(in) :: cgsrc(:)
+  real(8), allocatable, intent(inout) :: x(:)
+
+#ifdef USE_PETSC
+  ! PETSc solver
+  call solve_system_petsc(cgsrc, x)
+#else
+  ! Original MICCG solver
+  call miccg(cg, cgsrc, x)
+#endif
+
+end subroutine solve_system
+
 #ifdef USE_PETSC
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -51,7 +68,7 @@ end subroutine setup_grvA
 subroutine setup_petsc_A
   use grid,only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
   use petsc_solver_mod,only:A_petsc
-  integer :: in, jn, kn, lmax, dim, i, j, k, l, ncoeff, m
+  integer :: in, jn, kn, dim, i, j, k, l, ncoeff, m
   real(8) :: coeffs(5)
   integer :: row, col
   integer :: ierr
@@ -89,7 +106,7 @@ subroutine setup_petsc_A
   ! Loop over all grid points.
   do l = 1, lmax
     call ijk_from_l(l, is, js, ks, in, jn, i, j, k)
-    call compute_coeffs(dim, i, j, k, ie, kn, coeffs)
+    call compute_coeffs_gravity(dim, i, j, k, ie, kn, coeffs)
 
     ! As the dimension increases, additional diagonals are added, but the
     ! offsets of existing diagonals are not changed.
@@ -145,7 +162,7 @@ end subroutine setup_petsc_A
 subroutine setup_cg
   use grid,only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
   use miccg_mod, only: cg=>cg_grv
-  integer :: in, jn, kn, lmax, dim, i, j, k, l
+  integer :: in, jn, kn, dim, i, j, k, l
   real(8), allocatable :: coeffs(:)
 
   ! Set grid parameters.
@@ -206,7 +223,7 @@ subroutine setup_cg
   allocate(coeffs(cg%Adiags))
   do l = 1, lmax
     call ijk_from_l(l, is, js, ks, in, jn, i, j, k)
-    call compute_coeffs(dim, i, j, k, ie, kn, coeffs)
+    call compute_coeffs_gravity(dim, i, j, k, ie, kn, coeffs)
     ! Save the computed coefficients into the equation matrix.
     cg%A(:, l) = coeffs
   end do
@@ -249,4 +266,4 @@ subroutine setup_cg
 
 end subroutine setup_cg
 
-end module matrix_utils
+end module matrix_solver

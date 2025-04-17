@@ -4,9 +4,10 @@ module petsc_solver_mod
   use petsc
   use mpi_utils, only: myrank, stop_mpi
   implicit none
-  ! private
+  private
 
-  public :: init_petsc, finalise_petsc
+  public :: init_petsc, finalise_petsc, solve_system_petsc
+  public :: A_petsc !, x_petsc, b_petsc, ksp
 
   PetscErrorCode :: ierr
   Mat :: A_petsc
@@ -24,6 +25,72 @@ module petsc_solver_mod
   subroutine finalise_petsc
     call PetscFinalize(ierr)
   end subroutine finalise_petsc
+
+  subroutine solve_system_petsc(cgsrc, x)
+    !-------------------------------------------------------------------
+    ! Solves the linear system A*x = b using PETSc.
+    !
+    ! Input:
+    !   cgsrc : real(8) array for the right-hand side vector b.
+    !
+    ! In/Out:
+    !   x     : real(8) array where the solution is placed.
+    !
+    ! PETSc objects are created locally and then destroyed.
+    !-------------------------------------------------------------------
+    real(8), intent(in) :: cgsrc(:)
+    real(8), intent(inout) :: x(:)
+    integer :: ierr, i, lmax
+    PetscInt :: N
+    real(8), pointer :: x_array(:)
+
+    ! System size
+    lmax = size(cgsrc)
+    N = lmax
+
+    ! Create vector for right-hand side.
+    call VecCreate(PETSC_COMM_WORLD, b_petsc, ierr)
+    call VecSetSizes(b_petsc, PETSC_DECIDE, N, ierr)
+    call VecSetFromOptions(b_petsc, ierr)
+
+    ! Create vector for solution.
+    call VecCreate(PETSC_COMM_WORLD, x_petsc, ierr)
+    call VecSetSizes(x_petsc, PETSC_DECIDE, N, ierr)
+    call VecSetFromOptions(x_petsc, ierr)
+
+    ! Insert values from cgsrc into b_petsc.
+    do i = 0, N-1
+      call VecSetValue(b_petsc, i, cgsrc(i+1), INSERT_VALUES, ierr)
+    end do
+    call VecAssemblyBegin(b_petsc, ierr)
+    call VecAssemblyEnd(b_petsc, ierr)
+
+    ! Create KSP solver context.
+    call KSPCreate(PETSC_COMM_WORLD, ksp, ierr)
+    call KSPSetOperators(ksp, A_petsc, A_petsc, ierr)
+    call KSPSetInitialGuessNonzero(ksp, PETSC_TRUE, ierr)
+    call KSPSetFromOptions(ksp, ierr)
+    call KSPGetPC(ksp,pc,ierr)
+    call PCSetup(pc,ierr)
+    call KSPSetup(ksp, ierr)
+
+    ! Solve the linear system.
+    call KSPSolve(ksp, b_petsc, x_petsc, ierr)
+
+    ! Copy solution back to x.
+    call VecGetArrayF90(x_petsc, x_array, ierr)
+
+    do i = 1, lmax
+      x(i) = x_array(i)
+    end do
+    call VecRestoreArrayF90(x_petsc, x_array, ierr)
+
+    ! Clean up PETSc objects.
+    call KSPDestroy(ksp, ierr)
+    call VecDestroy(x_petsc, ierr)
+    call VecDestroy(b_petsc, ierr)
+
+  end subroutine solve_system_petsc
 
 #endif
 end module petsc_solver_mod

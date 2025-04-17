@@ -195,6 +195,8 @@ program hormone
 
   call finalize_mpi
 
+  ! TODO: finalise PETsc
+
 !------------------------------- end program ---------------------------------
 
 end program hormone
