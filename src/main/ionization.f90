@@ -65,7 +65,6 @@ contains
 ! **************************************************************************
  subroutine ionization_setup
 ! PURPOSE: Set up all fitting coefficients
-  use constants,only:Rgas
   real(8):: x
 
   if(allocated(eion))return ! skip if already called
@@ -77,7 +76,7 @@ contains
   eion(2) = 1.312d13  ! HI   [erg/mol]
   eion(3) = 2.3723d13 ! HeI  [erg/mol]
   eion(4) = 5.2505d13 ! HeII [erg/mol]
-  logeion(1:4) = log10(eion(1:4)/Rgas)
+  logeion(1:4) = log10(eion(1:4)/8.31446d7)
 
 ! These fitting parameters are tuned for eosDT in the range X=0.6-0.8
   frec = 0.005d0
