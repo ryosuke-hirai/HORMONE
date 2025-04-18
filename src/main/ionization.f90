@@ -23,7 +23,7 @@ contains
   if(abs(x)>=tanh_edge)then
    rapid_tanh = sign(1d0,x)-tanh_c/x
   else
-   x2 = x**2
+   x2 = x*x
    a = ((x2+105d0)*x2+945d0)*x
    b = ((x2+28d0)*x2+63d0)*15d0
    rapid_tanh = a/b
@@ -36,10 +36,10 @@ contains
   real(8),intent(in)::x
   real(8):: a,b,x2,rapid_dtanh
 
+  x2 = x*x
   if(abs(x)>=tanh_edge)then
-   rapid_dtanh = dtanh_c/x**2
+   rapid_dtanh = dtanh_c/x2
   else
-   x2=x**2
    a = (((x2-21d0)*x2+420d0)*x2-6615d0)*x2+59535d0
    b = (x2+28d0)*x2+63d0
    rapid_dtanh = a/(15d0*b**2)
@@ -55,7 +55,7 @@ contains
   if(abs(x)>=sigm_edge)then
    rapid_sigm = sign(1d0,x)
   else
-   x2=x**2
+   x2=x*x
    a = 1.01892853d0+(0.61598944d0+0.12291505d0*x2)*x2
    b = 1d0+(0.481799d0+0.480846d0*x2)*x2
    rapid_sigm = x*a/b
