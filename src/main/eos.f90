@@ -11,13 +11,13 @@ contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
- use ionization_mod,only:get_erec_cvimubar,get_imurec
+ use ionization_mod,only:get_erec_cveff,get_imurec
 ! PURPOSE: To calculate temperature from density and internal energy
  real(8),intent(in):: d,eint
  real(8),intent(inout):: T,imu
  real(8),intent(in),optional:: X,Y
  real(8),intent(out),optional:: erec_out
- real(8):: corr, erec, Cvimubar, derecdT, dcvimubardT, Tdot, logd, dt
+ real(8):: corr, erec, Cveff, derecdT, dcveffdlnT, Tdot, logd, dt
  real(8),parameter:: W4err = 1d-2
  integer:: n
 
@@ -44,12 +44,12 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  case(2) ! ideal gas + radiation + recombination
   corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
   do n = 1, 500
-   call get_erec_cvimubar(logd,T,X,Y,erec,cvimubar,derecdT,dcvimubardT)
+   call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
    end if
-   corr = (eint-(arad*T**3+d*Rgas*cvimubar)*T-d*erec) &
-        / ( -4d0*arad*T**3-d*(Rgas*(cvimubar+dcvimubardT*T)+derecdT) )
+   corr = (eint-(arad*T**3+d*Rgas*cveff)*T-d*erec) &
+        / ( -4d0*arad*T**3-d*(Rgas*(cveff+dcveffdlnT)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr
@@ -78,15 +78,15 @@ end subroutine getT_from_de
 !                        SUBROUTINE GETT_FROM_DP
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-subroutine getT_from_dp(d,p,T,imu,X,Y,cvimubar,erec)
- use ionization_mod,only:get_erec_cvimubar,get_imurec
+subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
+ use ionization_mod,only:get_erec_cveff,get_imurec
 ! PURPOSE: To calculate temperature from density and pressure
  implicit none
  real(8),intent(in):: d,p
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: T,imu
- real(8),intent(out),optional:: erec, cvimubar
- real(8):: corr, imurec, dimurecdT, logd
+ real(8),intent(out),optional:: erec, cveff
+ real(8):: corr, imurec, dimurecdlnT, logd
  integer:: n
 
  if(T<=0d0) T=1d3
@@ -112,9 +112,9 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,cvimubar,erec)
  case(2) ! ideal gas + radiation + recombination
   corr = huge; logd = log10(d)
   do n = 1, 500
-   call get_imurec(logd,T,X,Y,imurec,dimurecdT)
+   call get_imurec(logd,T,X,Y,imurec,dimurecdlnT)
    corr = (p - (arad*T**3/3d0+d*Rgas*imurec)*T) &
-        / (-4d0*arad*T**3/3d0-d*Rgas*(imurec+dimurecdT*T))
+        / (-4d0*arad*T**3/3d0-d*Rgas*(imurec+dimurecdlnT))
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
@@ -125,7 +125,7 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,cvimubar,erec)
   end if
   imu = imurec
   if(present(erec))then
-   call get_erec_cvimubar(logd,T,X,Y,erec,cvimubar)
+   call get_erec_cveff(logd,T,X,Y,erec,cveff)
   end if
 
  case default
@@ -148,7 +148,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
  real(8),intent(inout):: T,imu
  real(8),intent(out):: p,cs
  integer,intent(out):: ierr
- real(8):: gamma_eff,erec,Ttemp,cs2
+ real(8):: erec,Ttemp,cs2
 
 !-----------------------------------------------------------------------------
 
@@ -169,17 +169,17 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
 
  case(1) ! ideal gas + radiation pressure
   p = eos_p(d,eint,T,imu)
-  gamma_eff = 1d0+p/eint
 
-  cs = sqrt(gamma_eff*p/d)
+  cs2 = get_cs2(d,T,imu=imu)
+  cs  = sqrt(cs2)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
   Ttemp = T
   call getT_from_de(d,eint,Ttemp,imu,X,Y,erec)
   p = eos_p(d,eint,T,imu,X,Y)
-  gamma_eff = 1d0+p/(eint-d*erec)
 
-  cs = sqrt(gamma_eff*p/d)
+  cs2 = get_cs2(d,T,X=X,Y=Y)
+  cs  = sqrt(cs2)
 
  case default
   stop 'Error in eostype'
@@ -224,7 +224,7 @@ function eos_e(d,p,T,imu,X,Y)
  real(8),intent(in):: d,p
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: imu,T
- real(8):: eos_e, cvimubar, erec
+ real(8):: eos_e, cveff, erec
 
  select case (eostype)
  case(0) ! ideal gas
@@ -236,14 +236,44 @@ function eos_e(d,p,T,imu,X,Y)
   eos_e = ( Cv*imu*d + arad*T**3 )*T
 
  case(2) ! ideal gas + radiation + recombination
-  call getT_from_dp(d,p,T,imu,X,Y,cvimubar,erec)
-  eos_e = ( Rgas*cvimubar*d + arad*T**3 )*T + d*erec
+  call getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
+  eos_e = ( Rgas*cveff*d + arad*T**3 )*T + d*erec
 
  case default
   stop 'Error in eostype'
  end select
 
 end function eos_e
+
+! ***************************************************************************
+
+function get_cs2(d,T,imu,X,Y) result(cs2)
+! PURPOSE: To compute sound speed squared from d and T
+ use ionization_mod
+ real(8),intent(in):: d,T
+ real(8),intent(in),optional:: imu,X,Y
+ real(8):: cs2
+ real(8):: erec,cveff,derecdT,dcveffdlnT,imurec,dimurecdlnT,dimurecdlnd
+ real(8):: logd,deraddT
+
+ select case(eostype)
+ case(0)
+  cs2 = gamma*Rgas*imu*T
+ case(1)
+  deraddT = 4d0*arad*T**3/d
+  cs2 = Rgas*imu*T + (Rgas*imu+deraddT/3d0)**2*T/(Cv*imu+deraddT)
+ case(2)
+  logd=log10(d)
+  call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
+  call get_imurec(logd,T,X,Y,imurec,dimurecdlnT,dimurecdlnd)
+  deraddT = 4d0*arad*T**3/d
+  cs2 = Rgas*(imurec+dimurecdlnd)*T &
+      + ( Rgas*(imurec+dimurecdlnT)+deraddT/3d0)**2*T &
+        / (Rgas*(cveff+dcveffdlnT)+deraddT+derecdT)
+ case default
+ end select
+
+end function get_cs2
 
 ! ***************************************************************************
 
@@ -266,7 +296,6 @@ end function get_cf
 ! ***************************************************************************
 
 elemental function Trad(erad)
- use constants,only:arad
 ! PURPOSE: To compute radiation temperature from erad
  real(8),intent(in):: erad
  real(8):: Trad
@@ -327,7 +356,6 @@ end function entropy_from_dT
 ! ***************************************************************************
 
 function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
- use constants
 ! PURPOSE: To calculate entropy from density and pressure
  implicit none
  real(8),intent(in):: d,p
@@ -358,7 +386,6 @@ end function entropy_from_dp
 ! ***************************************************************************
 
 function entropy_from_de(d,e,T,imu,X,Y) result(entropy)
- use constants
 ! PURPOSE: To calculate entropy from density and internal energy
  implicit none
  real(8),intent(in):: d,e

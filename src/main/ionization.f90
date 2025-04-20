@@ -9,8 +9,8 @@ module ionization_mod
                              sigm_edge = 1.43713233658279d0, &
                              dlogT=1d-4, dtemp=log(dlogT)
 
- public::ionization_setup,get_xion,get_erec,get_imurec,get_erec_cvimubar
- private::rapid_tanh,rapid_dtanh,arec1,brec1,rapid_sigm,cvmol,cvimubar
+ public::ionization_setup,get_xion,get_erec,get_imurec,get_erec_cveff
+ private::rapid_tanh,rapid_dtanh,arec1,brec1,rapid_sigm,cvmol,get_cveff,imurec1
 
 contains
 ! **************************************************************************
@@ -138,24 +138,24 @@ contains
  end function cvmol
 
 ! ***************************************************************************
- pure function cvimubar(logT,xion,X,Y)
+ pure function get_cveff(logT,xion,X,Y) result(cveff)
 ! Compute Cv/(mu*Rgas). Becomes complicated when H2 is present.
   real(8),intent(in):: logT,xion(1:4),X,Y
-  real(8):: cvimubar, imup, Xmol,Xbar,Ybar
+  real(8):: cveff, imup, Xmol,Xbar,Ybar
 
   if(xion(1)<1d0)then
    Xmol = (1d0-xion(1))*X
    Xbar = xion(1)*X/(1d0-Xmol) ! Hydrogen mass fraction of monatomic part
    Ybar = Y/(1d0-Xmol)         ! Helium mass fraction of monatomic part
    imup = 0.5d0*(1d0+2d0*xion(2))*Xbar+0.25d0*(xion(3)+xion(4)-1d0)*Ybar+0.5d0
-   cvimubar = cvmol(logT)/2d0*Xmol+1.5d0*imup*(1d0-Xmol)
+   cveff = cvmol(logT)/2d0*Xmol+1.5d0*imup*(1d0-Xmol)
   else
    imup = 0.5d0*(xion(1)+2d0*xion(2))*X+0.25d0*(xion(3)+xion(4)-1d0)*Y+0.5d0
-   cvimubar = 1.5d0*imup
+   cveff = 1.5d0*imup
   end if
   
- end function cvimubar
- 
+ end function get_cveff
+
 ! *************************************************************************** 
  pure subroutine get_xion(logd,T,Y,xion,dxion)
 ! PURPOSE: Get ionization fractions (and dxdT) given rho and T
@@ -192,13 +192,13 @@ contains
 
 ! ***************************************************************************
 
- pure subroutine get_erec_cvimubar(logd,T,X,Y,erec,cvimu,derecdT,dcvimubardT)
-! PURPOSE: Get recombination energy and Cv/mu given rho and T
+ pure subroutine get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
+! PURPOSE: Get recombination energy and cveff=Cv/mu/Rgas given rho and T
   real(8),intent(in):: logd,T,X,Y
-  real(8),intent(out):: erec, cvimu
-  real(8),intent(out),optional:: derecdT, dcvimubardT
+  real(8),intent(out):: erec, cveff
+  real(8),intent(out),optional:: derecdT, dcveffdlnT
   real(8),dimension(1:4):: e, xi, zi
-  real(8):: logT,cvimu2
+  real(8):: logT,cveff2
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
@@ -208,7 +208,7 @@ contains
   e(3) = eion(3)*Y*0.25d0
   e(4) = eion(4)*Y*0.25d0
 
-  if(present(derecdT).or.present(dcvimubardT))then
+  if(present(derecdT).or.present(dcveffdlnT))then
    call get_xion(logd,T,Y,xi,zi)
   else
    call get_xion(logd,T,Y,xi)
@@ -220,36 +220,51 @@ contains
   end if
 
   logT = log(T)
-  cvimu = cvimubar(logT,xi,X,Y)
-  if(present(dcvimubardT))then
-   cvimu2 = cvimubar(logT+dlogT,xi,X,Y)
-   dcvimubardT = (cvimu2-cvimu)/(T*dtemp)
+  cveff = get_cveff(logT,xi,X,Y)
+  if(present(dcveffdlnT))then
+   cveff2 = get_cveff(logT+dlogT,xi,X,Y)
+   dcveffdlnT = (cveff2-cveff)/dtemp
   end if
 
   return
- end subroutine get_erec_cvimubar
+ end subroutine get_erec_cveff
 
 ! ***************************************************************************
+ pure function imurec1(xi,X,Y)
+! Compute mean molecular weight given ionisation fractions
+  real(8),intent(in):: xi(1:4),X,Y
+  real(8):: imurec1
 
- pure subroutine get_imurec(logd,T,X,Y,imurec,dimurecdT)
+  imurec1 = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
+
+ end function imurec1
+
+! ***************************************************************************
+ pure subroutine get_imurec(logd,T,X,Y,imurec,dimurecdlnT,dimurecdlnd)
 ! PURPOSE: Get the mean molecular weight for partially ionised plasma
   real(8),intent(in):: logd,T,X,Y
   real(8),intent(out):: imurec
-  real(8),intent(out),optional:: dimurecdT
+  real(8),intent(out),optional:: dimurecdlnT,dimurecdlnd
   real(8),dimension(1:4):: xi, zi
+  real(8):: imurec2
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
 
-  if(present(dimurecdT))then
+  if(present(dimurecdlnT))then
    call get_xion(logd,T,Y,xi,zi)
   else
    call get_xion(logd,T,Y,xi)
   end if
 
-  imurec = (0.5d0*xi(1)+xi(2))*X+0.25d0*(xi(3)+xi(4)-1d0)*Y+0.5d0
-  if(present(dimurecdT))then
-   dimurecdT = (0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y
+  imurec = imurec1(xi,X,Y)
+  if(present(dimurecdlnT))then
+   dimurecdlnT = T*((0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y)
+  end if
+  if(present(dimurecdlnd))then
+   call get_xion(logd+dlogT,T,Y,xi)
+   imurec2 = imurec1(xi,X,Y)
+   dimurecdlnd = (imurec2-imurec)/dtemp
   end if
 
   return

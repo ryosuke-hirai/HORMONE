@@ -23,6 +23,7 @@ subroutine eostest
  real(8):: Qi, Qf, Q, erec, imu2, imu3, T0, cs
  real(8):: T3, p3, p4, d2, S, T4
  real(8):: rerrp1,rerrp2,rerrp3,rerrT1,rerrT2,rerrd1
+ real(8):: gamma1
  integer:: j,k, iie, jje, kke, ierr, ui
  character(len=100):: form1
 
@@ -30,8 +31,8 @@ subroutine eostest
 
 ! Set grid resolution for EoS unit test
  iie = 0
- jje = 100
- kke = 100
+ jje = 200
+ kke = 200
  Z = 0.02d0
 
 ! Set range of grid for the EoS test
@@ -55,12 +56,13 @@ subroutine eostest
  imu = 1d0/0.62d0
  rerrp1=0d0;rerrp2=0d0;rerrT1=0d0;rerrT2=0d0;rerrd1=0d0
  open(newunit=ui,file='data/eostest_gas.dat',status='replace')
- write(ui,'(2a5,15a23)')&
+ write(ui,'(2a5,16a23)')&
     'j','k','d','Q','e',&
     'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
     'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
     'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
-    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy'
+    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy',&
+    'gamma1'
 
  do k = 0, kke ! loop over T
   T0 = 10d0**(Ti+(Tf-Ti)/dble(kke)*dble(k))
@@ -77,6 +79,7 @@ subroutine eostest
    e = eos_e(d,p,T,imu)
    p2 = eos_p(d,e,T2,imu)
    call eos_p_cs(d,e,T3,imu,p3,cs,ierr=ierr)
+   gamma1 = cs**2*d/p3
 
    S = entropy_from_dp(d,p,T4,imu)
    d2 = get_d_from_ps(p,S,imu)
@@ -88,11 +91,11 @@ subroutine eostest
    rerrT1 = max(rerrT1,abs(T2/T-1d0))
    rerrT2 = max(rerrT2,abs(T3/T-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
-   write(ui,'(2i5,15(1PE23.15e2))')&
+   write(ui,'(2i5,16(1PE23.15e2))')&
     j,k,d,Q,e,&
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
-    p4/p-1d0,S,d2
+    p4/p-1d0,S,d2,gamma1
 
   end do
   write(ui,'()')
@@ -116,12 +119,13 @@ subroutine eostest
  imu = 1d0/0.62d0
  rerrp1=0d0;rerrp2=0d0;rerrT1=0d0;rerrT2=0d0;rerrd1=0d0
  open(newunit=ui,file='data/eostest_gasrad.dat',status='replace')
- write(ui,'(2a5,14a23)')&
+ write(ui,'(2a5,16a23)')&
     'j','k','d','Q','e',&
     'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
     'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
     'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
-    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy'
+    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy',&
+    'gamma1'
 
  do k = 0, kke ! loop over T
   T0 = 10d0**(Ti+(Tf-Ti)/dble(kke)*dble(k))
@@ -138,6 +142,7 @@ subroutine eostest
    e = eos_e(d,p,T,imu)
    p2 = eos_p(d,e,T2,imu)
    call eos_p_cs(d,e,T3,imu,p3,cs,ierr=ierr)
+   gamma1 = cs**2*d/p3
 
    S = entropy_from_dp(d,p,T4,imu)
    d2 = get_d_from_ps(p,S,imu)
@@ -149,11 +154,11 @@ subroutine eostest
    rerrT1 = max(rerrT1,abs(T2/T-1d0))
    rerrT2 = max(rerrT2,abs(T3/T-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
-   write(ui,'(2i5,15(1PE23.15e2))')&
+   write(ui,'(2i5,18(1PE23.15e2))')&
     j,k,d,Q,e,&
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
-    p4/p-1d0,S,d2
+    p4/p-1d0,S,d2,gamma1
 
   end do
   write(ui,'()')
@@ -177,13 +182,14 @@ subroutine eostest
  call ionization_setup
  rerrp1=0d0;rerrp2=0d0;rerrT1=0d0;rerrT2=0d0;rerrd1=0d0
  open(newunit=ui,file='data/eostest_gasradrec.dat',status='replace')
- write(ui,'(2a5,18a23)')&
+ write(ui,'(2a5,20a23)')&
     'j','k','d','Q','e','X',&
     'mu_from_eos_e','mu_from_eos_p','mu_from_eos_p_cs',&
     'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
     'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
     'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
-    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy'
+    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy',&
+    'gamma1'
 
  do k = 0, kke ! loop over T
   T0 = 10d0**(Ti+(Tf-Ti)/dble(kke)*dble(k))
@@ -202,6 +208,7 @@ subroutine eostest
    e = eos_e(d,p,T,imu,X,Y)
    p2 = eos_p(d,e,T2,imu2,X,Y)
    call eos_p_cs(d,e,T3,imu3,p3,cs,X,Y,ierr=ierr)
+   gamma1 = cs**2*d/p3
 
 ! Currently not ready for entropy calculations
 !   S = entropy_from_dp(d,p,T4,imu4,X,Y)
@@ -215,12 +222,12 @@ subroutine eostest
    rerrT1 = max(rerrT1,abs(T2/T-1d0))
    rerrT2 = max(rerrT2,abs(T3/T-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
-   write(ui,'(2i5,18(1PE23.15e2))')&
+   write(ui,'(2i5,20(1PE23.15e2))')&
     j,k,d,Q,e,X,&
     1d0/imu,1d0/imu2,1d0/imu3,&
     T,T2,T3,p,p2,p3,&
     p2/p-1d0,p3/p-1d0,&
-    p4/p-1d0,S,d2
+    p4/p-1d0,S,d2,gamma1
 
   end do
   write(ui,'()')
