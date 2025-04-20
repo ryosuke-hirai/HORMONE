@@ -148,7 +148,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
  real(8),intent(inout):: T,imu
  real(8),intent(out):: p,cs
  integer,intent(out):: ierr
- real(8):: erec,Ttemp,cs2
+ real(8):: cs2
 
 !-----------------------------------------------------------------------------
 
