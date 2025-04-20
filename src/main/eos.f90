@@ -170,7 +170,8 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
  case(1) ! ideal gas + radiation pressure
   p = eos_p(d,eint,T,imu)
 
-  cs2 = get_cs2(d,T,imu=imu)
+!  cs2 = get_cs2(d,T,imu=imu)
+  cs2 = (1d0+p/eint)*p/d
   cs  = sqrt(cs2)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
