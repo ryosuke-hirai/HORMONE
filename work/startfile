@@ -36,6 +36,7 @@ If start==0, it will set the initial condition based on the choice of simtype.
 'windtunnel': Wind tunnel simulations
 'stellarcollision': Stellar collision simulation (Hirai & Podsiadlowski 2022)
 'sn2022jli': Stellar collision in companion frame + SN heating
+'radstar': Polyropic star on spherical coordinates with radiation transport
 
 ** Unit tests **
 'eostest': Forwards and backwards consistency test for EoS
