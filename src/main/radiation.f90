@@ -156,7 +156,7 @@ end subroutine get_diffusion_coeff
 
 subroutine get_radA(cg)
 
- use settings,only:radswitch
+ use settings,only:radswitch,crdnt
  use constants,only:arad,clight,Cv
  use utils,only:har_mean
  use grid,only:dt,dvol
@@ -204,7 +204,7 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) &
               - dvol(i,j,k)*clight*kappap*d(i,j,k) &
                *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
                 - 1d0 )
    end if
 
@@ -231,7 +231,7 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) &
               - dvol(i,j,k)*clight*kappap*d(i,j,k) &
                *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
                 - 1d0 )
    end if
 
@@ -257,7 +257,7 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) &
               - dvol(i,j,k)*clight*kappap*d(i,j,k) &
                *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
                 - 1d0 )
    end if
 
@@ -286,7 +286,7 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) &
               - dvol(i,j,k)*clight*kappap*d(i,j,k) &
                *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
                 - 1d0 )
    end if
 
@@ -317,7 +317,7 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) &
               - dvol(i,j,k)*clight*kappap*d(i,j,k) &
                *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
                 - 1d0 )
    end if
 
@@ -348,7 +348,7 @@ subroutine get_radA(cg)
     cg%A(1,l) = cg%A(1,l) &
               - dvol(i,j,k)*clight*kappap*d(i,j,k) &
                *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
                 - 1d0 )
    end if
 
@@ -375,26 +375,31 @@ subroutine get_radA(cg)
    if(j<cg%je)&
     cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
    if(k>cg%ks)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j-1,k)*har_mean(radK(i,j,k-1:k))
+    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
    if(k<cg%ke)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j  ,k)*har_mean(radK(i,j,k:k+1))
+    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
    if(radswitch==1)then ! coupling term
     kappap = kappa_p(d(i,j,k),T(i,j,k))
     cg%A(1,l) = cg%A(1,l) &
               - dvol(i,j,k)*clight*kappap*d(i,j,k) &
                *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
+                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
                 - 1d0 )
    end if
 
    cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
    cg%A(3,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
-   cg%A(4,l) = -geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
-   cg%A(5,l) = -geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
+   cg%A(4,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
+   if(k==cg%ks)then
+    if(crdnt==2)&
+     cg%A(5,l) = -geo(3,i,j,k-1)*har_mean([radK(i,j,k),radK(i,j,cg%ke)])
+   else
+    if(crdnt==2)&
+     cg%A(5,l) = 0d0
+   end if
    if(i==cg%ie)cg%A(2,l) = 0d0
    if(j==cg%je)cg%A(3,l) = 0d0
    if(k==cg%ke)cg%A(4,l) = 0d0
-   if(k/=cg%ks)cg%A(5,l) = 0d0
   end do
 !$omp end parallel do
 
