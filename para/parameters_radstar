@@ -20,7 +20,7 @@
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
-          tnlim=30 t_end=1d4 dt_out=5d2 tn_out=30
+          tnlim=300 t_end=2d1 dt_out=2d1 tn_out=500
           dt_unit='s' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.true.
           write_other_slice=.true. /
@@ -49,7 +49,7 @@
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
-&gravcon gravswitch=1 grverr=1d-15 cgerr=1d-15 HGfac=10d0 hgcfl=0.9d0 gbtype=1 alphagrv=0.1d0
+&gravcon gravswitch=1 grverr=1d-15 cgerr=1d-15 HGfac=5d0 hgcfl=0.9d0 gbtype=1 alphagrv=0.1d0
 	 grav_init_other=.false. grav_init_relax=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
@@ -58,8 +58,8 @@
 ! c_kappa_{r,p,f}: values for fixed opacity (Rosseland, Planck, flux-weighted mean)
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
 ! rbtype:0=zero-gradient boundary
-&rad_con radswitch=1 opacitytype=0 c_kappa_r=1d0 c_kappa_p=1d0 c_kappa_f=1d0
+&rad_con radswitch=2 opacitytype=0 c_kappa_r=1d0 c_kappa_p=1d0 c_kappa_f=1d0
          lambdatype=0 rbtype=0 /
 
 ! test tolerance
-&testcon  test_tol=3d-11 Mach_tol=1d-5/
+&testcon  test_tol=1d-14 Mach_tol=1d-5/
