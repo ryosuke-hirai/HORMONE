@@ -19,7 +19,7 @@
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
 &out_con  outstyle=1 endstyle=1
-          tnlim=100000 t_end=1500d0 dt_out=100d0 tn_out=1
+          tnlim=100000 t_end=1000d0 dt_out=100d0 tn_out=1
           dt_unit='ms' outres=1 /
 
 ! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'

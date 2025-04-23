@@ -721,6 +721,7 @@ subroutine write_bin
 
  if(compswitch>=2) then
    call write_dummy_recordmarker(un)
+   call write_var(un, spn)
    call write_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
    call write_var(un, species, 1, spn)
    call write_dummy_recordmarker(un)
