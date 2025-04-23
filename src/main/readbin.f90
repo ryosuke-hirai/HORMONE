@@ -65,6 +65,7 @@ subroutine readbin(filename)
 
  if(compswitch>=2) then
    call read_dummy_recordmarker(un)
+   call read_var(un, spn)
    call read_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
    call read_var(un, species, 1, spn)
    call read_dummy_recordmarker(un)
