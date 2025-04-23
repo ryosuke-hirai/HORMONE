@@ -75,7 +75,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
    end if
-   corr = (eint-d*(Rgas*cveff)*T-erec) &
+   corr = (eint-d*(Rgas*cveff*T+erec)) &
         / ( -d*(Rgas*(cveff+dcveffdlnT)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt

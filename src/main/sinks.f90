@@ -96,9 +96,11 @@ subroutine sink_accretion
 !$omp end parallel do
 
   call allreduce_mpi('sum',ambmass)
+  if(eq_sym)ambmass = 2d0*ambmass
 
 ! Roughly estimate heat rate by optical depth
   sink(n)%facc = 1d0 - exp(-kappa*ambmass/(4d0*pi/3d0*r_acc**2))
+  if(sink(n)%facc<0d0)stop 'facc is negative'
 
 !$omp parallel do private(i,j,k,dis,philoc,itauacc,newd,newe,newp,vcell,vrel,&
 !$omp dm,spc1,spc2,ang_to_ns,perp) &
