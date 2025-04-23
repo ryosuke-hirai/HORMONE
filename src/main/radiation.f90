@@ -620,9 +620,10 @@ subroutine radiative_force
       if(l>m)cycle
       Pedd(l,m) = (3d0*ff-1d0)*nn(l)*nn(m)
       if(l==m)Pedd(l,m) = Pedd(l,m) + (1d0-ff)
+      Pedd(l,m) = 0.5d0*erad(i,j,k)*Pedd(l,m)
      end do
     end do
-    Pedd = 0.5d0*erad(i,j,k)*Pedd
+
     radwork = Pedd(1,1)*gradv1(1) + Pedd(1,2)*gradv1(2) + Pedd(1,3)*gradv1(3) &
             + Pedd(1,2)*gradv2(1) + Pedd(2,2)*gradv2(2) + Pedd(2,3)*gradv2(3) &
             + Pedd(1,3)*gradv3(1) + Pedd(2,3)*gradv3(2) + Pedd(3,3)*gradv3(3)
