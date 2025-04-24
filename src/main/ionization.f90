@@ -6,8 +6,7 @@ module ionization_mod
                                        arec, brec, crec, drec, arec1c, brec1c
  real(8),private:: frec, edge, tanh_c, dtanh_c, Trot, Tvib, sigrot, sigvib
  real(8),parameter,private:: tanh_edge = 3.64673859532966d0, &
-                             sigm_edge = 1.43713233658279d0, &
-                             dlogT=1d-4, dtemp=log(dlogT)
+                             sigm_edge = 1.43713233658279d0
 
  public::ionization_setup,get_xion,get_erec,get_imurec,get_erec_cveff
  private::rapid_tanh,rapid_dtanh,arec1,brec1,rapid_sigm,cvmol,get_cveff,imurec1
@@ -128,19 +127,19 @@ contains
   end if
  end function brec1
 ! ***************************************************************************
- pure function cvmol(logT)
+ pure function cvmol(lnT)
 ! molecular hydrogen specific heat capacity
-  real(8),intent(in):: logT
+  real(8),intent(in):: lnT
   real(8):: cvmol
-  cvmol = 0.5d0 * ( rapid_sigm((logT-Trot)/sigrot) &
-                  + rapid_sigm((logT-Tvib)/sigvib) &
+  cvmol = 0.5d0 * ( rapid_sigm((lnT-Trot)/sigrot) &
+                  + rapid_sigm((lnT-Tvib)/sigvib) &
                   + 5d0 )
  end function cvmol
 
 ! ***************************************************************************
- pure function get_cveff(logT,xion,X,Y) result(cveff)
+ pure function get_cveff(lnT,xion,X,Y) result(cveff)
 ! Compute Cv/(mu*Rgas). Becomes complicated when H2 is present.
-  real(8),intent(in):: logT,xion(1:4),X,Y
+  real(8),intent(in):: lnT,xion(1:4),X,Y
   real(8):: cveff, imup, Xmol,Xbar,Ybar
 
   if(xion(1)<1d0)then
@@ -148,12 +147,12 @@ contains
    Xbar = xion(1)*X/(1d0-Xmol) ! Hydrogen mass fraction of monatomic part
    Ybar = Y/(1d0-Xmol)         ! Helium mass fraction of monatomic part
    imup = 0.5d0*(1d0+2d0*xion(2))*Xbar+0.25d0*(xion(3)+xion(4)-1d0)*Ybar+0.5d0
-   cveff = cvmol(logT)/2d0*Xmol+1.5d0*imup*(1d0-Xmol)
+   cveff = cvmol(lnT)/2d0*Xmol+1.5d0*imup*(1d0-Xmol)
   else
    imup = 0.5d0*(xion(1)+2d0*xion(2))*X+0.25d0*(xion(3)+xion(4)-1d0)*Y+0.5d0
    cveff = 1.5d0*imup
   end if
-  
+
  end function get_cveff
 
 ! *************************************************************************** 
@@ -198,7 +197,8 @@ contains
   real(8),intent(out):: erec, cveff
   real(8),intent(out),optional:: derecdT, dcveffdlnT
   real(8),dimension(1:4):: e, xi, zi
-  real(8):: logT,cveff2
+  real(8):: lnT,cveff2
+  real(8),parameter:: dlnT=1d-4
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
@@ -219,11 +219,11 @@ contains
    derecdT = sum(e(1:4)*zi(1:4))
   end if
 
-  logT = log(T)
-  cveff = get_cveff(logT,xi,X,Y)
+  lnT = log(T)
+  cveff = get_cveff(lnT,xi,X,Y)
   if(present(dcveffdlnT))then
-   cveff2 = get_cveff(logT+dlogT,xi,X,Y)
-   dcveffdlnT = (cveff2-cveff)/dtemp
+   cveff2 = get_cveff(lnT+dlnT,xi,X,Y)
+   dcveffdlnT = (cveff2-cveff)/dlnT
   end if
 
   return
@@ -247,6 +247,7 @@ contains
   real(8),intent(out),optional:: dimurecdlnT,dimurecdlnd
   real(8),dimension(1:4):: xi, zi
   real(8):: imurec2
+  real(8),parameter:: dlnd=1d-4
 
 ! CAUTION: This is only a poor man's way of implementing recombination energy.
 !          It only should be used for -3.5<logQ<-6 where logQ=logrho-2logT+12.
@@ -262,9 +263,9 @@ contains
    dimurecdlnT = T*((0.5d0*zi(1)+zi(2))*X+0.25d0*(zi(3)+zi(4))*Y)
   end if
   if(present(dimurecdlnd))then
-   call get_xion(logd+dlogT,T,Y,xi)
+   call get_xion(logd+dlnd,T,Y,xi)
    imurec2 = imurec1(xi,X,Y)
-   dimurecdlnd = (imurec2-imurec)/dtemp
+   dimurecdlnd = (imurec2-imurec)/dlnd
   end if
 
   return

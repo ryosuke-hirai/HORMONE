@@ -20,10 +20,10 @@ subroutine eostest
 
  real(8):: d, p, e, T, imu
  real(8):: X, Y, Z, Xi, Xf, p2, T2, Ti, Tf
- real(8):: Qi, Qf, Q, erec, imu2, imu3, T0, cs
+ real(8):: Qi, Qf, Q, imu2, imu3, T0, cs
  real(8):: T3, p3, p4, d2, S, T4
  real(8):: rerrp1,rerrp2,rerrp3,rerrT1,rerrT2,rerrd1
- real(8):: gamma1
+ real(8):: gamma1, erad, prad
  integer:: j,k, iie, jje, kke, ierr, ui
  character(len=100):: form1
 
@@ -38,10 +38,10 @@ subroutine eostest
 ! Set range of grid for the EoS test
  Xi = 0.6d0
  Xf = 0.8d0
- Ti = 3d0
- Tf = 6d0
- Qi = -8d0
- Qf = 0d0
+ Ti = 2d0
+ Tf = 7d0
+ Qi = -10d0
+ Qf = 2d0
 
  Xi=0.7d0
 
@@ -201,7 +201,6 @@ subroutine eostest
 
    d = 10d0**(log10(Q)+2d0*log10(T)-12d0)
    call get_imurec(log10(d),T,X,Y,imu)
-   erec = get_erec(log10(d),T,X,Y)
 
    p = Rgas*imu*d*T+arad*T**4/3d0
    T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
@@ -241,6 +240,76 @@ subroutine eostest
 ! print form1,'get_d_from_ps: density =',rerrd1
 ! print form1,'get_p_from_ds: pressure =',rerrp3
  print*,'Entropy calculations for eostype=2 currently under construction'
+ print*,'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+ print*,''
+
+! Test gas + recombination EoS
+ print*,'Testing gas+rec EoS forwards and backwards consistency...'
+ eostype = 3
+ compswitch = 2
+ call ionization_setup
+ rerrp1=0d0;rerrp2=0d0;rerrT1=0d0;rerrT2=0d0;rerrd1=0d0
+ open(newunit=ui,file='data/eostest_gasrec.dat',status='replace')
+ write(ui,'(2a5,20a23)')&
+    'j','k','d','Q','e','X',&
+    'mu_from_eos_e','mu_from_eos_p','mu_from_eos_p_cs',&
+    'T_from_eos_e','T_from_eos_p','T_from_eos_p_cs',&
+    'p_for_eos_e','p_from_eos_p','p_from_eos_p_cs',&
+    'rel_error_for_eos_p','rel_error_for_eos_p_cs',&
+    'rel_error_p_from_ds','entropy_from_dp','d_from_inventropy',&
+    'gamma1'
+
+ do k = 0, kke ! loop over T
+  T0 = 10d0**(Ti+(Tf-Ti)/dble(kke)*dble(k))
+  do j = 0, jje ! loop over Q
+   Q = 10d0**(Qi+(Qf-Qi)/dble(jje)*dble(j))
+   X = Xi!+(Xf-Xi)/dble(iie)*dble(i)
+   Y = 1d0-X-Z
+   T = T0
+
+   d = 10d0**(log10(Q)+2d0*log10(T)-12d0)
+   call get_imurec(log10(d),T,X,Y,imu)
+
+   p = Rgas*imu*d*T
+   erad = arad*T**4/2d0; prad = erad/3d0
+   T = 1d3; T2 = 1d3; T3 = 1d3; T4 = 1d3
+   e = eos_e(d,p,T,imu,X,Y)
+   p2 = eos_p(d,e,T2,imu2,X,Y)
+   call eos_p_cs(d,e,T3,imu3,p3,cs,X,Y,erad=erad,ierr=ierr)
+   gamma1 = cs**2*d/(p3+prad)
+
+! Currently not ready for entropy calculations
+!   S = entropy_from_dp(d,p,T4,imu4,X,Y)
+!   d2 = get_d_from_ps(p,S,imu4,X,Y)
+!   p4 = get_p_from_ds(d,S,imu)
+
+   rerrp1 = max(rerrp1,abs(p2/p-1d0))
+   rerrp2 = max(rerrp2,abs(p3/p-1d0))
+   rerrp3 = max(rerrp3,abs(p4/p-1d0))
+   rerrT1 = max(rerrT1,abs(T2/T-1d0))
+   rerrT2 = max(rerrT2,abs(T3/T-1d0))
+   rerrd1 = max(rerrd1,abs(d2/d-1d0))
+   write(ui,'(2i5,20(1PE23.15e2))')&
+    j,k,d,Q,e+erad,X,&
+    1d0/imu,1d0/imu2,1d0/imu3,&
+    T,T2,T3,p,p2,p3,&
+    p2/p-1d0,p3/p-1d0,&
+    p4/p-1d0,S,d2,gamma1
+
+  end do
+  write(ui,'()')
+ end do
+
+ close(ui)
+
+ print*,'Relative errors computed from each module is:'
+ print form1,'eos_p    : temperature =',rerrT1,'pressure =',rerrp1
+ print form1,'eos_p_cs : temperature =',rerrT2,'pressure =',rerrp2
+! print form1,'get_d_from_ps: density =',rerrd1
+! print form1,'get_p_from_ds: pressure =',rerrp3
+ print*,'Entropy calculations for eostype=3 currently under construction'
+ print*,'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+ print*,''
 
  stop
 
