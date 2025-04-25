@@ -189,6 +189,7 @@ end subroutine get_luminosity2
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate luminosity assuming black body radiation
+! v3:: Compute multiple frequencies so that we can get an effective temperature
 
 subroutine get_luminosity3(angle,lmda,lum,spec)
 
@@ -292,6 +293,125 @@ subroutine get_luminosity3(angle,lmda,lum,spec)
 
  return
 end subroutine get_luminosity3
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                       SUBROUTINE GET_LUMINOSITY4
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To calculate luminosity assuming black body radiation
+! v4:: Faster integration by shooting rays from the observer and truncating when
+!      it gets optically thick
+
+subroutine get_luminosity4(angle,lmda,lum,spec)
+
+ use settings,only:eq_sym
+ use grid
+ use physval
+ use constants,only:pi,sigma
+ use utils,only:carpol,roty,rotz,geometrical_series
+ use utils_analysis
+
+ implicit none
+
+ real(8),intent(in):: angle(1:2)
+ real(8),allocatable,intent(in):: lmda(:)
+ real(8),intent(out):: lum
+ real(8),allocatable,intent(inout):: spec(:)
+ real(8):: drmin, dtheta, dA, rho, XX, TT, dzabs, lumt
+ real(8),dimension(1:3):: x, xp, dz0
+ real(8),allocatable,dimension(:):: dr, rr, int_nu, S_nu, dtau, tau, dint_nu
+ integer:: ii, jj, iin, jjn
+ real(8):: source, intens, dtau_grey, tau_grey, dintens
+ logical:: half
+
+!-----------------------------------------------------------------------------
+
+ iin = 600 ! radial resolution
+ jjn = 100 ! angular resolution
+ allocate(dr(-1:iin+2),rr(-1:iin+2))
+ drmin = dxi1(is)
+ call geometrical_series(dr,drmin,1,iin,0d0,xi1(ie))
+ rr(0) = 0d0
+ do ii = 1, iin
+  rr(ii) = rr(ii-1)+dr(ii)
+ end do
+ dtheta = 2d0*pi/dble(jjn)
+ dz0 = [0d0,0d0,1d0]
+ dz0 = rotz(roty(dz0,angle(1)),angle(2))
+ lum = 0d0
+ lumt = 0d0
+ spec = 0d0
+ half = .false.
+ if(eq_sym.and.abs(angle(1)*2d0/pi-1d0)<1d-10)then
+  half=.true.
+  jjn=jjn/2
+ end if
+
+ allocate(int_nu,S_nu,tau,dtau,mold=lmda)
+
+!$omp parallel do reduction(+:lumt,spec) collapse(2)  &
+!$omp private(ii,jj,dA,x,xp,rho,XX,TT,dzabs,dtau,tau,source,intens,dintens,&
+!$omp         int_nu,dint_nu,S_nu,dtau_grey,tau_grey)
+ do jj = 1, jjn
+  do ii = 1, iin
+! set initial position
+   x(1) =-0.5d0*(rr(ii-1)+rr(ii))*sin(jj*dtheta)
+   x(2) = 0.5d0*(rr(ii-1)+rr(ii))*cos(jj*dtheta)
+   x(3) = sqrt(xi1(ie)**2-x(1)**2-x(2)**2)*0.97d0
+   dA = 0.5d0*(rr(ii)**2-rr(ii-1)**2)*dtheta
+   x = rotz(roty(x,angle(1)),angle(2))
+
+! Shoot ray
+   dzabs=0d0
+   intens=0d0
+   tau=0d0
+   dtau=1d99
+   int_nu=0d0
+   tau_grey=0d0
+   dtau_grey=1d99
+   ray_loop:do while (dot_product(x,x)<xi1(ie)**2)
+
+    x = x - dz0*dzabs
+    xp = carpol(x)
+
+    if(xp(1)<norm2(x))then
+     ! for some reason the Intel compiler causes this to happen
+     print*,'error'
+     print*,ii,jj,xp(1),norm2(x)
+     stop
+    end if
+
+    call get_local_val(xp,rho,XX,TT,dzabs)
+! Assuming grey opacities
+    dtau = rho*kap(XX,TT,lmda)*dzabs
+    dtau_grey = rho*kap(XX,TT)*dzabs
+    source = sigma*TT**4/pi
+    dintens = source*(1d0-exp(-dtau_grey))*exp(-tau_grey)
+    intens = intens + dintens
+    S_nu = planck_lambda(lmda,TT)
+    dint_nu = S_nu*(1d0-exp(-dtau))*exp(-tau)
+    int_nu = int_nu + dint_nu
+    if(maxval(abs(dint_nu/int_nu))<1d-8)exit ray_loop
+    tau = tau + dtau
+    tau_grey = tau_grey + dtau_grey
+   end do ray_loop
+
+   lumt = lumt+dA*intens
+   spec = spec+dA*int_nu
+  end do
+ end do
+!$omp end parallel do
+
+ lum = lumt*4d0*pi
+ if(half)then
+  lum = lum*2d0
+  spec = spec*2d0
+ end if
+
+ return
+end subroutine get_luminosity4
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
