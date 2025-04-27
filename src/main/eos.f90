@@ -11,14 +11,13 @@ contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
- use ionization_mod,only:get_erec_imurec
+ use ionization_mod,only:get_erec_cveff,get_imurec
 ! PURPOSE: To calculate temperature from density and internal energy
- implicit none
  real(8),intent(in):: d,eint
  real(8),intent(inout):: T,imu
  real(8),intent(in),optional:: X,Y
  real(8),intent(out),optional:: erec_out
- real(8):: corr, erec, derecdT, dimurecdT, Tdot, logd, dt
+ real(8):: corr, erec, Cveff, derecdT, dcveffdlnT, Tdot, logd, dt
  real(8),parameter:: W4err = 1d-2
  integer:: n
 
@@ -45,12 +44,12 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  case(2) ! ideal gas + radiation + recombination
   corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
   do n = 1, 500
-   call get_erec_imurec(logd,T,X,Y,erec,imu,derecdT,dimurecdT)
+   call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
    end if
-   corr = (eint-(arad*T**3+d*Cv*imu)*T-d*erec) &
-        / ( -4d0*arad*T**3-d*(Cv*(imu+dimurecdT*T)+derecdT) )
+   corr = (eint-(arad*T**3+d*Rgas*cveff)*T-d*erec) &
+        / ( -4d0*arad*T**3-d*(Rgas*(cveff+dcveffdlnT)+derecdT) )
    if(abs(corr)>W4err*T)then
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr
@@ -63,9 +62,37 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
   end do
   if(n>500)then
    print*,'Error in getT_from_de, eostype=',eostype
-   print*,'d=',d,'eint=',eint,'mu=',1d0/imu
+   print'(4(a6,1PE13.6e2))','d=',d,'eint=',eint,'X=',X,'Y=',Y
    stop
   end if
+  call get_imurec(logd,T,X,Y,imu)
+  if(present(erec_out)) erec_out = erec
+
+ case(3) ! ideal gas + recombination
+  corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
+  do n = 1, 500
+   call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
+   if(d*erec>=eint)then ! avoid negative thermal energy
+    T = 0.95d0*T; Tdot=0d0;cycle
+   end if
+   corr = (eint-d*(Rgas*cveff*T+erec)) &
+        / ( -d*(Rgas*(cveff+dcveffdlnT)+derecdT) )
+   if(abs(corr)>W4err*T)then
+    T = T + Tdot*dt
+    Tdot = (1d0-2d0*dt)*Tdot - dt*corr
+   else
+    T = T-corr
+    Tdot = 0d0
+   end if
+   if(abs(corr)<eoserr*T)exit
+   if(n>50)dt=0.5d0
+  end do
+  if(n>500)then
+   print*,'Error in getT_from_de, eostype=',eostype
+   print'(4(a6,1PE13.6e2))','d=',d,'eint=',eint,'X=',X,'Y=',Y
+   stop
+  end if
+  call get_imurec(logd,T,X,Y,imu)
   if(present(erec_out)) erec_out = erec
 
  case default
@@ -78,22 +105,22 @@ end subroutine getT_from_de
 !                        SUBROUTINE GETT_FROM_DP
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
- use ionization_mod,only:get_erec,get_imurec
+subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
+ use ionization_mod,only:get_erec_cveff,get_imurec
 ! PURPOSE: To calculate temperature from density and pressure
  implicit none
  real(8),intent(in):: d,p
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: T,imu
- real(8),intent(out),optional:: erec
- real(8):: corr, imurec, dimurecdT, logd
+ real(8),intent(out),optional:: erec, cveff
+ real(8):: corr, imurec, dimurecdlnT, logd
  integer:: n
 
  if(T<=0d0) T=1d3
 
  select case (eostype)
  case(0) ! ideal gas
-  T = p/(Rgas*imu)
+  T = p/(Rgas*d*imu)
 
  case(1) ! ideal gas + radiation
   corr = huge
@@ -112,9 +139,9 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
  case(2) ! ideal gas + radiation + recombination
   corr = huge; logd = log10(d)
   do n = 1, 500
-   call get_imurec(logd,T,X,Y,imurec,dimurecdT)
+   call get_imurec(logd,T,X,Y,imurec,dimurecdlnT)
    corr = (p - (arad*T**3/3d0+d*Rgas*imurec)*T) &
-        / (-4d0*arad*T**3/3d0-d*Rgas*(imurec+dimurecdT*T))
+        / (-4d0*arad*T**3/3d0-d*Rgas*(imurec+dimurecdlnT))
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
@@ -124,7 +151,28 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,erec)
    stop
   end if
   imu = imurec
-  if(present(erec)) erec = get_erec(logd,T,X,Y)
+  if(present(erec))then
+   call get_erec_cveff(logd,T,X,Y,erec,cveff)
+  end if
+
+ case(3) ! ideal gas + recombination
+  corr = huge; logd = log10(d)
+  do n = 1, 500
+   call get_imurec(logd,T,X,Y,imurec,dimurecdlnT)
+   corr = (p - d*Rgas*imurec*T) &
+        / (-d*Rgas*(imurec+dimurecdlnT))
+   T = T - corr
+   if(abs(corr)<eoserr*T)exit
+  end do
+  if(n>500)then
+   print*,'Error in getT_from_dp, eostype=',eostype
+   print*,'d=',d,'p=',p,'mu=',1d0/imu
+   stop
+  end if
+  imu = imurec
+  if(present(erec))then
+   call get_erec_cveff(logd,T,X,Y,erec,cveff)
+  end if
 
  case default
   stop 'Error in eostype'
@@ -146,7 +194,7 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
  real(8),intent(inout):: T,imu
  real(8),intent(out):: p,cs
  integer,intent(out):: ierr
- real(8):: gamma_eff,erec,Ttemp,cs2
+ real(8):: cs2
 
 !-----------------------------------------------------------------------------
 
@@ -162,22 +210,23 @@ subroutine eos_p_cs(d,eint,T,imu,p,cs,X,Y,erad,ierr)
   p = eos_p(d,eint,T,imu)
   cs2 = gamma*p/d
   if(present(erad))cs2 = cs2 + 4d0*erad/(9d0*d)
-
   cs = sqrt(cs2)
 
  case(1) ! ideal gas + radiation pressure
   p = eos_p(d,eint,T,imu)
-  gamma_eff = 1d0+p/eint
-
-  cs = sqrt(gamma_eff*p/d)
+  cs2 = get_cs2(d,T,imu=imu)
+  cs  = sqrt(cs2)
 
  case(2) ! ideal gas + radiation pressure + recombination energy
-  Ttemp = T
-  call getT_from_de(d,eint,Ttemp,imu,X,Y,erec)
   p = eos_p(d,eint,T,imu,X,Y)
-  gamma_eff = 1d0+p/(eint-d*erec)
+  cs2 = get_cs2(d,T,X=X,Y=Y)
+  cs  = sqrt(cs2)
 
-  cs = sqrt(gamma_eff*p/d)
+ case(3) ! ideal gas + recombination energy
+  p = eos_p(d,eint,T,imu,X,Y)
+  cs2 = get_cs2(d,T,X=X,Y=Y)
+  if(present(erad))cs2 = cs2 + 4d0*erad/(9d0*d)
+  cs  = sqrt(cs2)
 
  case default
   stop 'Error in eostype'
@@ -208,6 +257,10 @@ function eos_p(d,eint,T,imu,X,Y)
   call getT_from_de(d,eint,T,imu,X,Y)
   eos_p = ( Rgas*imu*d + arad*T**3/3d0 )*T
 
+ case(3) ! ideal gas + recombination
+  call getT_from_de(d,eint,T,imu,X,Y)
+  eos_p = Rgas*imu*d*T
+
  case default
   stop 'Error in eostype'
  end select
@@ -222,7 +275,7 @@ function eos_e(d,p,T,imu,X,Y)
  real(8),intent(in):: d,p
  real(8),intent(in),optional:: X,Y
  real(8),intent(inout):: imu,T
- real(8):: eos_e, erec
+ real(8):: eos_e, cveff, erec
 
  select case (eostype)
  case(0) ! ideal gas
@@ -234,14 +287,58 @@ function eos_e(d,p,T,imu,X,Y)
   eos_e = ( Cv*imu*d + arad*T**3 )*T
 
  case(2) ! ideal gas + radiation + recombination
-  call getT_from_dp(d,p,T,imu,X,Y,erec)
-  eos_e = ( Cv*imu*d + arad*T**3 )*T + d*erec
+  call getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
+  eos_e = ( Rgas*cveff*d + arad*T**3 )*T + d*erec
+
+ case(3) ! ideal gas + recombination
+  call getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
+  eos_e = d*( Rgas*cveff*T + erec )
 
  case default
   stop 'Error in eostype'
  end select
 
 end function eos_e
+
+! ***************************************************************************
+
+function get_cs2(d,T,imu,X,Y) result(cs2)
+! PURPOSE: To compute sound speed squared from d and T
+ use ionization_mod
+ real(8),intent(in):: d,T
+ real(8),intent(in),optional:: imu,X,Y
+ real(8):: cs2
+ real(8):: erec,cveff,derecdT,dcveffdlnT,imurec,dimurecdlnT,dimurecdlnd
+ real(8):: logd,deraddT
+
+ select case(eostype)
+ case(0) ! ideal gas
+  cs2 = gamma*Rgas*imu*T
+
+ case(1) ! ideal gas + radiation
+  deraddT = 4d0*arad*T**3/d
+  cs2 = Rgas*imu*T + (Rgas*imu+deraddT/3d0)**2*T/(Cv*imu+deraddT)
+
+ case(2) ! ideal gas + radiation + recombination
+  logd=log10(d)
+  call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
+  call get_imurec(logd,T,X,Y,imurec,dimurecdlnT,dimurecdlnd)
+  deraddT = 4d0*arad*T**3/d
+  cs2 = Rgas*(imurec+dimurecdlnd)*T &
+      + ( Rgas*(imurec+dimurecdlnT)+deraddT/3d0)**2*T &
+        / (Rgas*(cveff+dcveffdlnT)+deraddT+derecdT)
+
+ case(3) ! ideal gas + recombination
+  logd=log10(d)
+  call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
+  call get_imurec(logd,T,X,Y,imurec,dimurecdlnT,dimurecdlnd)
+  cs2 = Rgas*(imurec+dimurecdlnd)*T &
+      + ( Rgas*(imurec+dimurecdlnT))**2*T &
+        / (Rgas*(cveff+dcveffdlnT)+derecdT)
+
+ end select
+
+end function get_cs2
 
 ! ***************************************************************************
 
@@ -264,7 +361,6 @@ end function get_cf
 ! ***************************************************************************
 
 elemental function Trad(erad)
- use constants,only:arad
 ! PURPOSE: To compute radiation temperature from erad
  real(8),intent(in):: erad
  real(8):: Trad
@@ -315,6 +411,10 @@ function entropy_from_dT(d,T,imu,X,Y) result(entropy)
   print*, 'Entropy calculation for eostype=2 still needs work'
   stop
 
+ case(3) ! ideal gas + recombination
+  print*, 'Entropy calculation for eostype=3 still needs work'
+  stop
+
  case default
   stop 'Error in eostype'
 
@@ -325,7 +425,6 @@ end function entropy_from_dT
 ! ***************************************************************************
 
 function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
- use constants
 ! PURPOSE: To calculate entropy from density and pressure
  implicit none
  real(8),intent(in):: d,p
@@ -346,6 +445,10 @@ function entropy_from_dp(d,p,T,imu,X,Y) result(entropy)
   call getT_from_dp(d,p,T,imu,X,Y)
   entropy = entropy_from_dT(d,T,imu,X,Y)
 
+ case(3) ! ideal gas + recombination
+  call getT_from_dp(d,p,T,imu,X,Y)
+  entropy = entropy_from_dT(d,T,imu,X,Y)
+
  case default
   stop 'Error in eostype'
 
@@ -356,7 +459,6 @@ end function entropy_from_dp
 ! ***************************************************************************
 
 function entropy_from_de(d,e,T,imu,X,Y) result(entropy)
- use constants
 ! PURPOSE: To calculate entropy from density and internal energy
  implicit none
  real(8),intent(in):: d,e
@@ -374,6 +476,10 @@ function entropy_from_de(d,e,T,imu,X,Y) result(entropy)
   entropy = entropy_from_dT(d,T,imu)
 
  case(2) ! ideal gas + radiation + recombination
+  call getT_from_de(d,e,T,imu,X,Y)
+  entropy = entropy_from_dT(d,T,imu,X,Y)
+
+ case(3) ! ideal gas + recombination
   call getT_from_de(d,e,T,imu,X,Y)
   entropy = entropy_from_dT(d,T,imu,X,Y)
 
@@ -423,6 +529,33 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
   end if
 
  case(2) ! ideal gas + radiation + recombination
+  d = 1d-8 ! initial guess
+  T = 1d3
+  corr=huge;ddot=0d0;dt=0.9d0
+  do n = 1,500
+   dp = d*(1d0+dfac)
+   S0 = entropy_from_dp(d,p,T,imu,X,Y)
+   Sp = entropy_from_dp(dp,p,T,imu,X,Y)
+   dSdd = (Sp-S0)/(dp-d) ! Numerical differentiation
+   corr0 = (S0-S)/dSdd
+   corr = min(corr0,d*0.9d0)
+   if(abs(corr)>W4err*d)then
+    d = d + ddot*dt
+    ddot = (1d0-2d0*dt)*ddot - dt*corr
+   else
+    d = d-corr
+    ddot = 0d0
+   end if
+   if(abs(corr)<Serr_rel_eoserr*eoserr*d)exit
+   if(n>50)dt=0.5d0
+  end do
+  if(n>500)then
+   print*,'Error in get_d_from_ps, eostype=',eostype
+   print*,'d=',d,'S=',S,'mu=',1d0/imu
+   stop
+  end if
+
+ case(3) ! ideal gas + recombination
   d = 1d-8 ! initial guess
   T = 1d3
   corr=huge;ddot=0d0;dt=0.9d0
@@ -521,6 +654,33 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
    stop
   end if
 
+ case(3) ! ideal gas + recombination
+  e = 1d-8 ! initial guess
+  T = 1d3
+  corr=huge;edot=0d0;dt=0.9d0
+  do n = 1,500
+   ep = e*(1d0+dfac)
+   S0 = entropy_from_de(d,e,T,imu,X,Y)
+   Sp = entropy_from_de(d,ep,T,imu,X,Y)
+   dSde = (Sp-S0)/(ep-e) ! Numerical differentiation
+   corr0 = (S0-S)/dSde
+   corr = min(corr0,e*0.9d0)
+   if(abs(corr)>W4err*e)then
+    e = e + edot*dt
+    edot = (1d0-2d0*dt)*edot - dt*corr
+   else
+    e = e-corr
+    edot = 0d0
+   end if
+   if(abs(corr)<Serr_rel_eoserr*eoserr*e)exit
+   if(n>50)dt=0.5d0
+  end do
+  if(n>500)then
+   print*,'Error in getd_from_ps, eostype=',eostype
+   print*,'d=',d,'S=',S,'mu=',1d0/imu
+   stop
+  end if
+
  case default
   stop 'Error in eostype'
  end select
@@ -550,6 +710,10 @@ function get_p_from_ds(d,S,imu,X,Y) result(p)
   p = eos_p(d,eint,T,imu)
 
  case(2) ! ideal gas + radiation + recombination
+  eint = get_e_from_ds(d,S,imu,X,Y)
+  p = eos_p(d,eint,T,imu,X,Y)
+
+ case(3) ! ideal gas + recombination
   eint = get_e_from_ds(d,S,imu,X,Y)
   p = eos_p(d,eint,T,imu,X,Y)
 
@@ -597,7 +761,7 @@ subroutine pressure
   end do
 !$omp end parallel do
 
- case (2) ! EoSs that require composition
+ case (2:3) ! EoSs that require composition
 !$omp parallel do private(i,j,k,bsq) collapse(3)
   do k = ks,ke
    do j = js,je

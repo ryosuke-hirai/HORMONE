@@ -38,6 +38,7 @@ subroutine initialcondition
  use smearingtest_mod
  use iotest_mod
  use radtests_mod
+ use radstar_mod
 
  integer:: i,j,k
 
@@ -77,6 +78,9 @@ subroutine initialcondition
 
   case('polytrope')
    call polytrope
+
+  case('radstar')
+   call radstar
 
   case('agndisk')
    call agndisk
