@@ -3,27 +3,38 @@ module petsc_solver_mod
 #include <petsc/finclude/petsc.h>
   use petsc
   use mpi_utils, only: myrank, stop_mpi
+#endif
   implicit none
   private
 
   public :: init_petsc, finalise_petsc, solve_system_petsc
-  public :: A_petsc !, x_petsc, b_petsc, ksp
+  public :: A_petsc
 
+#ifdef USE_PETSC
   PetscErrorCode :: ierr
   Mat :: A_petsc
   Vec :: x_petsc, b_petsc
   KSP :: ksp
   PC :: pc
+#else
+  ! Dummy declarations for non-PETSc builds
+  integer :: ierr
+  integer :: A_petsc, x_petsc, b_petsc, ksp, pc
+#endif
 
   contains
 
   subroutine init_petsc
+#ifdef USE_PETSC
     call PetscInitialize(PETSC_NULL_CHARACTER, ierr)
     if (ierr /= 0) stop 'PETSc initialization failed'
+#endif
   end subroutine init_petsc
 
   subroutine finalise_petsc
+#ifdef USE_PETSC
     call PetscFinalize(ierr)
+#endif
   end subroutine finalise_petsc
 
   subroutine solve_system_petsc(cgsrc, x)
@@ -40,6 +51,7 @@ module petsc_solver_mod
     !-------------------------------------------------------------------
     real(8), intent(in) :: cgsrc(:)
     real(8), intent(inout) :: x(:)
+#ifdef USE_PETSC
     integer :: ierr, i, lmax
     PetscInt :: N
     real(8), pointer :: x_array(:)
@@ -90,7 +102,7 @@ module petsc_solver_mod
     call VecDestroy(x_petsc, ierr)
     call VecDestroy(b_petsc, ierr)
 
+#endif
   end subroutine solve_system_petsc
 
-#endif
 end module petsc_solver_mod

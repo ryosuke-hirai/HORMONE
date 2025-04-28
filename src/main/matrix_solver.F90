@@ -43,6 +43,7 @@ end subroutine setup_A_grv
 
 subroutine solve_system(cgsrc, x)
   use petsc_solver_mod
+  use miccg_mod, only: miccg, cg=>cg_grv
   real(8), allocatable, intent(in) :: cgsrc(:)
   real(8), allocatable, intent(inout) :: x(:)
 
