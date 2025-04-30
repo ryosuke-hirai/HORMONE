@@ -107,6 +107,30 @@ jobs:
         flat:
           - no
           - yes
+        mpi_tasks:
+          - 2
+        omp_threads:
+          - 2
+        include:
+          # These tests should be run with 4 MPI tasks as well
+          - test: smearing
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: polytrope
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: KHinstability
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: orszagtang_xy
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: orszagtang_yz
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: orszagtang_xz
+            mpi_tasks: 4
+            omp_threads: 1
         exclude:
           - fc: ifx
             mpi: yes
@@ -202,8 +226,10 @@ jobs:
       working-directory: ./work
       run: |
         if [[ "${{ matrix.mpi }}" == "yes" ]]; then
-          OMP_NUM_THREADS=2 mpirun -np 4 --oversubscribe ./hormone
+          export OMP_NUM_THREADS=${{ matrix.omp_threads }}
+          mpirun -np ${{ matrix.mpi_tasks }} --oversubscribe ./hormone
         else
+          export OMP_NUM_THREADS=${{ matrix.omp_threads }}
           ./hormone
         fi
 
