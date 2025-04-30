@@ -201,7 +201,7 @@ jobs:
           - test: diffusion2d_yz
             flat: yes
 
-    name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }})
+    name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }})
 
     steps:
     - uses: actions/checkout@v4
