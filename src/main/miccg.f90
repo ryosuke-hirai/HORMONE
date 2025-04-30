@@ -3,18 +3,158 @@ module miccg_mod
  implicit none
 
  public:: miccg,ijk_from_l,l_from_ijk,get_preconditioner
- type cg_set
-  integer:: is,ie,js,je,ks,ke,in,jn,kn,lmax
-  integer:: cdiags,Adiags
-  integer,allocatable:: ia(:),ic(:)
-  real(8),allocatable,dimension(:,:):: A,c
-  real(8):: alpha
- end type cg_set
- type(cg_set),public::cg_grv,cg_rad
-
  private:: Apk,cctr
 
 contains
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE SETUP_CG
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: This is the assembly routine for the MICCG branch.
+!          The coefficients are computed using compute_coeffs and
+!          the preconditioner is computed as well.
+!          The resulting data is stored in the cg object.
+!          The matrix A is not assembled here, but the offsets are set.
+
+subroutine setup_cg(system)
+  use utils, only: get_dim
+  use matrix_vars, only: cg_set, cg_grv, cg_rad, igrv, irad
+  use matrix_coeffs_mod, only: compute_coeffs
+  use grid,only:is,ie,js,je,ks,ke
+  integer, intent(in) :: system
+  integer :: in, jn, kn, dim, i, j, k, l
+  real(8), allocatable :: coeffs(:)
+  type(cg_set), pointer :: cg
+  integer :: lmax
+
+  ! Select the appropriate cg object based on the system.
+  if (system == igrv) then
+    cg => cg_grv
+  else if (system == irad) then
+    cg => cg_rad
+  else
+    print *, 'Error in setup_cg: unsupported system'
+    stop
+  end if
+
+  ! Set grid parameters.
+  cg%is = is;  cg%ie = ie
+  cg%js = js;  cg%je = je
+  cg%ks = ks;  cg%ke = ke
+
+  in = ie - is + 1
+  jn = je - js + 1
+  kn = ke - ks + 1
+  cg%in = in;  cg%jn = jn;  cg%kn = kn
+  lmax = in * jn * kn
+  cg%lmax = lmax
+
+  ! Determine problem dimensionality.
+  call get_dim(is, ie, js, je, ks, ke, dim)
+
+  ! Set number of diagonals and coefficient count.
+  select case(dim)
+  case(1)
+    cg%Adiags = 2
+  case(2)
+    cg%Adiags = 3
+  case(3)
+    cg%Adiags = 5
+  end select
+
+  ! Allocate the equation matrix and set the offsets.
+  allocate(cg%ia(1:cg%Adiags))
+  allocate(cg%A(1:cg%Adiags, 1:lmax))
+
+  ! These are the same for gravity and radiation
+  select case(dim)
+  case(1)
+    cg%ia(1) = 0
+    cg%ia(2) = 1
+  case(2)
+    cg%ia(1) = 0
+    cg%ia(2) = 1
+    cg%ia(3) = in
+  case(3)
+    cg%ia(1) = 0
+    cg%ia(2) = 1
+    cg%ia(3) = in
+    cg%ia(4) = in * jn
+    cg%ia(5) = in * jn * (kn - 1)
+  end select
+
+  ! Set up the preconditioner.
+  select case(dim)
+  case(1)
+    cg%cdiags = 2
+  case(2)
+    cg%cdiags = 4
+  case(3)
+    cg%cdiags = 5
+  end select
+
+  allocate(cg%ic(1:cg%cdiags))
+  allocate(cg%c(1:cg%cdiags, 1:lmax))
+
+  select case(dim)
+  case(1)
+    cg%ic(1) = 0
+    cg%ic(2) = 1
+    cg%alpha = 0.99d0
+  case(2)
+    cg%ic(1) = 0
+    cg%ic(2) = 1
+    cg%ic(3) = in - 1
+    cg%ic(4) = in
+    cg%alpha = 0.99d0
+  case(3)
+    cg%ic(1) = 0
+    cg%ic(2) = 1
+    cg%ic(3) = in
+    cg%ic(4) = in * jn
+    cg%ic(5) = in * jn * (kn - 1)
+    cg%alpha = 0.999d0
+  end select
+
+end subroutine setup_cg
+
+subroutine write_A_cg(system)
+  use utils, only: get_dim
+  use matrix_vars, only: cg_set,igrv,irad,cg_grv,cg_rad
+  use matrix_coeffs_mod, only: compute_coeffs
+  integer, intent(in) :: system
+  real(8), allocatable :: coeffs(:)
+  type(cg_set), pointer :: cg
+  integer :: in, jn, kn, dim, i, j, k, l
+
+  if (system == igrv) then
+    cg => cg_grv
+  else if (system == irad) then
+    cg => cg_rad
+  else
+    print *, 'Error in write_A_cg: unsupported system'
+    stop
+  end if
+
+  call get_dim(cg%is, cg%ie, cg%js, cg%je, cg%ks, cg%ke, dim)
+
+  ! Loop over all grid points. For each point, compute the stencil
+  ! coefficients from the physics via compute_coeffs.
+  allocate(coeffs(cg%Adiags))
+  do l = 1, cg%lmax
+    call ijk_from_l(l, cg%is, cg%js, cg%ks, cg%in, cg%jn, i, j, k)
+    call compute_coeffs(system, dim, i, j, k, coeffs)
+    ! Save the computed coefficients into the equation matrix.
+    cg%A(:, l) = coeffs
+  end do
+  deallocate(coeffs)
+
+  call get_preconditioner(cg)
+
+end subroutine write_A_cg
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -26,7 +166,7 @@ contains
 ! PURPOSE: To solve Ax=b using the MICCG method
 
 subroutine miccg(cg,b,x)
-
+ use matrix_vars,only: cg_set
  use settings,only:cgerr
 
  type(cg_set),intent(in):: cg
@@ -144,7 +284,7 @@ end subroutine miccg
 ! PURPOSE: To calculate A*p_k
 
 subroutine Apk(cg,p,q)
-
+ use matrix_vars,only: cg_set
  type(cg_set),intent(in):: cg
  real(8),allocatable,intent(in):: p(:)
  real(8),allocatable,intent(inout):: q(:)
@@ -176,7 +316,7 @@ end subroutine Apk
 !          q = (CC^T)^{-1}r_k
 
 subroutine cctr(cg,r,q)
-
+ use matrix_vars,only: cg_set
  type(cg_set),intent(in):: cg
  real(8),allocatable,intent(in):: r(:)
  real(8),allocatable,intent(inout):: q(:)
@@ -258,7 +398,7 @@ end subroutine ijk_from_l
 ! PURPOSE: To calculate preconditioner matrix elements
 
 subroutine get_preconditioner(cg)
-
+ use matrix_vars,only: cg_set
  type(cg_set),intent(inout):: cg
  integer:: l,ll,ld,i,n,m
  logical:: found

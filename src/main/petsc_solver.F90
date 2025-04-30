@@ -8,18 +8,16 @@ module petsc_solver_mod
   private
 
   public :: init_petsc, finalise_petsc, solve_system_petsc
-  public :: A_petsc
 
 #ifdef USE_PETSC
   PetscErrorCode :: ierr
-  Mat :: A_petsc
   Vec :: x_petsc, b_petsc
   KSP :: ksp
   PC :: pc
 #else
   ! Dummy declarations for non-PETSc builds
   integer :: ierr
-  integer :: A_petsc, x_petsc, b_petsc, ksp, pc
+  integer :: x_petsc, b_petsc, ksp, pc
 #endif
 
   contains
@@ -37,7 +35,122 @@ module petsc_solver_mod
 #endif
   end subroutine finalise_petsc
 
-  subroutine solve_system_petsc(cgsrc, x)
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE SETUP_PETSC_A
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: PETSc branch for assembling the Laplacian matrix.
+!          For each grid point, we compute the stencil using compute_coeffs,
+!          then insert the values directly into the PETSc matrix (A_petsc).
+!          Preconditioning is handled by PETSc, so we do not compute it here.
+
+subroutine write_A_petsc(system)
+  integer, intent(in) :: system
+#ifdef USE_PETSC
+  use grid,only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
+  use petsc_solver_mod,only:A_petsc_grv, A_petsc_rad
+  integer :: in, jn, kn, dim, i, j, k, l, ncoeff, m
+  real(8) :: coeffs(5)
+  integer :: row, col
+  integer :: ierr
+  PetscInt    :: n
+  PetscScalar :: val
+  type(Mat) :: A_petsc
+  integer :: lmax
+
+  ! Select the appropriate PETSc matrix based on the system.
+  if (system == igrv) then
+    A_petsc = A_petsc_grv
+  else if (system == irad) then
+    A_petsc = A_petsc_rad
+  else
+    print *, 'Error in setup_petsc_A: unsupported system'
+    stop
+  end if
+
+  ! Compute grid dimensions and total number of points.
+  in = ie - is + 1
+  jn = je - js + 1
+  kn = ke - ks + 1
+  lmax = in * jn * kn
+
+  if (system == igrv) then
+    lmax_grv = lmax
+  else if (system == irad) then
+    lmax_rad = lmax
+  end if
+
+  ! Determine problem dimension based on input indices.
+  if(ie > is .and. je > js .and. ke > ks) then
+    dim = 3
+    ncoeff = 5
+  else if(ie > is .and. (je > js .or. ke > ks)) then
+    dim = 2
+    ncoeff = 3
+  else if(ie > is .and. (je == js .and. ke == ks)) then
+    dim = 1
+    ncoeff = 2
+  else
+    print *, 'Error in setup_petsc_A: unsupported dimension'
+    stop
+  end if
+
+  ! Set up PETSc matrix
+  call MatCreate(PETSC_COMM_WORLD, A_petsc, ierr)
+  n = lmax
+  call MatSetSizes(A_petsc, PETSC_DECIDE, PETSC_DECIDE, n, n, ierr)
+  call MatSetFromOptions(A_petsc, ierr)
+  call MatSetUp(A_petsc, ierr)
+
+  ! Loop over all grid points.
+  do l = 1, lmax
+    call ijk_from_l(l, is, js, ks, in, jn, i, j, k)
+    call compute_coeffs(system, dim, i, j, k, ie, in, jn, kn, coeffs)
+
+    ! As the dimension increases, additional diagonals are added, but the
+    ! offsets of existing diagonals are not changed.
+    ! In 1D, the offsets are at 0, 1.
+    ! In 2D, the offsets are at 0, 1, in
+    ! In 3D, the offsets are at 0, 1, in, in*jn, in*jn*(kn-1)
+    ! These are the same for gravity and radiation
+    do m = 1, ncoeff
+      select case(m)
+      case(1)
+        row = l - 1
+        col = l - 1
+      case(2)
+        row = l - 1
+        col = l - 1 + 1
+      case(3)
+        row = l - 1
+        col = l - 1 + in
+      case(4)
+        row = l - 1
+        col = l - 1 + in * jn
+      case(5)
+        row = l - 1
+        col = l - 1 + in * jn * (kn - 1)
+      end select
+
+      if(row >= 0 .and. row < lmax .and. col >= 0 .and. col < lmax) then
+        val = coeffs(m)
+        ! Symmetric matrix
+                       call MatSetValue(A_petsc, row, col, val, INSERT_VALUES, ierr)
+        if(row /= col) call MatSetValue(A_petsc, col, row, val, INSERT_VALUES, ierr)
+      end if
+    enddo
+  end do
+
+  ! Finalize PETSc matrix assembly.
+  call MatAssemblyBegin(A_petsc, MAT_FINAL_ASSEMBLY, ierr)
+  call MatAssemblyEnd(A_petsc, MAT_FINAL_ASSEMBLY, ierr)
+
+#endif
+end subroutine write_A_petsc
+
+  subroutine solve_system_petsc(A_petsc, cgsrc, x)
     !-------------------------------------------------------------------
     ! Solves the linear system A*x = b using PETSc.
     !
@@ -49,6 +162,11 @@ module petsc_solver_mod
     !
     ! PETSc objects are created locally and then destroyed.
     !-------------------------------------------------------------------
+#ifdef USE_PETSC
+    Mat, intent(in) :: A_petsc
+#else
+    integer, intent(in) :: A_petsc
+#endif
     real(8), intent(in) :: cgsrc(:)
     real(8), intent(inout) :: x(:)
 #ifdef USE_PETSC

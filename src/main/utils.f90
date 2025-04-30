@@ -514,4 +514,17 @@ pure function har_mean(x)
  har_mean = 2d0*x(1)*x(2)/sum(x(1:2))
 end function har_mean
 
+subroutine get_dim(is, ie, js, je, ks, ke, dim)
+  implicit none
+  integer,intent(in):: is, ie, js, je, ks, ke
+  integer,intent(out):: dim
+  dim = 0
+
+  ! TODO: make this MPI compatible
+
+  if (ie > is) dim = dim + 1
+  if (je > js) dim = dim + 1
+  if (ke > ks) dim = dim + 1
+end subroutine get_dim
+
 end module utils

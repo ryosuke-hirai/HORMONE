@@ -25,7 +25,7 @@ subroutine gravity_elliptic
  use miccg_mod,only:miccg,l_from_ijk,ijk_from_l
  use timestep_mod,only:timestep
  use profiler_mod
- use matrix_solver,only:lmax,solve_system
+ use matrix_solver,only:lmax=>lmax_grv,solve_system_grv
  integer:: i,j,k,l
  real(8),allocatable,dimension(:):: x, cgsrc
 
@@ -106,7 +106,7 @@ subroutine gravity_elliptic
 ! ############################################################################
 
 ! Solve Poisson equation with the conjugate gradient method
-  call solve_system(cgsrc, x)
+  call solve_system_grv(cgsrc, x)
 
 !-------------------------------------------------------------------------
 
