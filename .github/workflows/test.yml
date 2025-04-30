@@ -202,7 +202,7 @@ jobs:
       working-directory: ./work
       run: |
         if [[ "${{ matrix.mpi }}" == "yes" ]]; then
-          OMP_NUM_THREADS=1 mpirun -np 4 --oversubscribe ./hormone
+          OMP_NUM_THREADS=2 mpirun -np 4 --oversubscribe ./hormone
         else
           ./hormone
         fi
