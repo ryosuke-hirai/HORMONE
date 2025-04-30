@@ -114,21 +114,45 @@ jobs:
         include:
           # These tests should be run with 4 MPI tasks as well
           - test: smearing
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
             mpi_tasks: 4
             omp_threads: 1
           - test: polytrope
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
             mpi_tasks: 4
             omp_threads: 1
           - test: KHinstability
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
             mpi_tasks: 4
             omp_threads: 1
           - test: orszagtang_xy
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
             mpi_tasks: 4
             omp_threads: 1
           - test: orszagtang_yz
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
             mpi_tasks: 4
             omp_threads: 1
           - test: orszagtang_xz
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
             mpi_tasks: 4
             omp_threads: 1
         exclude:
