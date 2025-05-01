@@ -3,7 +3,7 @@
 ! fmr_max   : Maximum levels of fixed mesh refinement (0 means no FMR)
 ! fmr_lvl(i): Number of layers in a given FMR level
 &gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
-	  is=1 ie=32 js=1 je=8 ks=1 ke=16
+	  is=1 ie=32 js=1 je=8 ks=1 ke=24
 	  imesh=1 jmesh=0 kmesh=0
 	  x1min=2d-2 x2min=0d0 x3min=0d0
 	  fmr_max=2 fmr_lvl(1)=2 fmr_lvl(2)=4 /
