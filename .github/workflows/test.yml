@@ -103,10 +103,58 @@ jobs:
           - radshock_x
           - radshock_y
           - radshock_z
-          - radstar  
+          - radstar
         flat:
           - no
           - yes
+        mpi_tasks:
+          - 2
+        omp_threads:
+          - 2
+        include:
+          # These tests should be run with 4 MPI tasks as well
+          - test: smearing
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: polytrope
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: KHinstability
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: orszagtang_xy
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: orszagtang_yz
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+          - test: orszagtang_xz
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
         exclude:
           - fc: ifx
             mpi: yes
@@ -153,7 +201,7 @@ jobs:
           - test: diffusion2d_yz
             flat: yes
 
-    name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }})
+    name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }})
 
     steps:
     - uses: actions/checkout@v4
@@ -202,8 +250,10 @@ jobs:
       working-directory: ./work
       run: |
         if [[ "${{ matrix.mpi }}" == "yes" ]]; then
-          mpirun -np 2 --oversubscribe ./hormone
+          export OMP_NUM_THREADS=${{ matrix.omp_threads }}
+          mpirun -np ${{ matrix.mpi_tasks }} --oversubscribe ./hormone
         else
+          export OMP_NUM_THREADS=${{ matrix.omp_threads }}
           ./hormone
         fi
 
