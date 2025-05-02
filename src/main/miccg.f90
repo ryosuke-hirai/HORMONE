@@ -22,7 +22,7 @@ contains
 subroutine setup_cg(cg)
   use utils, only: get_dim
   use matrix_vars, only: cg_set
-  use matrix_coeffs_mod, only: compute_coeffs
+  use matrix_coeffs_mod, only: compute_coeffs, get_matrix_offsets
   use grid,only:is,ie,js,je,ks,ke
   type(cg_set), intent(out) :: cg
   integer :: in, jn, kn, ln, dim
@@ -55,22 +55,7 @@ subroutine setup_cg(cg)
   allocate(cg%ia(1:cg%Adiags))
   allocate(cg%A(1:cg%Adiags, 1:cg%lmax))
 
-  ! These are the same for gravity and radiation
-  select case(dim)
-  case(1)
-    cg%ia(1) = 0
-    cg%ia(2) = 1
-  case(2)
-    cg%ia(1) = 0
-    cg%ia(2) = 1
-    cg%ia(3) = in
-  case(3)
-    cg%ia(1) = 0
-    cg%ia(2) = 1
-    cg%ia(3) = in
-    cg%ia(4) = in * jn
-    cg%ia(5) = in * jn * (kn - 1)
-  end select
+  call get_matrix_offsets(dim, cg%ia)
 
   ! Set up the preconditioner.
   select case(dim)
@@ -85,14 +70,14 @@ subroutine setup_cg(cg)
   allocate(cg%ic(1:cg%cdiags))
   allocate(cg%c(1:cg%cdiags, 1:cg%lmax))
 
+  ! The preconditioner offsets are only used for MICCG, so there is no generic subroutine for them
+  ! If the 2D problem is in the y-z plane, then elements 3 and 4 are jn instead of in
   select case(dim)
   case(1)
     cg%ic(1) = 0
     cg%ic(2) = 1
     cg%alpha = 0.99d0
   case(2)
-    ! If the 2D problem is in the y-z plane, then elements 3 and 4
-    ! are jn instead of in
     if (in == 1) then
       ln = jn
     else
@@ -116,7 +101,7 @@ end subroutine setup_cg
 
 subroutine write_A_cg(cg, system)
   use utils, only: get_dim
-  use matrix_vars, only: cg_set,igrv,irad
+  use matrix_vars, only: cg_set
   use matrix_coeffs_mod, only: compute_coeffs
   type(cg_set), intent(inout) :: cg
   integer,      intent(in)   :: system

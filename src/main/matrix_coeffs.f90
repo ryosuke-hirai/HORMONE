@@ -3,7 +3,7 @@ module matrix_coeffs_mod
   implicit none
   private
 
-  public :: compute_coeffs
+  public :: compute_coeffs, get_matrix_offsets
 
   contains
 
@@ -350,5 +350,55 @@ module matrix_coeffs_mod
     end select
 
   end subroutine compute_coeffs_radiation
+
+  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  !
+  !                     SUBROUTINE get_matrix_offsets
+  !
+  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+  ! PURPOSE: Computes the diagonal offsets for the matrix based on the dimension.
+  !          Same for gravity and radiation.
+
+  subroutine get_matrix_offsets(dim, offsets)
+    use grid, only: is, ie, js, je, ks, ke
+    integer, intent(in)  :: dim
+    integer, intent(out) :: offsets(:)
+
+    integer :: in, jn, kn
+
+    ! TODO: store globally
+    in = ie - is + 1
+    jn = je - js + 1
+    kn = ke - ks + 1
+
+    ! As the dimension increases, additional diagonals are added, but the
+    ! offsets of existing diagonals are not changed.
+    ! In 1D, the offsets are at 0, 1.
+    ! In 2D, the offsets are at 0, 1, in
+    ! In 3D, the offsets are at 0, 1, in, in*jn, in*jn*(kn-1)
+    ! These are the same for gravity and radiation
+    ! Special case of 2D, which depends on the plane of the grid.
+
+    offsets(1) = 0
+    offsets(2) = 1
+
+    if (dim == 2) then
+      ! TODO: make this check MPI compatible
+      if (in > 1) then
+        offsets(3) = in
+      else
+        offsets(3) = jn
+      end if
+    endif
+
+    if (dim == 3) then
+      offsets(3) = in
+      offsets(4) = in * jn
+      offsets(5) = in * jn * (kn - 1)
+    endif
+
+  end subroutine get_matrix_offsets
+
 
 end module matrix_coeffs_mod

@@ -80,8 +80,9 @@ end subroutine setup_petsc
 
 #ifdef USE_PETSC
 subroutine write_A_petsc(A_petsc, ksp, lmax_petsc, system)
+  use utils,only: get_dim
   use grid,only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
-  use matrix_coeffs_mod,only:compute_coeffs
+  use matrix_coeffs_mod,only:compute_coeffs, get_matrix_offsets
   use miccg_mod,only:ijk_from_l ! TODO: move this elsewhere
   Mat, intent(in) :: A_petsc
   KSP, intent(in) :: ksp
@@ -89,59 +90,37 @@ subroutine write_A_petsc(A_petsc, ksp, lmax_petsc, system)
   integer, intent(in) :: system
   integer :: in, jn, kn, dim, i, j, k, l, ncoeff, m
   real(8) :: coeffs(5)
+  integer :: offsets(5)
   integer :: row, col
   PC             :: pc
   PetscScalar    :: val
   PetscErrorCode :: ierr
 
   ! Determine problem dimension based on input indices.
-  if(ie > is .and. je > js .and. ke > ks) then
-    dim = 3
-    ncoeff = 5
-  else if(ie > is .and. (je > js .or. ke > ks)) then
-    dim = 2
-    ncoeff = 3
-  else if(ie > is .and. (je == js .and. ke == ks)) then
-    dim = 1
+  call get_dim(is, ie, js, je, ks, ke, dim)
+  select case (dim)
+  case(1)
     ncoeff = 2
-  else
-    print *, 'Error in setup_petsc_A: unsupported dimension'
-    stop
-  end if
+  case(2)
+    ncoeff = 3
+  case(3)
+    ncoeff = 5
+  end select
 
   in = ie - is + 1
   jn = je - js + 1
   kn = ke - ks + 1
+
+  call get_matrix_offsets(dim, offsets)
 
   ! Loop over all grid points.
   do l = 1, lmax_petsc
     call ijk_from_l(l, is, js, ks, in, jn, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
 
-    ! As the dimension increases, additional diagonals are added, but the
-    ! offsets of existing diagonals are not changed.
-    ! In 1D, the offsets are at 0, 1.
-    ! In 2D, the offsets are at 0, 1, in
-    ! In 3D, the offsets are at 0, 1, in, in*jn, in*jn*(kn-1)
-    ! These are the same for gravity and radiation
     do m = 1, ncoeff
-      select case(m)
-      case(1)
-        row = l - 1
-        col = l - 1
-      case(2)
-        row = l - 1
-        col = l - 1 + 1
-      case(3)
-        row = l - 1
-        col = l - 1 + in
-      case(4)
-        row = l - 1
-        col = l - 1 + in * jn
-      case(5)
-        row = l - 1
-        col = l - 1 + in * jn * (kn - 1)
-      end select
+      row = (l - 1)
+      col = row + offsets(m)
 
       if(row >= 0 .and. row < lmax_petsc .and. col >= 0 .and. col < lmax_petsc) then
         val = coeffs(m)
