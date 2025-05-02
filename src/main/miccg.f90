@@ -25,7 +25,7 @@ subroutine setup_cg(cg)
   use matrix_coeffs_mod, only: compute_coeffs
   use grid,only:is,ie,js,je,ks,ke
   type(cg_set), intent(out) :: cg
-  integer :: in, jn, kn, dim
+  integer :: in, jn, kn, ln, dim
 
   ! Set grid parameters.
   cg%is = is;  cg%ie = ie
@@ -91,10 +91,17 @@ subroutine setup_cg(cg)
     cg%ic(2) = 1
     cg%alpha = 0.99d0
   case(2)
+    ! If the 2D problem is in the y-z plane, then elements 3 and 4
+    ! are jn instead of in
+    if (in == 1) then
+      ln = jn
+    else
+      ln = in
+    end if
     cg%ic(1) = 0
     cg%ic(2) = 1
-    cg%ic(3) = in - 1
-    cg%ic(4) = in
+    cg%ic(3) = ln - 1
+    cg%ic(4) = ln
     cg%alpha = 0.99d0
   case(3)
     cg%ic(1) = 0
