@@ -1,16 +1,18 @@
 module matrix_vars
-  implicit none
 
 #ifdef USE_PETSC
 #include <petsc/finclude/petsc.h>
     use petsc
 #endif
 
+  implicit none
+
   ! Integer switch for the gravity and radiation solvers
   integer, parameter :: igrv = 1
   integer, parameter :: irad = 2
 
-  ! Matrix sizes
+  ! Matrix sizes for allocatioon
+  ! Should mirror PETSc and CG lmax
   integer :: lmax_grv
   integer :: lmax_rad
 
@@ -18,10 +20,14 @@ module matrix_vars
 #ifdef USE_PETSC
   Mat :: A_petsc_grv
   Mat :: A_petsc_rad
-#else
-  ! Dummy declarations for non-PETSc builds
-  integer :: A_petsc_grv
-  integer :: A_petsc_rad
+  Vec :: x_petsc_grv
+  Vec :: x_petsc_rad
+  Vec :: b_petsc_grv
+  Vec :: b_petsc_rad
+  KSP :: ksp_grv
+  KSP :: ksp_rad
+  PetscInt :: lmax_petsc_grv
+  PetscInt :: lmax_petsc_rad
 #endif
 
   ! MICCG arrays

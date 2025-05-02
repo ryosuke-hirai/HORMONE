@@ -19,26 +19,13 @@ contains
 !          The resulting data is stored in the cg object.
 !          The matrix A is not assembled here, but the offsets are set.
 
-subroutine setup_cg(system)
+subroutine setup_cg(cg)
   use utils, only: get_dim
-  use matrix_vars, only: cg_set, cg_grv, cg_rad, igrv, irad
+  use matrix_vars, only: cg_set
   use matrix_coeffs_mod, only: compute_coeffs
   use grid,only:is,ie,js,je,ks,ke
-  integer, intent(in) :: system
-  integer :: in, jn, kn, dim, i, j, k, l
-  real(8), allocatable :: coeffs(:)
-  type(cg_set), pointer :: cg
-  integer :: lmax
-
-  ! Select the appropriate cg object based on the system.
-  if (system == igrv) then
-    cg => cg_grv
-  else if (system == irad) then
-    cg => cg_rad
-  else
-    print *, 'Error in setup_cg: unsupported system'
-    stop
-  end if
+  type(cg_set), intent(out) :: cg
+  integer :: in, jn, kn, dim
 
   ! Set grid parameters.
   cg%is = is;  cg%ie = ie
@@ -49,8 +36,7 @@ subroutine setup_cg(system)
   jn = je - js + 1
   kn = ke - ks + 1
   cg%in = in;  cg%jn = jn;  cg%kn = kn
-  lmax = in * jn * kn
-  cg%lmax = lmax
+  cg%lmax = in * jn * kn
 
   ! Determine problem dimensionality.
   call get_dim(is, ie, js, je, ks, ke, dim)
@@ -67,7 +53,7 @@ subroutine setup_cg(system)
 
   ! Allocate the equation matrix and set the offsets.
   allocate(cg%ia(1:cg%Adiags))
-  allocate(cg%A(1:cg%Adiags, 1:lmax))
+  allocate(cg%A(1:cg%Adiags, 1:cg%lmax))
 
   ! These are the same for gravity and radiation
   select case(dim)
@@ -97,7 +83,7 @@ subroutine setup_cg(system)
   end select
 
   allocate(cg%ic(1:cg%cdiags))
-  allocate(cg%c(1:cg%cdiags, 1:lmax))
+  allocate(cg%c(1:cg%cdiags, 1:cg%lmax))
 
   select case(dim)
   case(1)
@@ -121,23 +107,14 @@ subroutine setup_cg(system)
 
 end subroutine setup_cg
 
-subroutine write_A_cg(system)
+subroutine write_A_cg(cg, system)
   use utils, only: get_dim
-  use matrix_vars, only: cg_set,igrv,irad,cg_grv,cg_rad
+  use matrix_vars, only: cg_set,igrv,irad
   use matrix_coeffs_mod, only: compute_coeffs
-  integer, intent(in) :: system
+  type(cg_set), intent(inout) :: cg
+  integer,      intent(in)   :: system
   real(8), allocatable :: coeffs(:)
-  type(cg_set), pointer :: cg
-  integer :: in, jn, kn, dim, i, j, k, l
-
-  if (system == igrv) then
-    cg => cg_grv
-  else if (system == irad) then
-    cg => cg_rad
-  else
-    print *, 'Error in write_A_cg: unsupported system'
-    stop
-  end if
+  integer :: dim, i, j, k, l
 
   call get_dim(cg%is, cg%ie, cg%js, cg%je, cg%ks, cg%ke, dim)
 

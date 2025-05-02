@@ -26,11 +26,11 @@ subroutine radiation
  use constants,only:Cv,Rgas
  use grid
  use physval
- use matrix_vars,only:cg=>cg_rad
  use miccg_mod,only:miccg,ijk_from_l
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
- use matrix_solver,only:setup_A_rad,lmax=>lmax_rad,solve_system_rad
+ use matrix_vars,only:lmax=>lmax_rad
+ use matrix_solver,only:write_A_rad,solve_system_rad
 
  integer:: l,i,j,k
  integer:: in,jn
@@ -48,18 +48,20 @@ subroutine radiation
 ! Then update the diffusion term
  call get_gradE
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
- call setup_A_rad
+ call write_A_rad
  call get_radb ! Sets up rsrc
 
- allocate( x(1:cg%lmax) )
+  in = ie-is+1; jn = je-js+1
+
+ allocate( x(lmax) )
 !$omp parallel do private(l,i,j,k)
- do l = 1, cg%lmax
-  call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
+ do l = 1, lmax
+  call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
   x(l) = erad(i,j,k)
  end do
 !$omp end parallel do
 
-call solve_system_rad(rsrc,x) ! returns erad^{n+1}
+call solve_system_rad(x, rsrc) ! returns erad^{n+1}
 
 ! TODO: refactor this elsewhere
 in = ie-is+1; jn = je-js+1
@@ -152,269 +154,6 @@ subroutine get_diffusion_coeff
 return
 end subroutine get_diffusion_coeff
 
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!
-!                          SUBROUTINE GET_RADA
-!
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: Compute divergence term (A) for radiation diffusion equation
-
-subroutine get_radA(cg)
-
- use settings,only:radswitch,crdnt
- use constants,only:arad,clight,Cv
- use utils,only:har_mean
- use grid,only:dt,dvol
- use physval
- use miccg_mod,only:ijk_from_l,get_preconditioner
-
- type(cg_set),intent(inout)::cg
- integer:: i,j,k,l,dim
- real(8):: kappap
-
-!-----------------------------------------------------------------------------
-
- if(cg%in>1.and.cg%jn>1.and.cg%kn>1)then
-  dim=3
- elseif(cg%in>1.and.cg%jn>1.and.cg%kn==1)then
-  dim=21
- elseif(cg%in>1.and.cg%jn==1.and.cg%kn>1)then
-  dim=22
- elseif(cg%in==1.and.cg%jn>1.and.cg%kn>1)then
-  dim=23
- elseif(cg%in>1.and.cg%jn==1.and.cg%kn==1)then
-  dim=11
- elseif(cg%in==1.and.cg%jn>1.and.cg%kn==1)then
-  dim=12
- elseif(cg%in==1.and.cg%jn==1.and.cg%kn>1)then
-  dim=13
- else
-  print*,'Error in get_radA, dimension is not supported; dim=',dim
- end if
-
- select case(dim)
- case(11) ! 1D x-direction
-
-!$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-
-   cg%A(1,l) = dvol(i,j,k)/dt
-   if(i>cg%is)& ! gradient term in x- direction
-    cg%A(1,l) = cg%A(1,l) + geo(1,i-1,j,k)*har_mean(radK(i-1:i,j,k))
-   if(i<cg%ie)& ! gradient term in x+ direction
-    cg%A(1,l) = cg%A(1,l) + geo(1,i  ,j,k)*har_mean(radK(i:i+1,j,k))
-   if(radswitch==1)then ! coupling term
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
-    cg%A(1,l) = cg%A(1,l) &
-              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
-               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
-                - 1d0 )
-   end if
-
-   cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
-   if(i==cg%ie)cg%A(2,l) = 0d0
-  end do
-!$omp end parallel do
-
- case(12) ! 1D y-direction
-
-!$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-
-   cg%A(1,l) = dvol(i,j,k)/dt
-   if(j>cg%js)& ! gradient term in y- direction
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
-   if(j<cg%je)& ! gradient term in y+ direction
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
-
-
-   if(radswitch==1)then ! coupling term
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
-    cg%A(1,l) = cg%A(1,l) &
-              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
-               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
-                - 1d0 )
-   end if
-
-   cg%A(2,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
-   if(j==cg%je)cg%A(2,l) = 0d0
-  end do
-!$omp end parallel do
-
- case(13) ! 1D z-direction
-
-!$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-
-   cg%A(1,l) = dvol(i,j,k)/dt
-
-   if(k>cg%ks)& ! gradient term in z- direction
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
-   if(k<cg%ke)& ! gradient term in z+ direction
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
-   if(radswitch==1)then ! coupling term
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
-    cg%A(1,l) = cg%A(1,l) &
-              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
-               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
-                - 1d0 )
-   end if
-
-   cg%A(2,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
-   if(k==cg%ke)cg%A(2,l) = 0d0
-  end do
-!$omp end parallel do
-
- case(21) ! 2D xy-plane
-
-!$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-
-   cg%A(1,l) = dvol(i,j,k)/dt
-   if(i>cg%is)&
-    cg%A(1,l) = cg%A(1,l) + geo(1,i-1,j,k)*har_mean(radK(i-1:i,j,k))
-   if(i<cg%ie)&
-    cg%A(1,l) = cg%A(1,l) + geo(1,i  ,j,k)*har_mean(radK(i:i+1,j,k))
-   if(j>cg%js)&
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
-   if(j<cg%je)&
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
-   if(radswitch==1)then ! coupling term
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
-    cg%A(1,l) = cg%A(1,l) &
-              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
-               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
-                - 1d0 )
-   end if
-
-   cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
-   cg%A(3,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
-   if(i==cg%ie)cg%A(2,l) = 0d0
-   if(j==cg%je)cg%A(3,l) = 0d0
-  end do
-!$omp end parallel do
-
- case(22) ! xz-plane
-
-!$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-
-   cg%A(1,l) = dvol(i,j,k)/dt
-   if(i>cg%is)&
-    cg%A(1,l) = cg%A(1,l) + geo(1,i-1,j,k)*har_mean(radK(i-1:i,j,k))
-   if(i<cg%ie)&
-    cg%A(1,l) = cg%A(1,l) + geo(1,i  ,j,k)*har_mean(radK(i:i+1,j,k))
-   if(k>cg%ks)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
-   if(k<cg%ke)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
-   if(radswitch==1)then ! coupling term
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
-    cg%A(1,l) = cg%A(1,l) &
-              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
-               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
-                - 1d0 )
-   end if
-
-   cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
-   cg%A(3,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
-   if(i==cg%ie)cg%A(2,l) = 0d0
-   if(k==cg%ke)cg%A(3,l) = 0d0
-  end do
-!$omp end parallel do
-
- case(23) ! yz-plane
-
-!$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-
-   cg%A(1,l) = dvol(i,j,k)/dt
-   if(j>cg%js)&
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
-   if(j<cg%je)&
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
-   if(k>cg%ks)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
-   if(k<cg%ke)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
-   if(radswitch==1)then ! coupling term
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
-    cg%A(1,l) = cg%A(1,l) &
-              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
-               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
-                - 1d0 )
-   end if
-
-   cg%A(2,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
-   cg%A(3,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
-   if(j==cg%je)cg%A(2,l) = 0d0
-   if(k==cg%ke)cg%A(3,l) = 0d0
-  end do
-!$omp end parallel do
-
- case(3) ! 3D
-
-!$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, cg%lmax
-   call ijk_from_l(l,cg%is,cg%js,cg%ks,cg%in,cg%jn,i,j,k)
-
-   cg%A(1,l) = dvol(i,j,k)/dt
-   if(i>cg%is)&
-    cg%A(1,l) = cg%A(1,l) + geo(1,i-1,j,k)*har_mean(radK(i-1:i,j,k))
-   if(i<cg%ie)&
-    cg%A(1,l) = cg%A(1,l) + geo(1,i  ,j,k)*har_mean(radK(i:i+1,j,k))
-   if(j>cg%js)&
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j-1,k)*har_mean(radK(i,j-1:j,k))
-   if(j<cg%je)&
-    cg%A(1,l) = cg%A(1,l) + geo(2,i,j  ,k)*har_mean(radK(i,j:j+1,k))
-   if(k>cg%ks)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k-1)*har_mean(radK(i,j,k-1:k))
-   if(k<cg%ke)&
-    cg%A(1,l) = cg%A(1,l) + geo(3,i,j,k  )*har_mean(radK(i,j,k:k+1))
-   if(radswitch==1)then ! coupling term
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
-    cg%A(1,l) = cg%A(1,l) &
-              - dvol(i,j,k)*clight*kappap*d(i,j,k) &
-               *( 4d0*arad*T(i,j,k)**3*kappap*clight*dt &
-                 /(Cv*imu(i,j,k)+4d0*arad*kappap*clight*dt*T(i,j,k)**3) &
-                - 1d0 )
-   end if
-
-   cg%A(2,l) = -geo(1,i,j,k)*har_mean(radK(i:i+1,j,k))
-   cg%A(3,l) = -geo(2,i,j,k)*har_mean(radK(i,j:j+1,k))
-   cg%A(4,l) = -geo(3,i,j,k)*har_mean(radK(i,j,k:k+1))
-   if(k==cg%ks)then
-    if(crdnt==2)&
-     cg%A(5,l) = -geo(3,i,j,k-1)*har_mean([radK(i,j,k),radK(i,j,cg%ke)])
-   else
-    if(crdnt==2)&
-     cg%A(5,l) = 0d0
-   end if
-   if(i==cg%ie)cg%A(2,l) = 0d0
-   if(j==cg%je)cg%A(3,l) = 0d0
-   if(k==cg%ke)cg%A(4,l) = 0d0
-  end do
-!$omp end parallel do
-
- end select
-
- call get_preconditioner(cg)
-
-return
-end subroutine get_radA
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -431,7 +170,7 @@ subroutine get_radb
  use grid,only:dvol,dt,is,ie,js,je,ks,ke
  use physval
  use miccg_mod,only:ijk_from_l
- use matrix_solver, only:lmax=>lmax_rad
+ use matrix_vars, only:lmax=>lmax_rad
 
  integer:: i,j,k,l
  real(8):: kappap
@@ -455,109 +194,6 @@ subroutine get_radb
 return
 end subroutine get_radb
 
-! !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-! !
-! !                        SUBROUTINE SETUP_RADCG
-! !
-! !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! ! PURPOSE: To set up the necessary parameters for the CG method
-
-! subroutine setup_radcg(is,ie,js,je,ks,ke,cg)
-
-!  use settings,only:crdnt
-
-!  integer,intent(in)::is,ie,js,je,ks,ke
-!  type(cg_set),intent(out):: cg
-!  integer:: in,jn,kn,ln,lmax,dim
-
-! !-----------------------------------------------------------------------------
-
-!  cg%is=is;cg%ie=ie; cg%js=js;cg%je=je; cg%ks=ks;cg%ke=ke
-!  in = ie-is+1; jn = je-js+1; kn = ke-ks+1
-!  cg%in=in; cg%jn=jn; cg%kn=kn
-!  lmax = in*jn*kn; cg%lmax=lmax
-!  if(ie>is.and.je>js.and.ke>ks)then
-!   dim=3
-!  elseif(ie>is.and.je>js.and.ke==ks)then
-!   dim=2
-!  elseif(ie>is.and.je==js.and.ke>ks)then
-!   dim=2
-!  elseif(ie==is.and.je>js.and.ke>ks)then
-!   dim=2
-!  elseif(ie>is.and.je==js.and.ke==ks)then
-!   dim=1
-!  elseif(ie==is.and.je>js.and.ke==ks)then
-!   dim=1
-!  elseif(ie==is.and.je==js.and.ke>ks)then
-!   dim=1
-!  else
-!   print*,'Error in setup_radcg, dimension is not supported; dim=',dim
-!  end if
-
-!  select case(dim)
-!  case(1) ! 1D
-! ! 1D coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-!   cg%Adiags = 2
-!   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
-!   cg%ia(1) = 0
-!   cg%ia(2) = 1
-
-! ! Pre-conditioner matrix with MICCG(1,1) method
-!   cg%cdiags = 2
-!   allocate(cg%ic(1:cg%cdiags),cg%c(1:cg%cdiags,1:lmax))
-!   cg%ic(1) = 0
-!   cg%ic(2) = 1
-!   cg%alpha = 0.99d0
-
-!  case(2) ! 2D
-! ! 2D coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-!   cg%Adiags = 3
-!   ln=in; if(in==1)ln=jn
-!   allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
-!   cg%ia(1) = 0
-!   cg%ia(2) = 1
-!   cg%ia(3) = ln
-
-! ! Pre-conditioner matrix with MICCG(1,2) method
-!   cg%cdiags = 4
-!   allocate(cg%ic(1:cg%cdiags),cg%c(1:cg%cdiags,1:lmax))
-!   cg%ic(1) = 0
-!   cg%ic(2) = 1
-!   cg%ic(3) = ln-1
-!   cg%ic(4) = ln
-!   cg%alpha = 0.99d0
-
-
-!  case(3) ! 3D
-! ! 3D spherical coordinates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-!   if(crdnt==2)then
-
-!    cg%Adiags = 5
-!    allocate(cg%ia(1:cg%Adiags),cg%A(1:cg%Adiags,1:lmax))
-!    cg%ia(1) = 0
-!    cg%ia(2) = 1
-!    cg%ia(3) = in
-!    cg%ia(4) = in*jn
-!    cg%ia(5) = in*jn*(kn-1)
-
-! ! Pre-conditioner matrix with ICCG(1,1) method
-!    cg%cdiags = 5
-!    allocate(cg%ic(1:cg%cdiags),cg%c(1:cg%cdiags,1:lmax))
-!    cg%ic(1) = 0
-!    cg%ic(2) = 1
-!    cg%ic(3) = in
-!    cg%ic(4) = in*jn
-!    cg%ic(5) = in*jn*(kn-1)
-!    cg%alpha = 0.999d0 ! No modification
-
-!   end if
-
-!  end select
-
-! return
-! end subroutine setup_radcg
-
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -571,19 +207,15 @@ subroutine radiation_setup
 
  use settings,only:radswitch
  use grid,only:is,ie,js,je,ks,ke
-!  use miccg_mod,only:cg=>cg_rad
  use matrix_vars,only:lmax=>lmax_rad,irad
+ use matrix_solver,only:setup_matrix
  use miccg_mod,only:setup_cg
  use physval,only:radK
 
 !-----------------------------------------------------------------------------
 
  if(radswitch==1.or.radswitch==2)then
-  ! call setup_radcg(is,ie,js,je,ks,ke,cg)
-  ! MICCG method
-  call setup_cg(irad)
-  ! PETSc
-  lmax = (ie-is+1)*(je-js+1)*(ke-ks+1)
+  call setup_matrix(irad)
   call get_geo
   allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is:ie,js:je,ks:ke),&
            rsrc(1:lmax) )
