@@ -143,17 +143,19 @@ program lightcurve
 !!$   end do
 
    do iviewing_angle = 0, 8
-    call get_luminosity3(angles(:,iviewing_angle),lmda,lum,spec)
+    call get_luminosity4(angles(:,iviewing_angle),lmda,lum,spec)
     call fit_blackbody(lmda,spec,Teff)
     Reff = get_bbradius(Teff,lum)
-    print'(1PE13.5e2,i2,3(1PE13.5e2))',time/dt_unit_in_sec,iviewing_angle,lum,Teff,Reff/rsun
+    print'(1PE13.5e2,i2,3(1PE13.5e2))',&
+     time/dt_unit_in_sec,iviewing_angle,lum,Teff,Reff/rsun
     flush(6)
-    write(unitn(iviewing_angle),'(i10,99(1PE14.5e3))')tn,time/3600d0/24d0,lum,spec,Teff,Reff/rsun
+    write(unitn(iviewing_angle),'(i10,99(1PE14.5e3))')&
+     tn,time/3600d0/24d0,lum,spec,Teff,Reff/rsun
     flush(unitn(iviewing_angle))
    end do
 
    outtime = outtime + dt_out
-   outtn = outtn + tn_out
+   outtn   = outtn   + tn_out
   end do
 
   do angle = iangle, fangle, dangle
