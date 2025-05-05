@@ -29,6 +29,11 @@ jobs:
         exclude:
           - fc: ifx
             mpi: yes
+          # Exclude ifx and mpi for petsc (TODO: add these later)
+          - fc: ifx
+            petsc: yes
+          - mpi: yes
+            petc: yes
 
     name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
