@@ -50,6 +50,33 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y petsc-dev
 
+        - name: Debug PETSc location
+          if: matrix.petsc == 'yes'
+          run: |
+            echo "=== PETSc pkg-config info ==="
+            pkg-config --modversion petsc || echo "pkg-config can't find 'petsc'"
+            pkg-config --modversion PETSc || echo "pkg-config can't find 'PETSc'"
+
+            echo "=== pkg-config search path ==="
+            echo "$PKG_CONFIG_PATH"
+            find /usr/lib -name petsc.pc 2>/dev/null || echo "No petsc.pc found under /usr/lib"
+
+            echo "=== petsc.pc locations ==="
+            pkg-config --path petsc || echo "No --path for 'petsc'"
+            pkg-config --path PETSc || echo "No --path for 'PETSc'"
+
+            echo "=== Checking PETSC_DIR ==="
+            echo "PETSC_DIR=$PETSC_DIR"
+            if [ -n "${PETSC_DIR}" ] && [ -d "${PETSC_DIR}" ]; then
+              find "${PETSC_DIR}" -type f -iname petsc.pc | head -n 1
+            else
+              echo "PETSC_DIR not set or does not exist"
+            fi
+
+            echo "=== PETSc headers and libraries ==="
+            find /usr/include -name petsc*.h 2>/dev/null | head -n 5
+            find /usr/lib -name 'libpetsc*' 2>/dev/null | head -n 5
+
         - name: Compile
           working-directory: ./work
           run: |
