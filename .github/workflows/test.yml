@@ -124,7 +124,6 @@ jobs:
           - yes
         petsc:
           - no
-          - yes
         mpi_tasks:
           - 2
         omp_threads:
@@ -173,10 +172,83 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+          # Radiation and gravity tests should be used to test PETSc implementation
+          - test: star_sph
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: polytrope
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: diffusion1d_x
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion1d_y
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion1d_z
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion2d_xy
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion2d_xz
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion2d_yz
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: radshock_x
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: radshock_y
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: radshock_z
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: radstar
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+
         exclude:
           - fc: ifx
             mpi: yes
-
           # The star setup routine is susceptible to roundoff error
           # which gives very different results with the intel compiler
           - test: polytrope
@@ -218,36 +290,6 @@ jobs:
             flat: yes
           - test: diffusion2d_yz
             flat: yes
-          # PETSc is not compatible with MPI yet
-          - petsc: yes
-            mpi: yes
-          # Tests without radiation and gravity do not use PETSc
-          - test: sodshock_x
-            petsc: yes
-          - test: sodshock_y
-            petsc: yes
-          - test: sodshock_z
-            petsc: yes
-          - test: briowushock_x
-            petsc: yes
-          - test: briowushock_y
-            petsc: yes
-          - test: briowushock_z
-            petsc: yes
-          - test: sedov_default
-            petsc: yes
-          - test: orszagtang_xy
-            petsc: yes
-          - test: orszagtang_yz
-            petsc: yes
-          - test: orszagtang_xz
-            petsc: yes
-          - test: KHinstability
-            petsc: yes
-          - test: smearing
-            petsc: yes
-          - test: iotest
-            petsc: yes
 
     name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
