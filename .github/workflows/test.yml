@@ -33,7 +33,7 @@ jobs:
           - fc: ifx
             petsc: yes
           - mpi: yes
-            petc: yes
+            petsc: yes
 
     name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
