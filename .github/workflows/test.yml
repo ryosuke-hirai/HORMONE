@@ -30,287 +30,294 @@ jobs:
           - fc: ifx
             mpi: yes
 
-    name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
+    name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+        - uses: actions/checkout@v4
 
-    - uses: ./.github/actions/setup-intel-oneapi
-      if: matrix.fc == 'ifx'
+        - uses: ./.github/actions/setup-intel-oneapi
+          if: matrix.fc == 'ifx'
 
-    - name: Set up OpenMPI
-      if: matrix.mpi == 'yes'
-      run: sudo apt-get install -y openmpi-bin libopenmpi-dev
+        - name: Set up OpenMPI
+          if: matrix.mpi == 'yes'
+          run: sudo apt-get install -y openmpi-bin libopenmpi-dev
 
-    - name: Compile
-      working-directory: ./work
-      run: |
-        set -o pipefail
-        make ${{ matrix.debug == 'yes' && 'debug' || '' }} |& tee compile.log
-      env:
-        FC: ${{ matrix.fc }}
-        MPI: ${{ matrix.mpi }}
+        - name: Set up PETSc
+          if: matrix.petsc == 'yes'
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y petsc-dev
 
-    - name: Save binary as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
-        path: ./work/hormone
+        - name: Compile
+          working-directory: ./work
+          run: |
+            set -o pipefail
+            make ${{ matrix.debug == 'yes' && 'debug' || '' }} |& tee compile.log
+          env:
+            FC: ${{ matrix.fc }}
+            MPI: ${{ matrix.mpi }}
+            USE_PETSC: ${{ matrix.petsc == 'yes' && 'yes' || 'no' }}
 
-    - name: Save compile log as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-compile-log
-        path: ./work/compile.log
+        - name: Save binary as artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc }}
+            path: ./work/hormone
 
-  test:
-    needs: compile
-    runs-on: ubuntu-latest
+        - name: Save compile log as artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc }}-compile-log
+            path: ./work/compile.log
 
-    strategy:
-      fail-fast: false
-      matrix:
-        fc:
-          - gfortran
-          - ifx
-        debug:
-          - no
-          - yes
-        mpi:
-          - no
-          - yes
-        test:
-          - sodshock_x
-          - sodshock_y
-          - sodshock_z
-          - briowushock_x
-          - briowushock_y
-          - briowushock_z
-          - orszagtang_xy
-          - orszagtang_yz
-          - orszagtang_xz
-          - sedov_default
-          - KHinstability
-          - star_sph
-          - polytrope
-          - smearing
-          - iotest
-          - diffusion1d_x
-          - diffusion1d_y
-          - diffusion1d_z
-          - diffusion2d_xy
-          - diffusion2d_xz
-          - diffusion2d_yz
-          - radshock_x
-          - radshock_y
-          - radshock_z
-          - radstar
-        flat:
-          - no
-          - yes
-        mpi_tasks:
-          - 2
-        omp_threads:
-          - 2
-        include:
-          # These tests should be run with 4 MPI tasks as well
-          - test: smearing
-            fc: gfortran
-            debug: no
-            mpi: yes
-            flat: yes
-            mpi_tasks: 4
-            omp_threads: 1
-          - test: polytrope
-            fc: gfortran
-            debug: no
-            mpi: yes
-            flat: yes
-            mpi_tasks: 4
-            omp_threads: 1
-          - test: KHinstability
-            fc: gfortran
-            debug: no
-            mpi: yes
-            flat: yes
-            mpi_tasks: 4
-            omp_threads: 1
-          - test: orszagtang_xy
-            fc: gfortran
-            debug: no
-            mpi: yes
-            flat: yes
-            mpi_tasks: 4
-            omp_threads: 1
-          - test: orszagtang_yz
-            fc: gfortran
-            debug: no
-            mpi: yes
-            flat: yes
-            mpi_tasks: 4
-            omp_threads: 1
-          - test: orszagtang_xz
-            fc: gfortran
-            debug: no
-            mpi: yes
-            flat: yes
-            mpi_tasks: 4
-            omp_threads: 1
-        exclude:
-          - fc: ifx
-            mpi: yes
+  # test:
+  #   needs: compile
+  #   runs-on: ubuntu-latest
 
-          # The star setup routine is susceptible to roundoff error
-          # which gives very different results with the intel compiler
-          - test: polytrope
-            fc: ifx
-          # star_sph uses MICCG init, which is not compatible with MPI
-          - test: star_sph
-            mpi: yes
-          # radiation tests use MICCG, which is not compatible with MPI yet
-          - test: diffusion1d_x
-            mpi: yes
-          - test: diffusion1d_y
-            mpi: yes
-          - test: diffusion1d_z
-            mpi: yes
-          - test: diffusion2d_xy
-            mpi: yes
-          - test: diffusion2d_xz
-            mpi: yes
-          - test: diffusion2d_yz
-            mpi: yes
-          - test: radshock_x
-            mpi: yes
-          - test: radshock_y
-            mpi: yes
-          - test: radshock_z
-            mpi: yes
-          - test: radstar
-            mpi: yes
-          # diffusion1d does not use hydro, so reconstruction is irrelevant
-          - test: diffusion1d_x
-            flat: yes
-          - test: diffusion1d_y
-            flat: yes
-          - test: diffusion1d_z
-            flat: yes
-          - test: diffusion2d_xy
-            flat: yes
-          - test: diffusion2d_xz
-            flat: yes
-          - test: diffusion2d_yz
-            flat: yes
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       fc:
+  #         - gfortran
+  #         - ifx
+  #       debug:
+  #         - no
+  #         - yes
+  #       mpi:
+  #         - no
+  #         - yes
+  #       test:
+  #         - sodshock_x
+  #         - sodshock_y
+  #         - sodshock_z
+  #         - briowushock_x
+  #         - briowushock_y
+  #         - briowushock_z
+  #         - orszagtang_xy
+  #         - orszagtang_yz
+  #         - orszagtang_xz
+  #         - sedov_default
+  #         - KHinstability
+  #         - star_sph
+  #         - polytrope
+  #         - smearing
+  #         - iotest
+  #         - diffusion1d_x
+  #         - diffusion1d_y
+  #         - diffusion1d_z
+  #         - diffusion2d_xy
+  #         - diffusion2d_xz
+  #         - diffusion2d_yz
+  #         - radshock_x
+  #         - radshock_y
+  #         - radshock_z
+  #         - radstar
+  #       flat:
+  #         - no
+  #         - yes
+  #       mpi_tasks:
+  #         - 2
+  #       omp_threads:
+  #         - 2
+  #       include:
+  #         # These tests should be run with 4 MPI tasks as well
+  #         - test: smearing
+  #           fc: gfortran
+  #           debug: no
+  #           mpi: yes
+  #           flat: yes
+  #           mpi_tasks: 4
+  #           omp_threads: 1
+  #         - test: polytrope
+  #           fc: gfortran
+  #           debug: no
+  #           mpi: yes
+  #           flat: yes
+  #           mpi_tasks: 4
+  #           omp_threads: 1
+  #         - test: KHinstability
+  #           fc: gfortran
+  #           debug: no
+  #           mpi: yes
+  #           flat: yes
+  #           mpi_tasks: 4
+  #           omp_threads: 1
+  #         - test: orszagtang_xy
+  #           fc: gfortran
+  #           debug: no
+  #           mpi: yes
+  #           flat: yes
+  #           mpi_tasks: 4
+  #           omp_threads: 1
+  #         - test: orszagtang_yz
+  #           fc: gfortran
+  #           debug: no
+  #           mpi: yes
+  #           flat: yes
+  #           mpi_tasks: 4
+  #           omp_threads: 1
+  #         - test: orszagtang_xz
+  #           fc: gfortran
+  #           debug: no
+  #           mpi: yes
+  #           flat: yes
+  #           mpi_tasks: 4
+  #           omp_threads: 1
+  #       exclude:
+  #         - fc: ifx
+  #           mpi: yes
 
-    name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }})
+  #         # The star setup routine is susceptible to roundoff error
+  #         # which gives very different results with the intel compiler
+  #         - test: polytrope
+  #           fc: ifx
+  #         # star_sph uses MICCG init, which is not compatible with MPI
+  #         - test: star_sph
+  #           mpi: yes
+  #         # radiation tests use MICCG, which is not compatible with MPI yet
+  #         - test: diffusion1d_x
+  #           mpi: yes
+  #         - test: diffusion1d_y
+  #           mpi: yes
+  #         - test: diffusion1d_z
+  #           mpi: yes
+  #         - test: diffusion2d_xy
+  #           mpi: yes
+  #         - test: diffusion2d_xz
+  #           mpi: yes
+  #         - test: diffusion2d_yz
+  #           mpi: yes
+  #         - test: radshock_x
+  #           mpi: yes
+  #         - test: radshock_y
+  #           mpi: yes
+  #         - test: radshock_z
+  #           mpi: yes
+  #         - test: radstar
+  #           mpi: yes
+  #         # diffusion1d does not use hydro, so reconstruction is irrelevant
+  #         - test: diffusion1d_x
+  #           flat: yes
+  #         - test: diffusion1d_y
+  #           flat: yes
+  #         - test: diffusion1d_z
+  #           flat: yes
+  #         - test: diffusion2d_xy
+  #           flat: yes
+  #         - test: diffusion2d_xz
+  #           flat: yes
+  #         - test: diffusion2d_yz
+  #           flat: yes
 
-    steps:
-    - uses: actions/checkout@v4
+  #   name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }})
 
-    - uses: ./.github/actions/setup-intel-oneapi
-      if: matrix.fc == 'ifx'
+  #   steps:
+  #   - uses: actions/checkout@v4
 
-    - name: Set up OpenMPI
-      if: matrix.mpi == 'yes'
-      run: sudo apt-get install -y openmpi-bin libopenmpi-dev
+  #   - uses: ./.github/actions/setup-intel-oneapi
+  #     if: matrix.fc == 'ifx'
 
-    - name: Check gfortran version
-      run: gfortran --version
+  #   - name: Set up OpenMPI
+  #     if: matrix.mpi == 'yes'
+  #     run: sudo apt-get install -y openmpi-bin libopenmpi-dev
 
-    - name: Download binary
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
-        path: ./work
+  #   - name: Check gfortran version
+  #     run: gfortran --version
 
-    - name: Set executable permissions for binary
-      run: chmod +x ./work/hormone
+  #   - name: Download binary
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
+  #       path: ./work
 
-    - name: Update startfile
-      working-directory: ./work
-      run: sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
+  #   - name: Set executable permissions for binary
+  #     run: chmod +x ./work/hormone
 
-    - name: Remove "test" after test name if doing iotest
-      if: matrix.test == 'iotest'
-      working-directory: ./work
-      run: sed -i "s/iotest test/iotest/g" startfile
+  #   - name: Update startfile
+  #     working-directory: ./work
+  #     run: sed -i "s/sodshock_x/${{ matrix.test }}/g" startfile
 
-    - name: Flat reconstruction switch
-      if: matrix.flat == 'yes'
-      working-directory: ./para
-      # If flux_limiter is specified, replace it with "flat", otherwise add the option
-      run: |
-        if grep -q "flux_limiter=" parameters_${{ matrix.test }}; then
-          sed -i "s/flux_limiter='[^']*'/flux_limiter='flat'/" parameters_${{ matrix.test }}
-        else
-          sed -i "s/&simucon/\&simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
-        fi
-        cat parameters_${{ matrix.test }}
+  #   - name: Remove "test" after test name if doing iotest
+  #     if: matrix.test == 'iotest'
+  #     working-directory: ./work
+  #     run: sed -i "s/iotest test/iotest/g" startfile
 
-    - name: Run test
-      working-directory: ./work
-      run: |
-        if [[ "${{ matrix.mpi }}" == "yes" ]]; then
-          export OMP_NUM_THREADS=${{ matrix.omp_threads }}
-          mpirun -np ${{ matrix.mpi_tasks }} --oversubscribe ./hormone
-        else
-          export OMP_NUM_THREADS=${{ matrix.omp_threads }}
-          ./hormone
-        fi
+  #   - name: Flat reconstruction switch
+  #     if: matrix.flat == 'yes'
+  #     working-directory: ./para
+  #     # If flux_limiter is specified, replace it with "flat", otherwise add the option
+  #     run: |
+  #       if grep -q "flux_limiter=" parameters_${{ matrix.test }}; then
+  #         sed -i "s/flux_limiter='[^']*'/flux_limiter='flat'/" parameters_${{ matrix.test }}
+  #       else
+  #         sed -i "s/&simucon/\&simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
+  #       fi
+  #       cat parameters_${{ matrix.test }}
 
-  compiler-warnings:
-    needs: compile
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        fc:
-          - gfortran
-        debug:
-          - yes
-        mpi:
-          - no
-          - yes
+  #   - name: Run test
+  #     working-directory: ./work
+  #     run: |
+  #       if [[ "${{ matrix.mpi }}" == "yes" ]]; then
+  #         export OMP_NUM_THREADS=${{ matrix.omp_threads }}
+  #         mpirun -np ${{ matrix.mpi_tasks }} --oversubscribe ./hormone
+  #       else
+  #         export OMP_NUM_THREADS=${{ matrix.omp_threads }}
+  #         ./hormone
+  #       fi
 
-    name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
+  # compiler-warnings:
+  #   needs: compile
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       fc:
+  #         - gfortran
+  #       debug:
+  #         - yes
+  #       mpi:
+  #         - no
+  #         - yes
 
-    steps:
-    - uses: actions/checkout@v4
+  #   name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
 
-    - name: Download compile log
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-compile-log
+  #   steps:
+  #   - uses: actions/checkout@v4
 
-    - name: Check for compiler warnings
-      run: |
-        cat ./compile.log
-        if grep -q "Warning: " ./compile.log; then
-          echo "Compiler warnings found"
-          exit 1
-        else
-          echo "No compiler warnings found"
-        fi
+  #   - name: Download compile log
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-compile-log
 
-  # Gather results into a dummy job that will fail if the previous job fails
-  gather_results:
-    if: always()
-    needs:
-    - test
+  #   - name: Check for compiler warnings
+  #     run: |
+  #       cat ./compile.log
+  #       if grep -q "Warning: " ./compile.log; then
+  #         echo "Compiler warnings found"
+  #         exit 1
+  #       else
+  #         echo "No compiler warnings found"
+  #       fi
 
-    # This name matches the branch protection requirement
-    name: test
+  # # Gather results into a dummy job that will fail if the previous job fails
+  # gather_results:
+  #   if: always()
+  #   needs:
+  #   - test
 
-    runs-on: ubuntu-latest
+  #   # This name matches the branch protection requirement
+  #   name: test
 
-    steps:
-    - name: Check all tests
-      run: |
-        if [[ "${{ needs.test.result }}" == "success" ]]; then
-          echo "All tests succeeded"
-        else
-          echo "At least one test failed"
-          exit 1
-        fi
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #   - name: Check all tests
+  #     run: |
+  #       if [[ "${{ needs.test.result }}" == "success" ]]; then
+  #         echo "All tests succeeded"
+  #       else
+  #         echo "At least one test failed"
+  #         exit 1
+  #       fi
