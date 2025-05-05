@@ -341,7 +341,7 @@ jobs:
       run: |
         if [[ "${{ matrix.mpi }}" == "yes" ]]; then
           export OMP_NUM_THREADS=${{ matrix.omp_threads }}
-          mpirun -np ${{ matrix.mpi_tasks }} --oversubscribe ./hormone
+          mpirun -np ${{ matrix.mpi_tasks }} --oversubscribe ./hormone -ksp_type cg -pc_type bjacobi ksp_rtol 1.e-16
         else
           export OMP_NUM_THREADS=${{ matrix.omp_threads }}
           ./hormone
