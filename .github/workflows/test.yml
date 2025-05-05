@@ -367,7 +367,7 @@ jobs:
           - mpi: yes
             petsc: yes
 
-    name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
+    name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
     steps:
     - uses: actions/checkout@v4
