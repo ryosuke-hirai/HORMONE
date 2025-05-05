@@ -23,6 +23,9 @@ jobs:
         mpi:
           - no
           - yes
+        petsc:
+          - no
+          - yes
         exclude:
           - fc: ifx
             mpi: yes
