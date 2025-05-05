@@ -124,6 +124,7 @@ jobs:
           - yes
         petsc:
           - no
+          - yes
         mpi_tasks:
           - 2
         omp_threads:
@@ -217,6 +218,36 @@ jobs:
             flat: yes
           - test: diffusion2d_yz
             flat: yes
+          # PETSc is not compatible with MPI yet
+          - petsc: yes
+            mpi: yes
+          # Tests without radiation and gravity do not use PETSc
+          - test: sodshock_x
+            petsc: yes
+          - test: sodshock_y
+            petsc: yes
+          - test: sodshock_z
+            petsc: yes
+          - test: briowushock_x
+            petsc: yes
+          - test: briowushock_y
+            petsc: yes
+          - test: briowushock_z
+            petsc: yes
+          - test: sedov_default
+            petsc: yes
+          - test: orszagtang_xy
+            petsc: yes
+          - test: orszagtang_yz
+            petsc: yes
+          - test: orszagtang_xz
+            petsc: yes
+          - test: KHinstability
+            petsc: yes
+          - test: smearing
+            petsc: yes
+          - test: iotest
+            petsc: yes
 
     name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
@@ -302,7 +333,7 @@ jobs:
     - name: Download compile log
       uses: actions/download-artifact@v4
       with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc == 'yes' && 'yes' || 'no' }}-compile-log
+        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc }}-compile-log
 
     - name: Check for compiler warnings
       run: |
