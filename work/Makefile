@@ -113,7 +113,7 @@ ascii: $(TARGETA)
 lc: $(TARGETL)
 
 $(TARGET): $(OBJ_F)
-	$(FC) $(FCFLAG) $(LDFLAGS) -o $@ $(OBJ_F)
+	$(FC) $(FCFLAG) -o $@ $(OBJ_F) $(LDFLAGS)
 
 $(TARGETA): $(OBJA_F)
 	$(FC) $(FCFLAG) -o $@ $(OBJA_F)
