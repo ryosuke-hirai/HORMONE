@@ -137,6 +137,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: polytrope
             fc: gfortran
             debug: no
@@ -144,6 +145,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: KHinstability
             fc: gfortran
             debug: no
@@ -151,6 +153,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: orszagtang_xy
             fc: gfortran
             debug: no
@@ -158,6 +161,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: orszagtang_yz
             fc: gfortran
             debug: no
@@ -165,6 +169,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: orszagtang_xz
             fc: gfortran
             debug: no
@@ -172,6 +177,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           # Radiation and gravity tests should be used to test PETSc implementation
           - test: star_sph
             fc: gfortran
