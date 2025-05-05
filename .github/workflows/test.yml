@@ -50,33 +50,6 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y petsc-dev
 
-        - name: Debug PETSc Makefile variables and Fortran support
-          if: matrix.petsc == 'yes'
-          shell: bash
-          run: |
-            echo "=== Evaluating PETSc Makefile variables ==="
-
-            PETSC_PC=$(pkg-config --path petsc || pkg-config --path PETSc || if [ -n "${PETSC_DIR}" ] && [ -d "${PETSC_DIR}" ]; then find "${PETSC_DIR}" -type f -iname petsc.pc 2>/dev/null | head -n 1; fi)
-            echo "PETSC_PC=$PETSC_PC"
-
-            PETSC_INCLUDE=$(pkg-config --cflags "$PETSC_PC" 2>/dev/null)
-            echo "PETSC_INCLUDE=$PETSC_INCLUDE"
-
-            PETSC_LDFLAGS=$(pkg-config --libs "$PETSC_PC" 2>/dev/null)
-            echo "PETSC_LDFLAGS=$PETSC_LDFLAGS"
-
-            echo "=== PETSc Fortran support check ==="
-
-            HEADER_FILE="/usr/include/petsc/petscconf.h"
-            if [ -f "$HEADER_FILE" ]; then
-              grep -i 'fortran' "$HEADER_FILE" || echo "No Fortran-related macros found"
-            else
-              echo "petscconf.h not found at $HEADER_FILE"
-            fi
-
-            echo "=== Looking for Fortran symbols in PETSc libs ==="
-            nm -g /usr/lib/x86_64-linux-gnu/libpetsc*.so | grep vecassemblybegin_ || echo "Symbol not found (may indicate missing Fortran support)"
-
         - name: Compile
           working-directory: ./work
           run: |
