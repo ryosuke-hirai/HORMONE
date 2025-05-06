@@ -5,7 +5,7 @@ module matrix_solver
 contains
 
 subroutine setup_matrix(system)
-
+  use grid, only: is, ie, js, je, ks, ke, gis, gie, gjs, gje, gks, gke
 #ifdef USE_PETSC
   use petsc_solver_mod, only: setup_petsc
   use matrix_vars, only: petsc_grv, petsc_rad
@@ -13,7 +13,7 @@ subroutine setup_matrix(system)
   use miccg_mod, only: setup_cg
   use matrix_vars, only: cg_grv, cg_rad
 #endif
-  use matrix_vars, only: lmax_grv, lmax_rad, igrv, irad
+  use matrix_vars, only: igrv, irad
 
   integer, intent(in) :: system
 
@@ -21,19 +21,15 @@ subroutine setup_matrix(system)
 
   ! Set up the PETSc matrix and vectors
   if (system == igrv) then
-    call setup_petsc(petsc_grv)
-    lmax_grv = petsc_grv%lmax
+    call setup_petsc(petsc_grv, gis, gie, gjs, gje, gks, gke)
   else if (system == irad) then
-    call setup_petsc(petsc_rad)
-    lmax_rad = petsc_rad%lmax
+    call setup_petsc(petsc_rad, is, ie, js, je, ks, ke)
   end if
 #else
   if (system == igrv) then
-    call setup_cg(cg_grv)
-    lmax_grv = cg_grv%lmax
+    call setup_cg(cg_grv, gis, gie, gjs, gje, gks, gke)
   else if (system == irad) then
-    call setup_cg(cg_rad)
-    lmax_rad = cg_rad%lmax
+    call setup_cg(cg_rad, is, ie, js, je, ks, ke)
   end if
 
 #endif

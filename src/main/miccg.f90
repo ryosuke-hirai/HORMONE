@@ -19,13 +19,13 @@ contains
 !          The resulting data is stored in the cg object.
 !          The matrix A is not assembled here, but the offsets are set.
 
-subroutine setup_cg(cg)
+subroutine setup_cg(cg, is, ie, js, je, ks, ke)
   use utils, only: get_dim
   use matrix_vars, only: cg_set
   use matrix_coeffs_mod, only: compute_coeffs, get_matrix_offsets
-  use grid,only:is,ie,js,je,ks,ke
   type(cg_set), intent(out) :: cg
-  integer :: in, jn, kn, ln, dim
+  integer, intent(in) :: is, ie, js, je, ks, ke
+  integer :: in, jn, kn, ln
 
   ! Set grid parameters.
   cg%is = is;  cg%ie = ie
@@ -39,10 +39,10 @@ subroutine setup_cg(cg)
   cg%lmax = in * jn * kn
 
   ! Determine problem dimensionality.
-  call get_dim(is, ie, js, je, ks, ke, dim)
+  call get_dim(is, ie, js, je, ks, ke, cg%dim)
 
   ! Set number of diagonals and coefficient count.
-  select case(dim)
+  select case(cg%dim)
   case(1)
     cg%Adiags = 2
   case(2)
@@ -55,10 +55,10 @@ subroutine setup_cg(cg)
   allocate(cg%ia(1:cg%Adiags))
   allocate(cg%A(1:cg%Adiags, 1:cg%lmax))
 
-  call get_matrix_offsets(dim, cg%ia)
+  call get_matrix_offsets(cg%dim, cg%ia)
 
   ! Set up the preconditioner.
-  select case(dim)
+  select case(cg%dim)
   case(1)
     cg%cdiags = 2
   case(2)
@@ -72,7 +72,7 @@ subroutine setup_cg(cg)
 
   ! The preconditioner offsets are only used for MICCG, so there is no generic subroutine for them
   ! If the 2D problem is in the y-z plane, then elements 3 and 4 are jn instead of in
-  select case(dim)
+  select case(cg%dim)
   case(1)
     cg%ic(1) = 0
     cg%ic(2) = 1
@@ -101,15 +101,20 @@ end subroutine setup_cg
 
 subroutine write_A_cg(cg, system)
   use utils, only: get_dim
-  use matrix_utils, only: ijk_from_l
-  use matrix_vars, only: cg_set
+  use matrix_utils, only: ijk_from_l, get_raddim
+  use matrix_vars, only: cg_set, irad, igrv
   use matrix_coeffs_mod, only: compute_coeffs
   type(cg_set), intent(inout) :: cg
   integer,      intent(in)   :: system
   real(8), allocatable :: coeffs(:)
   integer :: dim, i, j, k, l
 
-  call get_dim(cg%is, cg%ie, cg%js, cg%je, cg%ks, cg%ke, dim)
+  ! The radiation coefficients depend on the direction of the problem in 1D and 2D
+  if (system == irad) then
+    dim = get_raddim(cg%in, cg%jn, cg%kn)
+  elseif (system == igrv) then
+    dim = cg%dim
+  endif
 
   ! Loop over all grid points. For each point, compute the stencil
   ! coefficients from the physics via compute_coeffs.

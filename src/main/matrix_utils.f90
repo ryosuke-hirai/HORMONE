@@ -39,4 +39,28 @@ pure subroutine ijk_from_l(l,is,js,ks,in,jn,i,j,k)
 return
 end subroutine ijk_from_l
 
+pure function get_raddim(in, jn, kn) result(dim)
+! PURPOSE: Get the dimension of the radiation problem
+  integer,intent(in)::in,jn,kn
+  integer::dim
+
+  if (in>1.and.jn>1.and.kn==1)then
+    dim=3
+  elseif(in>1.and.jn>1.and.kn==1)then
+    dim=21
+  elseif(in>1.and.jn==1.and.kn>1)then
+    dim=22
+  elseif(in==1.and.jn>1.and.kn>1)then
+    dim=23
+  elseif(in>1.and.jn==1.and.kn==1)then
+    dim=11
+  elseif(in==1.and.jn>1.and.kn==1)then
+    dim=12
+  elseif(in==1.and.jn==1.and.kn>1)then
+    dim=13
+  endif
+
+end function get_raddim
+
+
 end module matrix_utils

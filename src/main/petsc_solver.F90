@@ -31,47 +31,50 @@ module petsc_solver_mod
 
 
 #ifdef USE_PETSC
-subroutine setup_petsc(petsc_matrix)
-  use grid, only: is, ie, js, je, ks, ke
+subroutine setup_petsc(pm, is, ie, js, je, ks, ke)
+  use utils, only: get_dim
   use matrix_vars, only: petsc_set
-  type(petsc_set), intent(out) :: petsc_matrix
+  type(petsc_set), intent(out) :: pm
+  integer, intent(in) :: is, ie, js, je, ks, ke
   PC  :: pc
   PetscErrorCode :: ierr
 
   ! Compute grid dimensions and total number of points.
-  petsc_matrix%is = is; petsc_matrix%ie = ie
-  petsc_matrix%js = js; petsc_matrix%je = je
-  petsc_matrix%ks = ks; petsc_matrix%ke = ke
+  pm%is = is; pm%ie = ie
+  pm%js = js; pm%je = je
+  pm%ks = ks; pm%ke = ke
 
-  petsc_matrix%in = ie - is + 1
-  petsc_matrix%jn = je - js + 1
-  petsc_matrix%kn = ke - ks + 1
+  pm%in = ie - is + 1
+  pm%jn = je - js + 1
+  pm%kn = ke - ks + 1
 
-  petsc_matrix%lmax = petsc_matrix%in * petsc_matrix%jn * petsc_matrix%kn
+  pm%lmax = pm%in * pm%jn * pm%kn
+
+  call get_dim(pm%is, pm%ie, pm%js, pm%je, pm%ks, pm%ke, pm%dim)
 
   ! Set up matrix A
-  call MatCreate(PETSC_COMM_WORLD, petsc_matrix%A, ierr)
-  call MatSetSizes(petsc_matrix%A, PETSC_DECIDE, PETSC_DECIDE, petsc_matrix%lmax, petsc_matrix%lmax, ierr)
-  call MatSetFromOptions(petsc_matrix%A, ierr)
-  call MatSetUp(petsc_matrix%A, ierr)
+  call MatCreate(PETSC_COMM_WORLD, pm%A, ierr)
+  call MatSetSizes(pm%A, PETSC_DECIDE, PETSC_DECIDE, pm%lmax, pm%lmax, ierr)
+  call MatSetFromOptions(pm%A, ierr)
+  call MatSetUp(pm%A, ierr)
   ! Create vector for right-hand side.
-  call VecCreate(PETSC_COMM_WORLD, petsc_matrix%b, ierr)
-  call VecSetSizes(petsc_matrix%b, PETSC_DECIDE, petsc_matrix%lmax, ierr)
-  call VecSetFromOptions(petsc_matrix%b, ierr)
+  call VecCreate(PETSC_COMM_WORLD, pm%b, ierr)
+  call VecSetSizes(pm%b, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetFromOptions(pm%b, ierr)
   ! Create vector for solution.
-  call VecCreate(PETSC_COMM_WORLD, petsc_matrix%x, ierr)
-  call VecSetSizes(petsc_matrix%x, PETSC_DECIDE, petsc_matrix%lmax, ierr)
-  call VecSetFromOptions(petsc_matrix%x, ierr)
+  call VecCreate(PETSC_COMM_WORLD, pm%x, ierr)
+  call VecSetSizes(pm%x, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetFromOptions(pm%x, ierr)
   ! Create the KSP solver context.
-  call KSPCreate(PETSC_COMM_WORLD, petsc_matrix%ksp, ierr)
-  call KSPSetInitialGuessNonzero(petsc_matrix%ksp, PETSC_TRUE, ierr)
+  call KSPCreate(PETSC_COMM_WORLD, pm%ksp, ierr)
+  call KSPSetInitialGuessNonzero(pm%ksp, PETSC_TRUE, ierr)
   ! Equivalent to options: -ksp_type cg -pc_type bjacobi -ksp_rtol 1.e-16
-  call KSPSetType(petsc_matrix%ksp, KSPCG, ierr)
-  call KSPGetPC(petsc_matrix%ksp, pc, ierr)
+  call KSPSetType(pm%ksp, KSPCG, ierr)
+  call KSPGetPC(pm%ksp, pc, ierr)
   call PCSetType(pc, PCBJACOBI, ierr)
-  call KSPSetTolerances(petsc_matrix%ksp, 1.d-16, -1.d0, -1.d0, PETSC_DECIDE, ierr)
+  call KSPSetTolerances(pm%ksp, 1.d-16, -1.d0, -1.d0, PETSC_DECIDE, ierr)
   ! Allow command line options/overrides
-  call KSPSetFromOptions(petsc_matrix%ksp, ierr)
+  call KSPSetFromOptions(pm%ksp, ierr)
 
 end subroutine setup_petsc
 #endif
@@ -88,26 +91,23 @@ end subroutine setup_petsc
 !          Preconditioning is handled by PETSc, so we do not compute it here.
 
 #ifdef USE_PETSC
-subroutine write_A_petsc(petsc_matrix, system)
+subroutine write_A_petsc(pm, system)
   use utils, only: get_dim
-  use grid, only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
   use matrix_coeffs_mod, only:compute_coeffs, get_matrix_offsets
-  use matrix_utils, only:ijk_from_l
+  use matrix_utils, only:ijk_from_l, get_raddim
   use matrix_vars, only: petsc_set
-  type(petsc_set), intent(inout) :: petsc_matrix
+  type(petsc_set), intent(inout) :: pm
   integer, intent(in) :: system
-  integer :: in, jn, kn, dim, i, j, k, l, ncoeff, m
+  integer :: dim, i, j, k, l, ncoeff, m
   real(8) :: coeffs(5)
   integer :: offsets(5)
   integer :: row, col
+  integer :: dim
   PC             :: pc
   PetscScalar    :: val
   PetscErrorCode :: ierr
 
-  ! Determine problem dimension based on input indices.
-  call get_dim(is, ie, js, je, ks, ke, dim)
-
-  select case (dim)
+  select case (pm%dim)
   case(1)
     ncoeff = 2
   case(2)
@@ -116,41 +116,44 @@ subroutine write_A_petsc(petsc_matrix, system)
     ncoeff = 5
   end select
 
-  in = ie - is + 1
-  jn = je - js + 1
-  kn = ke - ks + 1
+  call get_matrix_offsets(pm%dim, offsets)
 
-  call get_matrix_offsets(dim, offsets)
+  ! The radiation coefficients depend on the direction of the problem in 1D and 2D
+  if (system == irad) then
+    dim = get_raddim(pm%in, pm%jn, pm%kn)
+  elseif (system == igrv) then
+    dim = pm%dim
+  endif
 
   ! Loop over all grid points.
-  do l = 1, petsc_matrix%lmax
-    call ijk_from_l(l, is, js, ks, in, jn, i, j, k)
+  do l = 1, pm%lmax
+    call ijk_from_l(l, pm%is, pm%js, pm%ks, pm%in, pm%jn, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
 
     do m = 1, ncoeff
       row = (l - 1)
       col = row + offsets(m)
 
-      if(row >= 0 .and. row < petsc_matrix%lmax .and. col >= 0 .and. col < petsc_matrix%lmax) then
+      if(row >= 0 .and. row < pm%lmax .and. col >= 0 .and. col < pm%lmax) then
         val = coeffs(m)
         ! Symmetric matrix
-                       call MatSetValue(petsc_matrix%A, row, col, val, INSERT_VALUES, ierr)
-        if(row /= col) call MatSetValue(petsc_matrix%A, col, row, val, INSERT_VALUES, ierr)
+                       call MatSetValue(pm%A, row, col, val, INSERT_VALUES, ierr)
+        if(row /= col) call MatSetValue(pm%A, col, row, val, INSERT_VALUES, ierr)
       end if
     enddo
   end do
 
   ! Finalize PETSc matrix assembly.
-  call MatAssemblyBegin(petsc_matrix%A, MAT_FINAL_ASSEMBLY, ierr)
-  call MatAssemblyEnd(petsc_matrix%A, MAT_FINAL_ASSEMBLY, ierr)
+  call MatAssemblyBegin(pm%A, MAT_FINAL_ASSEMBLY, ierr)
+  call MatAssemblyEnd(pm%A, MAT_FINAL_ASSEMBLY, ierr)
 
   ! Set operators for the KSP solver.
-  call KSPSetOperators(petsc_matrix%ksp, petsc_matrix%A, petsc_matrix%A, ierr)
+  call KSPSetOperators(pm%ksp, pm%A, pm%A, ierr)
 
   ! Set preconditioner.
-  call KSPGetPC(petsc_matrix%ksp, pc, ierr)
+  call KSPGetPC(pm%ksp, pc, ierr)
   call PCSetup(pc, ierr)
-  call KSPSetup(petsc_matrix%ksp, ierr)
+  call KSPSetup(pm%ksp, ierr)
 
 end subroutine write_A_petsc
 #endif
@@ -164,29 +167,29 @@ end subroutine write_A_petsc
 ! PURPOSE: Solves the linear system A*x = b using PETSc.
 
 #ifdef USE_PETSC
-subroutine solve_system_petsc(petsc_matrix, x, b)
+subroutine solve_system_petsc(pm, x, b)
   use matrix_vars, only: petsc_set
-  type(petsc_set), intent(in) :: petsc_matrix
+  type(petsc_set), intent(in) :: pm
   real(8), intent(inout) :: x(:)
   real(8), intent(in)    :: b(:)
   integer :: ierr, i
   real(8), pointer :: x_array(:)
 
-  do i = 0, petsc_matrix%lmax-1
-    call VecSetValue(petsc_matrix%b, i, b(i+1), INSERT_VALUES, ierr)
+  do i = 0, pm%lmax-1
+    call VecSetValue(pm%b, i, b(i+1), INSERT_VALUES, ierr)
   end do
-  call VecAssemblyBegin(petsc_matrix%b, ierr)
-  call VecAssemblyEnd(petsc_matrix%b, ierr)
+  call VecAssemblyBegin(pm%b, ierr)
+  call VecAssemblyEnd(pm%b, ierr)
 
   ! Solve the linear system.
-  call KSPSolve(petsc_matrix%ksp, petsc_matrix%b, petsc_matrix%x, ierr)
+  call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
 
   ! Copy solution back to x.
-  call VecGetArrayF90(petsc_matrix%x, x_array, ierr)
-  do i = 1, petsc_matrix%lmax
+  call VecGetArrayF90(pm%x, x_array, ierr)
+  do i = 1, pm%lmax
     x(i) = x_array(i)
   end do
-  call VecRestoreArrayF90(petsc_matrix%x, x_array, ierr)
+  call VecRestoreArrayF90(pm%x, x_array, ierr)
 
 end subroutine solve_system_petsc
 #endif

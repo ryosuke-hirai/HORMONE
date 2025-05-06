@@ -26,12 +26,13 @@ subroutine gravity_elliptic
  use timestep_mod,only:timestep
  use profiler_mod
  use matrix_utils,only:l_from_ijk,ijk_from_l
- use matrix_vars,only:lmax=>lmax_grv
  use matrix_solver,only:solve_system_grv
- integer:: i,j,k,l
+ integer:: i,j,k,l,lmax
  real(8),allocatable,dimension(:):: x, cgsrc
 
 !-------------------------------------------------------------------------
+
+ lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
 
  allocate( x(1:lmax), cgsrc(1:lmax) )
 

@@ -29,12 +29,12 @@ subroutine radiation
  use miccg_mod,only:miccg
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
- use matrix_vars,only:lmax=>lmax_rad
  use matrix_solver,only:write_A_rad,solve_system_rad
  use matrix_utils,only:ijk_from_l
 
  integer:: l,i,j,k
- integer:: in,jn
+ integer:: in,jn,kn
+ integer:: lmax
  real(8),allocatable:: x(:)
 
 !-----------------------------------------------------------------------------
@@ -52,7 +52,8 @@ subroutine radiation
  call write_A_rad
  call get_radb ! Sets up rsrc
 
-  in = ie-is+1; jn = je-js+1
+ in = ie-is+1; jn = je-js+1; kn = ke-ks+1
+ lmax = in*kn*kn
 
  allocate( x(lmax) )
 !$omp parallel do private(l,i,j,k)
@@ -63,9 +64,6 @@ subroutine radiation
 !$omp end parallel do
 
 call solve_system_rad(x, rsrc) ! returns erad^{n+1}
-
-! TODO: refactor this elsewhere
-in = ie-is+1; jn = je-js+1
 
 ! update erad and u
 !$omp parallel do private(l,i,j,k)
@@ -171,14 +169,14 @@ subroutine get_radb
  use grid,only:dvol,dt,is,ie,js,je,ks,ke
  use physval
  use matrix_utils,only:ijk_from_l
- use matrix_vars, only:lmax=>lmax_rad
 
- integer:: i,j,k,l
+ integer:: i,j,k,l,lmax
  real(8):: kappap
  integer :: in,jn,kn
 !-----------------------------------------------------------------------------
 
  in = ie-is+1; jn = je-js+1; kn = ke-ks+1
+ lmax = in*jn*kn
 
 !$omp parallel do private(l,i,j,k,kappap)
   do l = 1, lmax
@@ -208,16 +206,19 @@ subroutine radiation_setup
 
  use settings,only:radswitch
  use grid,only:is,ie,js,je,ks,ke
- use matrix_vars,only:lmax=>lmax_rad,irad
+ use matrix_vars,only:irad
  use matrix_solver,only:setup_matrix
  use miccg_mod,only:setup_cg
  use physval,only:radK
+
+ integer :: lmax
 
 !-----------------------------------------------------------------------------
 
  if(radswitch==1.or.radswitch==2)then
   call setup_matrix(irad)
   call get_geo
+  lmax = (ie-is+1)*(je-js+1)*(ke-ks+1)
   allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is:ie,js:je,ks:ke),&
            rsrc(1:lmax) )
  end if

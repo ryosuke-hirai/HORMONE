@@ -11,15 +11,10 @@ module matrix_vars
   integer, parameter :: igrv = 1
   integer, parameter :: irad = 2
 
-  ! Matrix sizes for allocatioon
-  ! Should mirror PETSc and CG lmax
-  integer :: lmax_grv
-  integer :: lmax_rad
-
   ! PETSc arrays
 #ifdef USE_PETSC
   type petsc_set
-    integer :: is, ie, js ,je, ks, ke, in, jn, kn
+    integer :: is, ie, js ,je, ks, ke, in, jn, kn, dim
     Mat :: A
     Vec :: x
     Vec :: b
@@ -32,7 +27,7 @@ module matrix_vars
 
   ! MICCG arrays
   type cg_set
-    integer :: is, ie, js ,je, ks, ke, in, jn, kn, lmax
+    integer :: is, ie, js ,je, ks, ke, in, jn, kn, lmax, dim
     integer :: cdiags, Adiags
     integer, allocatable :: ia(:), ic(:)
     real(8), allocatable, dimension(:,:) :: A, c
