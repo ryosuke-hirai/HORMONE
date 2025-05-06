@@ -95,14 +95,13 @@ subroutine write_A_petsc(pm, system)
   use utils, only: get_dim
   use matrix_coeffs_mod, only:compute_coeffs, get_matrix_offsets
   use matrix_utils, only:ijk_from_l, get_raddim
-  use matrix_vars, only: petsc_set
+  use matrix_vars, only: petsc_set, irad, igrv
   type(petsc_set), intent(inout) :: pm
   integer, intent(in) :: system
   integer :: dim, i, j, k, l, ncoeff, m
   real(8) :: coeffs(5)
   integer :: offsets(5)
   integer :: row, col
-  integer :: dim
   PC             :: pc
   PetscScalar    :: val
   PetscErrorCode :: ierr
