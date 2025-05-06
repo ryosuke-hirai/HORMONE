@@ -62,4 +62,4 @@
          lambdatype=0 rbtype=0 /
 
 ! test tolerance
-&testcon  test_tol=5d-10 Mach_tol=1d-5/
+&testcon  test_tol=1d-13 Mach_tol=1d-5/
