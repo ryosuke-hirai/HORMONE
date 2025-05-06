@@ -372,7 +372,7 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
  real(8),allocatable,dimension(:),intent(in)::m
  real(8),allocatable,dimension(:),intent(inout)::r,rho,p
  integer i,Nmax,which
- real(8):: fac
+ real(8):: fac, outer_P, kappa_surf
  real(8),parameter:: err=1d-8
 
 !-----------------------------------------------------------------------------
@@ -380,6 +380,8 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
  Nmax=size(rho)-1
  p = -1d0
  fac = 0.5d0
+
+ kappa_surf = 0.3d0 ! surface opacity for outer boundary condition
 
  p(0:1) = G*(m(Nmax)-m(0))**2/r(Nmax)**4/(8d0*pi) ! Initial guess
  which = 0
@@ -395,18 +397,23 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
    r(i) = (r(i-1)**3+3d0*(m(i)-m(i-1))/(4d0*pi*rho(i)))**(1d0/3d0)
   end do shot_loop
 
-  if(p(Nmax)/(p(0)*1d-8)-1d0>err)then
+! Photospheric boundary condition
+  outer_P = 2d0*G*m(Nmax)/(3d0*r(Nmax)**2*kappa_surf)
+  if(p(Nmax)/outer_P-1d0>err)then
    p(Nmax) = -1d0
    p(0:1)=p(0)*(1d0-fac)
    if(which>0)fac=fac*0.5d0
    which=-1
-  elseif(p(Nmax)/(p(0)*1d-8)-1d0<-err)then
+  elseif(p(Nmax)/outer_P-1d0<-err)then
    p(0:1)=p(0)*(1d0+fac)
    if(which<0)fac=fac*0.5d0
    which=1
   else
    exit convergence_loop
   end if
+
+! give up if central pressure cannot be further improved
+  if(fac < epsilon(1d0))exit
 
  end do convergence_loop
 
