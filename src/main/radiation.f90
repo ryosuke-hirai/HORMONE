@@ -26,11 +26,12 @@ subroutine radiation
  use constants,only:Cv,Rgas
  use grid
  use physval
- use miccg_mod,only:miccg,ijk_from_l
+ use miccg_mod,only:miccg
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
  use matrix_vars,only:lmax=>lmax_rad
  use matrix_solver,only:write_A_rad,solve_system_rad
+ use matrix_utils,only:ijk_from_l
 
  integer:: l,i,j,k
  integer:: in,jn
@@ -169,7 +170,7 @@ subroutine get_radb
  use constants,only:clight,arad
  use grid,only:dvol,dt,is,ie,js,je,ks,ke
  use physval
- use miccg_mod,only:ijk_from_l
+ use matrix_utils,only:ijk_from_l
  use matrix_vars, only:lmax=>lmax_rad
 
  integer:: i,j,k,l

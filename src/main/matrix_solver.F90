@@ -1,11 +1,8 @@
 module matrix_solver
-  use miccg_mod, only: ijk_from_l, get_preconditioner
-  use matrix_vars, only: cg_set, igrv, irad
 
   implicit none
 
-  contains
-
+contains
 
 subroutine setup_matrix(system)
 
@@ -17,7 +14,7 @@ subroutine setup_matrix(system)
   use miccg_mod, only: setup_cg
   use matrix_vars, only: cg_grv, cg_rad
 #endif
-  use matrix_vars, only: lmax_grv, lmax_rad
+  use matrix_vars, only: lmax_grv, lmax_rad, igrv, irad
 
   integer, intent(in) :: system
 
@@ -54,6 +51,7 @@ end subroutine setup_matrix
 !          compilation flag USE_PETSC.
 
 subroutine write_A_grv
+  use matrix_vars, only: igrv
 #ifdef USE_PETSC
   use matrix_vars, only: A_petsc_grv, lmax_petsc_grv, ksp_grv
   use petsc_solver_mod, only: write_A_petsc
@@ -67,6 +65,7 @@ subroutine write_A_grv
 end subroutine write_A_grv
 
 subroutine write_A_rad
+  use matrix_vars, only: irad
 #ifdef USE_PETSC
   use matrix_vars, only: A_petsc_rad, lmax_petsc_rad, ksp_rad
   use petsc_solver_mod, only: write_A_petsc

@@ -90,7 +90,7 @@ subroutine write_A_petsc(A_petsc, ksp, lmax_petsc, system)
   use utils,only: get_dim
   use grid,only:is=>gis,ie=>gie,js=>gjs,je=>gje,ks=>gks,ke=>gke
   use matrix_coeffs_mod,only:compute_coeffs, get_matrix_offsets
-  use miccg_mod,only:ijk_from_l ! TODO: move this elsewhere
+  use matrix_utils,only:ijk_from_l
   Mat, intent(in) :: A_petsc
   KSP, intent(in) :: ksp
   PetscInt, intent(in) :: lmax_petsc

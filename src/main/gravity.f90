@@ -25,7 +25,6 @@ subroutine gravity
  use gravbound_mod
  use gravity_hyperbolic_mod,only:gravity_hyperbolic,hg_boundary_conditions
  use gravity_elliptic_mod,only:gravity_elliptic
- use miccg_mod,only:miccg,l_from_ijk,ijk_from_l
  use timestep_mod,only:timestep
  use profiler_mod
 
