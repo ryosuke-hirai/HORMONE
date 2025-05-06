@@ -67,7 +67,7 @@ subroutine setup_petsc(A_petsc, b_petsc, x_petsc, ksp, lmax_petsc)
   call KSPSetType(ksp, KSPCG, ierr)
   call KSPGetPC(ksp, pc, ierr)
   call PCSetType(pc, PCBJACOBI, ierr)
-  call KSPSetTolerances(ksp, 1.d-17, PETSC_DECIDE_REAL, PETSC_DECIDE_REAL, PETSC_DECIDE, ierr)
+  call KSPSetTolerances(ksp, 1.d-17, -1.d0, -1.d0, PETSC_DECIDE, ierr)
   ! Allow command line options/overrides
   call KSPSetFromOptions(ksp, ierr)
 
