@@ -37,6 +37,7 @@ subroutine setup_petsc(A_petsc, b_petsc, x_petsc, ksp, lmax_petsc)
   Mat :: A_petsc
   Vec :: b_petsc, x_petsc
   KSP :: ksp
+  PC  :: pc
   PetscInt :: lmax_petsc
   PetscErrorCode :: ierr
 
@@ -62,6 +63,12 @@ subroutine setup_petsc(A_petsc, b_petsc, x_petsc, ksp, lmax_petsc)
   ! Create the KSP solver context.
   call KSPCreate(PETSC_COMM_WORLD, ksp, ierr)
   call KSPSetInitialGuessNonzero(ksp, PETSC_TRUE, ierr)
+  ! Equivalent to options: -ksp_type cg -pc_type bjacobi -ksp_rtol 1.e-17
+  call KSPSetType(ksp, KSPCG, ierr)
+  call KSPGetPC(ksp, pc, ierr)
+  call PCSetType(pc, PCBJACOBI, ierr)
+  call KSPSetTolerances(ksp, 1.e-17, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, ierr)
+  ! Allow command line options/overrides
   call KSPSetFromOptions(ksp, ierr)
 
 end subroutine setup_petsc
