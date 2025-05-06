@@ -63,11 +63,11 @@ subroutine setup_petsc(A_petsc, b_petsc, x_petsc, ksp, lmax_petsc)
   ! Create the KSP solver context.
   call KSPCreate(PETSC_COMM_WORLD, ksp, ierr)
   call KSPSetInitialGuessNonzero(ksp, PETSC_TRUE, ierr)
-  ! Equivalent to options: -ksp_type cg -pc_type bjacobi -ksp_rtol 1.e-17
+  ! Equivalent to options: -ksp_type cg -pc_type bjacobi -ksp_rtol 1.e-16
   call KSPSetType(ksp, KSPCG, ierr)
   call KSPGetPC(ksp, pc, ierr)
   call PCSetType(pc, PCBJACOBI, ierr)
-  call KSPSetTolerances(ksp, 1.d-17, -1.d0, -1.d0, PETSC_DECIDE, ierr)
+  call KSPSetTolerances(ksp, 1.d-16, -1.d0, -1.d0, PETSC_DECIDE, ierr)
   ! Allow command line options/overrides
   call KSPSetFromOptions(ksp, ierr)
 
