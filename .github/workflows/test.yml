@@ -309,6 +309,12 @@ jobs:
       if: matrix.mpi == 'yes'
       run: sudo apt-get install -y openmpi-bin libopenmpi-dev
 
+    - name: Set up PETSc
+      if: matrix.petsc == 'yes'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y petsc-dev
+
     - name: Check gfortran version
       run: gfortran --version
 
