@@ -53,7 +53,7 @@ subroutine radiation
  call get_radb ! Sets up rsrc
 
  in = ie-is+1; jn = je-js+1; kn = ke-ks+1
- lmax = in*kn*kn
+ lmax = in*jn*kn
 
  allocate( x(lmax) )
 !$omp parallel do private(l,i,j,k)
