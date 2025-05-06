@@ -365,7 +365,6 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
 
  use constants,only:G,pi
  use pressure_mod,only:get_d_from_ps
- use utils,only:softened_acc
 
  real(8),intent(in)::Sc,rsoft
  real(8),intent(inout)::imu
@@ -383,22 +382,21 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
 
  kappa_surf = 0.3d0 ! surface opacity for outer boundary condition
 
- p(0:1) = G*(m(Nmax)-m(0))**2/r(Nmax)**4/(8d0*pi) ! Initial guess
+ p(0:1) = G*(m(Nmax)-m(0))**2/(8d0*pi*r(Nmax)**4) ! Initial guess
  which = 0
 
  convergence_loop:do
   rho(0:1) = get_d_from_ps(p(0),Sc,imu)
   r(1) = ((m(1)-m(0))/(4d0*pi/3d0*rho(1)))**(1d0/3d0)
+
   shot_loop:do i = 2, Nmax
-   p(i) = p(i-1) - (m(i)-m(i-2))*G/(8d0*pi*r(i-1)**2) &
-                 *((m(i-1)-m(0))/r(i-1)**2+m(0)*softened_acc(r(i-1),rsoft))
+   call next_p_r(p(i-1),r(i-1),rsoft,m(i-1),m(i),m(0),Sc,imu,p(i),r(i),rho(i))
    if(p(i)<=0d0)exit shot_loop
-   rho(i) = get_d_from_ps(p(i),Sc,imu)
-   r(i) = (r(i-1)**3+3d0*(m(i)-m(i-1))/(4d0*pi*rho(i)))**(1d0/3d0)
   end do shot_loop
 
 ! Photospheric boundary condition
   outer_P = 2d0*G*m(Nmax)/(3d0*r(Nmax)**2*kappa_surf)
+
   if(p(Nmax)/outer_P-1d0>err)then
    p(Nmax) = -1d0
    p(0:1)=p(0)*(1d0-fac)
@@ -421,6 +419,64 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
 
 return
 end subroutine isentropic_star1
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                           SUBROUTINE NEXT_P_R
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute next p_i and r_i given previous p_{i-1} and r_{i-1}
+
+subroutine next_p_r(p1,r1,rsoft,m1,m2,mc,Sc,imu,p2,r2,rho2)
+
+ use constants,only:G,pi
+ use pressure_mod,only:get_d_from_ps
+ use utils,only:softened_acc
+
+ real(8),intent(in):: p1,r1,rsoft,m1,m2,mc,Sc
+ real(8),intent(inout):: imu
+ real(8),intent(out):: p2,r2,rho2
+ real(8):: dm,rhom,rm,corr,f1,f2,dp
+ real(8),parameter:: err=1d-10
+
+!-----------------------------------------------------------------------------
+
+ dm = m2-m1
+ p2 = p1 * 0.99d0 ! guess for next p
+ rho2 = -1d0
+ r2 = -1d0
+
+ corr=huge(1d0)
+ do while(abs(corr)>err*p2)
+  rhom = get_d_from_ps(0.5d0*(p1+p2),Sc,imu)
+  rm = 0.5d0*(r1+(3d0*dm/(4d0*pi*rhom)+r1**3)**(1d0/3d0))
+  f1 = p1-p2 &
+     - G*dm/(4d0*pi*rm**2)&
+      *((0.5d0*(m1+m2)-mc)/rm**2+mc*softened_acc(rm,rsoft))
+
+  dp = max(p2*1d-2,p1*1d-12)
+  rhom = get_d_from_ps(0.5d0*(p1+p2+dp),Sc,imu)
+  rm = 0.5d0*(r1+(3d0*dm/(4d0*pi*rhom)+r1**3)**(1d0/3d0))
+  f2 = p1-p2-dp &
+     - G*dm/(4d0*pi*rm**2)&
+      *((0.5d0*(m1+m2)-mc)/rm**2+mc*softened_acc(rm,rsoft))
+
+  corr = -f1*dp/(f2-f1)
+
+  if(p2<=0d0.and.corr<0d0)then
+! If it was previously negative and tries to go negative again, give up
+   p2 = -1d0
+   return
+  end if
+  p2 = p2 + corr
+  p2 = max(p2,0d0) ! don't let pressure go negative
+
+ end do
+
+ rho2 = get_d_from_ps(0.5d0*(p1+p2),Sc,imu)
+ r2 = (3d0*dm/(4d0*pi*rho2)+r1**3)**(1d0/3d0)
+
+ return
+end subroutine next_p_r
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !                     SUBROUTINE GET_SOFTENED_PROFILE
