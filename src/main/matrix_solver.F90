@@ -8,8 +8,7 @@ subroutine setup_matrix(system)
 
 #ifdef USE_PETSC
   use petsc_solver_mod, only: setup_petsc
-  use matrix_vars, only: A_petsc_grv, A_petsc_rad, b_petsc_grv, b_petsc_rad, &
-  x_petsc_grv, x_petsc_rad, ksp_grv, ksp_rad, lmax_petsc_grv, lmax_petsc_rad
+  use matrix_vars, only: petsc_grv, petsc_rad
 #else
   use miccg_mod, only: setup_cg
   use matrix_vars, only: cg_grv, cg_rad
@@ -22,11 +21,11 @@ subroutine setup_matrix(system)
 
   ! Set up the PETSc matrix and vectors
   if (system == igrv) then
-    call setup_petsc(A_petsc_grv, b_petsc_grv, x_petsc_grv, ksp_grv, lmax_petsc_grv)
-    lmax_grv = lmax_petsc_grv
+    call setup_petsc(petsc_grv)
+    lmax_grv = petsc_grv%lmax
   else if (system == irad) then
-    call setup_petsc(A_petsc_rad, b_petsc_rad, x_petsc_rad, ksp_rad, lmax_petsc_rad)
-    lmax_rad = lmax_petsc_rad
+    call setup_petsc(petsc_rad)
+    lmax_rad = petsc_rad%lmax
   end if
 #else
   if (system == igrv) then
@@ -53,9 +52,9 @@ end subroutine setup_matrix
 subroutine write_A_grv
   use matrix_vars, only: igrv
 #ifdef USE_PETSC
-  use matrix_vars, only: A_petsc_grv, lmax_petsc_grv, ksp_grv
+  use matrix_vars, only: petsc_grv
   use petsc_solver_mod, only: write_A_petsc
-  call write_A_petsc(A_petsc_grv, ksp_grv, lmax_petsc_grv, igrv)
+  call write_A_petsc(petsc_grv, igrv)
 #else
   use matrix_vars, only: cg_grv
   use miccg_mod, only: write_A_cg
@@ -67,9 +66,9 @@ end subroutine write_A_grv
 subroutine write_A_rad
   use matrix_vars, only: irad
 #ifdef USE_PETSC
-  use matrix_vars, only: A_petsc_rad, lmax_petsc_rad, ksp_rad
+  use matrix_vars, only: petsc_rad
   use petsc_solver_mod, only: write_A_petsc
-  call write_A_petsc(A_petsc_rad, ksp_rad, lmax_petsc_rad, irad)
+  call write_A_petsc(petsc_rad, irad)
 #else
   use matrix_vars, only: cg_rad
   use miccg_mod, only: write_A_cg
@@ -91,7 +90,7 @@ end subroutine write_A_rad
 subroutine solve_system_grv(x, b)
 #ifdef USE_PETSC
   use petsc_solver_mod, only: solve_system_petsc
-  use matrix_vars, only: x_petsc_grv, b_petsc_grv, ksp_grv, lmax_petsc_grv
+  use matrix_vars, only: petsc_grv
 #else
   use miccg_mod, only: miccg
   use matrix_vars, only: cg_grv
@@ -102,7 +101,7 @@ subroutine solve_system_grv(x, b)
 
 #ifdef USE_PETSC
   ! PETSc solver for gravity system
-  call solve_system_petsc(x_petsc_grv, b_petsc_grv, ksp_grv, lmax_petsc_grv, x, b)
+  call solve_system_petsc(petsc_grv, x, b)
 #else
   ! MICCG solver for gravity system
   call miccg(cg_grv, b, x)
@@ -113,7 +112,7 @@ end subroutine solve_system_grv
 subroutine solve_system_rad(x, b)
 #ifdef USE_PETSC
   use petsc_solver_mod, only: solve_system_petsc
-  use matrix_vars, only: x_petsc_rad, b_petsc_rad, ksp_rad, lmax_petsc_rad
+  use matrix_vars, only: petsc_rad
 #else
   use miccg_mod, only: miccg
   use matrix_vars, only: cg_rad
@@ -124,7 +123,7 @@ real(8), allocatable, intent(in)    :: b(:)
 
 #ifdef USE_PETSC
   ! PETSc solver for radiation system
-call solve_system_petsc(x_petsc_rad, b_petsc_rad, ksp_rad, lmax_petsc_rad, x, b)
+call solve_system_petsc(petsc_rad, x, b)
 #else
   ! MICCG solver for radiation system
   call miccg(cg_rad, b, x)

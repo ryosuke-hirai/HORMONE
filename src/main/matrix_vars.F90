@@ -18,16 +18,16 @@ module matrix_vars
 
   ! PETSc arrays
 #ifdef USE_PETSC
-  Mat :: A_petsc_grv
-  Mat :: A_petsc_rad
-  Vec :: x_petsc_grv
-  Vec :: x_petsc_rad
-  Vec :: b_petsc_grv
-  Vec :: b_petsc_rad
-  KSP :: ksp_grv
-  KSP :: ksp_rad
-  PetscInt :: lmax_petsc_grv
-  PetscInt :: lmax_petsc_rad
+  type petsc_set
+    integer :: is, ie, js ,je, ks, ke, in, jn, kn
+    Mat :: A
+    Vec :: x
+    Vec :: b
+    KSP :: ksp
+    PetscInt :: lmax
+  end type petsc_set
+  type(petsc_set), target :: petsc_grv
+  type(petsc_set), target :: petsc_rad
 #endif
 
   ! MICCG arrays
