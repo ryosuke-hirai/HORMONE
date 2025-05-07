@@ -20,6 +20,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
  real(8):: corr, erec, Cveff, derecdT, dcveffdlnT, Tdot, logd, dt
  real(8),parameter:: W4err = 1d-2
  integer:: n
+ integer,parameter:: nmax=500
 
  if(T<=0d0) T=1d3
 
@@ -29,13 +30,13 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 
  case(1) ! ideal gas + radiation
   corr = huge
-  do n = 1, 500
+  do n = 1, nmax
    corr = (eint-(arad*T**3+d*Cv*imu)*T) &
         / ( -4d0*arad*T**3-d*Cv*imu)
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getT_from_de, eostype=',eostype
    print*,'d=',d,'eint=',eint,'mu=',1d0/imu
    stop
@@ -43,7 +44,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 
  case(2) ! ideal gas + radiation + recombination
   corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
-  do n = 1, 500
+  do n = 1, nmax
    call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
@@ -54,15 +55,19 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
     T = T + Tdot*dt
     Tdot = (1d0-2d0*dt)*Tdot - dt*corr
    else
-    T = T-corr
+    T = T-corr*dt
     Tdot = 0d0
+    dt = 1d0
    end if
    if(abs(corr)<eoserr*T)exit
-   if(n>50)dt=0.5d0
+   if(n> 50)dt=0.5d0
+   if(n>100)dt=0.25d0
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getT_from_de, eostype=',eostype
    print'(4(a6,1PE13.6e2))','d=',d,'eint=',eint,'X=',X,'Y=',Y
+   print*,'corr=',corr,'T=',T,'Tdot=',Tdot,'corr/T=',abs(corr/T)
+   print*,'egas=',d*cveff*Rgas*T,'erad=',arad*T**4,'erec=',d*erec
    stop
   end if
   call get_imurec(logd,T,X,Y,imu)
@@ -70,7 +75,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 
  case(3) ! ideal gas + recombination
   corr=huge;Tdot=0d0;logd=log10(d);dt=0.9d0
-  do n = 1, 500
+  do n = 1, nmax
    call get_erec_cveff(logd,T,X,Y,erec,cveff,derecdT,dcveffdlnT)
    if(d*erec>=eint)then ! avoid negative thermal energy
     T = 0.95d0*T; Tdot=0d0;cycle
@@ -87,7 +92,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
    if(abs(corr)<eoserr*T)exit
    if(n>50)dt=0.5d0
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getT_from_de, eostype=',eostype
    print'(4(a6,1PE13.6e2))','d=',d,'eint=',eint,'X=',X,'Y=',Y
    stop
@@ -115,6 +120,7 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
  real(8),intent(out),optional:: erec, cveff
  real(8):: corr, imurec, dimurecdlnT, logd
  integer:: n
+ integer,parameter:: nmax=500
 
  if(T<=0d0) T=1d3
 
@@ -124,13 +130,13 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
 
  case(1) ! ideal gas + radiation
   corr = huge
-  do n = 1, 500
+  do n = 1, nmax
    corr = (p - (arad*T**3/3d0+d*Rgas*imu)*T) &
         / (-4d0*arad*T**3/3d0-d*Rgas*imu)
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getT_from_dp, eostype=',eostype
    print*,'d=',d,'p=',p,'mu=',1d0/imu
    stop
@@ -138,14 +144,14 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
 
  case(2) ! ideal gas + radiation + recombination
   corr = huge; logd = log10(d)
-  do n = 1, 500
+  do n = 1, nmax
    call get_imurec(logd,T,X,Y,imurec,dimurecdlnT)
    corr = (p - (arad*T**3/3d0+d*Rgas*imurec)*T) &
         / (-4d0*arad*T**3/3d0-d*Rgas*(imurec+dimurecdlnT))
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getT_from_dp, eostype=',eostype
    print*,'d=',d,'p=',p,'mu=',1d0/imu
    stop
@@ -157,14 +163,14 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
 
  case(3) ! ideal gas + recombination
   corr = huge; logd = log10(d)
-  do n = 1, 500
+  do n = 1, nmax
    call get_imurec(logd,T,X,Y,imurec,dimurecdlnT)
    corr = (p - d*Rgas*imurec*T) &
         / (-d*Rgas*(imurec+dimurecdlnT))
    T = T - corr
    if(abs(corr)<eoserr*T)exit
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getT_from_dp, eostype=',eostype
    print*,'d=',d,'p=',p,'mu=',1d0/imu
    stop
@@ -502,6 +508,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
  real(8):: d,corr,corr0,dp,S0,Sp,dSdd,T,ddot,dt
  real(8),parameter:: dfac=1d-8, Serr_rel_eoserr=7d0, W4err=1d-2
  integer:: n
+ integer,parameter:: nmax=500
 
 !-----------------------------------------------------------------------------
 
@@ -513,7 +520,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
   d = 1d-8 ! initial guess
   T = p/(Rgas*d*imu)
   corr=1d99
-  do n = 1, 5000 ! Newton-Raphson iteration to get density
+  do n = 1, nmax
    dp = d*(1d0+dfac)
    S0 = entropy_from_dp(d,p,T,imu)
    Sp = entropy_from_dp(dp,p,T,imu)
@@ -522,7 +529,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
    d = d-corr
    if(abs((S0-S)/dSdd)<Serr_rel_eoserr*eoserr*d)exit
   end do
-  if(n>5000)then
+  if(n>nmax)then
    print*,'Error in get_d_from_ps, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
@@ -532,7 +539,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
   d = 1d-8 ! initial guess
   T = 1d3
   corr=huge;ddot=0d0;dt=0.9d0
-  do n = 1,500
+  do n = 1,nmax
    dp = d*(1d0+dfac)
    S0 = entropy_from_dp(d,p,T,imu,X,Y)
    Sp = entropy_from_dp(dp,p,T,imu,X,Y)
@@ -549,7 +556,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
    if(abs(corr)<Serr_rel_eoserr*eoserr*d)exit
    if(n>50)dt=0.5d0
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in get_d_from_ps, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
@@ -559,7 +566,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
   d = 1d-8 ! initial guess
   T = 1d3
   corr=huge;ddot=0d0;dt=0.9d0
-  do n = 1,500
+  do n = 1,nmax
    dp = d*(1d0+dfac)
    S0 = entropy_from_dp(d,p,T,imu,X,Y)
    Sp = entropy_from_dp(dp,p,T,imu,X,Y)
@@ -576,7 +583,7 @@ function get_d_from_ps(p,S,imu,X,Y) result(d)
    if(abs(corr)<Serr_rel_eoserr*eoserr*d)exit
    if(n>50)dt=0.5d0
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in get_d_from_ps, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
@@ -601,6 +608,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
  real(8):: e,corr,corr0,ep,S0,Sp,dSde,T,edot,dt
  real(8),parameter:: dfac=1d-8, Serr_rel_eoserr=1d2, W4err=1d-2
  integer:: n
+ integer,parameter:: nmax=500
 
 !-----------------------------------------------------------------------------
 
@@ -612,7 +620,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
   e = 1d-8 ! initial guess
   T = e/(Cv*d*imu)
   corr=1d99
-  do n = 1, 500 ! Newton-Raphson iteration to get internal energy
+  do n = 1, nmax ! Newton-Raphson iteration to get internal energy
    ep = e*(1d0+dfac)
    S0 = entropy_from_de(d,e,T,imu)
    Sp = entropy_from_de(d,ep,T,imu)
@@ -621,7 +629,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
    e = e-corr
    if(abs((S0-S)/dSde)<Serr_rel_eoserr*eoserr*e)exit
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in get_e_from_ds, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
@@ -631,7 +639,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
   e = 1d-8 ! initial guess
   T = 1d3
   corr=huge;edot=0d0;dt=0.9d0
-  do n = 1,500
+  do n = 1,nmax
    ep = e*(1d0+dfac)
    S0 = entropy_from_de(d,e,T,imu,X,Y)
    Sp = entropy_from_de(d,ep,T,imu,X,Y)
@@ -648,7 +656,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
    if(abs(corr)<Serr_rel_eoserr*eoserr*e)exit
    if(n>50)dt=0.5d0
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getd_from_ps, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
@@ -658,7 +666,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
   e = 1d-8 ! initial guess
   T = 1d3
   corr=huge;edot=0d0;dt=0.9d0
-  do n = 1,500
+  do n = 1,nmax
    ep = e*(1d0+dfac)
    S0 = entropy_from_de(d,e,T,imu,X,Y)
    Sp = entropy_from_de(d,ep,T,imu,X,Y)
@@ -675,7 +683,7 @@ function get_e_from_ds(d,S,imu,X,Y) result(e)
    if(abs(corr)<Serr_rel_eoserr*eoserr*e)exit
    if(n>50)dt=0.5d0
   end do
-  if(n>500)then
+  if(n>nmax)then
    print*,'Error in getd_from_ps, eostype=',eostype
    print*,'d=',d,'S=',S,'mu=',1d0/imu
    stop
