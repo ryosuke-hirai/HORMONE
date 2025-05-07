@@ -34,7 +34,9 @@ module mpi_utils
   subroutine finalize_mpi()
 #ifdef MPI
     integer :: ierr
-    call MPI_FINALIZE(ierr)
+    logical :: finalized
+    call MPI_FINALIZED(finalized, ierr)
+    if (.not. finalized) call MPI_FINALIZE(ierr)
 #endif
   end subroutine finalize_mpi
 
@@ -144,7 +146,7 @@ module mpi_utils
 #endif
 
   end subroutine allreduce_mpi_real8_2darray
-  
+
   subroutine allreduce_mpi_int4(op_str, value)
     character(len=*), intent(in) :: op_str
     integer, intent(inout) :: value

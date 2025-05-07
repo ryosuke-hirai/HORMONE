@@ -31,3 +31,5 @@
 ! c_kappa: value of fixed opacity (only relevant for opacitytype=0)
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
 &rad_con radswitch=1 opacitytype=0 c_kappa_p=0d0 c_kappa_r=1d0 lambdatype=0 rbtype=0 /
+
+&testcon test_tol=1d-14 /
