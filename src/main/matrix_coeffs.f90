@@ -1,4 +1,4 @@
-module matrix_coeffs_mod
+module matrix_coeffs
 
   implicit none
   private
@@ -401,4 +401,4 @@ module matrix_coeffs_mod
   end subroutine get_matrix_offsets
 
 
-end module matrix_coeffs_mod
+end module matrix_coeffs

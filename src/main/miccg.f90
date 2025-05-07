@@ -22,7 +22,7 @@ contains
 subroutine setup_cg(cg, is, ie, js, je, ks, ke)
   use utils, only: get_dim
   use matrix_vars, only: cg_set
-  use matrix_coeffs_mod, only: compute_coeffs, get_matrix_offsets
+  use matrix_coeffs, only: compute_coeffs, get_matrix_offsets
   type(cg_set), intent(out) :: cg
   integer, intent(in) :: is, ie, js, je, ks, ke
   integer :: in, jn, kn, ln
@@ -103,7 +103,7 @@ subroutine write_A_cg(cg, system)
   use utils, only: get_dim
   use matrix_utils, only: ijk_from_l, get_raddim
   use matrix_vars, only: cg_set, irad, igrv
-  use matrix_coeffs_mod, only: compute_coeffs
+  use matrix_coeffs, only: compute_coeffs
   type(cg_set), intent(inout) :: cg
   integer,      intent(in)   :: system
   real(8), allocatable :: coeffs(:)

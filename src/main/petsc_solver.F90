@@ -93,7 +93,7 @@ end subroutine setup_petsc
 #ifdef USE_PETSC
 subroutine write_A_petsc(pm, system)
   use utils, only: get_dim
-  use matrix_coeffs_mod, only:compute_coeffs, get_matrix_offsets
+  use matrix_coeffs, only:compute_coeffs, get_matrix_offsets
   use matrix_utils, only:ijk_from_l, get_raddim
   use matrix_vars, only: petsc_set, irad, igrv
   type(petsc_set), intent(inout) :: pm
