@@ -372,7 +372,7 @@ subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
  real(8),allocatable,dimension(:),intent(inout)::r,rho,p
  integer i,Nmax,which
  real(8):: fac, outer_P, kappa_surf
- real(8),parameter:: err=1d-8
+ real(8),parameter:: err=1d-10
 
 !-----------------------------------------------------------------------------
 

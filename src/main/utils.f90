@@ -245,15 +245,22 @@ contains
   return
  end subroutine get_vcyl
 
-! Compute gradient with second order accuracy
- function get_grad(u,i,j,k) result(gradu)
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                          SUBROUTINE GET_GRAD
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Compute gradient with second order accuracy
+
+ subroutine get_grad(u,i,j,k,gradu)
 
   use settings,only:solve_i,solve_j,solve_k
   use grid,only:dx1,dx2,dx3,sx1,sisin
 
   integer,intent(in):: i,j,k
   real(8),intent(in),allocatable:: u(:,:,:)
-  real(8):: gradu(1:3)
+  real(8),intent(out):: gradu(1:3)
+
+!-----------------------------------------------------------------------------
 
   gradu = 0d0
   if(solve_i) &
@@ -273,7 +280,7 @@ contains
               / (dx3(k)*dx3(k+1)*(dx3(k)+dx3(k+1))) &
             * sx1(i)*sisin(j)
 
- end function get_grad
+ end subroutine get_grad
 
 ! This function is equivalent to rotz(roty(rotz(uvec1,-x3),0.5*pi),x3)
 ! but expanded out, to reduce roundoff error
