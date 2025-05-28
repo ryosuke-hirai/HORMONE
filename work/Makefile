@@ -40,6 +40,24 @@ ifeq (${PROFILE},yes)
 FCFLAG+=$(PRFLAG)
 endif
 
+# PETSc settings
+ifeq (${USE_PETSC},yes)
+# Useful as an escape hatch if libpetsc.so was not compiled properly
+# and has missing symbols from external libraries.
+ifeq ($(PETSC_PC_STATIC), yes)
+STATIC = "--static"
+else
+STATIC =
+endif
+
+PETSC_PC = $(shell pkg-config --path petsc || pkg-config --path PETSc || if [ -n "${PETSC_DIR}" ] && [ -d "${PETSC_DIR}" ]; then find "${PETSC_DIR}" -type f -iname petsc.pc 2>/dev/null | head -n 1; fi)
+PETSC_INCLUDE ?= $(shell pkg-config --cflags $(PETSC_PC) 2>/dev/null)
+PETSC_LDFLAGS ?= $(shell pkg-config $(STATIC) --libs $(PETSC_PC) 2>/dev/null)
+
+LDFLAGS += $(PETSC_LDFLAGS)
+FPPFLAG += -DUSE_PETSC $(PETSC_INCLUDE)
+endif
+
 # directories
 OBJ_DIR = obj
 SRC_DIR = ../src/main
@@ -54,7 +72,7 @@ TARGETA = ascii_output
 TARGETL = lightcurve
 
 # compile modules that are being depended on first
-MOD = mpi_utils.F90 modules.f90 profiler.f90 mpi_domain.F90 io.F90 utils.f90 conserve.f90 ionization.f90 eos.f90 miccg.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 opacity.f90 radiation_utils.f90 radiation.f90 cooling.f90 sinks.f90 externalforce.f90 composition.f90 star.f90 shockfind.f90 output.f90 smear.f90 input.f90 setup.f90 readbin.f90  restart.f90 fluxboundary.f90 rungekutta.f90 timestep.f90 tests.f90 gridset.f90 gravbound.f90 gravity_hyperbolic.f90 gravity_miccg.f90 interpolation.f90 numflux.f90 source.f90
+MOD = mpi_utils.F90 modules.f90 profiler.f90 mpi_domain.F90 io.F90 utils.f90 conserve.f90 ionization.f90 eos.f90 matrix_vars.F90 opacity.f90 radiation_utils.f90 matrix_coeffs.f90 matrix_utils.f90 miccg.f90 fluxlimiter.f90 hlldflux.f90 dirichlet.f90 particles.f90 petsc_solver.F90 matrix_solver.F90 radiation.f90 cooling.f90 sinks.f90 externalforce.f90 composition.f90 star.f90 shockfind.f90 output.f90 smear.f90 input.f90 setup.f90 readbin.f90  restart.f90 fluxboundary.f90 rungekutta.f90 timestep.f90 tests.f90 gridset.f90 gravbound.f90 gravity_hyperbolic.f90 gravity_elliptic.f90 interpolation.f90 numflux.f90 source.f90
 MODF= $(patsubst %,$(SRC_DIR)/%,$(MOD))
 
 # Initial condition routines should be compiled before initialcondition.f90
@@ -95,12 +113,12 @@ ascii: $(TARGETA)
 lc: $(TARGETL)
 
 $(TARGET): $(OBJ_F)
-	$(FC) $(FCFLAG) -o $@ $(OBJ_F)
+	$(FC) $(FCFLAG) -o $@ $(OBJ_F) $(LDFLAGS)
 
 $(TARGETA): $(OBJA_F)
 	$(FC) $(FCFLAG) -o $@ $(OBJA_F)
 
-$(TARGETL): $(OBJL_F) 
+$(TARGETL): $(OBJL_F)
 	$(FC) $(FCFLAG) -o $@ $(OBJL_F)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.F90

@@ -49,7 +49,7 @@ program hormone
   use cooling_mod
   use frame_mod
   use tests_mod
-
+  use petsc_solver_mod
   use profiler_mod
 
   implicit none
@@ -61,6 +61,7 @@ program hormone
   in_loop = .false.
 
   call init_mpi
+  call init_petsc
 
 ! Start profiling
   call init_profiler
@@ -127,7 +128,7 @@ program hormone
     call terminal_output
 
     call gravity
-    if(radswitch>0)  call get_gradE(cg_rad)
+    if(radswitch>0)  call get_gradE
     if(include_sinks)call get_sink_acc(sink) ! updates dt
     call set_frame_acc
 
@@ -194,7 +195,7 @@ program hormone
   endif
 
   call finalize_mpi
-
+  call finalize_petsc
 !------------------------------- end program ---------------------------------
 
 end program hormone
