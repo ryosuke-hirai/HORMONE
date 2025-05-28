@@ -14,7 +14,7 @@ contains
 subroutine radstar
 
  use settings,only:eostype
- use constants,only:msun,rsun,arad
+ use constants,only:msun,rsun,arad,G
  use grid
  use physval
  use star_mod
@@ -37,9 +37,10 @@ subroutine radstar
  ! Place the star at the origin
  call set_star_sph_grid(r,m,pres)
 
- ! Attach a wind-like atmosphere
- dbg = rho (size(rho)-1)
- pbg = pres(size(rho)-1)
+! Attach a wind-like atmosphere
+! (Hardwire values to avoid compiler-dependent atmospheres)
+ dbg = 1d-5
+ pbg = 2d0*G*mass/(3d0*radius**2*0.3d0)
 
  do k = ks, ke
   do j = js, je

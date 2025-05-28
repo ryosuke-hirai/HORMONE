@@ -108,7 +108,7 @@ subroutine get_gradE
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    gradE(1:3,i,j,k) = get_grad(erad,i,j,k)
+    call get_grad(erad,i,j,k,gradE(1:3,i,j,k))
    end do
   end do
  end do
@@ -128,9 +128,8 @@ end subroutine get_gradE
 subroutine get_diffusion_coeff
 
  use constants,only:clight
- use utils,only:get_grad
- use physval,only:erad,d,T,erad,radK
  use grid,only:is,ie,js,je,ks,ke
+ use physval,only:erad,d,T,erad
 
  integer:: i,j,k
  real(8):: RR,ll,kappar
@@ -260,9 +259,9 @@ subroutine radiative_force
     frad(1:3) = -ll*gradE(1:3,i,j,k)
     vdotfrad = frad(1)*v1(i,j,k) + frad(2)*v2(i,j,k) + frad(3)*v3(i,j,k)
 
-    gradv1 = get_grad(v1,i,j,k)
-    gradv2 = get_grad(v2,i,j,k)
-    gradv3 = get_grad(v3,i,j,k)
+    call get_grad(v1,i,j,k,gradv1)
+    call get_grad(v2,i,j,k,gradv2)
+    call get_grad(v3,i,j,k,gradv3)
 
     nn(1:3) = gradE(1:3,i,j,k)/max(norm2(gradE(1:3,i,j,k)),epsilon(erad(i,j,k)))
     do m = 1, 3
