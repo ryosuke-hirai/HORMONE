@@ -129,7 +129,7 @@ subroutine get_diffusion_coeff
 
  use constants,only:clight
  use grid,only:is,ie,js,je,ks,ke
- use physval,only:erad,d,T,erad
+ use physval,only:erad,d,T,erad,radK
 
  integer:: i,j,k
  real(8):: RR,ll,kappar
