@@ -32,6 +32,7 @@ module petsc_solver_mod
 
 #ifdef USE_PETSC
 subroutine setup_petsc(is, ie, js, je, ks, ke, pm)
+  use settings, only: cgerr
   use utils, only: get_dim
   use matrix_vars, only: petsc_set
   integer, intent(in) :: is, ie, js, je, ks, ke
@@ -57,22 +58,29 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, pm)
   call MatSetSizes(pm%A, PETSC_DECIDE, PETSC_DECIDE, pm%lmax, pm%lmax, ierr)
   call MatSetFromOptions(pm%A, ierr)
   call MatSetUp(pm%A, ierr)
+
   ! Create vector for right-hand side.
   call VecCreate(PETSC_COMM_WORLD, pm%b, ierr)
   call VecSetSizes(pm%b, PETSC_DECIDE, pm%lmax, ierr)
   call VecSetFromOptions(pm%b, ierr)
+
   ! Create vector for solution.
   call VecCreate(PETSC_COMM_WORLD, pm%x, ierr)
   call VecSetSizes(pm%x, PETSC_DECIDE, pm%lmax, ierr)
   call VecSetFromOptions(pm%x, ierr)
+
   ! Create the KSP solver context.
   call KSPCreate(PETSC_COMM_WORLD, pm%ksp, ierr)
+
+  ! Re-use the solution from the previous iteration as the initial guess.
   call KSPSetInitialGuessNonzero(pm%ksp, PETSC_TRUE, ierr)
-  ! Equivalent to options: -ksp_type cg -pc_type bjacobi -ksp_rtol 1.e-16
+
+  ! Equivalent to options: -ksp_type cg -pc_type bjacobi -ksp_rtol [cgerr]
   call KSPSetType(pm%ksp, KSPCG, ierr)
   call KSPGetPC(pm%ksp, pc, ierr)
   call PCSetType(pc, PCBJACOBI, ierr)
-  call KSPSetTolerances(pm%ksp, 1.d-16, -1.d0, -1.d0, PETSC_DECIDE, ierr)
+  call KSPSetTolerances(pm%ksp, cgerr, -1.d0, -1.d0, PETSC_DECIDE, ierr)
+
   ! Allow command line options/overrides
   call KSPSetFromOptions(pm%ksp, ierr)
 
@@ -174,6 +182,7 @@ subroutine solve_system_petsc(pm, b, x)
   integer :: ierr, i
   real(8), pointer :: x_array(:)
 
+  ! Set the right-hand side vector b.
   do i = 0, pm%lmax-1
     call VecSetValue(pm%b, i, b(i+1), INSERT_VALUES, ierr)
   end do
@@ -183,7 +192,8 @@ subroutine solve_system_petsc(pm, b, x)
   ! Solve the linear system.
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
 
-  ! Copy solution back to x.
+  ! Copy solution back to Fortran array x.
+  ! Leave values in pm%x to re-use in the next iteration.
   call VecGetArrayF90(pm%x, x_array, ierr)
   do i = 1, pm%lmax
     x(i) = x_array(i)
