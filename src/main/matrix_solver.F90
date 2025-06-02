@@ -24,7 +24,7 @@ subroutine setup_matrix(system)
   end if
 #endif
 
-  print*, "Setting up", trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), "solver for", trim(adjustl(merge("gravity", "radiation", system == igrv)))
+  print*, "Setting up", trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), "solver for", trim(adjustl(merge("gravity  ", "radiation", system == igrv)))
 
   if (matrix_solver == 0) then
     if (system == igrv) then
