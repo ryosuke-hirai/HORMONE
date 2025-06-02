@@ -7,6 +7,14 @@ module matrix_coeffs
 
   contains
 
+  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  !
+  !                     SUBROUTINE COMPUTE_COEFFS
+  !
+  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+  ! PURPOSE: Computes the stencil coefficients for a given grid point.
+
   subroutine compute_coeffs(system, dim, i, j, k, coeffs)
     use matrix_vars, only: igrv, irad
     use grid, only: is, ie, js, je, ks, ke
@@ -55,7 +63,7 @@ module matrix_coeffs
   !
   !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-  ! PURPOSE: Computes the stencil coefficients for a given grid point.
+  ! PURPOSE: Computes the stencil coefficients for gravity
 
   subroutine compute_coeffs_gravity(dim, i, j, k, coeffs)
     use settings, only: crdnt, eq_sym, gbtype
@@ -165,6 +173,14 @@ module matrix_coeffs
     end select
 
   end subroutine compute_coeffs_gravity
+
+  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  !
+  !                     SUBROUTINE COMPUTE_COEFFS_RADIATION
+  !
+  !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+  ! PURPOSE: Computes the stencil coefficients for radiation
 
   subroutine compute_coeffs_radiation(raddim, i, j, k, coeffs)
     use settings, only: crdnt, radswitch

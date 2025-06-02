@@ -4,6 +4,15 @@ module matrix_solver
 
 contains
 
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE SETUP_MATRIX
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Setup the matrix solver (MICCG or PETSc) for either gravity or radiation
+
 subroutine setup_matrix(system)
   use settings, only: matrix_solver
   use grid, only: is, ie, js, je, ks, ke, gis, gie, gjs, gje, gks, gke
@@ -43,6 +52,8 @@ subroutine setup_matrix(system)
   end if
 
 end subroutine setup_matrix
+
+
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
 !                          SUBROUTINE WRITE_A_GRV/RAD
