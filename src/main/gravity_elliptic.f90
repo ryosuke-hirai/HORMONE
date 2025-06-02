@@ -32,6 +32,8 @@ subroutine gravity_elliptic
 
 !-------------------------------------------------------------------------
 
+ call start_clock(wtelg)
+
  lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
 
  allocate( x(1:lmax), cgsrc(1:lmax) )
@@ -39,8 +41,6 @@ subroutine gravity_elliptic
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
  if(gbtype==0)call gravbound
-
- call start_clock(wtpoi)
 
 ! cylindrical (equatorial+axial symmetry) ####################################
  if(je==js.and.crdnt==1.and.dim==2)then
@@ -168,7 +168,7 @@ subroutine gravity_elliptic
   cgrav_old = cgrav
  end if
 
- call stop_clock(wtpoi)
+ call stop_clock(wtelg)
 end subroutine gravity_elliptic
 
 end module gravity_elliptic_mod

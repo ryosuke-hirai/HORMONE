@@ -106,6 +106,7 @@ subroutine solve_system_grv(x, b)
   use settings, only: matrix_solver
   use miccg_mod, only: miccg
   use matrix_vars, only: cg_grv
+  use profiler_mod
 #ifdef USE_PETSC
   use petsc_solver_mod, only: solve_system_petsc
   use matrix_vars, only: petsc_grv
@@ -115,10 +116,14 @@ subroutine solve_system_grv(x, b)
   real(8), allocatable, intent(in)    :: b(:)
 
   if (matrix_solver == 0) then
+    call start_clock(wtmig)
     call miccg(cg_grv, b, x)
+    call stop_clock(wtmig)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
+    call start_clock(wtpeg)
     call solve_system_petsc(petsc_grv, x, b)
+    call stop_clock(wtpeg)
 #endif
   endif
 
@@ -128,6 +133,7 @@ subroutine solve_system_rad(x, b)
   use settings, only: matrix_solver
   use miccg_mod, only: miccg
   use matrix_vars, only: cg_rad
+  use profiler_mod
 #ifdef USE_PETSC
   use petsc_solver_mod, only: solve_system_petsc
   use matrix_vars, only: petsc_rad
@@ -137,10 +143,14 @@ subroutine solve_system_rad(x, b)
   real(8), allocatable, intent(in)    :: b(:)
 
   if (matrix_solver == 0) then
+    call start_clock(wtmir)
     call miccg(cg_rad, b, x)
+    call stop_clock(wtmir)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
+    call start_clock(wtper)
     call solve_system_petsc(petsc_rad, x, b)
+    call stop_clock(wtper)
 #endif
   endif
 

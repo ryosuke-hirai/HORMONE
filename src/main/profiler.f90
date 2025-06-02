@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=29 ! number of profiling categories
+ integer,parameter:: n_wt=33 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -21,19 +21,23 @@ module profiler_mod
   wttim=14,& ! time stepping
   wtgrv=15,& ! gravity
   wtgbn=16,& ! gravbound
-  wtpoi=17,& ! Poisson solver
-  wthyp=18,& ! hyperbolic self-gravity
-  wtgsm=19,& ! gravity smearing
-  wtgs2=20,& ! MPI sweep gravity smearing
-  wtsho=21,& ! shockfind
-  wtrad=22,& ! radiation
-  wtopc=23,& ! opacity
-  wtrfl=24,& ! radiative flux
-  wtsnk=25,& ! sink motion
-  wtacc=26,& ! sink accretion
-  wtout=27,& ! output
-  wtmpi=28,& ! mpi exchange
-  wtwai=29,& ! mpi wait
+  wtelg=17,& ! elliptic self-gravity
+  wtmig=18,& ! MICCG solver for gravity
+  wtpeg=19,& ! PETSc solver for gravity
+  wthyp=20,& ! hyperbolic self-gravity
+  wtgsm=21,& ! gravity smearing
+  wtgs2=22,& ! MPI sweep gravity smearing
+  wtsho=23,& ! shockfind
+  wtrad=24,& ! radiation
+  wtmir=25,& ! MICCG solver for radiation
+  wtper=26,& ! PETSc solver for radiation
+  wtopc=27,& ! opacity
+  wtrfl=28,& ! radiative flux
+  wtsnk=29,& ! sink motion
+  wtacc=30,& ! sink accretion
+  wtout=31,& ! output
+  wtmpi=32,& ! mpi exchange
+  wtwai=33,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -72,13 +76,17 @@ subroutine init_profiler
  parent(wttim) = wtlop ! time stepping
  parent(wtgrv) = wtlop ! gravity
  parent(wtgbn) = wtgrv ! gravbound
- parent(wtpoi) = wtgrv ! Poisson solver
+ parent(wtelg) = wtgrv ! elliptic self-gravity
+ parent(wtmig) = wtelg ! MICCG solver for gravity
+ parent(wtpeg) = wtelg ! PETSc solver for gravity
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
  parent(wtgsm) = wthyp ! gravity smearing
  parent(wtgs2) = wtgsm ! MPI sweep gravity smearing
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
+ parent(wtmir) = wtrad ! MICCG solver for radiation
+ parent(wtper) = wtrad ! PETSc solver for radiation
  parent(wtopc) = wtrad ! opacity
  parent(wtrfl) = wtrad ! radiative flux
  parent(wtsnk) = wtlop ! sink motion
@@ -104,13 +112,17 @@ subroutine init_profiler
  routine_name(wttim) = 'Timestep'    ! time stepping
  routine_name(wtgrv) = 'Gravity'     ! gravity
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
- routine_name(wtpoi) = 'MICCG'       ! Poisson solver
+ routine_name(wtelg) = 'Elliptic'    ! elliptic self-gravity
+ routine_name(wtmig) = 'MICCG'       ! MICCG solver for gravity
+ routine_name(wtpeg) = 'PETSc'       ! PETSc solver for gravity
  routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
  routine_name(wtgsm) = 'Grav smear'  ! gravity smearing
  routine_name(wtgs2) = 'MPI sweep'   ! MPI sweep for gravity smearing
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
+ routine_name(wtmir) = 'MICCG'       ! MICCG solver for radiation
+ routine_name(wtper) = 'PETSc'       ! PETSc solver for radiation
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad flux'    ! radiative flux
  routine_name(wtsnk) = 'Sink motion' ! sink motion
@@ -281,7 +293,7 @@ subroutine reduce_clocks_mpi
   ! max may not be useful, because a task that finishes a step quickly will
   ! record less time in that step, but more time in the subsequent step,
   ! meaning the times may add up to more than the total time.
-  
+
   do wti = 0, n_wt
     wtime_avg(wti) = wtime(wti)
     wtime_max(wti) = wtime(wti)
