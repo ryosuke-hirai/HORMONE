@@ -23,6 +23,7 @@ module settings
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl, alphagrv
  integer:: imesh, jmesh, kmesh
  integer:: nsink, maxtngrv
+ integer:: matrix_solver
 ! test tolerance
  real(8):: test_tol, Mach_tol
 ! switches

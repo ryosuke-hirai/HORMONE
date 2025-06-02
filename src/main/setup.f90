@@ -137,6 +137,7 @@ subroutine read_parameters(filename)
  namelist /rad_con/ radswitch, opacitytype, c_kappa_p, c_kappa_r, c_kappa_f, &
                     lambdatype, rbtype
  namelist /partcon/ include_particles, maxptc
+ namelist /mat_con/ matrix_solver
  namelist /testcon/ test_tol, Mach_tol
 
  if(filename=='')return
@@ -156,6 +157,7 @@ subroutine read_parameters(filename)
  read(ui,NML=sinkcon,iostat=istat);rewind(ui)
  read(ui,NML=rad_con,iostat=istat);rewind(ui)
  read(ui,NML=partcon,iostat=istat);rewind(ui)
+ read(ui,NML=mat_con,iostat=istat);rewind(ui)
  read(ui,NML=testcon,iostat=istat)
  close(ui)
 
