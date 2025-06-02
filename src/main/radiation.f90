@@ -63,7 +63,7 @@ subroutine radiation
  end do
 !$omp end parallel do
 
-call solve_system_rad(x, rsrc) ! returns erad^{n+1}
+call solve_system_rad(rsrc, x) ! returns erad^{n+1}
 
 ! update erad and u
 !$omp parallel do private(l,i,j,k)

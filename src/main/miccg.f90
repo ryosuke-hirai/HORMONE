@@ -19,12 +19,12 @@ contains
 !          The resulting data is stored in the cg object.
 !          The matrix A is not assembled here, but the offsets are set.
 
-subroutine setup_cg(cg, is, ie, js, je, ks, ke)
+subroutine setup_cg(is, ie, js, je, ks, ke, cg)
   use utils, only: get_dim
   use matrix_vars, only: cg_set
   use matrix_coeffs, only: compute_coeffs, get_matrix_offsets
-  type(cg_set), intent(out) :: cg
   integer, intent(in) :: is, ie, js, je, ks, ke
+  type(cg_set), intent(out) :: cg
   integer :: in, jn, kn, ln
 
   ! Set grid parameters.
@@ -99,7 +99,7 @@ subroutine setup_cg(cg, is, ie, js, je, ks, ke)
 
 end subroutine setup_cg
 
-subroutine write_A_cg(cg, system)
+subroutine write_A_cg(system, cg)
   use utils, only: get_dim
   use matrix_utils, only: ijk_from_l, get_raddim
   use matrix_vars, only: cg_set, irad, igrv

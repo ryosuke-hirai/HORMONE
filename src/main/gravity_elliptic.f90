@@ -109,7 +109,7 @@ subroutine gravity_elliptic
 ! ############################################################################
 
 ! Solve Poisson equation with the conjugate gradient method
-  call solve_system_grv(x, cgsrc)
+  call solve_system_grv(cgsrc, x)
 
 !-------------------------------------------------------------------------
 

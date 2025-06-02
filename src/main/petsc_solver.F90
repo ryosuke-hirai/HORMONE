@@ -31,11 +31,11 @@ module petsc_solver_mod
 
 
 #ifdef USE_PETSC
-subroutine setup_petsc(pm, is, ie, js, je, ks, ke)
+subroutine setup_petsc(is, ie, js, je, ks, ke, pm)
   use utils, only: get_dim
   use matrix_vars, only: petsc_set
-  type(petsc_set), intent(out) :: pm
   integer, intent(in) :: is, ie, js, je, ks, ke
+  type(petsc_set), intent(out) :: pm
   PC  :: pc
   PetscErrorCode :: ierr
 
@@ -91,13 +91,13 @@ end subroutine setup_petsc
 !          Preconditioning is handled by PETSc, so we do not compute it here.
 
 #ifdef USE_PETSC
-subroutine write_A_petsc(pm, system)
+subroutine write_A_petsc(system, pm)
   use utils, only: get_dim
   use matrix_coeffs, only:compute_coeffs, get_matrix_offsets
   use matrix_utils, only:ijk_from_l, get_raddim
   use matrix_vars, only: petsc_set, irad, igrv
-  type(petsc_set), intent(inout) :: pm
   integer, intent(in) :: system
+  type(petsc_set), intent(inout) :: pm
   integer :: dim, i, j, k, l, ncoeff, m
   real(8) :: coeffs(5)
   integer :: offsets(5)
@@ -166,11 +166,11 @@ end subroutine write_A_petsc
 ! PURPOSE: Solves the linear system A*x = b using PETSc.
 
 #ifdef USE_PETSC
-subroutine solve_system_petsc(pm, x, b)
+subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
   type(petsc_set), intent(in) :: pm
-  real(8), intent(inout) :: x(:)
   real(8), intent(in)    :: b(:)
+  real(8), intent(inout) :: x(:)
   integer :: ierr, i
   real(8), pointer :: x_array(:)
 

@@ -28,16 +28,16 @@ subroutine setup_matrix(system)
 
   if (matrix_solver == 0) then
     if (system == igrv) then
-      call setup_cg(cg_grv, gis, gie, gjs, gje, gks, gke)
+      call setup_cg(gis, gie, gjs, gje, gks, gke, cg_grv)
     else if (system == irad) then
-      call setup_cg(cg_rad, is, ie, js, je, ks, ke)
+      call setup_cg(is, ie, js, je, ks, ke, cg_rad)
     end if
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
     if (system == igrv) then
-      call setup_petsc(petsc_grv, gis, gie, gjs, gje, gks, gke)
+      call setup_petsc(gis, gie, gjs, gje, gks, gke, petsc_grv)
     else if (system == irad) then
-      call setup_petsc(petsc_rad, is, ie, js, je, ks, ke)
+      call setup_petsc(is, ie, js, je, ks, ke, petsc_rad)
     end if
 #endif
   end if
@@ -63,10 +63,10 @@ subroutine write_A_grv
 #endif
 
   if (matrix_solver == 0) then
-    call write_A_cg(cg_grv, igrv)
+    call write_A_cg(igrv, cg_grv)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
-    call write_A_petsc(petsc_grv, igrv)
+    call write_A_petsc(igrv, petsc_grv)
 #endif
   end if
 
@@ -82,10 +82,10 @@ subroutine write_A_rad
 #endif
 
   if (matrix_solver == 0) then
-    call write_A_cg(cg_rad, irad)
+    call write_A_cg(irad, cg_rad)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
-    call write_A_petsc(petsc_rad, irad)
+    call write_A_petsc(irad, petsc_rad)
 #endif
   endif
 
@@ -102,7 +102,7 @@ end subroutine write_A_rad
 !          It calls either the MICCG or PETSc branch depending on the
 !          compilation flag USE_PETSC.
 
-subroutine solve_system_grv(x, b)
+subroutine solve_system_grv(b, x)
   use settings, only: matrix_solver
   use miccg_mod, only: miccg
   use matrix_vars, only: cg_grv
@@ -112,8 +112,8 @@ subroutine solve_system_grv(x, b)
   use matrix_vars, only: petsc_grv
 #endif
 
-  real(8), allocatable, intent(inout) :: x(:)
   real(8), allocatable, intent(in)    :: b(:)
+  real(8), allocatable, intent(inout) :: x(:)
 
   if (matrix_solver == 0) then
     call start_clock(wtmig)
@@ -122,14 +122,14 @@ subroutine solve_system_grv(x, b)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
     call start_clock(wtpeg)
-    call solve_system_petsc(petsc_grv, x, b)
+    call solve_system_petsc(petsc_grv, b, x)
     call stop_clock(wtpeg)
 #endif
   endif
 
 end subroutine solve_system_grv
 
-subroutine solve_system_rad(x, b)
+subroutine solve_system_rad(b, x)
   use settings, only: matrix_solver
   use miccg_mod, only: miccg
   use matrix_vars, only: cg_rad
@@ -139,8 +139,8 @@ subroutine solve_system_rad(x, b)
   use matrix_vars, only: petsc_rad
 #endif
 
-  real(8), allocatable, intent(inout) :: x(:)
   real(8), allocatable, intent(in)    :: b(:)
+  real(8), allocatable, intent(inout) :: x(:)
 
   if (matrix_solver == 0) then
     call start_clock(wtmir)
@@ -149,7 +149,7 @@ subroutine solve_system_rad(x, b)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
     call start_clock(wtper)
-    call solve_system_petsc(petsc_rad, x, b)
+    call solve_system_petsc(petsc_rad, b, x)
     call stop_clock(wtper)
 #endif
   endif
