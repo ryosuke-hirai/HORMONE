@@ -169,8 +169,8 @@ end subroutine write_A_petsc
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
   type(petsc_set), intent(in) :: pm
-  real(8), intent(in)    :: b(:)
-  real(8), intent(inout) :: x(:)
+  real(8), intent(in)  :: b(:)
+  real(8), intent(out) :: x(:)
   integer :: ierr, i
   real(8), pointer :: x_array(:)
 
