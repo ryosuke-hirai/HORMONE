@@ -24,8 +24,7 @@ subroutine gravity
  use gravmod
  use gravbound_mod
  use gravity_hyperbolic_mod,only:gravity_hyperbolic,hg_boundary_conditions
- use gravity_miccg_mod,only:gravity_miccg
- use miccg_mod,only:miccg,l_from_ijk,ijk_from_l
+ use gravity_elliptic_mod,only:gravity_elliptic
  use timestep_mod,only:timestep
  use profiler_mod
 
@@ -54,7 +53,7 @@ subroutine gravity
   call hg_boundary_conditions
 
  elseif(gravswitch==2 .or. (gravswitch==3 .and. tn==0))then
-  call gravity_miccg
+  call gravity_elliptic
 
  elseif(gravswitch==3 .and. tn/=0)then
   call gravity_hyperbolic
@@ -77,9 +76,9 @@ subroutine gravsetup
  use utils,only:isequal
  use grid
  use gravmod
- use miccg_mod,only:cg_grv
  use gravity_hyperbolic_mod,only:setup_grv_hyperbolic
- use gravity_miccg_mod,only:setup_grvcg
+ use matrix_vars,only:igrv
+ use matrix_solver_mod,only:setup_matrix,write_A_grv
 
 ! set initial x0
  if(tn==0 .and. isequal(maxval(grvphi(gis:gie,gjs:gje,gks:gke)), 0d0))&
@@ -88,7 +87,8 @@ subroutine gravsetup
  if(tn==0) cgrav_old = cgrav
 
  if(gravswitch==2.or.gravswitch==3)then
-  call setup_grvcg(gis,gie,gjs,gje,gks,gke,cg_grv)
+  call setup_matrix(igrv)
+  call write_A_grv ! writes to cg_grv or PETSc arrays
  end if
 
 ! For Hyperbolic gravity solver ----------------------------------------------

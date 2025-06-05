@@ -23,44 +23,59 @@ jobs:
         mpi:
           - no
           - yes
+        petsc:
+          - no
+          - yes
         exclude:
           - fc: ifx
             mpi: yes
+          # Exclude ifx and mpi for petsc (TODO: add these later)
+          - fc: ifx
+            petsc: yes
+          - mpi: yes
+            petsc: yes
 
-    name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
+    name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+        - uses: actions/checkout@v4
 
-    - uses: ./.github/actions/setup-intel-oneapi
-      if: matrix.fc == 'ifx'
+        - uses: ./.github/actions/setup-intel-oneapi
+          if: matrix.fc == 'ifx'
 
-    - name: Set up OpenMPI
-      if: matrix.mpi == 'yes'
-      run: sudo apt-get install -y openmpi-bin libopenmpi-dev
+        - name: Set up OpenMPI
+          if: matrix.mpi == 'yes'
+          run: sudo apt-get install -y openmpi-bin libopenmpi-dev
 
-    - name: Compile
-      working-directory: ./work
-      run: |
-        set -o pipefail
-        make ${{ matrix.debug == 'yes' && 'debug' || '' }} |& tee compile.log
-      env:
-        FC: ${{ matrix.fc }}
-        MPI: ${{ matrix.mpi }}
+        - name: Set up PETSc
+          if: matrix.petsc == 'yes'
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y petsc-dev
 
-    - name: Save binary as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
-        path: ./work/hormone
+        - name: Compile
+          working-directory: ./work
+          run: |
+            set -o pipefail
+            make ${{ matrix.debug == 'yes' && 'debug' || '' }} |& tee compile.log
+          env:
+            FC: ${{ matrix.fc }}
+            MPI: ${{ matrix.mpi }}
+            USE_PETSC: ${{ matrix.petsc == 'yes' && 'yes' || 'no' }}
 
-    - name: Save compile log as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-compile-log
-        path: ./work/compile.log
+        - name: Save binary as artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc }}
+            path: ./work/hormone
+
+        - name: Save compile log as artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc }}-compile-log
+            path: ./work/compile.log
 
   test:
     needs: compile
@@ -107,6 +122,8 @@ jobs:
         flat:
           - no
           - yes
+        petsc:
+          - no
         mpi_tasks:
           - 2
         omp_threads:
@@ -120,6 +137,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: polytrope
             fc: gfortran
             debug: no
@@ -127,6 +145,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: KHinstability
             fc: gfortran
             debug: no
@@ -134,6 +153,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: orszagtang_xy
             fc: gfortran
             debug: no
@@ -141,6 +161,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: orszagtang_yz
             fc: gfortran
             debug: no
@@ -148,6 +169,7 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
           - test: orszagtang_xz
             fc: gfortran
             debug: no
@@ -155,10 +177,84 @@ jobs:
             flat: yes
             mpi_tasks: 4
             omp_threads: 1
+            petsc: no
+          # Radiation and gravity tests should be used to test PETSc implementation
+          - test: star_sph
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: polytrope
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: diffusion1d_x
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion1d_y
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion1d_z
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion2d_xy
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion2d_xz
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: diffusion2d_yz
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: no
+          - test: radshock_x
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: radshock_y
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: radshock_z
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+          - test: radstar
+            fc: gfortran
+            debug: no
+            mpi: no
+            petsc: yes
+            flat: yes
+
         exclude:
           - fc: ifx
             mpi: yes
-
           # The star setup routine is susceptible to roundoff error
           # which gives very different results with the intel compiler
           #- test: polytrope
@@ -201,7 +297,7 @@ jobs:
           - test: diffusion2d_yz
             flat: yes
 
-    name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }})
+    name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
     steps:
     - uses: actions/checkout@v4
@@ -213,13 +309,19 @@ jobs:
       if: matrix.mpi == 'yes'
       run: sudo apt-get install -y openmpi-bin libopenmpi-dev
 
+    - name: Set up PETSc
+      if: matrix.petsc == 'yes'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y petsc-dev
+
     - name: Check gfortran version
       run: gfortran --version
 
     - name: Download binary
       uses: actions/download-artifact@v4
       with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}
+        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc }}
         path: ./work
 
     - name: Set executable permissions for binary
@@ -243,6 +345,17 @@ jobs:
           sed -i "s/flux_limiter='[^']*'/flux_limiter='flat'/" parameters_${{ matrix.test }}
         else
           sed -i "s/&simucon/\&simucon flux_limiter='flat'/" parameters_${{ matrix.test }}
+        fi
+        cat parameters_${{ matrix.test }}
+
+    - name: PETSc solver switch
+      if: matrix.petsc == 'yes'
+      working-directory: ./para
+      run: |
+        if grep -q "matrix_solver=" parameters_${{ matrix.test }}; then
+          sed -i "s/matrix_solver='[^']*'/matrix_solver=0/" parameters_${{ matrix.test }}
+        else
+          sed -i "s/&mat_con/\&mat_con matrix_solver=0/" parameters_${{ matrix.test }}
         fi
         cat parameters_${{ matrix.test }}
 
@@ -270,8 +383,14 @@ jobs:
         mpi:
           - no
           - yes
+        petsc:
+          - no
+          - yes
+        exclude:
+          - mpi: yes
+            petsc: yes
 
-    name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }})
+    name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
     steps:
     - uses: actions/checkout@v4
@@ -279,7 +398,7 @@ jobs:
     - name: Download compile log
       uses: actions/download-artifact@v4
       with:
-        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-compile-log
+        name: ${{ matrix.fc }}-debug_${{ matrix.debug }}-mpi_${{ matrix.mpi }}-petsc_${{ matrix.petsc }}-compile-log
 
     - name: Check for compiler warnings
       run: |

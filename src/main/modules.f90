@@ -23,6 +23,7 @@ module settings
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl, alphagrv
  integer:: imesh, jmesh, kmesh
  integer:: nsink, maxtngrv
+ integer:: matrix_solver
 ! test tolerance
  real(8):: test_tol, Mach_tol
 ! switches
@@ -120,6 +121,7 @@ module physval
   character(len=10),allocatable:: species(:)
   real(8),allocatable,dimension(:,:,:):: d0,p0,b10,b20,b30,v10,v20,v30
   real(8),allocatable,dimension(:,:,:,:):: spc0
+  real(8),allocatable,dimension(:,:,:):: radK
 
   real(8):: gamma, muconst, ch
 

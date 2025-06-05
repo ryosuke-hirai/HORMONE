@@ -182,7 +182,7 @@ subroutine tools
   dtg_unit = minval(dtg)
   call allreduce_mpi('min',dtg_unit)
  end if
- 
+
 return
 end subroutine tools
 
