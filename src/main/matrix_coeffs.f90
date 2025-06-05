@@ -378,6 +378,7 @@ module matrix_coeffs
 
   subroutine get_matrix_offsets(dim, offsets)
     use grid, only: is, ie, js, je, ks, ke
+    use settings, only: crdnt
     integer, intent(in)  :: dim
     integer, intent(out) :: offsets(:)
 
@@ -411,8 +412,26 @@ module matrix_coeffs
     if (dim == 3) then
       offsets(3) = in
       offsets(4) = in * jn
-      offsets(5) = in * jn * (kn - 1)
+      ! The 5th diagonal is only needed for periodic boundaries in spherical coordinates
+      if (crdnt == 2) then
+        offsets(5) = in * jn * (kn - 1)
+      endif
     endif
+
+    ! TODO: Future implementation should check boundary conditions individually:
+    ! if( bc1is==0 )then
+    !  n=n+1
+    !  offsets(n) = in-1
+    ! end if
+    ! if( bc2is==0 )then
+    !  n=n+1
+    !  offsets(n) = in * (jn-1)
+    ! end if
+    ! if( bc3is==0 )then
+    !  n=n+1
+    !  offsets(n) = in * jn * (kn-1)
+    ! end if
+    ! This would also require setting cg%Adiags in this subroutine.
 
   end subroutine get_matrix_offsets
 
