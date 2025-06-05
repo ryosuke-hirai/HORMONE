@@ -29,7 +29,7 @@ subroutine radiation
  use miccg_mod,only:miccg
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
- use matrix_solver,only:write_A_rad,solve_system_rad
+ use matrix_solver_mod,only:write_A_rad,solve_system_rad
  use matrix_utils,only:ijk_from_l
 
  integer:: l,i,j,k
@@ -206,7 +206,7 @@ subroutine radiation_setup
  use settings,only:radswitch
  use grid,only:is,ie,js,je,ks,ke
  use matrix_vars,only:irad
- use matrix_solver,only:setup_matrix
+ use matrix_solver_mod,only:setup_matrix
  use miccg_mod,only:setup_cg
  use physval,only:radK
 

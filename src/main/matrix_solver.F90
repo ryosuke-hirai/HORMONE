@@ -1,4 +1,4 @@
-module matrix_solver
+module matrix_solver_mod
 
   implicit none
 
@@ -167,4 +167,4 @@ subroutine solve_system_rad(b, x)
 
 end subroutine solve_system_rad
 
-end module matrix_solver
+end module matrix_solver_mod

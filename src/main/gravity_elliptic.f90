@@ -26,7 +26,7 @@ subroutine gravity_elliptic
  use timestep_mod,only:timestep
  use profiler_mod
  use matrix_utils,only:l_from_ijk,ijk_from_l
- use matrix_solver,only:solve_system_grv
+ use matrix_solver_mod,only:solve_system_grv
  integer:: i,j,k,l,lmax
  real(8),allocatable,dimension(:):: x, cgsrc
 

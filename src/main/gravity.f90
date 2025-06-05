@@ -78,7 +78,7 @@ subroutine gravsetup
  use gravmod
  use gravity_hyperbolic_mod,only:setup_grv_hyperbolic
  use matrix_vars,only:igrv
- use matrix_solver,only:setup_matrix,write_A_grv
+ use matrix_solver_mod,only:setup_matrix,write_A_grv
 
 ! set initial x0
  if(tn==0 .and. isequal(maxval(grvphi(gis:gie,gjs:gje,gks:gke)), 0d0))&
