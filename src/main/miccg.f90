@@ -109,11 +109,12 @@ subroutine write_A_cg(system, cg)
   integer :: dim, i, j, k, l
 
   ! The radiation coefficients depend on the direction of the problem in 1D and 2D
-  if (system == irad) then
+  select case(system)
+  case(irad)
     dim = get_raddim(cg%in, cg%jn, cg%kn)
-  elseif (system == igrv) then
+  case(igrv)
     dim = cg%dim
-  endif
+  end select
 
   ! Loop over all grid points. For each point, compute the stencil
   ! coefficients from the physics via compute_coeffs.
