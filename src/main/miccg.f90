@@ -100,7 +100,6 @@ subroutine setup_cg(is, ie, js, je, ks, ke, cg)
 end subroutine setup_cg
 
 subroutine write_A_cg(system, cg)
-  use utils, only: get_dim
   use matrix_utils, only: ijk_from_l, get_raddim
   use matrix_vars, only: cg_set, irad, igrv
   use matrix_coeffs, only: compute_coeffs
