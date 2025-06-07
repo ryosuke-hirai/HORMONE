@@ -576,7 +576,7 @@ subroutine write_grid_dat
   end do
 
   if(crdnt==2)then
-   k=ke_global
+   k=ke_global+1
    do j = je_global, je_global
     do i = is_global, ie_global
      call write_my_grid_3d(ui,formval,i,j,k,x1(i),x2(j),xi3(k),dvol,i,j,k)
@@ -1220,7 +1220,7 @@ subroutine profiler_output
 
  if (myrank==0) then
   call get_maxlbl
-  write(form1,'("(",i2,"X4a12)")')maxlbl+1
+  write(form1,'("(",i2,"X,4a12)")')maxlbl+1
   write(forml,'("(",i2,"a)")')maxlbl+1 + 4*12
 
   open(newunit=ui,file='walltime.dat',status='replace')
