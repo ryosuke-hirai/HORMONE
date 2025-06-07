@@ -73,7 +73,6 @@ subroutine hyperbolic_gravity_step(cgrav_now,cgrav_old,dtg)
 
 !-----------------------------------------------------------------------------
 
-
  do grungen = 1, grktype
 
 ! Perform MPI neighbour exchange
@@ -149,7 +148,7 @@ subroutine hg_boundary_conditions
 
  !$omp parallel
  select case(crdnt)
-  ! Cylindrical coordinates ++++++++++++++++++++++++++++++++++++++++++++++++++++
+! Cylindrical coordinates ++++++++++++++++++++++++++++++++++++++++++++++++++++
  case(1)
   !$omp do private(j,k) collapse(2)
   do k = ks, ke
@@ -303,15 +302,45 @@ subroutine setup_grv_hyperbolic
 
 ! for axisymmetric cylindrical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if(je==js.and.dim==2.and.crdnt==1)then
-! Cartoon mesh method
+! TODO: To be replaced with Cartoon mesh method
    j = js
    do k = gks-1, gke
     do i = gis-1, gie
-
+     lap_coeff(0,i,j,k) = -( xi1(i)/dx1(i+1) + xi1(i-1)/dx1(i) &
+                            +2d0*x1(i)*dxi1(i)/(dx3(k)*dx3(k+1)) ) &
+                           * 0.5d0*(dx3(k)+dx3(k+1))
+     lap_coeff(1,i,j,k) = xi1(i)*0.5d0*(dx3(k)+dx3(k+1))/dx1(i+1)
+     lap_coeff(2,i,j,k) = 0d0
+     lap_coeff(3,i,j,k) = x1(i)*dxi1(i)/dx3(k+1)
+     if(gbtype==1)then
+      if(i==gie_global)then ! for Robin boundary at bc1o
+       lap_coeff(0,i,j,k) = lap_coeff(0,i,j,k) &
+                          + lap_coeff(1,i,j,k) *rdis(i,k)/rdis(i+1,k)
+       lap_coeff(1,i,j,k) = 0d0
+      end if
+      if(k==gks_global)then ! for Robin boundary at bc3i
+       lap_coeff(0,i,j,k) = lap_coeff(0,i,j,k) &
+                          + x1(i)*dxi1(i)/dx3(k) *rdis(i,k)/rdis(i,k-1)
+      end if
+      if(k==gks_global-1)then
+       lap_coeff(3,i,j,k) = 0d0
+      end if
+      if(k==gke_global)then ! for Robin boundary at bc3o
+       lap_coeff(0,i,j,k) = lap_coeff(0,i,j,k) &
+                          + lap_coeff(3,i,j,k) *rdis(i,k)/rdis(i,k+1)
+       lap_coeff(3,i,j,k) = 0d0
+      end if
+     end if
+     if(eq_sym)then
+      if(k==gks_global-1)& ! Neumann boundary at bc3i
+       lap_coeff(0,i,j,k) = lap_coeff(0,i,j,k) + lap_coeff(3,i,j,k)
+      if(k==gks_global-1)&
+       lap_coeff(3,i,j,k) = 0d0
+     end if
+! This normalization is applied after dot(lap,phi) due to stability reasons
+     lap_coeff(-1,i,j,k) = x1(i)*dxi1(i)*0.5d0*(dx3(k)+dx3(k+1))
     end do
    end do
-   print*,'Cylindrical coordinates not supported yet for hyperbolic self-gravity'
-   stop
 
 ! for axisymmetrical spherical %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   elseif(crdnt==2.and.ke==ks.and.dim==2)then
