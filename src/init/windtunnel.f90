@@ -24,6 +24,8 @@ subroutine windtunnel
  real(8),allocatable,dimension(:):: r,m,rho,pres
  character(len=100)::star_type,mesafile
  real(8)::mass,radius,poly_n,gamma0,imu_const
+ real(8),allocatable,dimension(:,:):: comp
+ character(len=10),allocatable:: comp_list(:)
  integer::i,j,k,nn,istat
 
 !-----------------------------------------------------------------------------
@@ -47,18 +49,36 @@ subroutine windtunnel
  call isentropic_star(mass,radius,0d0,0d0,imu_const,m,r,rho,pres)
  gamma=gamma0
 
+! Set passive scalars
+ allocate(comp_list(1:2),comp(1:2,0:size(m)))
+ comp_list(1) = 'planet'
+ comp_list(2) = 'wind'
+ comp(1,:) = 1d0
+ comp(2,:) = 0d0
+ species=comp_list
+
 ! Place the star at the origin
- call set_star_cyl_grid(r,m,pres)
+ call set_star_cyl_grid(r,m,pres,comp,comp_list)
 
  pwind = (Rgas/muconst*dwind + arad*Twind**3/3d0*0d0)*Twind
 ! Embed the star in a uniform wind tunnel
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    if(d(i,j,k)<0d0)then
-     d(i,j,k) = dwind
-     p(i,j,k) = pwind
-     v3(i,j,k) = vwind
+    if(d(i,j,k)<=0d0)then
+     if(x3(k)<-1.05d0*radius)then
+      d(i,j,k) = dwind*min(-x3(k)/radius-1d0,1d0)
+      p(i,j,k) = pwind*min(-x3(k)/radius-1d0,1d0)
+      v3(i,j,k) = vwind
+     else
+      d(i,j,k) = dwind*1d-2
+      p(i,j,k) = pwind*1d-2
+      v3(i,j,k) = 0d0
+     end if
+      v1(i,j,k) = 0d0
+      v2(i,j,k) = 0d0
+      spc(1,i,j,k) = 0d0
+      spc(2,i,j,k) = 1d0
     end if
    end do
   end do
