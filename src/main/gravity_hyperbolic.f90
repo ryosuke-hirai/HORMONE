@@ -290,6 +290,7 @@ end subroutine get_lapphi_hgsrc
 
 subroutine setup_grv_hyperbolic
 
+ use settings,only:eq_sym
  use utils,only:isequal
  use grid
  use gravmod
