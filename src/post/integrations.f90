@@ -920,4 +920,62 @@ end subroutine get_local_grav
 !!$return
 !!$end subroutine get_anal_drag
 ! convert cartesian to polar coordinates
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                      SUBROUTINE GET_OPTICAL_DEPTH
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute the gamma-ray optical depth long a line from the NS
+
+subroutine get_optical_depth(angle,Ephoton,tau)
+
+ use grid
+ use physval
+ use constants
+ use sink_mod,only:sink
+ use utils,only:roty,rotz,carpol
+ use utils_analysis
+
+ real(8),intent(in):: angle(1:2), Ephoton
+ real(8),intent(out):: tau
+ real(8):: x(1:3),xp(1:3),dtau,rho,XX,TT,dzabs,dz0(1:3)
+
+!-----------------------------------------------------------------------------
+
+! set initial position
+ x = sink(2)%x
+
+! Shoot ray
+ dzabs=0d0
+ tau=0d0
+ dtau=1d99
+ dz0 = [0d0,0d0,1d0]
+ dz0 = rotz(roty(dz0,angle(1)),angle(2))
+ ray_loop:do while (dot_product(x,x)<xi1(ie)**2)
+
+  x = x + dz0*dzabs
+  xp = carpol(x)
+
+!!$  if(xp(1)<norm2(x))then
+!!$! for some reason the Intel compiler causes this to happen
+!!$   print*,'error'
+!!$   print*,ii,jj,xp(1),norm2(x)
+!!$   stop
+!!$  end if
+
+  call get_local_val(xp,rho,XX,TT,dzabs)
+! Assuming grey opacities
+  dtau = rho*dzabs
+  tau = tau + dtau
+
+ end do ray_loop
+
+ ! This is Klein-Nishina opacity
+ tau = tau * 0.2d0*(1d0+XX)*0.375d0*m_e*clight**2/Ephoton
+
+return
+end subroutine get_optical_depth
+
 end module analysis_mod
