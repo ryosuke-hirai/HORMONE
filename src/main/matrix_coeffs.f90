@@ -188,7 +188,7 @@ module matrix_coeffs
     use utils, only: har_mean
     use radiation_utils, only: geo
     use opacity_mod, only: kappa_p
-    use grid, only: dvol, dt, is, ie, js, je, ks, ke
+    use grid, only: dvol, dt, is_global, ie_global, js_global, je_global, ks_global, ke_global
     use physval, only: T, imu, radK, d
 
     integer, intent(in) :: raddim, i, j, k
@@ -199,10 +199,10 @@ module matrix_coeffs
     select case(raddim)
     case (11)  ! 1D x-direction
       coeffs(1) = dvol(i,j,k)/dt
-      if(i > is) then
+      if(i > is_global) then
          coeffs(1) = coeffs(1) + geo(1, i-1, j, k)*har_mean(radK(i-1:i, j, k))
       end if
-      if(i < ie) then
+      if(i < ie_global) then
          coeffs(1) = coeffs(1) + geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
       end if
       if(radswitch == 1) then
@@ -212,14 +212,14 @@ module matrix_coeffs
                 4d0*arad*kappap*clight*dt*T(i,j,k)**3) - 1d0 )
       end if
       coeffs(2) = - geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
-      if(i == ie) coeffs(2) = 0d0
+      if(i == ie_global) coeffs(2) = 0d0
 
     case (12)  ! 1D y-direction
       coeffs(1) = dvol(i,j,k)/dt
-      if(j > js) then
+      if(j > js_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j-1, k)*har_mean(radK(i, j-1:j, k))
       end if
-      if(j < je) then
+      if(j < je_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
       end if
       if(radswitch == 1) then
@@ -229,14 +229,14 @@ module matrix_coeffs
                 4d0*arad*kappap*clight*dt*T(i,j,k)**3) - 1d0 )
       end if
       coeffs(2) = - geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
-      if(j == je) coeffs(2) = 0d0
+      if(j == je_global) coeffs(2) = 0d0
 
     case (13)  ! 1D z-direction
       coeffs(1) = dvol(i,j,k)/dt
-      if(k > ks) then
+      if(k > ks_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k-1)*har_mean(radK(i, j, k-1:k))
       end if
-      if(k < ke) then
+      if(k < ke_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
       end if
       if(radswitch == 1) then
@@ -246,20 +246,20 @@ module matrix_coeffs
                 4d0*arad*kappap*clight*dt*T(i,j,k)**3) - 1d0 )
       end if
       coeffs(2) = - geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
-      if(k == ke) coeffs(2) = 0d0
+      if(k == ke_global) coeffs(2) = 0d0
 
     case (21)  ! 2D xy-plane
       coeffs(1) = dvol(i,j,k)/dt
-      if(i > is) then
+      if(i > is_global) then
          coeffs(1) = coeffs(1) + geo(1, i-1, j, k)*har_mean(radK(i-1:i, j, k))
       end if
-      if(i < ie) then
+      if(i < ie_global) then
          coeffs(1) = coeffs(1) + geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
       end if
-      if(j > js) then
+      if(j > js_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j-1, k)*har_mean(radK(i, j-1:j, k))
       end if
-      if(j < je) then
+      if(j < je_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
       end if
       if(radswitch == 1) then
@@ -269,22 +269,22 @@ module matrix_coeffs
                 4d0*arad*kappap*clight*dt*T(i,j,k)**3) - 1d0 )
       end if
       coeffs(2) = - geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
-      if(i == ie) coeffs(2) = 0d0
+      if(i == ie_global) coeffs(2) = 0d0
       coeffs(3) = - geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
-      if(j == je) coeffs(3) = 0d0
+      if(j == je_global) coeffs(3) = 0d0
 
     case (22)  ! 2D xz-plane
       coeffs(1) = dvol(i,j,k)/dt
-      if(i > is) then
+      if(i > is_global) then
          coeffs(1) = coeffs(1) + geo(1, i-1, j, k)*har_mean(radK(i-1:i, j, k))
       end if
-      if(i < ie) then
+      if(i < ie_global) then
          coeffs(1) = coeffs(1) + geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
       end if
-      if(k > ks) then
+      if(k > ks_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k-1)*har_mean(radK(i, j, k-1:k))
       end if
-      if(k < ke) then
+      if(k < ke_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
       end if
       if(radswitch == 1) then
@@ -294,22 +294,22 @@ module matrix_coeffs
                 4d0*arad*kappap*clight*dt*T(i,j,k)**3) - 1d0 )
       end if
       coeffs(2) = - geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
-      if(i == ie) coeffs(2) = 0d0
+      if(i == ie_global) coeffs(2) = 0d0
       coeffs(3) = - geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
-      if(k == ke) coeffs(3) = 0d0
+      if(k == ke_global) coeffs(3) = 0d0
 
     case (23)  ! 2D yz-plane
       coeffs(1) = dvol(i,j,k)/dt
-      if(j > js) then
+      if(j > js_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j-1, k)*har_mean(radK(i, j-1:j, k))
       end if
-      if(j < je) then
+      if(j < je_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
       end if
-      if(k > ks) then
+      if(k > ks_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k-1)*har_mean(radK(i, j, k-1:k))
       end if
-      if(k < ke) then
+      if(k < ke_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
       end if
       if(radswitch == 1) then
@@ -319,28 +319,28 @@ module matrix_coeffs
                 4d0*arad*kappap*clight*dt*T(i,j,k)**3) - 1d0 )
       end if
       coeffs(2) = - geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
-      if(j == je) coeffs(2) = 0d0
+      if(j == je_global) coeffs(2) = 0d0
       coeffs(3) = - geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
-      if(k == ke) coeffs(3) = 0d0
+      if(k == ke_global) coeffs(3) = 0d0
 
     case (3)  ! 3D case
       coeffs(1) = dvol(i,j,k)/dt
-      if(i > is) then
+      if(i > is_global) then
          coeffs(1) = coeffs(1) + geo(1, i-1, j, k)*har_mean(radK(i-1:i, j, k))
       end if
-      if(i < ie) then
+      if(i < ie_global) then
          coeffs(1) = coeffs(1) + geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
       end if
-      if(j > js) then
+      if(j > js_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j-1, k)*har_mean(radK(i, j-1:j, k))
       end if
-      if(j < je) then
+      if(j < je_global) then
          coeffs(1) = coeffs(1) + geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
       end if
-      if(k > ks) then
+      if(k > ks_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k-1)*har_mean(radK(i, j, k-1:k))
       end if
-      if(k < ke) then
+      if(k < ke_global) then
          coeffs(1) = coeffs(1) + geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
       end if
       if(radswitch == 1) then
@@ -350,14 +350,15 @@ module matrix_coeffs
                 4d0*arad*kappap*clight*dt*T(i,j,k)**3) - 1d0 )
       end if
       coeffs(2) = - geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
-      if(i == ie) coeffs(2) = 0d0
+      if(i == ie_global) coeffs(2) = 0d0
       coeffs(3) = - geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
-      if(j == je) coeffs(3) = 0d0
+      if(j == je_global) coeffs(3) = 0d0
       coeffs(4) = - geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
-      if(k == ke) coeffs(4) = 0d0
+      if(k == ke_global) coeffs(4) = 0d0
       if(crdnt == 2) then
          if(k == 1) then
-            coeffs(5) = - geo(3, i, j, k-1)*har_mean( (/ radK(i,j,k), radK(i,j,ke) /) )
+            ! TODO: Fix this for MPI using ghost cells
+            coeffs(5) = - geo(3, i, j, k-1)*har_mean( (/ radK(i,j,k), radK(i,j,ke_global) /) )
          else
             coeffs(5) = 0d0
          end if

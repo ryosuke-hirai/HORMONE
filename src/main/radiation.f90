@@ -97,6 +97,7 @@ subroutine get_gradE
  use utils,only:get_grad
  use physval,only:erad
  use grid,only:is,ie,js,je,ks,ke
+ use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global
 
  integer:: i,j,k
 
@@ -105,9 +106,9 @@ subroutine get_gradE
  call rad_boundary
 
 !$omp parallel do private(i,j,k) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
+ do k = max(ks_global, ks-1), min(ke_global, ke+1)
+  do j = max(js_global, js-1), min(je_global, je+1)
+   do i = max(is_global, is-1), min(ie_global, ie+1)
     call get_grad(erad,i,j,k,gradE(1:3,i,j,k))
    end do
   end do
@@ -129,6 +130,7 @@ subroutine get_diffusion_coeff
 
  use constants,only:clight
  use grid,only:is,ie,js,je,ks,ke
+ use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global
  use physval,only:erad,d,T,erad,radK
 
  integer:: i,j,k
@@ -137,9 +139,9 @@ subroutine get_diffusion_coeff
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,RR,ll,kappar) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
+ do k = max(ks_global,ks-1), min(ke_global,ke+1)
+  do j = max(js_global,js-1), min(je_global,je+1)
+   do i = max(is_global,is-1), min(ie_global,ie+1)
     kappar = kappa_r(d(i,j,k),T(i,j,k))
     RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
@@ -218,7 +220,7 @@ subroutine radiation_setup
   call setup_matrix(irad)
   call get_geo
   lmax = (ie-is+1)*(je-js+1)*(ke-ks+1)
-  allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is:ie,js:je,ks:ke),&
+  allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1),&
            rsrc(1:lmax) )
  end if
 

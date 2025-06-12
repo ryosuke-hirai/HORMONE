@@ -14,12 +14,17 @@ module matrix_vars
   ! PETSc arrays
 #ifdef USE_PETSC
   type petsc_set
-    integer :: is, ie, js ,je, ks, ke, in, jn, kn, dim
+    integer :: dim
+    integer :: is, ie, js ,je, ks, ke, in, jn, kn
+    integer :: is_global, ie_global
+    integer :: js_global, je_global
+    integer :: ks_global, ke_global
+    integer :: ls, le
     Mat :: A
     Vec :: x
     Vec :: b
     KSP :: ksp
-    PetscInt :: lmax
+    PetscInt :: lmax, lmax_global
   end type petsc_set
   type(petsc_set), target :: petsc_grv
   type(petsc_set), target :: petsc_rad

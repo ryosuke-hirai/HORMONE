@@ -31,43 +31,63 @@ module petsc_solver_mod
 
 
 #ifdef USE_PETSC
-subroutine setup_petsc(is, ie, js, je, ks, ke, pm)
+subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, pm)
   use settings, only: cgerr
   use utils, only: get_dim
   use matrix_vars, only: petsc_set
   integer, intent(in) :: is, ie, js, je, ks, ke
+  integer, intent(in) :: is_global, ie_global, js_global, je_global, ks_global, ke_global
   type(petsc_set), intent(out) :: pm
   PC  :: pc
   PetscErrorCode :: ierr
+  PetscInt :: ls, le
 
   ! Compute grid dimensions and total number of points.
   pm%is = is; pm%ie = ie
   pm%js = js; pm%je = je
   pm%ks = ks; pm%ke = ke
 
+  ! in, jn, kn are the number of grid points in each direction locally
   pm%in = ie - is + 1
   pm%jn = je - js + 1
   pm%kn = ke - ks + 1
 
   pm%lmax = pm%in * pm%jn * pm%kn
 
-  call get_dim(pm%is, pm%ie, pm%js, pm%je, pm%ks, pm%ke, pm%dim)
+  pm%is_global = is_global; pm%ie_global = ie_global
+  pm%js_global = js_global; pm%je_global = je_global
+  pm%ks_global = ks_global; pm%ke_global = ke_global
+
+  pm%lmax_global = (ie_global - is_global + 1) * &
+    (je_global - js_global + 1) * (ke_global - ks_global + 1)
+
+  call get_dim(pm%is_global, pm%ie_global, pm%js_global, pm%je_global, pm%ks_global, pm%ke_global, pm%dim)
 
   ! Set up matrix A
   call MatCreate(PETSC_COMM_WORLD, pm%A, ierr)
-  call MatSetSizes(pm%A, PETSC_DECIDE, PETSC_DECIDE, pm%lmax, pm%lmax, ierr)
+  ! Divide the matrix between processes
+  call MatSetSizes(pm%A, pm%lmax, pm%lmax, pm%lmax_global, pm%lmax_global, ierr)
   call MatSetFromOptions(pm%A, ierr)
   call MatSetUp(pm%A, ierr)
 
   ! Create vector for right-hand side.
   call VecCreate(PETSC_COMM_WORLD, pm%b, ierr)
-  call VecSetSizes(pm%b, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetSizes(pm%b, pm%lmax, pm%lmax_global, ierr)
   call VecSetFromOptions(pm%b, ierr)
 
   ! Create vector for solution.
   call VecCreate(PETSC_COMM_WORLD, pm%x, ierr)
-  call VecSetSizes(pm%x, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetSizes(pm%x, pm%lmax, pm%lmax_global, ierr)
   call VecSetFromOptions(pm%x, ierr)
+
+  ! Get the ownership ranges for matrix
+  call MatGetOwnershipRange(pm%A, ls, le, ierr)
+
+  ! Fortran indexing
+  pm%ls = ls + 1
+  pm%le = le
+
+  print*, "Rank ", myrank, ":  Matrix ownership range: ", pm%ls, " to ", pm%le, " (global size: ", pm%lmax_global, ")"
 
   ! Create the KSP solver context.
   call KSPCreate(PETSC_COMM_WORLD, pm%ksp, ierr)
@@ -106,7 +126,7 @@ subroutine write_A_petsc(system, pm)
   use matrix_vars, only: petsc_set, irad, igrv
   integer, intent(in) :: system
   type(petsc_set), intent(inout) :: pm
-  integer :: dim, i, j, k, l, ncoeff, m
+  integer :: dim, i, j, k, l, ll, ncoeff, m
   real(8) :: coeffs(5)
   integer :: offsets(5)
   integer :: row, col
@@ -133,19 +153,23 @@ subroutine write_A_petsc(system, pm)
   endif
 
   ! Loop over all grid points.
-  do l = 1, pm%lmax
-    call ijk_from_l(l, pm%is, pm%js, pm%ks, pm%in, pm%jn, i, j, k)
+  ! l is the row number in the matrix
+  do l = pm%ls, pm%le
+    ! Other MPI ranks do not need to know about the local mapping of grid cells to matrix rows
+    ! because rows can be swapped. What matters is that this rank reads back using the same mapping
+    ll = l - pm%ls + 1
+    call ijk_from_l(ll, pm%is, pm%js, pm%ks, pm%in, pm%jn, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
 
     do m = 1, ncoeff
       row = (l - 1)
       col = row + offsets(m)
 
-      if(row >= 0 .and. row < pm%lmax .and. col >= 0 .and. col < pm%lmax) then
+      if(row >= 0 .and. row < pm%lmax_global .and. col >= 0 .and. col < pm%lmax_global) then
         val = coeffs(m)
         ! Symmetric matrix
                        call MatSetValue(pm%A, row, col, val, INSERT_VALUES, ierr)
-        if(row /= col) call MatSetValue(pm%A, col, row, val, INSERT_VALUES, ierr)
+        if(row /= col) call MatSetValue(pm%A, col, row, val, INSERT_VALUES, ierr) ! Not guaranteed to be in the current task's ownership range
       end if
     enddo
   end do
@@ -177,14 +201,14 @@ end subroutine write_A_petsc
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
   type(petsc_set), intent(in) :: pm
-  real(8), intent(in)  :: b(:)
-  real(8), intent(out) :: x(:)
-  integer :: ierr, i
+  real(8), intent(in)  :: b(pm%ls:pm%le)
+  real(8), intent(out) :: x(pm%ls:pm%le)
+  integer :: ierr, l
   real(8), pointer :: x_array(:)
 
   ! Set the right-hand side vector b.
-  do i = 0, pm%lmax-1
-    call VecSetValue(pm%b, i, b(i+1), INSERT_VALUES, ierr)
+  do l = pm%ls, pm%le
+    call VecSetValue(pm%b, l-1, b(l), INSERT_VALUES, ierr)
   end do
   call VecAssemblyBegin(pm%b, ierr)
   call VecAssemblyEnd(pm%b, ierr)
@@ -195,8 +219,9 @@ subroutine solve_system_petsc(pm, b, x)
   ! Copy solution back to Fortran array x.
   ! Leave values in pm%x to re-use in the next iteration.
   call VecGetArrayF90(pm%x, x_array, ierr)
-  do i = 1, pm%lmax
-    x(i) = x_array(i)
+  do l = pm%ls, pm%le
+    ! x_array indexing starts from 1
+    x(l) = x_array(l - pm%ls + 1)
   end do
   call VecRestoreArrayF90(pm%x, x_array, ierr)
 
