@@ -89,7 +89,7 @@ subroutine matrad_coupling
  end if
 
  stop
- 
+
 return
 end subroutine matrad_coupling
 
@@ -175,18 +175,24 @@ subroutine lin_diffusion
  eint(is:ie,js:je,ks:ke) = p(is:ie,js:je,ks:ke)/(gamma-1d0)
  e(is:ie,js:je,ks:ke) = eint(is:ie,js:je,ks:ke)
  erad(is:ie,js:je,ks:ke) = 1d0
- 
+
 ! Find the direction of shock tube
  select case(simtype(strl-1:strl))
  case('_x') ! 1D x direction
   imid = (is_global+ie_global)/2
-  erad(imid,js:je,ks:ke) = Etilde/dxi1(imid)
+  if(imid >= is .and. imid <= ie) then
+    erad(imid,js:je,ks:ke) = Etilde/dxi1(imid)
+  end if
  case('_y') ! 1D y direction
   imid = (js_global+je_global)/2
-  erad(is:ie,imid,ks:ke) = Etilde/dxi2(imid)
+  if(imid >= js .and. imid <= je) then
+    erad(is:ie,imid,ks:ke) = Etilde/dxi2(imid)
+  end if
  case('_z') ! 1D z direction
   imid = (ks_global+ke_global)/2
-  erad(is:ie,js:je,imid) = Etilde/dxi3(imid)
+  if(imid >= ks .and. imid <= ke) then
+    erad(is:ie,js:je,imid) = Etilde/dxi3(imid)
+  end if
  case('xy') ! 2D xy plane
   do j = js, je
    do i = is, ie
