@@ -27,16 +27,14 @@ subroutine gravity_elliptic
  use profiler_mod
  use matrix_utils,only:l_from_ijk,ijk_from_l
  use matrix_solver_mod,only:solve_system_grv
- integer:: i,j,k,l,lmax
+ integer:: i,j,k,l
  real(8),allocatable,dimension(:):: x, cgsrc
 
 !-------------------------------------------------------------------------
 
  call start_clock(wtelg)
 
- lmax = (gie-gis+1)*(gje-gjs+1)*(gke-gks+1)
-
- allocate( x(1:lmax), cgsrc(1:lmax) )
+ allocate( x(gls:gle), cgsrc(gls:gle) )
 
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -47,8 +45,8 @@ subroutine gravity_elliptic
 
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
-  do l = 1, lmax
-   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
+  do l = gls, gle
+   call ijk_from_l(l,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
@@ -67,8 +65,8 @@ subroutine gravity_elliptic
 
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
-  do l=1,lmax
-   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
+  do l=gls,gle
+   call ijk_from_l(l,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
@@ -88,8 +86,8 @@ subroutine gravity_elliptic
 
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
-  do l=1,lmax
-   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
+  do l=gls,gle
+   call ijk_from_l(l,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then
@@ -118,7 +116,7 @@ subroutine gravity_elliptic
  do k = gks, gke
   do j = gjs, gje
    do i = gis, gie
-    l = l_from_ijk(i,j,k,gis,gjs,gks,gie-gis+1,gje-gjs+1)
+    l = l_from_ijk(i,j,k,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1)
     grvphi(i,j,k) = x(l)
    end do
   end do

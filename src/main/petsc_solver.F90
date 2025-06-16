@@ -157,8 +157,7 @@ subroutine write_A_petsc(system, pm)
   do l = pm%ls, pm%le
     ! Other MPI ranks do not need to know about the local mapping of grid cells to matrix rows
     ! because rows can be swapped. What matters is that this rank reads back using the same mapping
-    ll = l - pm%ls + 1
-    call ijk_from_l(ll, pm%is, pm%js, pm%ks, pm%in, pm%jn, i, j, k)
+    call ijk_from_l(l, pm%is, pm%js, pm%ks, pm%ls, pm%in, pm%jn, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
 
     do m = 1, ncoeff

@@ -15,11 +15,10 @@ module matrix_vars
 #ifdef USE_PETSC
   type petsc_set
     integer :: dim
-    integer :: is, ie, js ,je, ks, ke, in, jn, kn
+    integer :: is, ie, js ,je, ks, ke, ls, le, in, jn, kn
     integer :: is_global, ie_global
     integer :: js_global, je_global
     integer :: ks_global, ke_global
-    integer :: ls, le
     Mat :: A
     Vec :: x
     Vec :: b
@@ -32,7 +31,7 @@ module matrix_vars
 
   ! MICCG arrays
   type cg_set
-    integer :: is, ie, js ,je, ks, ke, in, jn, kn, lmax, dim
+    integer :: is, ie, js ,je, ks, ke, ls, le, in, jn, kn, lmax, dim
     integer :: cdiags, Adiags
     integer, allocatable :: ia(:), ic(:)
     real(8), allocatable, dimension(:,:) :: A, c

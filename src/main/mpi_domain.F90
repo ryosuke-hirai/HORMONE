@@ -118,6 +118,8 @@ module mpi_domain
       gje = je
       gks = ks
       gke = ke
+      gls = ls
+      gle = le
 
       ! Check for gravity grid extension and adjust if necessary
       if (gravswitch >= 1) then

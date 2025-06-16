@@ -34,7 +34,6 @@ subroutine radiation
 
  integer:: l,i,j,k
  integer:: in,jn,kn
- integer:: lmax
  real(8),allocatable:: x(:)
 
 !-----------------------------------------------------------------------------
@@ -53,12 +52,11 @@ subroutine radiation
  call get_radb ! Sets up rsrc
 
  in = ie-is+1; jn = je-js+1; kn = ke-ks+1
- lmax = in*jn*kn
 
- allocate( x(lmax) )
+ allocate( x(ls:le) )
 !$omp parallel do private(l,i,j,k)
- do l = 1, lmax
-  call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
+ do l = ls, le
+  call ijk_from_l(l,is,js,ks,ls,in,jn,i,j,k)
   x(l) = erad(i,j,k)
  end do
 !$omp end parallel do
@@ -67,8 +65,8 @@ call solve_system_rad(rsrc, x) ! returns erad^{n+1}
 
 ! update erad and u
 !$omp parallel do private(l,i,j,k)
- do l = 1, lmax
-  call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
+ do l = ls, le
+  call ijk_from_l(l,is,js,ks,ls,in,jn,i,j,k)
   erad(i,j,k) = x(l)
   T   (i,j,k) = update_Tgas(d(i,j,k),erad(i,j,k),T(i,j,k),dt)
   eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
@@ -167,21 +165,20 @@ subroutine get_radb
 
  use settings,only:radswitch
  use constants,only:clight,arad
- use grid,only:dvol,dt,is,ie,js,je,ks,ke
+ use grid,only:dvol,dt,is,ie,js,je,ks,ke,ls,le
  use physval
  use matrix_utils,only:ijk_from_l
 
- integer:: i,j,k,l,lmax
+ integer:: i,j,k,l
  real(8):: kappap
  integer :: in,jn,kn
 !-----------------------------------------------------------------------------
 
  in = ie-is+1; jn = je-js+1; kn = ke-ks+1
- lmax = in*jn*kn
 
 !$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, lmax
-   call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
+  do l = ls, le
+   call ijk_from_l(l,is,js,ks,ls,in,jn,i,j,k)
 ! Note: Dirichlet boundary conditions should be included here.
    kappap = kappa_p(d(i,j,k),T(i,j,k))
    rsrc(l) = erad(i,j,k)*dvol(i,j,k)/dt
