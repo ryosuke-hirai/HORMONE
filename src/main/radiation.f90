@@ -30,15 +30,35 @@ subroutine radiation
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
- use matrix_utils,only:ijk_from_l
+ use matrix_utils,only:ijk_from_l,l_from_ijk
+ use mpi_domain,only:exchange_radiation_mpi
 
- integer:: l,i,j,k
+ integer:: l,i,j,k,ll
  integer:: in,jn,kn
+ integer:: in_global,jn_global,kn_global
  real(8),allocatable:: x(:)
+ integer,allocatable:: map(:)
 
 !-----------------------------------------------------------------------------
 
  call start_clock(wtrad)
+
+ in = ie-is+1; jn = je-js+1; kn = ke-ks+1
+ in_global = ie_global-is_global+1
+ jn_global = je_global-js_global+1
+ kn_global = ke_global-ks_global+1
+
+ allocate(map(1:in*jn*kn))
+ ll = 0
+ do k = ks, ke
+   do j = js, je
+     do i = is, ie
+       ll = ll + 1
+       l = l_from_ijk(i, j, k, is_global, js_global,ks_global, in_global, jn_global)
+       map(ll) = l
+     end do
+   end do
+ end do
 
 ! Advection and radiative acceleration terms are updated in hydro step
 
@@ -48,16 +68,20 @@ subroutine radiation
 ! Then update the diffusion term
  call get_gradE
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
+
+ ! Exchange radiation variables (radK) across MPI boundaries
+ call exchange_radiation_mpi
+
  call write_A_rad
- call get_radb ! Sets up rsrc
+ call get_radb(map) ! Sets up rsrc
 
- in = ie-is+1; jn = je-js+1; kn = ke-ks+1
-
- allocate( x(ls:le) )
-!$omp parallel do private(l,i,j,k)
- do l = ls, le
-  call ijk_from_l(l,is,js,ks,ls,in,jn,i,j,k)
-  x(l) = erad(i,j,k)
+ allocate( x(1:in*jn*kn) )
+!$omp parallel do private(l,i,j,k,ll)
+ do ll = 1, size(x)
+  l = map(ll)
+  ! Get the i,j,k indices from the local index
+  call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
+  x(ll) = erad(i,j,k)
  end do
 !$omp end parallel do
 
@@ -65,9 +89,10 @@ call solve_system_rad(rsrc, x) ! returns erad^{n+1}
 
 ! update erad and u
 !$omp parallel do private(l,i,j,k)
- do l = ls, le
-  call ijk_from_l(l,is,js,ks,ls,in,jn,i,j,k)
-  erad(i,j,k) = x(l)
+ do ll = 1, size(x)
+  l = map(ll)
+  call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
+  erad(i,j,k) = x(ll)
   T   (i,j,k) = update_Tgas(d(i,j,k),erad(i,j,k),T(i,j,k),dt)
   eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
   p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
@@ -95,7 +120,6 @@ subroutine get_gradE
  use utils,only:get_grad
  use physval,only:erad
  use grid,only:is,ie,js,je,ks,ke
- use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global
 
  integer:: i,j,k
 
@@ -104,9 +128,9 @@ subroutine get_gradE
  call rad_boundary
 
 !$omp parallel do private(i,j,k) collapse(3)
- do k = max(ks_global, ks-1), min(ke_global, ke+1)
-  do j = max(js_global, js-1), min(je_global, je+1)
-   do i = max(is_global, is-1), min(ie_global, ie+1)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
     call get_grad(erad,i,j,k,gradE(1:3,i,j,k))
    end do
   end do
@@ -128,7 +152,6 @@ subroutine get_diffusion_coeff
 
  use constants,only:clight
  use grid,only:is,ie,js,je,ks,ke
- use grid,only:is_global,ie_global,js_global,je_global,ks_global,ke_global
  use physval,only:erad,d,T,erad,radK
 
  integer:: i,j,k
@@ -137,9 +160,9 @@ subroutine get_diffusion_coeff
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,RR,ll,kappar) collapse(3)
- do k = max(ks_global,ks-1), min(ke_global,ke+1)
-  do j = max(js_global,js-1), min(je_global,je+1)
-   do i = max(is_global,is-1), min(ie_global,ie+1)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
     kappar = kappa_r(d(i,j,k),T(i,j,k))
     RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
@@ -161,29 +184,34 @@ end subroutine get_diffusion_coeff
 
 ! PURPOSE: To get source term (b) for the radiation diffusion equation
 
-subroutine get_radb
+subroutine get_radb(map)
 
  use settings,only:radswitch
  use constants,only:clight,arad
- use grid,only:dvol,dt,is,ie,js,je,ks,ke,ls,le
+ use grid,only:dvol,dt,is_global,js_global,ks_global,ie_global,je_global,ke_global
  use physval
  use matrix_utils,only:ijk_from_l
 
- integer:: i,j,k,l
+ integer,intent(in):: map(:)
+
+ integer:: i,j,k,l,ll
  real(8):: kappap
- integer :: in,jn,kn
+ integer :: in_global,jn_global,kn_global
 !-----------------------------------------------------------------------------
 
- in = ie-is+1; jn = je-js+1; kn = ke-ks+1
+ in_global = ie_global-is_global+1
+ jn_global = je_global-js_global+1
+ kn_global = ke_global-ks_global+1
 
 !$omp parallel do private(l,i,j,k,kappap)
-  do l = ls, le
-   call ijk_from_l(l,is,js,ks,ls,in,jn,i,j,k)
+ do ll = 1, size(rsrc)
+   l = map(ll)
+   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
 ! Note: Dirichlet boundary conditions should be included here.
    kappap = kappa_p(d(i,j,k),T(i,j,k))
-   rsrc(l) = erad(i,j,k)*dvol(i,j,k)/dt
+   rsrc(ll) = erad(i,j,k)*dvol(i,j,k)/dt
    if(radswitch==1) &
-    rsrc(l) = rsrc(l) + clight*kappap*d(i,j,k)*dvol(i,j,k)*arad &
+    rsrc(ll) = rsrc(ll) + clight*kappap*d(i,j,k)*dvol(i,j,k)*arad &
      * (4d0*T(i,j,k)**3*update_Tgas(d(i,j,k),0d0,T(i,j,k),dt)-3d0*T(i,j,k)**4)
   end do
 !$omp end parallel do
@@ -209,16 +237,14 @@ subroutine radiation_setup
  use miccg_mod,only:setup_cg
  use physval,only:radK
 
- integer :: lmax
-
 !-----------------------------------------------------------------------------
 
  if(radswitch==1.or.radswitch==2)then
   call setup_matrix(irad)
   call get_geo
-  lmax = (ie-is+1)*(je-js+1)*(ke-ks+1)
-  allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1),&
-           rsrc(1:lmax) )
+
+  allocate(radK(is-2:ie+2,js-2:je+2,ks-2:ke+2),gradE(1:3,is:ie,js:je,ks:ke),&
+           rsrc(1:(ie-is+1)*(je-js+1)*(ke-ks+1)) )
  end if
 
 return

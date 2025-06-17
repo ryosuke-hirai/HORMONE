@@ -98,7 +98,7 @@ module mpi_domain
       if (mycoords(3) == dims(3) - 1) ke = nz + (ks_global - 1)
 
       ! Vector of the number of cells on each task
-      allocate(ncells(nprocs))
+      allocate(ncells(0:nprocs-1))
 
       ! Number of cells in this task
       ncells(myrank) = (ie - is + 1) * (je - js + 1) * (ke - ks + 1)
@@ -108,7 +108,7 @@ module mpi_domain
 
       ! Calculate the number of cells in the ranks before this one
       ! ls and le is this task's start and end indices for the linear solver
-      ls = sum(ncells(1:myrank-1)) + 1
+      ls = sum(ncells(0:myrank-1)) + 1
       le = ls + ncells(myrank) - 1
 
       ! Copy the hydro grid decomposition to the gravity grid
@@ -323,6 +323,12 @@ module mpi_domain
        call exchange_scalar(grvphi)
       endif
    end subroutine exchange_gravity_mpi
+
+   subroutine exchange_radiation_mpi
+      use physval
+
+      call exchange_scalar(radK)
+   end subroutine exchange_radiation_mpi
 
    subroutine exchange_scalar(val)
       use grid

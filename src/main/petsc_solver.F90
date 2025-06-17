@@ -34,10 +34,12 @@ module petsc_solver_mod
 subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, pm)
   use settings, only: cgerr
   use utils, only: get_dim
+  use matrix_utils, only: l_from_ijk, ijk_from_l
   use matrix_vars, only: petsc_set
   integer, intent(in) :: is, ie, js, je, ks, ke
   integer, intent(in) :: is_global, ie_global, js_global, je_global, ks_global, ke_global
   type(petsc_set), intent(out) :: pm
+  integer :: i, j, k, l, ll
   PC  :: pc
   PetscErrorCode :: ierr
   PetscInt :: ls, le
@@ -58,8 +60,11 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
   pm%js_global = js_global; pm%je_global = je_global
   pm%ks_global = ks_global; pm%ke_global = ke_global
 
-  pm%lmax_global = (ie_global - is_global + 1) * &
-    (je_global - js_global + 1) * (ke_global - ks_global + 1)
+  pm%in_global = ie_global - is_global + 1
+  pm%jn_global = je_global - js_global + 1
+  pm%kn_global = ke_global - ks_global + 1
+
+  pm%lmax_global = pm%in_global * pm%jn_global * pm%kn_global
 
   call get_dim(pm%is_global, pm%ie_global, pm%js_global, pm%je_global, pm%ks_global, pm%ke_global, pm%dim)
 
@@ -104,6 +109,27 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
   ! Allow command line options/overrides
   call KSPSetFromOptions(pm%ksp, ierr)
 
+  ! Define the local rows for this task.
+  pm%num_rows = pm%lmax
+  allocate(pm%my_rows(pm%num_rows))
+
+  ll = 0
+  do k = ks, ke
+    do j = js, je
+      do i = is, ie
+        ll = ll + 1
+        l = l_from_ijk(i, j, k, pm%is_global, pm%js_global, pm%ks_global, pm%in_global, pm%jn_global)
+        pm%my_rows(ll) = l
+      end do
+    end do
+  end do
+
+  ! Assert that ll == pm%num_rows
+  if (ll /= pm%num_rows) then
+    print *, "Error: Number of local rows does not match expected count."
+    call stop_mpi(1)
+  end if
+
 end subroutine setup_petsc
 #endif
 
@@ -122,7 +148,7 @@ end subroutine setup_petsc
 subroutine write_A_petsc(system, pm)
   use utils, only: get_dim
   use matrix_coeffs, only:compute_coeffs, get_matrix_offsets
-  use matrix_utils, only:ijk_from_l, get_raddim
+  use matrix_utils, only:l_from_ijk, get_raddim, ijk_from_l
   use matrix_vars, only: petsc_set, irad, igrv
   integer, intent(in) :: system
   type(petsc_set), intent(inout) :: pm
@@ -154,10 +180,9 @@ subroutine write_A_petsc(system, pm)
 
   ! Loop over all grid points.
   ! l is the row number in the matrix
-  do l = pm%ls, pm%le
-    ! Other MPI ranks do not need to know about the local mapping of grid cells to matrix rows
-    ! because rows can be swapped. What matters is that this rank reads back using the same mapping
-    call ijk_from_l(l, pm%is, pm%js, pm%ks, pm%ls, pm%in, pm%jn, i, j, k)
+  do ll = 1, pm%num_rows
+    l = pm%my_rows(ll)
+    call ijk_from_l(l, pm%is_global, pm%js_global, pm%ks_global, pm%in_global, pm%jn_global, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
 
     do m = 1, ncoeff
@@ -200,14 +225,19 @@ end subroutine write_A_petsc
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
   type(petsc_set), intent(in) :: pm
-  real(8), intent(in)  :: b(pm%ls:pm%le)
-  real(8), intent(out) :: x(pm%ls:pm%le)
-  integer :: ierr, l
+  real(8), intent(in)  :: b(1:pm%num_rows)
+  real(8), intent(out) :: x(1:pm%num_rows)
+  integer :: ierr, l, ll
   real(8), pointer :: x_array(:)
+  PetscInt, allocatable :: idx_array(:)
+  IS :: is_from
+  Vec :: x_gather
+  VecScatter :: scatter_ctx
 
   ! Set the right-hand side vector b.
-  do l = pm%ls, pm%le
-    call VecSetValue(pm%b, l-1, b(l), INSERT_VALUES, ierr)
+  do ll = 1, pm%num_rows
+    l = pm%my_rows(ll)
+    call VecSetValue(pm%b, l-1, b(ll), INSERT_VALUES, ierr)
   end do
   call VecAssemblyBegin(pm%b, ierr)
   call VecAssemblyEnd(pm%b, ierr)
@@ -215,14 +245,31 @@ subroutine solve_system_petsc(pm, b, x)
   ! Solve the linear system.
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
 
+  ! Create index set with only our owned indices
+  allocate(idx_array(pm%num_rows))
+  idx_array(:) = pm%my_rows(:) - 1  ! Convert to zero-based indexing
+  call ISCreateGeneral(PETSC_COMM_SELF, pm%num_rows, idx_array, &
+                       PETSC_COPY_VALUES, is_from, ierr)
+
+  ! Create small vector to receive only our owned values
+  call VecCreate(PETSC_COMM_SELF, x_gather, ierr)
+  call VecSetSizes(x_gather, PETSC_DECIDE, pm%num_rows, ierr)
+  call VecSetFromOptions(x_gather, ierr)
+
+  ! Create scatter context to extract only our owned values
+  call VecScatterCreate(pm%x, is_from, x_gather, PETSC_NULL_IS, scatter_ctx, ierr)
+
+  ! Perform scatter to extract only our owned values
+  call VecScatterBegin(scatter_ctx, pm%x, x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
+  call VecScatterEnd(scatter_ctx, pm%x, x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
+
   ! Copy solution back to Fortran array x.
   ! Leave values in pm%x to re-use in the next iteration.
-  call VecGetArrayF90(pm%x, x_array, ierr)
-  do l = pm%ls, pm%le
-    ! x_array indexing starts from 1
-    x(l) = x_array(l - pm%ls + 1)
+  call VecGetArrayF90(x_gather, x_array, ierr)
+  do ll = 1, pm%num_rows
+    x(ll) = x_array(ll)
   end do
-  call VecRestoreArrayF90(pm%x, x_array, ierr)
+  call VecRestoreArrayF90(x_gather, x_array, ierr)
 
 end subroutine solve_system_petsc
 #endif

@@ -46,7 +46,7 @@ subroutine gravity_elliptic
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
   do l = gls, gle
-   call ijk_from_l(l,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1,i,j,k)
+   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
@@ -66,7 +66,7 @@ subroutine gravity_elliptic
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
   do l=gls,gle
-   call ijk_from_l(l,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1,i,j,k)
+   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
@@ -87,7 +87,7 @@ subroutine gravity_elliptic
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l)
   do l=gls,gle
-   call ijk_from_l(l,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1,i,j,k)
+   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
    x(l) = grvphi(i,j,k)
    cgsrc(l) = 0d0
    if(i>=is)then;if(i<=ie)then
@@ -116,7 +116,7 @@ subroutine gravity_elliptic
  do k = gks, gke
   do j = gjs, gje
    do i = gis, gie
-    l = l_from_ijk(i,j,k,gis,gjs,gks,gls,gie-gis+1,gje-gjs+1)
+    l = l_from_ijk(i,j,k,gis,gjs,gks,gie-gis+1,gje-gjs+1)
     grvphi(i,j,k) = x(l)
    end do
   end do
