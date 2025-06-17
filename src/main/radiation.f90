@@ -362,24 +362,24 @@ subroutine rad_boundary
 !$omp parallel do private(j,k) collapse(2)
  do k = ks, ke
   do j = js, je
-   erad(is-1,j,k) = erad(is,j,k)
-   erad(ie+1,j,k) = erad(ie,j,k)
+   if (is == is_global) erad(is-1,j,k) = erad(is,j,k)
+   if (ie == ie_global) erad(ie+1,j,k) = erad(ie,j,k)
   end do
  end do
 !$omp end parallel do
 !$omp parallel do private(i,k) collapse(2)
  do k = ks, ke
   do i = is, ie
-   erad(i,js-1,k) = erad(i,js,k)
-   erad(i,je+1,k) = erad(i,je,k)
+   if (js == js_global) erad(i,js-1,k) = erad(i,js,k)
+   if (je == je_global) erad(i,je+1,k) = erad(i,je,k)
   end do
  end do
 !$omp end parallel do
 !$omp parallel do private(i,j) collapse(2)
  do j = js, je
   do i = is, ie
-   erad(i,j,ks-1) = erad(i,j,ks)
-   erad(i,j,ke+1) = erad(i,j,ke)
+   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks)
+   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke)
   end do
  end do
 !$omp end parallel do
