@@ -17,7 +17,7 @@ module matrix_coeffs
 
   subroutine compute_coeffs(system, dim, i, j, k, coeffs)
     use matrix_vars, only: igrv, irad
-    use grid, only: is, ie, js, je, ks, ke
+    use grid, only: is_global, ie_global, js_global, je_global, ks_global, ke_global
     integer, intent(in) :: system, dim, i, j, k
     real(8), intent(out) :: coeffs(5)
 
@@ -29,10 +29,9 @@ module matrix_coeffs
     else if (system == irad) then
       ! raddim specfies the dimension and plane of the grid
       ! TODO: move this up one level so that it's not computed for every point
-      ! TODO: make this MPI compatible
-      in = ie - is + 1
-      jn = je - js + 1
-      kn = ke - ks + 1
+      in = ie_global - is_global + 1
+      jn = je_global - js_global + 1
+      kn = ke_global - ks_global + 1
       if(in>1.and.jn>1.and.kn>1)then
         raddim=3
       elseif(in>1.and.jn>1.and.kn==1)then
@@ -378,7 +377,7 @@ module matrix_coeffs
   !          Same for gravity and radiation.
 
   subroutine get_matrix_offsets(dim, offsets)
-    use grid, only: is, ie, js, je, ks, ke
+    use grid, only: is_global, ie_global, js_global, je_global, ks_global, ke_global
     use settings, only: crdnt
     integer, intent(in)  :: dim
     integer, intent(out) :: offsets(:)
@@ -386,9 +385,9 @@ module matrix_coeffs
     integer :: in, jn, kn
 
     ! TODO: store globally
-    in = ie - is + 1
-    jn = je - js + 1
-    kn = ke - ks + 1
+    in = ie_global - is_global + 1
+    jn = je_global - js_global + 1
+    kn = ke_global - ks_global + 1
 
     ! As the dimension increases, additional diagonals are added, but the
     ! offsets of existing diagonals are not changed.
@@ -402,7 +401,6 @@ module matrix_coeffs
     offsets(2) = 1
 
     if (dim == 2) then
-      ! TODO: make this check MPI compatible
       if (in > 1) then
         offsets(3) = in
       else
