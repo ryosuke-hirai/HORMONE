@@ -68,7 +68,7 @@ contains
   dt = courant * minval(dti)
 
   if(outstyle==1)then
-   t_ref = min(t_out,t_end)
+   if(endstyle==1)t_ref = min(t_out,t_end)
    if(t_ref-time-dt>0d0.and.t_ref-time-2d0*dt<0d0)then
     dt = 0.5d0*(t_ref-time)
    else
