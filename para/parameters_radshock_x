@@ -8,7 +8,7 @@
 	  x1min=0d0 x2min=0 x3min=0d0
 	  fmr_max=0 fmr_lvl(1:20)=0 /
 
-&simucon  crdnt=0 courant=0.5d0
+&simucon  crdnt=0 courant=0.9d0
           flux_limiter='modified_mc' /
 
 ! outdir : Output directory name
