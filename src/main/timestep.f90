@@ -26,7 +26,7 @@ contains
 
   integer:: i,j,k,l,n,jb,kb
   real(8),allocatable,dimension(:,:,:):: dti
-  real(8):: cfmax0,cfmax
+  real(8):: cfmax0,cfmax,t_ref
 
 !-------------------------------------------------------------------------
 
@@ -68,8 +68,9 @@ contains
   dt = courant * minval(dti)
 
   if(outstyle==1)then
-   if(t_out-time-dt>0d0.and.t_out-time-2d0*dt<0d0)then
-    dt = 0.5d0*(t_out-time)
+   t_ref = min(t_out,t_end)
+   if(t_ref-time-dt>0d0.and.t_ref-time-2d0*dt<0d0)then
+    dt = 0.5d0*(t_ref-time)
    else
     dt = min(dt,t_out-time)
    end if
