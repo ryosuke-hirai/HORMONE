@@ -203,7 +203,7 @@ module matrix_coeffs
          coeffs(1) = coeffs(1) + geo(1, i-1, j, k)*har_mean(radK(i-1:i, j, k))
       end if
       if(i < ie) then
-         coeffs(1) = coeffs(1) + geo(1, i, j, k)*har_mean(radK(i:i+1, j, k))
+         coeffs(1) = coeffs(1) + geo(1, i  , j, k)*har_mean(radK(i:i+1, j, k))
       end if
       if(radswitch == 1) then
          kappap = kappa_p(d(i,j,k), T(i,j,k))
@@ -220,7 +220,7 @@ module matrix_coeffs
          coeffs(1) = coeffs(1) + geo(2, i, j-1, k)*har_mean(radK(i, j-1:j, k))
       end if
       if(j < je) then
-         coeffs(1) = coeffs(1) + geo(2, i, j, k)*har_mean(radK(i, j:j+1, k))
+         coeffs(1) = coeffs(1) + geo(2, i, j  , k)*har_mean(radK(i, j:j+1, k))
       end if
       if(radswitch == 1) then
          kappap = kappa_p(d(i,j,k), T(i,j,k))
@@ -237,7 +237,7 @@ module matrix_coeffs
          coeffs(1) = coeffs(1) + geo(3, i, j, k-1)*har_mean(radK(i, j, k-1:k))
       end if
       if(k < ke) then
-         coeffs(1) = coeffs(1) + geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
+         coeffs(1) = coeffs(1) + geo(3, i, j, k  )*har_mean(radK(i, j, k:k+1))
       end if
       if(radswitch == 1) then
          kappap = kappa_p(d(i,j,k), T(i,j,k))
