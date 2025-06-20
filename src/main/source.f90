@@ -54,6 +54,17 @@ subroutine source
   stop
  end if
 
+! Reset src values
+!$omp parallel do private(i,j,k) collapse(3)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    src(i,j,k,:) = 0d0
+   end do
+  end do
+ end do
+!$omp end parallel do
+
  select case(crdnt)
 ! Cartesian >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(0)

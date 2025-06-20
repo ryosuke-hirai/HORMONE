@@ -146,6 +146,7 @@ end subroutine setup_petsc
 
 #ifdef USE_PETSC
 subroutine write_A_petsc(system, pm)
+  use settings,only:crdnt,solve_j,solve_k
   use utils, only: get_dim
   use matrix_coeffs, only:compute_coeffs, get_matrix_offsets
   use matrix_utils, only:l_from_ijk, get_raddim, ijk_from_l
@@ -160,14 +161,9 @@ subroutine write_A_petsc(system, pm)
   PetscScalar    :: val
   PetscErrorCode :: ierr
 
-  select case (pm%dim)
-  case(1)
-    ncoeff = 2
-  case(2)
-    ncoeff = 3
-  case(3)
-    ncoeff = 5
-  end select
+  ncoeff = pm%dim + 1
+  if(crdnt==1.and.solve_j)ncoeff=ncoeff+1
+  if(crdnt==2.and.solve_k)ncoeff=ncoeff+1
 
   call get_matrix_offsets(pm%dim, offsets)
 

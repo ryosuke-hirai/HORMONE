@@ -66,6 +66,7 @@ subroutine radiation
  if(radswitch==2)call rad_heat_cool
 
 ! Then update the diffusion term
+ call rad_boundary
  call get_gradE
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
 
@@ -85,7 +86,7 @@ subroutine radiation
  end do
 !$omp end parallel do
 
-call solve_system_rad(rsrc, x) ! returns erad^{n+1}
+ call solve_system_rad(rsrc, x) ! returns erad^{n+1}
 
 ! update erad and u
 !$omp parallel do private(l,i,j,k)
@@ -124,8 +125,6 @@ subroutine get_gradE
  integer:: i,j,k
 
 !-----------------------------------------------------------------------------
-
- call rad_boundary
 
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
@@ -270,6 +269,8 @@ subroutine radiative_force
 
 !-----------------------------------------------------------------------------
 
+ call get_gradE
+
 !$omp parallel do private(i,j,k,RR,ll,ff,frad,vdotfrad,gradv1,gradv2,gradv3,&
 !$omp nn,l,m,radwork,Pedd,kappar) collapse(3)
  do k = ks, ke
@@ -388,24 +389,30 @@ subroutine rad_boundary
 !$omp parallel do private(j,k) collapse(2)
  do k = ks, ke
   do j = js, je
-   if (is == is_global) erad(is-1,j,k) = erad(is,j,k)
-   if (ie == ie_global) erad(ie+1,j,k) = erad(ie,j,k)
+   if (is == is_global) erad(is-2,j,k) = erad(is+1,j,k)
+   if (is == is_global) erad(is-1,j,k) = erad(is  ,j,k)
+   if (ie == ie_global) erad(ie+1,j,k) = erad(ie  ,j,k)
+   if (ie == ie_global) erad(ie+2,j,k) = erad(ie-1,j,k)
   end do
  end do
 !$omp end parallel do
 !$omp parallel do private(i,k) collapse(2)
  do k = ks, ke
   do i = is, ie
-   if (js == js_global) erad(i,js-1,k) = erad(i,js,k)
-   if (je == je_global) erad(i,je+1,k) = erad(i,je,k)
+   if (js == js_global) erad(i,js-2,k) = erad(i,js+1,k)
+   if (js == js_global) erad(i,js-1,k) = erad(i,js  ,k)
+   if (je == je_global) erad(i,je+1,k) = erad(i,je  ,k)
+   if (je == je_global) erad(i,je+2,k) = erad(i,je-1,k)
   end do
  end do
 !$omp end parallel do
 !$omp parallel do private(i,j) collapse(2)
  do j = js, je
   do i = is, ie
-   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks)
-   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke)
+   if (ks == ks_global) erad(i,j,ks-2) = erad(i,j,ks+1)
+   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks  )
+   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke  )
+   if (ke == ke_global) erad(i,j,ke+2) = erad(i,j,ke-1)
   end do
  end do
 !$omp end parallel do
