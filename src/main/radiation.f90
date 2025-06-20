@@ -31,7 +31,7 @@ subroutine radiation
  use pressure_mod,only:Trad,get_etot_from_eint
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
  use matrix_utils,only:ijk_from_l,l_from_ijk
- use mpi_domain,only:exchange_radiation_mpi
+ use mpi_domain,only:exchange_scalar
 
  integer:: l,i,j,k,ll
  integer:: in,jn,kn
@@ -66,12 +66,10 @@ subroutine radiation
  if(radswitch==2)call rad_heat_cool
 
 ! Then update the diffusion term
+ call exchange_scalar(erad)
  call rad_boundary
  call get_gradE
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
-
- ! Exchange radiation variables (radK) across MPI boundaries
- call exchange_radiation_mpi
 
  call write_A_rad
  call get_radb(map) ! Sets up rsrc
@@ -127,9 +125,9 @@ subroutine get_gradE
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
+ do k = ks-1, ke+1
+  do j = js-1, je+1
+   do i = is-1, ie+1
     call get_grad(erad,i,j,k,gradE(1:3,i,j,k))
    end do
   end do
@@ -159,9 +157,17 @@ subroutine get_diffusion_coeff
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,RR,ll,kappar) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
+ do k = ks-1, ke+1
+  do j = js-1, je+1
+   do i = is-1, ie+1
+    ! Skip if this is a corner ghost cell, which is uninitialised and unused)
+    if ((i == is-1 .or. i == ie+1) .and. &
+      (j == js-1 .or. j == je+1)) cycle
+    if ((i == is-1 .or. i == ie+1) .and. &
+      (k == ks-1 .or. k == ke+1)) cycle
+    if ((j == js-1 .or. j == je+1) .and. &
+      (k == ks-1 .or. k == ke+1)) cycle
+
     kappar = kappa_r(d(i,j,k),T(i,j,k))
     RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
@@ -242,7 +248,7 @@ subroutine radiation_setup
   call setup_matrix(irad)
   call get_geo
 
-  allocate(radK(is-2:ie+2,js-2:je+2,ks-2:ke+2),gradE(1:3,is:ie,js:je,ks:ke),&
+  allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1),&
            rsrc(1:(ie-is+1)*(je-js+1)*(ke-ks+1)) )
  end if
 

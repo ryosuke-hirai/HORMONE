@@ -310,6 +310,8 @@ module mpi_domain
 
       if (compswitch >= 2) call exchange_spc(spc)
 
+      if (radswitch > 0) call exchange_scalar(erad)
+
       call stop_clock(wtmpi)
 #endif
 
@@ -323,12 +325,6 @@ module mpi_domain
        call exchange_scalar(grvphi)
       endif
    end subroutine exchange_gravity_mpi
-
-   subroutine exchange_radiation_mpi
-      use physval
-
-      call exchange_scalar(radK)
-   end subroutine exchange_radiation_mpi
 
    subroutine exchange_scalar(val)
       use grid
