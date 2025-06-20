@@ -119,7 +119,7 @@ subroutine write_A_cg(system, cg)
   ! Loop over all grid points. For each point, compute the stencil
   ! coefficients from the physics via compute_coeffs.
   allocate(coeffs(cg%Adiags))
-  do l = cg%ls, cg%le
+  do l = 1, cg%lmax
     call ijk_from_l(l, cg%is, cg%js, cg%ks, cg%in, cg%jn, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
     ! Save the computed coefficients into the equation matrix.

@@ -43,7 +43,6 @@ module mpi_domain
       logical :: periods(3)
       integer :: mycoords(3)
       integer :: i
-      integer, allocatable :: ncells(:)
 
 #endif
 
@@ -97,20 +96,6 @@ module mpi_domain
       if (mycoords(2) == dims(2) - 1) je = ny + (js_global - 1)
       if (mycoords(3) == dims(3) - 1) ke = nz + (ks_global - 1)
 
-      ! Vector of the number of cells on each task
-      allocate(ncells(0:nprocs-1))
-
-      ! Number of cells in this task
-      ncells(myrank) = (ie - is + 1) * (je - js + 1) * (ke - ks + 1)
-
-      ! Communicate the number of cells to all tasks
-      call MPI_Allgather(ncells(myrank), 1, MPI_INTEGER, ncells, 1, MPI_INTEGER, MPI_COMM_WORLD, ierr)
-
-      ! Calculate the number of cells in the ranks before this one
-      ! ls and le is this task's start and end indices for the linear solver
-      ls = sum(ncells(0:myrank-1)) + 1
-      le = ls + ncells(myrank) - 1
-
       ! Copy the hydro grid decomposition to the gravity grid
       gis = is
       gie = ie
@@ -118,8 +103,6 @@ module mpi_domain
       gje = je
       gks = ks
       gke = ke
-      gls = ls
-      gle = le
 
       ! Check for gravity grid extension and adjust if necessary
       if (gravswitch >= 1) then

@@ -30,7 +30,7 @@ subroutine radiation
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
- use matrix_utils,only:ijk_from_l,l_from_ijk
+ use matrix_utils,only:ijk_from_l,l_from_ijk,contiguous_map
  use mpi_domain,only:exchange_scalar
 
  integer:: l,i,j,k,ll
@@ -48,17 +48,7 @@ subroutine radiation
  jn_global = je_global-js_global+1
  kn_global = ke_global-ks_global+1
 
- allocate(map(1:in*jn*kn))
- ll = 0
- do k = ks, ke
-   do j = js, je
-     do i = is, ie
-       ll = ll + 1
-       l = l_from_ijk(i, j, k, is_global, js_global,ks_global, in_global, jn_global)
-       map(ll) = l
-     end do
-   end do
- end do
+ call contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, map)
 
 ! Advection and radiative acceleration terms are updated in hydro step
 

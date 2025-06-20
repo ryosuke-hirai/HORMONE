@@ -11,16 +11,19 @@ module matrix_vars
   integer, parameter :: igrv = 1
   integer, parameter :: irad = 2
 
+  ! A method-independent variable to store the number of rows owned
+  integer :: lmax_rad
+  integer :: lmax_grv
+
   ! PETSc arrays
 #ifdef USE_PETSC
   type petsc_set
     integer :: dim
-    integer :: is, ie, js ,je, ks, ke, ls, le, in, jn, kn
+    integer :: is, ie, js ,je, ks, ke, in, jn, kn
     integer :: is_global, ie_global, in_global
     integer :: js_global, je_global, jn_global
     integer :: ks_global, ke_global, kn_global
     integer, allocatable :: my_rows(:)
-    integer :: num_rows
     Mat :: A
     Vec :: x
     Vec :: b
@@ -33,7 +36,7 @@ module matrix_vars
 
   ! MICCG arrays
   type cg_set
-    integer :: is, ie, js ,je, ks, ke, in, jn, kn, lmax, dim, ls, le
+    integer :: is, ie, js ,je, ks, ke, in, jn, kn, lmax, dim
     integer :: cdiags, Adiags
     integer, allocatable :: ia(:), ic(:)
     real(8), allocatable, dimension(:,:) :: A, c

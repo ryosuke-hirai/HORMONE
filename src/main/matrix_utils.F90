@@ -40,6 +40,38 @@ pure subroutine ijk_from_l(l,is,js,ks,in,jn,i,j,k)
 return
 end subroutine ijk_from_l
 
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!                         SUBROUTINE CONTIGUOUS_MAP
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Create a contiguous mapping of the global matrix rows
+! is, ie, js, je, ks, ke: Starting/ending indices for i,j,k directions
+! is_global, ie_global, js_global, je_global, ks_global, ke_global: Global indices
+! map: Array to hold the mapping
+!
+! In the serial case, mapl(l) = l
+
+subroutine contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, map)
+  integer,intent(in) :: is, ie, js, je, ks, ke
+  integer,intent(in) :: is_global, ie_global, js_global, je_global, ks_global, ke_global
+  integer, allocatable :: map(:)
+  integer :: i, j, k, ll
+
+  allocate(map((ie-is+1)*(je-js+1)*(ke-ks+1)))
+
+  ll = 0
+  do k = ks, ke
+    do j = js, je
+      do i = is, ie
+        ll = ll + 1
+        map(ll) = l_from_ijk(i, j, k, is_global, js_global, ks_global, ie_global-is_global+1, je_global-js_global+1)
+      end do
+    end do
+  end do
+
+end subroutine contiguous_map
+
+
 pure function get_raddim(in, jn, kn) result(dim)
 ! PURPOSE: Get the dimension of the radiation problem
   integer,intent(in)::in,jn,kn

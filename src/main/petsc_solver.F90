@@ -88,11 +88,7 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
   ! Get the ownership ranges for matrix
   call MatGetOwnershipRange(pm%A, ls, le, ierr)
 
-  ! Fortran indexing
-  pm%ls = ls + 1
-  pm%le = le
-
-  print*, "Rank ", myrank, ":  Matrix ownership range: ", pm%ls, " to ", pm%le, " (global size: ", pm%lmax_global, ")"
+  ! print*, "Rank ", myrank, ":  Matrix ownership range: ", ls, " to ", le, " (global size: ", pm%lmax_global, ")"
 
   ! Create the KSP solver context.
   call KSPCreate(PETSC_COMM_WORLD, pm%ksp, ierr)
@@ -110,8 +106,7 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
   call KSPSetFromOptions(pm%ksp, ierr)
 
   ! Define the local rows for this task.
-  pm%num_rows = pm%lmax
-  allocate(pm%my_rows(pm%num_rows))
+  allocate(pm%my_rows(pm%lmax))
 
   ll = 0
   do k = ks, ke
@@ -124,8 +119,7 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
     end do
   end do
 
-  ! Assert that ll == pm%num_rows
-  if (ll /= pm%num_rows) then
+  if (ll /= pm%lmax) then
     print *, "Error: Number of local rows does not match expected count."
     call stop_mpi(1)
   end if
@@ -176,7 +170,7 @@ subroutine write_A_petsc(system, pm)
 
   ! Loop over all grid points.
   ! l is the row number in the matrix
-  do ll = 1, pm%num_rows
+  do ll = 1, pm%lmax
     l = pm%my_rows(ll)
     call ijk_from_l(l, pm%is_global, pm%js_global, pm%ks_global, pm%in_global, pm%jn_global, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
@@ -221,8 +215,8 @@ end subroutine write_A_petsc
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
   type(petsc_set), intent(in) :: pm
-  real(8), intent(in)  :: b(1:pm%num_rows)
-  real(8), intent(out) :: x(1:pm%num_rows)
+  real(8), intent(in)  :: b(pm%lmax)
+  real(8), intent(out) :: x(pm%lmax)
   integer :: ierr, l, ll
   real(8), pointer :: x_array(:)
   PetscInt, allocatable :: idx_array(:)
@@ -231,7 +225,7 @@ subroutine solve_system_petsc(pm, b, x)
   VecScatter :: scatter_ctx
 
   ! Set the right-hand side vector b.
-  do ll = 1, pm%num_rows
+  do ll = 1, pm%lmax
     l = pm%my_rows(ll)
     call VecSetValue(pm%b, l-1, b(ll), INSERT_VALUES, ierr)
   end do
@@ -242,14 +236,14 @@ subroutine solve_system_petsc(pm, b, x)
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
 
   ! Create index set with only our owned indices
-  allocate(idx_array(pm%num_rows))
+  allocate(idx_array(pm%lmax))
   idx_array(:) = pm%my_rows(:) - 1  ! Convert to zero-based indexing
-  call ISCreateGeneral(PETSC_COMM_SELF, pm%num_rows, idx_array, &
+  call ISCreateGeneral(PETSC_COMM_SELF, pm%lmax, idx_array, &
                        PETSC_COPY_VALUES, is_from, ierr)
 
   ! Create small vector to receive only our owned values
   call VecCreate(PETSC_COMM_SELF, x_gather, ierr)
-  call VecSetSizes(x_gather, PETSC_DECIDE, pm%num_rows, ierr)
+  call VecSetSizes(x_gather, PETSC_DECIDE, pm%lmax, ierr)
   call VecSetFromOptions(x_gather, ierr)
 
   ! Create scatter context to extract only our owned values
@@ -262,9 +256,7 @@ subroutine solve_system_petsc(pm, b, x)
   ! Copy solution back to Fortran array x.
   ! Leave values in pm%x to re-use in the next iteration.
   call VecGetArrayF90(x_gather, x_array, ierr)
-  do ll = 1, pm%num_rows
-    x(ll) = x_array(ll)
-  end do
+  x(1:pm%lmax) = x_array(1:pm%lmax)
   call VecRestoreArrayF90(x_gather, x_array, ierr)
 
 end subroutine solve_system_petsc

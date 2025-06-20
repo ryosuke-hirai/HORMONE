@@ -25,7 +25,7 @@ subroutine setup_matrix(system)
 #endif
   use miccg_mod, only: setup_cg
   use matrix_vars, only: cg_grv, cg_rad
-  use matrix_vars, only: igrv, irad
+  use matrix_vars, only: igrv, irad, lmax_grv, lmax_rad
 
   integer, intent(in) :: system
 
@@ -62,6 +62,13 @@ subroutine setup_matrix(system)
                        petsc_rad)
     end if
 #endif
+  end if
+
+  ! The local number of rows on the matrix
+  if (system == igrv) then
+    lmax_grv = (gie - gis + 1) * (gje - gjs + 1) * (gke - gks + 1)
+  else if (system == irad) then
+    lmax_rad = (ie - is + 1) * (je - js + 1) * (ke - ks + 1)
   end if
 
 end subroutine setup_matrix
