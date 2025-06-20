@@ -20,6 +20,7 @@ subroutine boundarycondition
  use pressure_mod
  use composition_mod
  use profiler_mod
+ use radiation_mod,only:rad_boundary
 
  integer:: i,j,k
  real(8):: plug
@@ -37,6 +38,8 @@ subroutine boundarycondition
 ! 10: Flux b.c. (flux values should be given elsewhere!)
 
  call start_clock(wtbnd)
+
+ if(radswitch>0)call rad_boundary
 
 !$omp parallel
 
