@@ -48,7 +48,7 @@ subroutine radiation
  jn_global = je_global-js_global+1
  kn_global = ke_global-ks_global+1
 
- call contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, map)
+ call contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, map)
 
 ! Advection and radiative acceleration terms are updated in hydro step
 

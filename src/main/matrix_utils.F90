@@ -51,9 +51,9 @@ end subroutine ijk_from_l
 !
 ! In the serial case, mapl(l) = l
 
-subroutine contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, map)
+subroutine contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, map)
   integer,intent(in) :: is, ie, js, je, ks, ke
-  integer,intent(in) :: is_global, ie_global, js_global, je_global, ks_global, ke_global
+  integer,intent(in) :: is_global, ie_global, js_global, je_global, ks_global
   integer, allocatable :: map(:)
   integer :: i, j, k, ll
 

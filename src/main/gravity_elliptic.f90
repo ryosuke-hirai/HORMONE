@@ -38,7 +38,7 @@ subroutine gravity_elliptic
 
  allocate( x(lmax_grv), cgsrc(lmax_grv) )
  call contiguous_map(gis, gie, gjs, gje, gks, gke, &
-                     gis_global, gie_global, gjs_global, gje_global, gks_global, gke_global, map)
+                     gis_global, gie_global, gjs_global, gje_global, gks_global, map)
 
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
