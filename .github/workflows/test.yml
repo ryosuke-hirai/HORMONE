@@ -183,72 +183,96 @@ jobs:
             mpi: yes
             petsc: yes
             flat: yes
+            mpi_tasks: 2
+            omp_threads: 2
           - test: polytrope
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: yes
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion1d_x
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion1d_y
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion1d_z
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion2d_xy
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion2d_xz
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion2d_yz
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radshock_x
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: yes
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radshock_y
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: yes
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radshock_z
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: yes
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radstar
             fc: gfortran
             debug: yes
             mpi: yes
             petsc: yes
             flat: yes
+            mpi_tasks: 2
+            omp_threads: 2
 
         exclude:
           - fc: ifx
