@@ -29,10 +29,8 @@ jobs:
         exclude:
           - fc: ifx
             mpi: yes
-          # Exclude ifx and mpi for petsc (TODO: add these later)
+          # Exclude ifx for petsc
           - fc: ifx
-            petsc: yes
-          - mpi: yes
             petsc: yes
 
     name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
@@ -178,77 +176,77 @@ jobs:
             mpi_tasks: 4
             omp_threads: 1
             petsc: no
-          # Radiation and gravity tests should be used to test PETSc implementation
+          # Radiation and gravity tests should be used to test PETSc implementation with MPI
           - test: star_sph
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: yes
           - test: polytrope
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: yes
           - test: diffusion1d_x
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
           - test: diffusion1d_y
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
           - test: diffusion1d_z
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
           - test: diffusion2d_xy
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
           - test: diffusion2d_xz
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
           - test: diffusion2d_yz
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
           - test: radshock_x
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: yes
           - test: radshock_y
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: yes
           - test: radshock_z
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: yes
           - test: radstar
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: yes
 
@@ -396,9 +394,6 @@ jobs:
         petsc:
           - no
           - yes
-        exclude:
-          - mpi: yes
-            petsc: yes
 
     name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
