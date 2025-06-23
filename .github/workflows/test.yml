@@ -385,7 +385,7 @@ jobs:
       working-directory: ./para
       run: |
         if grep -q "matrix_solver=" parameters_${{ matrix.test }}; then
-          sed -i "s/matrix_solver='[^']*'/matrix_solver=1/" parameters_${{ matrix.test }}
+          sed -i "s/matrix_solver=[0-9]*/matrix_solver=1/" parameters_${{ matrix.test }}
         else
           sed -i "s/&mat_con/\&mat_con matrix_solver=1/" parameters_${{ matrix.test }}
         fi
