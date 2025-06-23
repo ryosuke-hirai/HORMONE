@@ -100,7 +100,7 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
   call KSPSetType(pm%ksp, KSPCG, ierr)
   call KSPGetPC(pm%ksp, pc, ierr)
   call PCSetType(pc, PCBJACOBI, ierr)
-  call KSPSetTolerances(pm%ksp, cgerr, PETSC_DEFAULT_REAL, PETSC_DEFAULT_REAL, PETSC_DEFAULT, ierr)
+  call KSPSetTolerances(pm%ksp, cgerr, PETSC_DEFAULT_REAL, PETSC_DEFAULT_REAL, PETSC_DEFAULT_INTEGER, ierr)
 
   ! Allow command line options/overrides
   call KSPSetFromOptions(pm%ksp, ierr)
