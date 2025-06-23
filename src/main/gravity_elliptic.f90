@@ -51,7 +51,7 @@ subroutine gravity_elliptic
 !$omp parallel do private(i,j,k,l,ll)
   do ll=1,lmax_grv
    l = map(ll)
-   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
+   call ijk_from_l(l,gis_global,gjs_global,gks_global,gie_global-gis_global+1,gje_global-gjs_global+1,i,j,k)
    x(ll) = grvphi(i,j,k)
    cgsrc(ll) = 0d0
    if(i>=is)then;if(i<=ie)then;if(k>=ks)then;if(k<=ke)then
@@ -72,7 +72,7 @@ subroutine gravity_elliptic
 !$omp parallel do private(i,j,k,l,ll)
   do ll=1,lmax_grv
    l = map(ll)
-   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
+   call ijk_from_l(l,gis_global,gjs_global,gks_global,gie_global-gis_global+1,gje_global-gjs_global+1,i,j,k)
    x(ll) = grvphi(i,j,k)
    cgsrc(ll) = 0d0
    if(i>=is)then;if(i<=ie)then;if(j>=js)then;if(j<=je)then
@@ -94,7 +94,7 @@ subroutine gravity_elliptic
 !$omp parallel do private(i,j,k,l,ll)
   do ll=1,lmax_grv
    l = map(ll)
-   call ijk_from_l(l,gis,gjs,gks,gie-gis+1,gje-gjs+1,i,j,k)
+   call ijk_from_l(l,gis_global,gjs_global,gks_global,gie_global-gis_global+1,gje_global-gjs_global+1,i,j,k)
    x(ll) = grvphi(i,j,k)
    cgsrc(ll) = 0d0
    if(i>=is)then;if(i<=ie)then
