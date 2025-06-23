@@ -31,7 +31,6 @@ subroutine radiation
  use pressure_mod,only:Trad,get_etot_from_eint
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
  use matrix_utils,only:ijk_from_l,l_from_ijk,contiguous_map
- use mpi_domain,only:exchange_scalar
 
  integer:: l,i,j,k,ll
  integer:: in,jn,kn
@@ -56,8 +55,6 @@ subroutine radiation
  if(radswitch==2)call rad_heat_cool
 
 ! Then update the diffusion term
- call exchange_scalar(erad)
- call rad_boundary
  call get_gradE
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
 
