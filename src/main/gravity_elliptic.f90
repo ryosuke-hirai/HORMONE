@@ -45,7 +45,7 @@ subroutine gravity_elliptic
  if(gbtype==0)call gravbound
 
 ! cylindrical (equatorial+axial symmetry) ####################################
- if(je==js.and.crdnt==1.and.dim==2)then
+ if(gje_global==gjs_global.and.crdnt==1.and.dim==2)then
 
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l,ll)
@@ -58,9 +58,9 @@ subroutine gravity_elliptic
     cgsrc(ll) = 4d0*pi*G*gsrc(i,j,k)*x1(i)*dxi1(i)*sum(dx3(k:k+1))*0.5d0
    end if;end if;end if;end if
    if(gbtype==0)then
-    if(k==gks) cgsrc(ll) = cgsrc(ll) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
-    if(i==gie) cgsrc(ll) = cgsrc(ll) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
-    if(k==gke) cgsrc(ll) = cgsrc(ll) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
+    if(k==gks_global) cgsrc(ll) = cgsrc(ll) - x1 (i)*dxi1(i)*idx3(k  )*phi3i(i,k-1)
+    if(i==gie_global) cgsrc(ll) = cgsrc(ll) - xi1(i)*dxi3(k)*idx1(i+1)*phi1o(i+1,k)
+    if(k==gke_global) cgsrc(ll) = cgsrc(ll) - x1 (i)*dxi1(i)*idx3(k+1)*phi3o(i,k+1)
    end if
   end do
 !$omp end parallel do
@@ -79,9 +79,9 @@ subroutine gravity_elliptic
     cgsrc(ll) = 4d0*pi*G*gsrc(i,j,k)*x1(i)**2*sinc(j)*dxi1(i)*dxi2(j)
    end if;end if;end if;end if
    if(gbtype==0)then
-    if(i==gie) cgsrc(ll) = cgsrc(ll) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)&
+    if(i==gie_global) cgsrc(ll) = cgsrc(ll) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)&
                                     *phiio(i+1,j)
-    if(i==gis) cgsrc(ll) = cgsrc(ll) - xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)&
+    if(i==gis_global) cgsrc(ll) = cgsrc(ll) - xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)&
                                     *phiii(i-1,j)
    end if
   end do
@@ -102,9 +102,9 @@ subroutine gravity_elliptic
    end if;end if
 
    if(gbtype==0)then
-    if(i==gie)cgsrc(ll) = cgsrc(ll) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)*dxi3(k)&
+    if(i==gie_global)cgsrc(ll) = cgsrc(ll) - xi1(i)**2*sinc(j)*dxi2(j)*idx1(i+1)*dxi3(k)&
                                   *phiio(i+1,j)
-    if(i==gis)cgsrc(ll) = cgsrc(ll) - xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)*dxi3(k)&
+    if(i==gis_global)cgsrc(ll) = cgsrc(ll) - xi1(i-1)**2*sinc(j)*dxi2(j)*idx1(i)*dxi3(k)&
                                   *phiii(i-1,j)
    end if
   end do
@@ -128,40 +128,55 @@ subroutine gravity_elliptic
 !$omp end parallel do
 
 
- if(je==js.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
+ if(gje_global==gjs_global.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
 
-  do k = gks,gke
-   do j = js,je
-    grvphi(is-2,j,k) = grvphi(is+1,j,k)
-    grvphi(is-1,j,k) = grvphi(is  ,j,k)
-   end do
-  end do
-  grvphi(gis:gie,js:je,gks-2) = grvphi(gis:gie,js:je,gks)
-  grvphi(gis:gie,js:je,gks-1) = grvphi(gis:gie,js:je,gks)
+  if (gis==gis_global) then
+    grvphi(gis-2,gjs:gje,gks:gke) = grvphi(gis+1,gjs:gje,gks:gke)
+    grvphi(gis-1,gjs:gje,gks:gke) = grvphi(gis  ,gjs:gje,gks:gke)
+  end if
+  if (gks==gks_global) then
+    grvphi(gis:gie,gjs:gje,gks-2) = grvphi(gis:gie,gjs:gje,gks)
+    grvphi(gis:gie,gjs:gje,gks-1) = grvphi(gis:gie,gjs:gje,gks)
+  end if
 
- elseif(ke==ks.and.crdnt==2.and.dim==2)then ! for spherical coordinates (2D)
+ elseif(gke_global==gks_global.and.crdnt==2.and.dim==2)then ! for spherical coordinates (2D)
 
-  grvphi(is-1:gie+1,js-2,ks) = grvphi(is-1:gie+1,js+1,ks)
-  grvphi(is-1:gie+1,js-1,ks) = grvphi(is-1:gie+1,js,ks)
-  grvphi(is-1:gie+1,je+1,ks) = grvphi(is-1:gie+1,je,ks)
-  grvphi(is-1:gie+1,je+2,ks) = grvphi(is-1:gie+1,je-1,ks)
-
-  grvphi(is-1,:,:) = grvphi(is,:,:)
-  grvphi(is-2,:,:) = grvphi(is+1,:,:)
-  grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
-                  ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  if (gks==gks_global) then
+    if (gjs==gjs_global) then
+      grvphi(gis-1:gie+1,gjs-2,gks) = grvphi(gis-1:gie+1,gjs+1,gks)
+      grvphi(gis-1:gie+1,gjs-1,gks) = grvphi(gis-1:gie+1,gjs,gks)
+    endif
+    if (gje==gje_global) then
+      grvphi(gis-1:gie+1,gje+1,gks) = grvphi(gis-1:gie+1,gje,gks)
+      grvphi(gis-1:gie+1,gje+2,gks) = grvphi(gis-1:gie+1,gje-1,gks)
+    endif
+  end if
+  if (gis==gis_global) then
+    grvphi(gis-1,:,:) = grvphi(gis,:,:)
+    grvphi(gis-2,:,:) = grvphi(gis+1,:,:)
+  end if
+  if (gie==gie_global) then
+    grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
+                    ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  end if
 
  elseif(crdnt==2.and.dim==3)then ! for spherical coordinates (3D)
-
-  grvphi(is-1:gie+1,js-2,ks:ke) = grvphi(is-1:gie+1,js,ks:ke)
-  grvphi(is-1:gie+1,js-1,ks:ke) = grvphi(is-1:gie+1,js,ks:ke)
-  grvphi(is-1:gie+1,je+1,ks:ke) = grvphi(is-1:gie+1,je,ks:ke)
-  grvphi(is-1:gie+1,je+2,ks:ke) = grvphi(is-1:gie+1,je,ks:ke)
-
-  grvphi(is-1,:,:) = grvphi(is,:,:)
-  grvphi(is-2,:,:) = grvphi(is+1,:,:)
-  grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
-                  ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  if (gjs==gjs_global) then
+    grvphi(gis-1:gie+1,gjs-2,gks:gke) = grvphi(gis-1:gie+1,gjs,gks:gke)
+    grvphi(gis-1:gie+1,gjs-1,gks:gke) = grvphi(gis-1:gie+1,gjs,gks:gke)
+  endif
+  if (gje==gje_global) then
+    grvphi(gis-1:gie+1,gje+1,gks:gke) = grvphi(gis-1:gie+1,gje,gks:gke)
+    grvphi(gis-1:gie+1,gje+2,gks:gke) = grvphi(gis-1:gie+1,gje-1,gks:gke)
+  endif
+  if (gis==gis_global) then
+    grvphi(gis-1,:,:) = grvphi(gis,:,:)
+    grvphi(gis-2,:,:) = grvphi(gis+1,:,:)
+  endif
+  if (gie==gie_global) then
+    grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
+                    ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  end if
 
  end if
 
