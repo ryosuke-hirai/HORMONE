@@ -68,7 +68,7 @@ module matrix_coeffs
     use settings, only: crdnt, eq_sym, gbtype
     use grid,only:gis_global,gie_global,gje_global,gks_global,gke_global,&
     xi1s,x1,xi1,dx1,idx1,dxi1,dx2,dxi2,dx3,dxi3,idx3,&
-    sini,sinc,rdis,ie,ke
+    sini,sinc,rdis
 
     integer, intent(in) :: dim, i, j, k
     real(8), intent(out), dimension(:) :: coeffs
@@ -85,7 +85,7 @@ module matrix_coeffs
       if ( gbtype == 1 .and. i == gie_global ) then
         coeffs(1) = coeffs(1) + coeffs(2) * x1(i)/x1(i+1)
       end if
-      if ( i == ie ) then ! TODO: check MPI
+      if ( i == gie_global ) then
         coeffs(2) = 0d0
       end if
 
@@ -100,10 +100,10 @@ module matrix_coeffs
         coeffs(2) = 0.5d0 * xi1(i) * sum_dx3 / dx1(i+1)
         coeffs(3) = x1(i) * dxi1(i) / dx3(k+1)
         if ( gbtype == 1 ) then
-          if ( i == ie ) then ! TODO: check MPI
+          if ( i == gie_global ) then
             coeffs(1) = coeffs(1) + coeffs(2) * rdis(i, k)/rdis(i+1, k)
           end if
-          if ( k == ke ) then ! TODO: check MPI
+          if ( k == gke_global ) then
             coeffs(1) = coeffs(1) + coeffs(2) * rdis(i, k)/rdis(i, k+1)
           end if
         end if
@@ -356,8 +356,9 @@ module matrix_coeffs
       if(k == ke_global) coeffs(4) = 0d0
       if(crdnt == 2) then
          if(k == 1) then
-            ! TODO: Fix this for MPI using ghost cells
-            coeffs(5) = - geo(3, i, j, k-1)*har_mean( (/ radK(i,j,k), radK(i,j,ke_global) /) )
+            ! radK is computed for the first layer of ghost cells, so we can use k-1
+            ! which is equivalent to ke_global
+            coeffs(5) = - geo(3, i, j, k-1)*har_mean( (/ radK(i,j,k), radK(i,j,k-1) /) )
          else
             coeffs(5) = 0d0
          end if
