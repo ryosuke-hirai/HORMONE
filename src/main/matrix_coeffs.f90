@@ -355,7 +355,7 @@ module matrix_coeffs
       coeffs(4) = - geo(3, i, j, k)*har_mean(radK(i, j, k:k+1))
       if(k == ke_global) coeffs(4) = 0d0
       if(crdnt == 2) then
-         if(k == 1) then
+         if(k == ks_global) then
             ! radK is computed for the first layer of ghost cells, so we can use k-1
             ! which is equivalent to ke_global
             coeffs(5) = - geo(3, i, j, k-1)*har_mean( (/ radK(i,j,k), radK(i,j,k-1) /) )
