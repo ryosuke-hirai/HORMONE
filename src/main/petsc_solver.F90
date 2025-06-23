@@ -215,8 +215,8 @@ end subroutine write_A_petsc
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
   type(petsc_set), intent(in) :: pm
-  real(8), intent(in)  :: b(pm%lmax)
-  real(8), intent(out) :: x(pm%lmax)
+  real(8), intent(in)    :: b(pm%lmax)
+  real(8), intent(inout) :: x(pm%lmax)
   integer :: ierr, l, ll
   real(8), pointer :: x_array(:)
   PetscInt, allocatable :: idx_array(:)
@@ -231,6 +231,16 @@ subroutine solve_system_petsc(pm, b, x)
   end do
   call VecAssemblyBegin(pm%b, ierr)
   call VecAssemblyEnd(pm%b, ierr)
+
+  ! Set the initial guess for the solution vector x.
+  ! The PETSc vector will already have the previous solution, but we set it explicitly
+  ! for consistent behaviour after restarting the solver.
+  do ll = 1, pm%lmax
+    l = pm%my_rows(ll)
+    call VecSetValue(pm%x, l-1, x(ll), INSERT_VALUES, ierr)
+  end do
+  call VecAssemblyBegin(pm%x, ierr)
+  call VecAssemblyEnd(pm%x, ierr)
 
   ! Solve the linear system.
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
