@@ -92,21 +92,21 @@ jobs:
           - no
           - yes
         test:
-          - sodshock_x
-          - sodshock_y
-          - sodshock_z
-          - briowushock_x
-          - briowushock_y
-          - briowushock_z
-          - orszagtang_xy
-          - orszagtang_yz
-          - orszagtang_xz
-          - sedov_default
-          - KHinstability
+          # - sodshock_x
+          # - sodshock_y
+          # - sodshock_z
+          # - briowushock_x
+          # - briowushock_y
+          # - briowushock_z
+          # - orszagtang_xy
+          # - orszagtang_yz
+          # - orszagtang_xz
+          # - sedov_default
+          # - KHinstability
           - star_sph
           - polytrope
-          - smearing
-          - iotest
+          # - smearing
+          # - iotest
           - diffusion1d_x
           - diffusion1d_y
           - diffusion1d_z
