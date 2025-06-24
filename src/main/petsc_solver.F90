@@ -159,7 +159,7 @@ subroutine write_A_petsc(system, pm)
   if(crdnt==1.and.solve_j)ncoeff=ncoeff+1
   if(crdnt==2.and.solve_k)ncoeff=ncoeff+1
 
-  call get_matrix_offsets(pm%dim, offsets)
+  call get_matrix_offsets(pm%dim, pm%in_global, pm%jn_global, pm%kn_global, offsets)
 
   ! The radiation coefficients depend on the direction of the problem in 1D and 2D
   if (system == irad) then

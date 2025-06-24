@@ -17,41 +17,16 @@ module matrix_coeffs
 
   subroutine compute_coeffs(system, dim, i, j, k, coeffs)
     use matrix_vars, only: igrv, irad
-    use grid, only: is_global, ie_global, js_global, je_global, ks_global, ke_global
     integer, intent(in) :: system, dim, i, j, k
     real(8), intent(out) :: coeffs(5)
-
-    integer :: raddim, in, jn, kn
+    integer :: in, jn, kn
 
     if (system == igrv) then
       ! Compute coefficients for gravity system
       call compute_coeffs_gravity(dim, i, j, k, coeffs)
     else if (system == irad) then
-      ! raddim specfies the dimension and plane of the grid
-      ! TODO: move this up one level so that it's not computed for every point
-      in = ie_global - is_global + 1
-      jn = je_global - js_global + 1
-      kn = ke_global - ks_global + 1
-      if(in>1.and.jn>1.and.kn>1)then
-        raddim=3
-      elseif(in>1.and.jn>1.and.kn==1)then
-        raddim=21
-      elseif(in>1.and.jn==1.and.kn>1)then
-        raddim=22
-      elseif(in==1.and.jn>1.and.kn>1)then
-        raddim=23
-      elseif(in>1.and.jn==1.and.kn==1)then
-        raddim=11
-      elseif(in==1.and.jn>1.and.kn==1)then
-        raddim=12
-      elseif(in==1.and.jn==1.and.kn>1)then
-        raddim=13
-      else
-        print*,'Error in compute_coeffs, dimension is not supported; raddim=',raddim
-      end if
-
       ! Compute coefficients for radiation system
-      call compute_coeffs_radiation(raddim, i, j, k, coeffs)
+      call compute_coeffs_radiation(dim, i, j, k, coeffs)
     end if
   end subroutine compute_coeffs
 
@@ -377,18 +352,12 @@ module matrix_coeffs
   ! PURPOSE: Computes the diagonal offsets for the matrix based on the dimension.
   !          Same for gravity and radiation.
 
-  subroutine get_matrix_offsets(dim, offsets)
+  subroutine get_matrix_offsets(dim, in, jn, kn, offsets)
     use grid, only: is_global, ie_global, js_global, je_global, ks_global, ke_global
     use settings, only: crdnt
     integer, intent(in)  :: dim
+    integer, intent(in)  :: in, jn, kn
     integer, intent(out) :: offsets(:)
-
-    integer :: in, jn, kn
-
-    ! TODO: store globally
-    in = ie_global - is_global + 1
-    jn = je_global - js_global + 1
-    kn = ke_global - ks_global + 1
 
     ! As the dimension increases, additional diagonals are added, but the
     ! offsets of existing diagonals are not changed.
