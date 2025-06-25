@@ -19,7 +19,6 @@ module matrix_coeffs
     use matrix_vars, only: igrv, irad
     integer, intent(in) :: system, dim, i, j, k
     real(8), intent(out) :: coeffs(5)
-    integer :: in, jn, kn
 
     if (system == igrv) then
       ! Compute coefficients for gravity system
@@ -353,7 +352,6 @@ module matrix_coeffs
   !          Same for gravity and radiation.
 
   subroutine get_matrix_offsets(dim, in, jn, kn, offsets)
-    use grid, only: is_global, ie_global, js_global, je_global, ks_global, ke_global
     use settings, only: crdnt
     integer, intent(in)  :: dim
     integer, intent(in)  :: in, jn, kn
