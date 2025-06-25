@@ -304,7 +304,7 @@ module mpi_domain
       use settings
       use gravmod
 
-      if (gravswitch == 3) then
+      if (gravswitch == 2 .or. gravswitch == 3) then
        call exchange_scalar(grvphi)
       endif
    end subroutine exchange_gravity_mpi

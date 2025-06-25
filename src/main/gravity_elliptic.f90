@@ -28,6 +28,7 @@ subroutine gravity_elliptic
  use matrix_utils,only:l_from_ijk,ijk_from_l,contiguous_map
  use matrix_solver_mod,only:solve_system_grv
  use matrix_vars,only:lmax_grv
+ use mpi_domain,only:exchange_gravity_mpi
  integer:: i,j,k,l,ll
  real(8),allocatable,dimension(:):: x, cgsrc
  integer,allocatable:: map(:)
@@ -126,6 +127,8 @@ subroutine gravity_elliptic
   grvphi(i,j,k) = x(ll)
  end do
 !$omp end parallel do
+
+ call exchange_gravity_mpi
 
 
  if(gje_global==gjs_global.and.crdnt==1.and.dim==2)then ! for cylindrical coordinates
