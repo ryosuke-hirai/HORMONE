@@ -140,7 +140,6 @@ subroutine gravity_elliptic
   end if
 
  elseif(gke_global==gks_global.and.crdnt==2.and.dim==2)then ! for spherical coordinates (2D)
-
   if (gks==gks_global) then
     if (gjs==gjs_global) then
       grvphi(gis-1:gie+1,gjs-2,gks) = grvphi(gis-1:gie+1,gjs+1,gks)
@@ -156,6 +155,8 @@ subroutine gravity_elliptic
     grvphi(gis-2,:,:) = grvphi(gis+1,:,:)
   end if
   if (gie==gie_global) then
+    grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
+                    ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
     grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
                     ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
   end if
@@ -174,6 +175,8 @@ subroutine gravity_elliptic
     grvphi(gis-2,:,:) = grvphi(gis+1,:,:)
   endif
   if (gie==gie_global) then
+    grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
+                    ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
     grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
                     ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
   end if
