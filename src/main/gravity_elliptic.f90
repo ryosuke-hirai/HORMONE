@@ -146,6 +146,8 @@ subroutine gravity_elliptic
 
   grvphi(is-1,:,:) = grvphi(is,:,:)
   grvphi(is-2,:,:) = grvphi(is+1,:,:)
+  grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
+                  ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
                   ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
 
@@ -158,6 +160,8 @@ subroutine gravity_elliptic
 
   grvphi(is-1,:,:) = grvphi(is,:,:)
   grvphi(is-2,:,:) = grvphi(is+1,:,:)
+  grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
+                  ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
                   ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
 
