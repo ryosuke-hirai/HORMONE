@@ -77,7 +77,7 @@ pure function get_raddim(in, jn, kn) result(dim)
   integer,intent(in)::in,jn,kn
   integer::dim
 
-  if (in>1.and.jn>1.and.kn==1)then
+  if (in>1.and.jn>1.and.kn>1)then
     dim=3
   elseif(in>1.and.jn>1.and.kn==1)then
     dim=21
