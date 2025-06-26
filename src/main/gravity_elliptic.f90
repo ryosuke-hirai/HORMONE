@@ -146,8 +146,12 @@ subroutine gravity_elliptic
 
   grvphi(is-1,:,:) = grvphi(is,:,:)
   grvphi(is-2,:,:) = grvphi(is+1,:,:)
-  grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
-                  ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  if(gbtype==1) then
+   grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
+                   ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
+   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
+                   ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  endif
 
  elseif(crdnt==2.and.dim==3)then ! for spherical coordinates (3D)
 
@@ -158,8 +162,12 @@ subroutine gravity_elliptic
 
   grvphi(is-1,:,:) = grvphi(is,:,:)
   grvphi(is-2,:,:) = grvphi(is+1,:,:)
-  grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
-                  ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  if(gbtype==1) then
+   grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
+                   ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
+   grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
+                   ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
+  endif
 
  end if
 
