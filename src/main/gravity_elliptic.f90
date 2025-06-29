@@ -157,7 +157,7 @@ subroutine gravity_elliptic
     grvphi(gis-1,:,:) = grvphi(gis,:,:)
     grvphi(gis-2,:,:) = grvphi(gis+1,:,:)
   end if
-  if (gie==gie_global) then
+  if (gbtype==1 .and. gie==gie_global) then
     grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
                     ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
     grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
@@ -177,14 +177,13 @@ subroutine gravity_elliptic
     grvphi(gis-1,:,:) = grvphi(gis,:,:)
     grvphi(gis-2,:,:) = grvphi(gis+1,:,:)
   endif
-  if (gie==gie_global) then
+  if (gbtype==1 .and. gie==gie_global) then
     grvphi(gie+1,:,:)= grvphi(gie,:,:) + &
                     ( grvphi(gie,:,:) - grvphi(gie-1,:,:) ) * dx1(gie)/dx1(gie-1)
     grvphi(gie+2,:,:)= grvphi(gie+1,:,:) + &
                     ( grvphi(gie+1,:,:) - grvphi(gie,:,:) ) * dx1(gie+1)/dx1(gie)
   end if
-
- end if
+ endif
 
  if(gravswitch==3)then
   call timestep
