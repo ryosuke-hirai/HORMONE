@@ -127,8 +127,48 @@ jobs:
         omp_threads:
           - 2
         include:
-          # Define base configurations as YAML anchors
-          - &mpi4_config
+          # Tests with 4 MPI tasks
+          - test: smearing
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+            petsc: no
+          - test: polytrope
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+            petsc: no
+          - test: KHinstability
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+            petsc: no
+          - test: orszagtang_xy
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+            petsc: no
+          - test: orszagtang_yz
+            fc: gfortran
+            debug: no
+            mpi: yes
+            flat: yes
+            mpi_tasks: 4
+            omp_threads: 1
+            petsc: no
+          - test: orszagtang_xz
             fc: gfortran
             debug: no
             mpi: yes
@@ -137,7 +177,96 @@ jobs:
             omp_threads: 1
             petsc: no
 
-          - &petsc_config
+          # Radiation and gravity tests using PETSc with MPI
+          - test: star_sph
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: polytrope
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: diffusion1d_x
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: diffusion1d_y
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: diffusion1d_z
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: diffusion2d_xy
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: diffusion2d_xz
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: diffusion2d_yz
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: radshock_x
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: radshock_y
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: radshock_z
+            fc: gfortran
+            debug: yes
+            mpi: yes
+            petsc: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
+          - test: radstar
             fc: gfortran
             debug: yes
             mpi: yes
@@ -146,55 +275,7 @@ jobs:
             mpi_tasks: 2
             omp_threads: 2
 
-          # Tests with 4 MPI tasks (using the anchor)
-          - test: smearing
-            <<: *mpi4_config
-          - test: polytrope
-            <<: *mpi4_config
-          - test: KHinstability
-            <<: *mpi4_config
-          - test: orszagtang_xy
-            <<: *mpi4_config
-          - test: orszagtang_yz
-            <<: *mpi4_config
-          - test: orszagtang_xz
-            <<: *mpi4_config
-
-          # Radiation and gravity tests using PETSc with MPI
-          - test: star_sph
-            <<: *petsc_config
-          - test: polytrope
-            <<: *petsc_config
-          - test: diffusion1d_x
-            <<: *petsc_config
-          - test: diffusion1d_y
-            <<: *petsc_config
-          - test: diffusion1d_z
-            <<: *petsc_config
-          - test: diffusion2d_xy
-            <<: *petsc_config
-          - test: diffusion2d_xz
-            <<: *petsc_config
-          - test: diffusion2d_yz
-            <<: *petsc_config
-          - test: radshock_x
-            <<: *petsc_config
-          - test: radshock_y
-            <<: *petsc_config
-          - test: radshock_z
-            <<: *petsc_config
-          - test: radstar
-            <<: *petsc_config
-
         exclude:
-          # Define reusable exclude configurations
-          - &mpi_miccg_exclude  # Template for MICCG not compatible with MPI
-            mpi: yes
-            petsc: no
-
-          - &diffusion_flat_exclude  # Template for diffusion not using flat reconstruction
-            flat: yes
-
           # General excludes
           - fc: ifx
             mpi: yes
@@ -205,41 +286,52 @@ jobs:
 
           # MICCG solver is not compatible with MPI
           - test: star_sph
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: diffusion1d_x
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: diffusion1d_y
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: diffusion1d_z
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: diffusion2d_xy
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: diffusion2d_xz
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: diffusion2d_yz
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: radshock_x
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: radshock_y
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: radshock_z
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
           - test: radstar
-            <<: *mpi_miccg_exclude
+            mpi: yes
+            petsc: no
 
           # diffusion1d does not use hydro, so reconstruction is irrelevant
           - test: diffusion1d_x
-            <<: *diffusion_flat_exclude
+            flat: yes
           - test: diffusion1d_y
-            <<: *diffusion_flat_exclude
+            flat: yes
           - test: diffusion1d_z
-            <<: *diffusion_flat_exclude
+            flat: yes
           - test: diffusion2d_xy
-            <<: *diffusion_flat_exclude
+            flat: yes
           - test: diffusion2d_xz
-            <<: *diffusion_flat_exclude
+            flat: yes
           - test: diffusion2d_yz
-            <<: *diffusion_flat_exclude
+            flat: yes
 
     name: ${{ matrix.test }} (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.flat == 'yes' && ' flat' || '' }}${{ matrix.mpi_tasks == 4 && ' 4x1' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 
