@@ -92,21 +92,21 @@ jobs:
           - no
           - yes
         test:
-          # - sodshock_x
-          # - sodshock_y
-          # - sodshock_z
-          # - briowushock_x
-          # - briowushock_y
-          # - briowushock_z
-          # - orszagtang_xy
-          # - orszagtang_yz
-          # - orszagtang_xz
-          # - sedov_default
-          # - KHinstability
+          - sodshock_x
+          - sodshock_y
+          - sodshock_z
+          - briowushock_x
+          - briowushock_y
+          - briowushock_z
+          - orszagtang_xy
+          - orszagtang_yz
+          - orszagtang_xz
+          - sedov_default
+          - KHinstability
           - star_sph
           - polytrope
-          # - smearing
-          # - iotest
+          - smearing
+          - iotest
           - diffusion1d_x
           - diffusion1d_y
           - diffusion1d_z
@@ -182,7 +182,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: polytrope
@@ -190,7 +190,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: diffusion1d_x
@@ -198,7 +198,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: diffusion1d_y
@@ -206,7 +206,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: diffusion1d_z
@@ -214,7 +214,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: diffusion2d_xy
@@ -222,7 +222,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: diffusion2d_xz
@@ -230,7 +230,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: diffusion2d_yz
@@ -238,7 +238,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: radshock_x
@@ -246,7 +246,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: radshock_y
@@ -254,7 +254,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: radshock_z
@@ -262,7 +262,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
           - test: radstar
@@ -270,7 +270,7 @@ jobs:
             debug: yes
             mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
             mpi_tasks: 2
             omp_threads: 2
 
