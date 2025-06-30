@@ -30,16 +30,22 @@ subroutine radiation
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
- use matrix_utils,only:ijk_from_l
+ use matrix_utils,only:ijk_from_l,l_from_ijk
+ use matrix_vars,only:map_rad
 
- integer:: l,i,j,k
+ integer:: l,i,j,k,ll
  integer:: in,jn,kn
- integer:: lmax
+ integer:: in_global,jn_global,kn_global
  real(8),allocatable:: x(:)
 
 !-----------------------------------------------------------------------------
 
  call start_clock(wtrad)
+
+ in = ie-is+1; jn = je-js+1; kn = ke-ks+1
+ in_global = ie_global-is_global+1
+ jn_global = je_global-js_global+1
+ kn_global = ke_global-ks_global+1
 
 ! Advection and radiative acceleration terms are updated in hydro step
 
@@ -47,20 +53,19 @@ subroutine radiation
  if(radswitch==2)call rad_heat_cool
 
 ! Then update the diffusion term
- call rad_boundary
  call get_gradE
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
+
  call write_A_rad
  call get_radb ! Sets up rsrc
 
- in = ie-is+1; jn = je-js+1; kn = ke-ks+1
- lmax = in*jn*kn
-
- allocate( x(lmax) )
-!$omp parallel do private(l,i,j,k)
- do l = 1, lmax
-  call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
-  x(l) = erad(i,j,k)
+ allocate( x(1:in*jn*kn) )
+!$omp parallel do private(l,i,j,k,ll)
+ do ll = 1, size(x)
+  l = map_rad(ll)
+  ! Get the i,j,k indices from the local index
+  call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
+  x(ll) = erad(i,j,k)
  end do
 !$omp end parallel do
 
@@ -68,9 +73,10 @@ subroutine radiation
 
 ! update erad and u
 !$omp parallel do private(l,i,j,k)
- do l = 1, lmax
-  call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
-  erad(i,j,k) = x(l)
+ do ll = 1, size(x)
+  l = map_rad(ll)
+  call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
+  erad(i,j,k) = x(ll)
   T   (i,j,k) = update_Tgas(d(i,j,k),erad(i,j,k),T(i,j,k),dt)
   eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
   p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
@@ -104,9 +110,9 @@ subroutine get_gradE
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
+ do k = ks-1, ke+1
+  do j = js-1, je+1
+   do i = is-1, ie+1
     call get_grad(erad,i,j,k,gradE(1:3,i,j,k))
    end do
   end do
@@ -136,9 +142,17 @@ subroutine get_diffusion_coeff
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,RR,ll,kappar) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
+ do k = ks-1, ke+1
+  do j = js-1, je+1
+   do i = is-1, ie+1
+    ! Skip if this is a corner ghost cell, which is uninitialised and unused)
+    if ((i == is-1 .or. i == ie+1) .and. &
+      (j == js-1 .or. j == je+1)) cycle
+    if ((i == is-1 .or. i == ie+1) .and. &
+      (k == ks-1 .or. k == ke+1)) cycle
+    if ((j == js-1 .or. j == je+1) .and. &
+      (k == ks-1 .or. k == ke+1)) cycle
+
     kappar = kappa_r(d(i,j,k),T(i,j,k))
     RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
@@ -164,26 +178,29 @@ subroutine get_radb
 
  use settings,only:radswitch
  use constants,only:clight,arad
- use grid,only:dvol,dt,is,ie,js,je,ks,ke
+ use grid,only:dvol,dt,is_global,js_global,ks_global,ie_global,je_global,ke_global
  use physval
  use matrix_utils,only:ijk_from_l
+ use matrix_vars,only:map_rad
 
- integer:: i,j,k,l,lmax
+ integer:: i,j,k,l,ll
  real(8):: kappap
- integer :: in,jn,kn
+ integer :: in_global,jn_global,kn_global
 !-----------------------------------------------------------------------------
 
- in = ie-is+1; jn = je-js+1; kn = ke-ks+1
- lmax = in*jn*kn
+ in_global = ie_global-is_global+1
+ jn_global = je_global-js_global+1
+ kn_global = ke_global-ks_global+1
 
 !$omp parallel do private(l,i,j,k,kappap)
-  do l = 1, lmax
-   call ijk_from_l(l,is,js,ks,in,jn,i,j,k)
+ do ll = 1, size(rsrc)
+   l = map_rad(ll)
+   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
 ! Note: Dirichlet boundary conditions should be included here.
    kappap = kappa_p(d(i,j,k),T(i,j,k))
-   rsrc(l) = erad(i,j,k)*dvol(i,j,k)/dt
+   rsrc(ll) = erad(i,j,k)*dvol(i,j,k)/dt
    if(radswitch==1) &
-    rsrc(l) = rsrc(l) + clight*kappap*d(i,j,k)*dvol(i,j,k)*arad &
+    rsrc(ll) = rsrc(ll) + clight*kappap*d(i,j,k)*dvol(i,j,k)*arad &
      * (4d0*T(i,j,k)**3*update_Tgas(d(i,j,k),0d0,T(i,j,k),dt)-3d0*T(i,j,k)**4)
   end do
 !$omp end parallel do
@@ -209,16 +226,14 @@ subroutine radiation_setup
  use miccg_mod,only:setup_cg
  use physval,only:radK
 
- integer :: lmax
-
 !-----------------------------------------------------------------------------
 
  if(radswitch==1.or.radswitch==2)then
   call setup_matrix(irad)
   call get_geo
-  lmax = (ie-is+1)*(je-js+1)*(ke-ks+1)
-  allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is:ie,js:je,ks:ke),&
-           rsrc(1:lmax) )
+
+  allocate(radK(is-1:ie+1,js-1:je+1,ks-1:ke+1),gradE(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1),&
+           rsrc(1:(ie-is+1)*(je-js+1)*(ke-ks+1)) )
  end if
 
 return
@@ -364,30 +379,30 @@ subroutine rad_boundary
 !$omp parallel do private(j,k) collapse(2)
  do k = ks, ke
   do j = js, je
-   erad(is-2,j,k) = erad(is+1,j,k)
-   erad(is-1,j,k) = erad(is  ,j,k)
-   erad(ie+1,j,k) = erad(ie  ,j,k)
-   erad(ie+2,j,k) = erad(ie-1,j,k)
+   if (is == is_global) erad(is-2,j,k) = erad(is+1,j,k)
+   if (is == is_global) erad(is-1,j,k) = erad(is  ,j,k)
+   if (ie == ie_global) erad(ie+1,j,k) = erad(ie  ,j,k)
+   if (ie == ie_global) erad(ie+2,j,k) = erad(ie-1,j,k)
   end do
  end do
 !$omp end parallel do
 !$omp parallel do private(i,k) collapse(2)
  do k = ks, ke
   do i = is, ie
-   erad(i,js-2,k) = erad(i,js+1,k)
-   erad(i,js-1,k) = erad(i,js  ,k)
-   erad(i,je+1,k) = erad(i,je  ,k)
-   erad(i,je+2,k) = erad(i,je-1,k)
+   if (js == js_global) erad(i,js-2,k) = erad(i,js+1,k)
+   if (js == js_global) erad(i,js-1,k) = erad(i,js  ,k)
+   if (je == je_global) erad(i,je+1,k) = erad(i,je  ,k)
+   if (je == je_global) erad(i,je+2,k) = erad(i,je-1,k)
   end do
  end do
 !$omp end parallel do
 !$omp parallel do private(i,j) collapse(2)
  do j = js, je
   do i = is, ie
-   erad(i,j,ks-2) = erad(i,j,ks+1)
-   erad(i,j,ks-1) = erad(i,j,ks  )
-   erad(i,j,ke+1) = erad(i,j,ke  )
-   erad(i,j,ke+2) = erad(i,j,ke-1)
+   if (ks == ks_global) erad(i,j,ks-2) = erad(i,j,ks+1)
+   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks  )
+   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke  )
+   if (ke == ke_global) erad(i,j,ke+2) = erad(i,j,ke-1)
   end do
  end do
 !$omp end parallel do

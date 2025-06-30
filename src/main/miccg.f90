@@ -55,7 +55,7 @@ subroutine setup_cg(is, ie, js, je, ks, ke, cg)
   allocate(cg%ia(1:cg%Adiags))
   allocate(cg%A(1:cg%Adiags, 1:cg%lmax))
 
-  call get_matrix_offsets(cg%dim, cg%ia)
+  call get_matrix_offsets(cg%dim, cg%in, cg%jn, cg%kn, cg%ia)
 
   ! Set up the preconditioner.
   select case(cg%dim)

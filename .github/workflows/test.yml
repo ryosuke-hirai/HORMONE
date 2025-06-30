@@ -29,10 +29,8 @@ jobs:
         exclude:
           - fc: ifx
             mpi: yes
-          # Exclude ifx and mpi for petsc (TODO: add these later)
+          # Exclude ifx for petsc
           - fc: ifx
-            petsc: yes
-          - mpi: yes
             petsc: yes
 
     name: compile (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
@@ -129,7 +127,7 @@ jobs:
         omp_threads:
           - 2
         include:
-          # These tests should be run with 4 MPI tasks as well
+          # Tests with 4 MPI tasks
           - test: smearing
             fc: gfortran
             debug: no
@@ -178,111 +176,149 @@ jobs:
             mpi_tasks: 4
             omp_threads: 1
             petsc: no
-          # Radiation and gravity tests should be used to test PETSc implementation
+
+          # Radiation and gravity tests using PETSc with MPI
           - test: star_sph
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: polytrope
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion1d_x
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion1d_y
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion1d_z
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion2d_xy
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion2d_xz
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: diffusion2d_yz
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
             flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radshock_x
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radshock_y
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radshock_z
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
           - test: radstar
             fc: gfortran
-            debug: no
-            mpi: no
+            debug: yes
+            mpi: yes
             petsc: yes
-            flat: yes
+            flat: no
+            mpi_tasks: 2
+            omp_threads: 2
 
         exclude:
+          # General excludes
           - fc: ifx
             mpi: yes
           # The star setup routine is susceptible to roundoff error
           # which gives very different results with the intel compiler
           #- test: polytrope
           #  fc: ifx
-          # star_sph uses MICCG init, which is not compatible with MPI
+
+          # MICCG solver is not compatible with MPI
           - test: star_sph
             mpi: yes
-          # radiation tests use MICCG, which is not compatible with MPI yet
+            petsc: no
           - test: diffusion1d_x
             mpi: yes
+            petsc: no
           - test: diffusion1d_y
             mpi: yes
+            petsc: no
           - test: diffusion1d_z
             mpi: yes
+            petsc: no
           - test: diffusion2d_xy
             mpi: yes
+            petsc: no
           - test: diffusion2d_xz
             mpi: yes
+            petsc: no
           - test: diffusion2d_yz
             mpi: yes
+            petsc: no
           - test: radshock_x
             mpi: yes
+            petsc: no
           - test: radshock_y
             mpi: yes
+            petsc: no
           - test: radshock_z
             mpi: yes
+            petsc: no
           - test: radstar
             mpi: yes
+            petsc: no
+
           # diffusion1d does not use hydro, so reconstruction is irrelevant
           - test: diffusion1d_x
             flat: yes
@@ -353,9 +389,9 @@ jobs:
       working-directory: ./para
       run: |
         if grep -q "matrix_solver=" parameters_${{ matrix.test }}; then
-          sed -i "s/matrix_solver='[^']*'/matrix_solver=0/" parameters_${{ matrix.test }}
+          sed -i "s/matrix_solver=[0-9]*/matrix_solver=1/" parameters_${{ matrix.test }}
         else
-          sed -i "s/&mat_con/\&mat_con matrix_solver=0/" parameters_${{ matrix.test }}
+          sed -i "s/&mat_con/\&mat_con matrix_solver=1/" parameters_${{ matrix.test }}
         fi
         cat parameters_${{ matrix.test }}
 
@@ -386,9 +422,6 @@ jobs:
         petsc:
           - no
           - yes
-        exclude:
-          - mpi: yes
-            petsc: yes
 
     name: warnings (${{ matrix.fc }} ${{ matrix.mpi == 'yes' && 'MPI' || 'serial' }}${{ matrix.debug == 'yes' && ' debug' || '' }}${{ matrix.petsc == 'yes' && ' PETSc' || '' }})
 

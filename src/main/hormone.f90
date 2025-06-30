@@ -194,8 +194,8 @@ program hormone
     if (.not. passed) call stop_mpi(1)
   endif
 
-  call finalize_mpi
   call finalize_petsc
+  call finalize_mpi
 !------------------------------- end program ---------------------------------
 
 end program hormone

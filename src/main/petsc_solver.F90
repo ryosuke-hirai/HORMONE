@@ -31,43 +31,65 @@ module petsc_solver_mod
 
 
 #ifdef USE_PETSC
-subroutine setup_petsc(is, ie, js, je, ks, ke, pm)
+subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, pm)
   use settings, only: cgerr
   use utils, only: get_dim
+  use matrix_utils, only: l_from_ijk, ijk_from_l
   use matrix_vars, only: petsc_set
   integer, intent(in) :: is, ie, js, je, ks, ke
+  integer, intent(in) :: is_global, ie_global, js_global, je_global, ks_global, ke_global
   type(petsc_set), intent(out) :: pm
+  integer :: i, j, k, l, ll
   PC  :: pc
   PetscErrorCode :: ierr
+  PetscInt :: ls, le
+  PetscInt, allocatable :: idx_array(:)
 
   ! Compute grid dimensions and total number of points.
   pm%is = is; pm%ie = ie
   pm%js = js; pm%je = je
   pm%ks = ks; pm%ke = ke
 
+  ! in, jn, kn are the number of grid points in each direction locally
   pm%in = ie - is + 1
   pm%jn = je - js + 1
   pm%kn = ke - ks + 1
 
   pm%lmax = pm%in * pm%jn * pm%kn
 
-  call get_dim(pm%is, pm%ie, pm%js, pm%je, pm%ks, pm%ke, pm%dim)
+  pm%is_global = is_global; pm%ie_global = ie_global
+  pm%js_global = js_global; pm%je_global = je_global
+  pm%ks_global = ks_global; pm%ke_global = ke_global
+
+  pm%in_global = ie_global - is_global + 1
+  pm%jn_global = je_global - js_global + 1
+  pm%kn_global = ke_global - ks_global + 1
+
+  pm%lmax_global = pm%in_global * pm%jn_global * pm%kn_global
+
+  call get_dim(pm%is_global, pm%ie_global, pm%js_global, pm%je_global, pm%ks_global, pm%ke_global, pm%dim)
 
   ! Set up matrix A
   call MatCreate(PETSC_COMM_WORLD, pm%A, ierr)
-  call MatSetSizes(pm%A, PETSC_DECIDE, PETSC_DECIDE, pm%lmax, pm%lmax, ierr)
+  ! Divide the matrix between processes
+  call MatSetSizes(pm%A, pm%lmax, pm%lmax, pm%lmax_global, pm%lmax_global, ierr)
   call MatSetFromOptions(pm%A, ierr)
   call MatSetUp(pm%A, ierr)
 
   ! Create vector for right-hand side.
   call VecCreate(PETSC_COMM_WORLD, pm%b, ierr)
-  call VecSetSizes(pm%b, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetSizes(pm%b, pm%lmax, pm%lmax_global, ierr)
   call VecSetFromOptions(pm%b, ierr)
 
   ! Create vector for solution.
   call VecCreate(PETSC_COMM_WORLD, pm%x, ierr)
-  call VecSetSizes(pm%x, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetSizes(pm%x, pm%lmax, pm%lmax_global, ierr)
   call VecSetFromOptions(pm%x, ierr)
+
+  ! Get the ownership ranges for matrix
+  call MatGetOwnershipRange(pm%A, ls, le, ierr)
+
+  ! print*, "Rank ", myrank, ":  Matrix ownership range: ", ls, " to ", le, " (global size: ", pm%lmax_global, ")"
 
   ! Create the KSP solver context.
   call KSPCreate(PETSC_COMM_WORLD, pm%ksp, ierr)
@@ -79,10 +101,45 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, pm)
   call KSPSetType(pm%ksp, KSPCG, ierr)
   call KSPGetPC(pm%ksp, pc, ierr)
   call PCSetType(pc, PCBJACOBI, ierr)
-  call KSPSetTolerances(pm%ksp, cgerr, -1.d0, -1.d0, PETSC_DECIDE, ierr)
+  call KSPSetTolerances(pm%ksp, cgerr, PETSC_DEFAULT_REAL, PETSC_DEFAULT_REAL, PETSC_DEFAULT_INTEGER, ierr)
 
   ! Allow command line options/overrides
   call KSPSetFromOptions(pm%ksp, ierr)
+
+  ! Define the local rows for this task.
+  allocate(pm%my_rows(pm%lmax))
+
+  ll = 0
+  do k = ks, ke
+    do j = js, je
+      do i = is, ie
+        ll = ll + 1
+        l = l_from_ijk(i, j, k, pm%is_global, pm%js_global, pm%ks_global, pm%in_global, pm%jn_global)
+        pm%my_rows(ll) = l
+      end do
+    end do
+  end do
+
+  if (ll /= pm%lmax) then
+    print *, "Error: Number of local rows does not match expected count."
+    call stop_mpi(1)
+  end if
+
+  ! Set up the scatter context and index set for solution gathering
+  ! This only needs to be done once during setup
+  allocate(idx_array(pm%lmax))
+  idx_array(:) = pm%my_rows(:) - 1  ! Convert to zero-based indexing
+  call ISCreateGeneral(PETSC_COMM_SELF, pm%lmax, idx_array, &
+                      PETSC_COPY_VALUES, pm%is_from, ierr)
+  deallocate(idx_array)
+
+  ! Create small vector to receive only our owned values
+  call VecCreate(PETSC_COMM_SELF, pm%x_gather, ierr)
+  call VecSetSizes(pm%x_gather, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetFromOptions(pm%x_gather, ierr)
+
+  ! Create scatter context to extract only our owned values
+  call VecScatterCreate(pm%x, pm%is_from, pm%x_gather, PETSC_NULL_IS, pm%scatter_ctx, ierr)
 
 end subroutine setup_petsc
 #endif
@@ -103,11 +160,11 @@ subroutine write_A_petsc(system, pm)
   use settings,only:crdnt,solve_j,solve_k
   use utils, only: get_dim
   use matrix_coeffs, only:compute_coeffs, get_matrix_offsets
-  use matrix_utils, only:ijk_from_l, get_raddim
+  use matrix_utils, only:l_from_ijk, get_raddim, ijk_from_l
   use matrix_vars, only: petsc_set, irad, igrv
   integer, intent(in) :: system
   type(petsc_set), intent(inout) :: pm
-  integer :: dim, i, j, k, l, ncoeff, m
+  integer :: dim, i, j, k, l, ll, ncoeff, m
   real(8) :: coeffs(5)
   integer :: offsets(5)
   integer :: row, col
@@ -119,7 +176,7 @@ subroutine write_A_petsc(system, pm)
   if(crdnt==1.and.solve_j)ncoeff=ncoeff+1
   if(crdnt==2.and.solve_k)ncoeff=ncoeff+1
 
-  call get_matrix_offsets(pm%dim, offsets)
+  call get_matrix_offsets(pm%dim, pm%in_global, pm%jn_global, pm%kn_global, offsets)
 
   ! The radiation coefficients depend on the direction of the problem in 1D and 2D
   if (system == irad) then
@@ -129,19 +186,21 @@ subroutine write_A_petsc(system, pm)
   endif
 
   ! Loop over all grid points.
-  do l = 1, pm%lmax
-    call ijk_from_l(l, pm%is, pm%js, pm%ks, pm%in, pm%jn, i, j, k)
+  ! l is the row number in the matrix
+  do ll = 1, pm%lmax
+    l = pm%my_rows(ll)
+    call ijk_from_l(l, pm%is_global, pm%js_global, pm%ks_global, pm%in_global, pm%jn_global, i, j, k)
     call compute_coeffs(system, dim, i, j, k, coeffs)
 
     do m = 1, ncoeff
       row = (l - 1)
       col = row + offsets(m)
 
-      if(row >= 0 .and. row < pm%lmax .and. col >= 0 .and. col < pm%lmax) then
+      if(row >= 0 .and. row < pm%lmax_global .and. col >= 0 .and. col < pm%lmax_global) then
         val = coeffs(m)
         ! Symmetric matrix
                        call MatSetValue(pm%A, row, col, val, INSERT_VALUES, ierr)
-        if(row /= col) call MatSetValue(pm%A, col, row, val, INSERT_VALUES, ierr)
+        if(row /= col) call MatSetValue(pm%A, col, row, val, INSERT_VALUES, ierr) ! Not guaranteed to be in the current task's ownership range
       end if
     enddo
   end do
@@ -173,28 +232,41 @@ end subroutine write_A_petsc
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
   type(petsc_set), intent(in) :: pm
-  real(8), intent(in)  :: b(:)
-  real(8), intent(out) :: x(:)
-  integer :: ierr, i
+  real(8), intent(in)    :: b(pm%lmax)
+  real(8), intent(inout) :: x(pm%lmax)
+  integer :: ierr, l, ll
   real(8), pointer :: x_array(:)
 
   ! Set the right-hand side vector b.
-  do i = 0, pm%lmax-1
-    call VecSetValue(pm%b, i, b(i+1), INSERT_VALUES, ierr)
+  do ll = 1, pm%lmax
+    l = pm%my_rows(ll)
+    call VecSetValue(pm%b, l-1, b(ll), INSERT_VALUES, ierr)
   end do
   call VecAssemblyBegin(pm%b, ierr)
   call VecAssemblyEnd(pm%b, ierr)
 
+  ! Set the initial guess for the solution vector x.
+  ! The PETSc vector will already have the previous solution, but we set it explicitly
+  ! for consistent behaviour after restarting the solver.
+  do ll = 1, pm%lmax
+    l = pm%my_rows(ll)
+    call VecSetValue(pm%x, l-1, x(ll), INSERT_VALUES, ierr)
+  end do
+  call VecAssemblyBegin(pm%x, ierr)
+  call VecAssemblyEnd(pm%x, ierr)
+
   ! Solve the linear system.
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
 
+  ! Perform scatter to extract only our owned values using pre-created scatter context
+  call VecScatterBegin(pm%scatter_ctx, pm%x, pm%x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
+  call VecScatterEnd(pm%scatter_ctx, pm%x, pm%x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
+
   ! Copy solution back to Fortran array x.
   ! Leave values in pm%x to re-use in the next iteration.
-  call VecGetArrayF90(pm%x, x_array, ierr)
-  do i = 1, pm%lmax
-    x(i) = x_array(i)
-  end do
-  call VecRestoreArrayF90(pm%x, x_array, ierr)
+  call VecGetArrayF90(pm%x_gather, x_array, ierr)
+  x(1:pm%lmax) = x_array(1:pm%lmax)
+  call VecRestoreArrayF90(pm%x_gather, x_array, ierr)
 
 end subroutine solve_system_petsc
 #endif

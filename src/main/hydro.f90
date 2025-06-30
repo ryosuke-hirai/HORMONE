@@ -14,7 +14,7 @@ contains
 
 subroutine hydro_step
 
- use settings,only:dirichlet_on,rktype
+ use settings,only:dirichlet_on,rktype,radswitch
  use grid,only:rungen
  use boundary_mod,only:boundarycondition
  use numflux_mod,only:numflux
@@ -39,6 +39,12 @@ subroutine hydro_step
   call source
   call rungekutta
  end do
+
+ ! if solving radiation, the boudary and ghost cells need to be updated
+  if (radswitch > 0) then
+    call exchange_mpi
+    call boundarycondition
+  endif
 
  call stop_clock(wthyd)
 
