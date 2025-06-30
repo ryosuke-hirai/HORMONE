@@ -17,7 +17,7 @@
 &simucon mag_on=.true. crdnt=2 /
 
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
-&gravcon gravswitch=3 include_extgrv=.true. /
+&gravcon gravswitch=3 include_extgrv=.true. grav_init_relax=.true./
 
 ! include_sinks: switch for sink particles
 ! nsink: number of sink particles
