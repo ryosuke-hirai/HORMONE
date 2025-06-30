@@ -25,21 +25,18 @@ subroutine gravity_elliptic
  use miccg_mod,only:miccg
  use timestep_mod,only:timestep
  use profiler_mod
- use matrix_utils,only:l_from_ijk,ijk_from_l,contiguous_map
+ use matrix_utils,only:l_from_ijk,ijk_from_l
  use matrix_solver_mod,only:solve_system_grv
- use matrix_vars,only:lmax_grv
+ use matrix_vars,only:lmax_grv,map_grv
  use mpi_domain,only:exchange_gravity_mpi
  integer:: i,j,k,l,ll
  real(8),allocatable,dimension(:):: x, cgsrc
- integer,allocatable:: map(:)
 
 !-------------------------------------------------------------------------
 
  call start_clock(wtelg)
 
  allocate( x(lmax_grv), cgsrc(lmax_grv) )
- call contiguous_map(gis, gie, gjs, gje, gks, gke, &
-                     gis_global, gie_global, gjs_global, gje_global, gks_global, map)
 
 ! MICCG method to solve Poisson equation $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -51,7 +48,7 @@ subroutine gravity_elliptic
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l,ll)
   do ll=1,lmax_grv
-   l = map(ll)
+   l = map_grv(ll)
    call ijk_from_l(l,gis_global,gjs_global,gks_global,gie_global-gis_global+1,gje_global-gjs_global+1,i,j,k)
    x(ll) = grvphi(i,j,k)
    cgsrc(ll) = 0d0
@@ -72,7 +69,7 @@ subroutine gravity_elliptic
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l,ll)
   do ll=1,lmax_grv
-   l = map(ll)
+   l = map_grv(ll)
    call ijk_from_l(l,gis_global,gjs_global,gks_global,gie_global-gis_global+1,gje_global-gjs_global+1,i,j,k)
    x(ll) = grvphi(i,j,k)
    cgsrc(ll) = 0d0
@@ -94,7 +91,7 @@ subroutine gravity_elliptic
 ! calculating b for Ax=b
 !$omp parallel do private(i,j,k,l,ll)
   do ll=1,lmax_grv
-   l = map(ll)
+   l = map_grv(ll)
    call ijk_from_l(l,gis_global,gjs_global,gks_global,gie_global-gis_global+1,gje_global-gjs_global+1,i,j,k)
    x(ll) = grvphi(i,j,k)
    cgsrc(ll) = 0d0
@@ -122,7 +119,7 @@ subroutine gravity_elliptic
 ! convert x to phi
 !$omp parallel do private(i,j,k,l,ll)
  do ll = 1, lmax_grv
-  l = map(ll)
+  l = map_grv(ll)
   call ijk_from_l(l,gis_global,gjs_global,gks_global,gie_global-gis_global+1,gje_global-gjs_global+1,i,j,k)
   grvphi(i,j,k) = x(ll)
  end do

@@ -30,13 +30,13 @@ subroutine radiation
  use profiler_mod
  use pressure_mod,only:Trad,get_etot_from_eint
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
- use matrix_utils,only:ijk_from_l,l_from_ijk,contiguous_map
+ use matrix_utils,only:ijk_from_l,l_from_ijk
+ use matrix_vars,only:map_rad
 
  integer:: l,i,j,k,ll
  integer:: in,jn,kn
  integer:: in_global,jn_global,kn_global
  real(8),allocatable:: x(:)
- integer,allocatable:: map(:)
 
 !-----------------------------------------------------------------------------
 
@@ -46,8 +46,6 @@ subroutine radiation
  in_global = ie_global-is_global+1
  jn_global = je_global-js_global+1
  kn_global = ke_global-ks_global+1
-
- call contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, map)
 
 ! Advection and radiative acceleration terms are updated in hydro step
 
@@ -59,12 +57,12 @@ subroutine radiation
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
 
  call write_A_rad
- call get_radb(map) ! Sets up rsrc
+ call get_radb ! Sets up rsrc
 
  allocate( x(1:in*jn*kn) )
 !$omp parallel do private(l,i,j,k,ll)
  do ll = 1, size(x)
-  l = map(ll)
+  l = map_rad(ll)
   ! Get the i,j,k indices from the local index
   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
   x(ll) = erad(i,j,k)
@@ -76,7 +74,7 @@ subroutine radiation
 ! update erad and u
 !$omp parallel do private(l,i,j,k)
  do ll = 1, size(x)
-  l = map(ll)
+  l = map_rad(ll)
   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
   erad(i,j,k) = x(ll)
   T   (i,j,k) = update_Tgas(d(i,j,k),erad(i,j,k),T(i,j,k),dt)
@@ -176,15 +174,14 @@ end subroutine get_diffusion_coeff
 
 ! PURPOSE: To get source term (b) for the radiation diffusion equation
 
-subroutine get_radb(map)
+subroutine get_radb
 
  use settings,only:radswitch
  use constants,only:clight,arad
  use grid,only:dvol,dt,is_global,js_global,ks_global,ie_global,je_global,ke_global
  use physval
  use matrix_utils,only:ijk_from_l
-
- integer,intent(in):: map(:)
+ use matrix_vars,only:map_rad
 
  integer:: i,j,k,l,ll
  real(8):: kappap
@@ -197,7 +194,7 @@ subroutine get_radb(map)
 
 !$omp parallel do private(l,i,j,k,kappap)
  do ll = 1, size(rsrc)
-   l = map(ll)
+   l = map_rad(ll)
    call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
 ! Note: Dirichlet boundary conditions should be included here.
    kappap = kappa_p(d(i,j,k),T(i,j,k))

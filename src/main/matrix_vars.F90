@@ -15,6 +15,10 @@ module matrix_vars
   integer :: lmax_rad
   integer :: lmax_grv
 
+  ! Mapping arrays for global indexing (shared by all methods)
+  integer, allocatable :: map_grv(:)
+  integer, allocatable :: map_rad(:)
+
   ! PETSc arrays
 #ifdef USE_PETSC
   type petsc_set

@@ -2,6 +2,9 @@ module matrix_solver_mod
 
   implicit none
 
+  public :: setup_matrix, write_A_grv, write_A_rad
+  public :: solve_system_grv, solve_system_rad
+
 contains
 
 
@@ -25,8 +28,9 @@ subroutine setup_matrix(system)
   use matrix_vars, only: petsc_grv, petsc_rad
 #endif
   use miccg_mod, only: setup_cg
+  use matrix_utils, only: contiguous_map
   use matrix_vars, only: cg_grv, cg_rad
-  use matrix_vars, only: igrv, irad, lmax_grv, lmax_rad
+  use matrix_vars, only: igrv, irad, lmax_grv, lmax_rad, map_grv, map_rad
 
   integer, intent(in) :: system
 
@@ -68,8 +72,19 @@ subroutine setup_matrix(system)
   ! The local number of rows on the matrix
   if (system == igrv) then
     lmax_grv = (gie - gis + 1) * (gje - gjs + 1) * (gke - gks + 1)
+
+    ! Create the mapping from local to global indices for gravity
+    if (allocated(map_grv)) deallocate(map_grv)
+    call contiguous_map(gis, gie, gjs, gje, gks, gke, gis_global, gie_global, &
+                       gjs_global, gje_global, gks_global, map_grv)
+
   else if (system == irad) then
     lmax_rad = (ie - is + 1) * (je - js + 1) * (ke - ks + 1)
+
+    ! Create the mapping from local to global indices for radiation
+    if (allocated(map_rad)) deallocate(map_rad)
+    call contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, &
+                      js_global, je_global, ks_global, map_rad)
   end if
 
 end subroutine setup_matrix
