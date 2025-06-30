@@ -27,7 +27,10 @@ module matrix_vars
     Mat :: A
     Vec :: x
     Vec :: b
+    Vec :: x_gather ! Local vector for gathering solution
     KSP :: ksp
+    IS :: is_from   ! Index set for scatter
+    VecScatter :: scatter_ctx ! Scatter context for solution vector
     PetscInt :: lmax, lmax_global
   end type petsc_set
   type(petsc_set), target :: petsc_grv

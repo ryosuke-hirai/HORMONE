@@ -43,6 +43,7 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
   PC  :: pc
   PetscErrorCode :: ierr
   PetscInt :: ls, le
+  PetscInt, allocatable :: idx_array(:)
 
   ! Compute grid dimensions and total number of points.
   pm%is = is; pm%ie = ie
@@ -123,6 +124,22 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
     print *, "Error: Number of local rows does not match expected count."
     call stop_mpi(1)
   end if
+
+  ! Set up the scatter context and index set for solution gathering
+  ! This only needs to be done once during setup
+  allocate(idx_array(pm%lmax))
+  idx_array(:) = pm%my_rows(:) - 1  ! Convert to zero-based indexing
+  call ISCreateGeneral(PETSC_COMM_SELF, pm%lmax, idx_array, &
+                      PETSC_COPY_VALUES, pm%is_from, ierr)
+  deallocate(idx_array)
+
+  ! Create small vector to receive only our owned values
+  call VecCreate(PETSC_COMM_SELF, pm%x_gather, ierr)
+  call VecSetSizes(pm%x_gather, PETSC_DECIDE, pm%lmax, ierr)
+  call VecSetFromOptions(pm%x_gather, ierr)
+
+  ! Create scatter context to extract only our owned values
+  call VecScatterCreate(pm%x, pm%is_from, pm%x_gather, PETSC_NULL_IS, pm%scatter_ctx, ierr)
 
 end subroutine setup_petsc
 #endif
@@ -219,10 +236,6 @@ subroutine solve_system_petsc(pm, b, x)
   real(8), intent(inout) :: x(pm%lmax)
   integer :: ierr, l, ll
   real(8), pointer :: x_array(:)
-  PetscInt, allocatable :: idx_array(:)
-  IS :: is_from
-  Vec :: x_gather
-  VecScatter :: scatter_ctx
 
   ! Set the right-hand side vector b.
   do ll = 1, pm%lmax
@@ -245,29 +258,15 @@ subroutine solve_system_petsc(pm, b, x)
   ! Solve the linear system.
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
 
-  ! Create index set with only our owned indices
-  allocate(idx_array(pm%lmax))
-  idx_array(:) = pm%my_rows(:) - 1  ! Convert to zero-based indexing
-  call ISCreateGeneral(PETSC_COMM_SELF, pm%lmax, idx_array, &
-                       PETSC_COPY_VALUES, is_from, ierr)
-
-  ! Create small vector to receive only our owned values
-  call VecCreate(PETSC_COMM_SELF, x_gather, ierr)
-  call VecSetSizes(x_gather, PETSC_DECIDE, pm%lmax, ierr)
-  call VecSetFromOptions(x_gather, ierr)
-
-  ! Create scatter context to extract only our owned values
-  call VecScatterCreate(pm%x, is_from, x_gather, PETSC_NULL_IS, scatter_ctx, ierr)
-
-  ! Perform scatter to extract only our owned values
-  call VecScatterBegin(scatter_ctx, pm%x, x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
-  call VecScatterEnd(scatter_ctx, pm%x, x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
+  ! Perform scatter to extract only our owned values using pre-created scatter context
+  call VecScatterBegin(pm%scatter_ctx, pm%x, pm%x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
+  call VecScatterEnd(pm%scatter_ctx, pm%x, pm%x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
 
   ! Copy solution back to Fortran array x.
   ! Leave values in pm%x to re-use in the next iteration.
-  call VecGetArrayF90(x_gather, x_array, ierr)
+  call VecGetArrayF90(pm%x_gather, x_array, ierr)
   x(1:pm%lmax) = x_array(1:pm%lmax)
-  call VecRestoreArrayF90(x_gather, x_array, ierr)
+  call VecRestoreArrayF90(pm%x_gather, x_array, ierr)
 
 end subroutine solve_system_petsc
 #endif
