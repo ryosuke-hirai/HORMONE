@@ -6,12 +6,10 @@ contains
 pure function l_from_ijk(i,j,k,is,js,ks,in,jn) result(l)
 ! PURPOSE: Compute a single index l from i,j,k
 ! is,js,ks: Starting index for i,j,k directions
-! ls: Starting index for unrolled 1D array
 ! in,jn,kn: Number of grid points in i,j,k directions
-
  integer,intent(in)::i,j,k,is,js,ks,in,jn
  integer::l
- l = (i-is)+1 + in*(j-js) + in*jn*(k-ks)
+ l = i-is+1 + in*(j-js) + in*jn*(k-ks)
 end function l_from_ijk
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -28,6 +26,7 @@ pure subroutine ijk_from_l(l,is,js,ks,in,jn,i,j,k)
  integer,intent(out)::i,j,k
 
 !-----------------------------------------------------------------------------
+
  i = mod(l,in)
  if(i==0)i=in
  j = mod(l-i,in*jn)/in
