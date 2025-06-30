@@ -19,11 +19,12 @@ contains
 subroutine setup_matrix(system)
   use settings, only: matrix_solver
   use mpi_utils, only: nprocs, stop_mpi
-  use grid, only: is, ie, js, je, ks, ke, gis, gie, gjs, gje, gks, gke
+  use grid, only: is, ie, js, je, ks, ke, gis, gie, gjs, gje, gks, gke, &
+                  is_global, ie_global, js_global, je_global, ks_global, &
+                  gis_global, gie_global, gjs_global, gje_global, gks_global
 
 #ifdef USE_PETSC
-  use grid, only: is_global, ie_global, js_global, je_global, ks_global, ke_global, &
-                  gis_global, gie_global, gjs_global, gje_global, gks_global, gke_global
+  use grid, only: ke_global, gke_global
   use petsc_solver_mod, only: setup_petsc
   use matrix_vars, only: petsc_grv, petsc_rad
 #endif
