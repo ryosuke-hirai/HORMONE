@@ -50,28 +50,21 @@ subroutine setup_matrix(system)
 
   print*, "Setting up ", trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), " solver for ", trim(adjustl(merge("gravity  ", "radiation", system == igrv)))
 
-  if (matrix_solver == 0) then
-    if (system == igrv) then
+  select case (system)
+  case (igrv)
+    ! Set up solver for gravity
+    select case (matrix_solver)
+    case (0)
       call setup_cg(gis, gie, gjs, gje, gks, gke, cg_grv)
-    else if (system == irad) then
-      call setup_cg(is, ie, js, je, ks, ke, cg_rad)
-    end if
-  else if (matrix_solver == 1) then
+    case (1)
 #ifdef USE_PETSC
-    if (system == igrv) then
       call setup_petsc(gis, gie, gjs, gje, gks, gke, gis_global, &
                        gie_global, gjs_global, gje_global, gks_global, gke_global, &
                        petsc_grv)
-    else if (system == irad) then
-      call setup_petsc(is, ie, js, je, ks, ke, &
-                       is_global, ie_global, js_global, je_global, ks_global, ke_global, &
-                       petsc_rad)
-    end if
 #endif
-  end if
+    end select
 
-  ! The local number of rows on the matrix
-  if (system == igrv) then
+    ! The local number of rows on the matrix for gravity
     lmax_grv = (gie - gis + 1) * (gje - gjs + 1) * (gke - gks + 1)
 
     ! Create the mapping from local to global indices for gravity
@@ -79,14 +72,27 @@ subroutine setup_matrix(system)
     call contiguous_map(gis, gie, gjs, gje, gks, gke, gis_global, gie_global, &
                        gjs_global, gje_global, gks_global, map_grv)
 
-  else if (system == irad) then
+  case (irad)
+    ! Set up solver for radiation
+    select case (matrix_solver)
+    case (0)
+      call setup_cg(is, ie, js, je, ks, ke, cg_rad)
+    case (1)
+#ifdef USE_PETSC
+      call setup_petsc(is, ie, js, je, ks, ke, &
+                       is_global, ie_global, js_global, je_global, ks_global, ke_global, &
+                       petsc_rad)
+#endif
+    end select
+
+    ! The local number of rows on the matrix for radiation
     lmax_rad = (ie - is + 1) * (je - js + 1) * (ke - ks + 1)
 
     ! Create the mapping from local to global indices for radiation
     if (allocated(map_rad)) deallocate(map_rad)
     call contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, &
                       js_global, je_global, ks_global, map_rad)
-  end if
+  end select
 
 end subroutine setup_matrix
 
