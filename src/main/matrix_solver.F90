@@ -2,6 +2,9 @@ module matrix_solver_mod
 
   implicit none
 
+  public :: setup_matrix, write_A_grv, write_A_rad
+  public :: solve_system_grv, solve_system_rad
+
 contains
 
 
@@ -15,41 +18,81 @@ contains
 
 subroutine setup_matrix(system)
   use settings, only: matrix_solver
-  use grid, only: is, ie, js, je, ks, ke, gis, gie, gjs, gje, gks, gke
+  use mpi_utils, only: nprocs, stop_mpi
+  use grid, only: is, ie, js, je, ks, ke, gis, gie, gjs, gje, gks, gke, &
+                  is_global, ie_global, js_global, je_global, ks_global, &
+                  gis_global, gie_global, gjs_global, gje_global, gks_global
+
 #ifdef USE_PETSC
+  use grid, only: ke_global, gke_global
   use petsc_solver_mod, only: setup_petsc
   use matrix_vars, only: petsc_grv, petsc_rad
 #endif
   use miccg_mod, only: setup_cg
+  use matrix_utils, only: contiguous_map
   use matrix_vars, only: cg_grv, cg_rad
-  use matrix_vars, only: igrv, irad
+  use matrix_vars, only: igrv, irad, lmax_grv, lmax_rad, map_grv, map_rad
 
   integer, intent(in) :: system
 
 #ifndef USE_PETSC
   if (matrix_solver == 1) then
-    print *, "Error: matrix_solver=1 (MICCG) is not available. Please compile with USE_PETSC."
-    stop
+    print *, "Error: matrix_solver=0 (MICCG) is not available. Please compile with USE_PETSC."
+    call stop_mpi(1)
   end if
 #endif
+
+  ! MICCG solver does not work with MPI
+  if (matrix_solver == 0 .and. (nprocs >= 2)) then
+    print *, "Error: MICCG solver is not compatible with MPI. Please use PETSc (matrix_solver=1)."
+    call stop_mpi(1)
+  end if
 
   print*, "Setting up ", trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), " solver for ", trim(adjustl(merge("gravity  ", "radiation", system == igrv)))
 
-  if (matrix_solver == 0) then
-    if (system == igrv) then
+  select case (system)
+  case (igrv)
+    ! Set up solver for gravity
+    select case (matrix_solver)
+    case (0)
       call setup_cg(gis, gie, gjs, gje, gks, gke, cg_grv)
-    else if (system == irad) then
-      call setup_cg(is, ie, js, je, ks, ke, cg_rad)
-    end if
-  else if (matrix_solver == 1) then
+    case (1)
 #ifdef USE_PETSC
-    if (system == igrv) then
-      call setup_petsc(gis, gie, gjs, gje, gks, gke, petsc_grv)
-    else if (system == irad) then
-      call setup_petsc(is, ie, js, je, ks, ke, petsc_rad)
-    end if
+      call setup_petsc(gis, gie, gjs, gje, gks, gke, gis_global, &
+                       gie_global, gjs_global, gje_global, gks_global, gke_global, &
+                       petsc_grv)
 #endif
-  end if
+    end select
+
+    ! The local number of rows on the matrix for gravity
+    lmax_grv = (gie - gis + 1) * (gje - gjs + 1) * (gke - gks + 1)
+
+    ! Create the mapping from local to global indices for gravity
+    if (allocated(map_grv)) deallocate(map_grv)
+    call contiguous_map(gis, gie, gjs, gje, gks, gke, gis_global, gie_global, &
+                       gjs_global, gje_global, gks_global, map_grv)
+
+  case (irad)
+    ! Set up solver for radiation
+    select case (matrix_solver)
+    case (0)
+      call setup_cg(is, ie, js, je, ks, ke, cg_rad)
+    case (1)
+#ifdef USE_PETSC
+      call setup_petsc(is, ie, js, je, ks, ke, &
+                       is_global, ie_global, js_global, je_global, ks_global, ke_global, &
+                       petsc_rad)
+#endif
+    end select
+
+    ! The local number of rows on the matrix for radiation
+    lmax_rad = (ie - is + 1) * (je - js + 1) * (ke - ks + 1)
+
+    ! Create the mapping from local to global indices for radiation
+    if (allocated(map_rad)) deallocate(map_rad)
+    call contiguous_map(is, ie, js, je, ks, ke, is_global, ie_global, &
+                      js_global, je_global, ks_global, map_rad)
+  end select
 
 end subroutine setup_matrix
 

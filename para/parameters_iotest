@@ -17,9 +17,12 @@
 &simucon mag_on=.true. crdnt=2 /
 
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
-&gravcon gravswitch=3 include_extgrv=.true. /
+&gravcon gravswitch=3 include_extgrv=.true. grav_init_relax=.true./
 
 ! include_sinks: switch for sink particles
 ! nsink: number of sink particles
 !!! other quantities should be given in initial condition file
 &sinkcon include_sinks=.true. nsink=2 /
+
+! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
+&mat_con matrix_solver=0 /

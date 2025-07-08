@@ -72,7 +72,7 @@ end subroutine gravity
 ! PURPOSE: To set up the matrix for Poisson equation
 
 subroutine gravsetup
-
+ use settings,only:grav_init_relax
  use utils,only:isequal
  use grid
  use gravmod
@@ -86,7 +86,7 @@ subroutine gravsetup
 
  if(tn==0) cgrav_old = cgrav
 
- if(gravswitch==2.or.gravswitch==3)then
+ if(gravswitch==2.or.(gravswitch==3.and..not.grav_init_relax))then
   call setup_matrix(igrv)
   call write_A_grv ! writes to cg_grv or PETSc arrays
  end if

@@ -293,6 +293,8 @@ module mpi_domain
 
       if (compswitch >= 2) call exchange_spc(spc)
 
+      if (radswitch > 0) call exchange_scalar(erad)
+
       call stop_clock(wtmpi)
 #endif
 
@@ -302,7 +304,7 @@ module mpi_domain
       use settings
       use gravmod
 
-      if (gravswitch == 3) then
+      if (gravswitch == 2 .or. gravswitch == 3) then
        call exchange_scalar(grvphi)
       endif
    end subroutine exchange_gravity_mpi
