@@ -58,8 +58,8 @@
 ! c_kappa_{r,p,f}: values for fixed opacity (Rosseland, Planck, flux-weighted mean)
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
 ! rbtype:0=zero-gradient boundary
-&rad_con radswitch=2 opacitytype=0 c_kappa_r=1d0 c_kappa_p=1d0 c_kappa_f=1d0
-         lambdatype=0 rbtype=0 /
+&rad_con radswitch=2 opacitytype=0 c_kappa_r=10.d0 c_kappa_p=0.1d0 c_kappa_f=0.1d0
+         lambdatype=1 rbtype=0 /
 
 ! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
 &mat_con matrix_solver=0 /
