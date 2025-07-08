@@ -171,7 +171,7 @@ contains
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE GET_VCAR
+!                             SUBROUTINE GET_VCAR
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate the Cartesian vector components from polar coordinates
@@ -194,7 +194,7 @@ contains
  end subroutine get_vcar
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE GET_VPOL
+!                             SUBROUTINE GET_VPOL
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate the Polar vector components from Cartesian coordinates
@@ -219,7 +219,7 @@ contains
  end subroutine get_vpol
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE GET_VCYL
+!                             SUBROUTINE GET_VCYL
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate Cylindrical vector components from Cartesian coordinates
@@ -246,7 +246,7 @@ contains
  end subroutine get_vcyl
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE GET_GRAD
+!                             SUBROUTINE GET_GRAD
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Compute gradient with second order accuracy
@@ -343,7 +343,7 @@ contains
  end function intpol
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                      SUBROUTINE GEOMETRICAL_SERIES
+!                        SUBROUTINE GEOMETRICAL_SERIES
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate dxi's in a geometrical series.
@@ -405,7 +405,7 @@ end subroutine geometrical_series
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE GRAVPOT1D
+!                             SUBROUTINE GRAVPOT1D
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate 1D gravitational potential
@@ -465,7 +465,7 @@ subroutine gravpot1d
 end subroutine gravpot1d
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE MASSCOORDINATE
+!                          SUBROUTINE MASSCOORDINATE
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To get mass coordinates

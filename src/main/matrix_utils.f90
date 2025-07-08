@@ -13,7 +13,7 @@ pure function l_from_ijk(i,j,k,is,js,ks,in,jn) result(l)
 end function l_from_ijk
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                         SUBROUTINE IJK_FROM_L
+!                            SUBROUTINE IJK_FROM_L
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Get i,j,k from l
@@ -40,7 +40,7 @@ return
 end subroutine ijk_from_l
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                         SUBROUTINE CONTIGUOUS_MAP
+!                          SUBROUTINE CONTIGUOUS_MAP
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Create a contiguous mapping of the global matrix rows
