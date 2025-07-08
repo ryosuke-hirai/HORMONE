@@ -8,7 +8,7 @@ module analysis_mod
  contains
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE GET_LUMINOSITY
+!                          SUBROUTINE GET_LUMINOSITY
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -99,7 +99,7 @@ end subroutine get_luminosity
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE GET_LUMINOSITY2
+!                          SUBROUTINE GET_LUMINOSITY2
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -184,7 +184,7 @@ end subroutine get_luminosity2
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE GET_LUMINOSITY3
+!                          SUBROUTINE GET_LUMINOSITY3
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -296,7 +296,7 @@ end subroutine get_luminosity3
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE GET_LUMINOSITY4
+!                          SUBROUTINE GET_LUMINOSITY4
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -415,7 +415,7 @@ end subroutine get_luminosity4
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE GET_LOCAL_VAL
+!                           SUBROUTINE GET_LOCAL_VAL
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Get local values of density, temperature and hydrogen fraction
@@ -536,7 +536,7 @@ end subroutine get_luminosity4
  end subroutine get_local_val
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE GET_LOCAL_VAL3D
+!                          SUBROUTINE GET_LOCAL_VAL3D
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Get local values of whatever quantity is input
@@ -583,7 +583,7 @@ end subroutine get_luminosity4
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE GET_COM
+!                              SUBROUTINE GET_COM
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Get centre of mass position and velocity
@@ -643,7 +643,7 @@ end subroutine get_luminosity4
  end subroutine get_com
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE GET_ACCRETION
+!                           SUBROUTINE GET_ACCRETION
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Calculated accreted amount of mass onto the NS
@@ -723,7 +723,7 @@ end subroutine get_luminosity4
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                      SUBROUTINE GET_ISOCONTOUR
+!                          SUBROUTINE GET_ISOCONTOUR
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Get isocontour surface data
@@ -785,7 +785,7 @@ end subroutine get_luminosity4
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE GET_LOCAL_GRAV
+!                          SUBROUTINE GET_LOCAL_GRAV
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -830,7 +830,7 @@ end subroutine get_local_grav
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE GET_ANAL_DRAG
+!                           SUBROUTINE GET_ANAL_DRAG
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -923,7 +923,7 @@ end subroutine get_local_grav
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE GET_OPTICAL_DEPTH
+!                         SUBROUTINE GET_OPTICAL_DEPTH
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
