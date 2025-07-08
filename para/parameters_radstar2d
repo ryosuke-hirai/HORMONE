@@ -2,10 +2,10 @@
 ! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
 ! fmr_max   : Maximum levels of fixed mesh refinement (0 means no FMR)
 ! fmr_lvl(i): Number of layers in a given FMR level
-&gridcon  xi1s=0d0 xi1e=1d12 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
-	  is=1 ie=150 js=1 je=16 ks=1 ke=32
+&gridcon  xi1s=0d0 xi1e=5d12 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
+	  is=1 ie=600 js=1 je=32 ks=1 ke=1
 	  imesh=1 jmesh=2 kmesh=0
-	  x1min=5d8 x2min=0d0 x3min=0d0
+	  x1min=1d8 x2min=0d0 x3min=0d0
 	  fmr_max=0 fmr_lvl(1)=10 fmr_lvl(2)=20 /
 
 ! outstyle/endstyle : time=1, timestep=2
@@ -22,7 +22,7 @@
 &out_con  outstyle=1 endstyle=1
           tnlim=300 t_end=2d1 dt_out=2d1 tn_out=500
           dt_unit='s' sigfig=7 outres=1
-	  write_other_vel =.false. write_shock =.true.
+	  write_other_vel =.true. write_shock =.true.
           write_other_slice=.true. /
 
 ! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
@@ -44,7 +44,7 @@
 ! Flux:10(provide in dirichlet.f90)
 ! eq_sym : Set to .true. for equatorial symmetry
 &bouncon  bc1is=1 bc1os=2 bc2is=1 bc2os=1 bc3is=0 bc3os=0
-	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.false. /
+	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.true. /
 
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
