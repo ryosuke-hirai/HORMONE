@@ -21,7 +21,7 @@ subroutine radstar
  use pressure_mod,only:eos_e
 
  real(8),allocatable,dimension(:):: r,m,rho,pres
- real(8)::mass,radius,mcore,rsoft,imu_const,dbg,pbg,omega
+ real(8)::mass,radius,mcore,rsoft,imu_const,dbg,pbg
  integer::i,j,k
 
 !-----------------------------------------------------------------------------
@@ -66,19 +66,7 @@ subroutine radstar
  end do
  eostype=0
 
-! Add rotation if 2D
- if(dim==2)then
-  omega = sqrt(G*mass/radius)/radius*1d-1
-  do k = ks, ke
-   do j = js, je
-    do i = is, ie
-     v3(i,j,k) = omega * x1(i)*sinc(j)
-    end do
-   end do
-  end do
- end if
-
- return
+return
 end subroutine radstar
 
 end module radstar_mod

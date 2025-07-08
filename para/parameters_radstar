@@ -62,7 +62,7 @@
          lambdatype=0 rbtype=0 /
 
 ! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
-&mat_con matrix_solver=0 /
+&mat_con matrix_solver=0
 
 ! test tolerance
 &testcon  test_tol=1d-13 Mach_tol=1d-5/
