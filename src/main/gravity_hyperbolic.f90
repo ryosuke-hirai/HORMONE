@@ -10,7 +10,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                     SUBROUTINE GRAVITY_HYPERBOLIC
+!                        SUBROUTINE GRAVITY_HYPERBOLIC
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -52,7 +52,7 @@ end subroutine gravity_hyperbolic
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                   SUBROUTINE HYPERBOLIC_GRAVITY_STEP
+!                      SUBROUTINE HYPERBOLIC_GRAVITY_STEP
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -127,7 +127,7 @@ end subroutine hyperbolic_gravity_step
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                   SUBROUTINE HG_BOUNDARY_CONDITIONS
+!                      SUBROUTINE HG_BOUNDARY_CONDITIONS
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -221,7 +221,7 @@ end subroutine hg_boundary_conditions
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE GET_LAPPHI_HGSRC
+!                         SUBROUTINE GET_LAPPHI_HGSRC
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

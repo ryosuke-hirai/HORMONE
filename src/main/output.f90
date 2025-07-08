@@ -11,7 +11,7 @@ module output_mod
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                            SUBROUTINE OUTPUT
+!                             SUBROUTINE OUTPUT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -61,7 +61,7 @@ end subroutine output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE TERMINAL_OUTPUT
+!                          SUBROUTINE TERMINAL_OUTPUT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -87,7 +87,7 @@ end subroutine terminal_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE OPEN_EVOFILE
+!                           SUBROUTINE OPEN_EVOFILE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -139,7 +139,7 @@ end subroutine open_evofile
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE EVO_OUTPUT
+!                            SUBROUTINE EVO_OUTPUT
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output quantities as a function of time
@@ -277,7 +277,7 @@ end subroutine evo_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE OPEN_SINKFILE
+!                           SUBROUTINE OPEN_SINKFILE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -342,7 +342,7 @@ subroutine open_sinkfile
 end subroutine open_sinkfile
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE SINK_OUTPUT
+!                            SUBROUTINE SINK_OUTPUT
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output sink properties as a function of time
@@ -389,7 +389,7 @@ return
 end subroutine sink_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE WRITE_GRID
+!                            SUBROUTINE WRITE_GRID
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output gridfile.bin and gridfile.dat
@@ -661,7 +661,7 @@ end subroutine write_grid_dat
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                           SUBROUTINE WRITE_BIN
+!                             SUBROUTINE WRITE_BIN
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -757,7 +757,7 @@ end subroutine write_bin
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                          SUBROUTINE WRITE_PLT
+!                             SUBROUTINE WRITE_PLT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -931,7 +931,7 @@ end subroutine write_plt
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE WRITE_VERTICAL_SLICE
+!                       SUBROUTINE WRITE_VERTICAL_SLICE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -1028,7 +1028,7 @@ end subroutine write_vertical_slice
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                         SUBROUTINE WRITE_EXTGRV
+!                           SUBROUTINE WRITE_EXTGRV
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To write extgrv file
@@ -1069,7 +1069,7 @@ return
 end subroutine write_extgrv
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE WRITE_PTC
+!                             SUBROUTINE WRITE_PTC
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Output ascii file for tracer particles
@@ -1157,7 +1157,7 @@ subroutine write_ptc
 end subroutine write_ptc
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE WRITE_BPT
+!                             SUBROUTINE WRITE_BPT
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Output binary file for tracer particles
@@ -1192,7 +1192,7 @@ end subroutine write_bpt
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE PROFILER_OUTPUT
+!                          SUBROUTINE PROFILER_OUTPUT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -1246,7 +1246,7 @@ end subroutine profiler_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE SCALING_OUTPUT
+!                          SUBROUTINE SCALING_OUTPUT
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -1292,7 +1292,7 @@ return
 end subroutine scaling_output
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                       SUBROUTINE SET_FILE_NAME
+!                           SUBROUTINE SET_FILE_NAME
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To create a file name with a given prefix
@@ -1328,7 +1328,7 @@ subroutine set_file_name(prefix,tn,time,filename)
 end subroutine set_file_name
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                    SUBROUTINE ADD_DIRECTORY_TO_FILENAME
+!                     SUBROUTINE ADD_DIRECTORY_TO_FILENAME
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To add the directory to the filename string
@@ -1348,7 +1348,7 @@ return
 end subroutine add_directory_to_filename
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE GET_HEADER
+!                            SUBROUTINE GET_HEADER
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To determine what to output
@@ -1456,7 +1456,7 @@ return
 end subroutine get_header
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE ADD_COLUMN
+!                            SUBROUTINE ADD_COLUMN
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To add a column of output variable into the header array
@@ -1478,7 +1478,7 @@ return
 end subroutine add_column
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE WRITE_VAL
+!                             SUBROUTINE WRITE_VAL
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To write a single row of values
@@ -1557,7 +1557,7 @@ return
 end subroutine write_val
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE WRITE_ANYVAL
+!                           SUBROUTINE WRITE_ANYVAL
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To write one value

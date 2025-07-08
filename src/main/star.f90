@@ -5,7 +5,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE REPLACE_CORE
+!                           SUBROUTINE REPLACE_CORE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -77,7 +77,7 @@ end subroutine replace_core
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE SET_STAR_SPH_GRID
+!                         SUBROUTINE SET_STAR_SPH_GRID
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -183,7 +183,7 @@ end subroutine set_star_sph_grid
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE SET_STAR_CYL_GRID
+!                         SUBROUTINE SET_STAR_CYL_GRID
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -309,7 +309,7 @@ end subroutine set_star_cyl_grid
 
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                       SUBROUTINE ONE_SHOT_INWARDS
+!                         SUBROUTINE ONE_SHOT_INWARDS
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Calculate a hydrostatic structure for a given entropy
@@ -356,7 +356,7 @@ return
 end subroutine one_shot_inwards
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                       SUBROUTINE ISENTROPIC_STAR1
+!                         SUBROUTINE ISENTROPIC_STAR1
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Calculate a hydrostatic structure for a given entropy
@@ -421,7 +421,7 @@ return
 end subroutine isentropic_star1
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE NEXT_P_R
+!                             SUBROUTINE NEXT_P_R
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To compute next p_i and r_i given previous p_{i-1} and r_{i-1}
@@ -479,7 +479,7 @@ subroutine next_p_r(p1,r1,rsoft,m1,m2,mc,Sc,imu,p2,r2,rho2)
 end subroutine next_p_r
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                     SUBROUTINE GET_SOFTENED_PROFILE
+!                       SUBROUTINE GET_SOFTENED_PROFILE
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: Returns softened core profile with fixed entropy
@@ -554,7 +554,7 @@ end subroutine get_softened_profile
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE ISENTROPIC_STAR
+!                          SUBROUTINE ISENTROPIC_STAR
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

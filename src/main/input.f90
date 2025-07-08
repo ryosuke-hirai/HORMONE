@@ -5,7 +5,7 @@ module input_mod
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                         SUBROUTINE READ_MESA
+!                             SUBROUTINE READ_MESA
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -227,7 +227,7 @@ end subroutine read_mesa
 !!$ end do
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                         SUBROUTINE ERROR_EXTRAS
+!                           SUBROUTINE ERROR_EXTRAS
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output error message and stop simulation when failing to find extras file.
@@ -246,7 +246,7 @@ subroutine error_extras(simutype,extrasfile)
 end subroutine error_extras
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE ERROR_NML
+!                             SUBROUTINE ERROR_NML
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output error message and stop simulation when relevant namelist cannot be found in extras file

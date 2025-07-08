@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import argparse
+
+# Regex for matching a border line like: "   !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
+HEADER_BORDER_RE = re.compile(r"^\s*!\s*\\\\{10,}\s*$")
+# Matches a blank comment line like "   !" or "!    "
+BLANK_COMMENT_LINE_RE = re.compile(r"^\s*!\s*$")
+
+
+def get_centered_line(text_line, border_line):
+    """Given a text line and a border line, return the text centered under it."""
+    border_stripped = border_line.rstrip("\n")
+    excl_index = border_stripped.find("!")
+    if excl_index == -1:
+        return None
+    prefix = border_stripped[: excl_index + 1]  # includes spaces and '!'
+    total_width = len(border_stripped)
+    content_width = total_width - len(prefix)  # minus space after '!'
+    text = text_line.strip("! \n")
+    centered = text.center(content_width).rstrip()
+    return prefix + centered + "\n"
+
+
+def process_file(path):
+    with open(path, "r") as f:
+        lines = f.readlines()
+
+    output = []
+    i = 0
+    file_changed = False
+    while i < len(lines):
+        # Try to match a 5-line block
+        if (
+            i + 4 < len(lines)
+            and HEADER_BORDER_RE.match(lines[i])
+            and BLANK_COMMENT_LINE_RE.match(lines[i + 1])
+            and BLANK_COMMENT_LINE_RE.match(lines[i + 3])
+            and HEADER_BORDER_RE.match(lines[i + 4])
+        ):
+            centered = get_centered_line(lines[i + 2], lines[i])
+            if centered and centered != lines[i + 2]:
+                output.append(lines[i])  # top border
+                output.append(lines[i + 1])  # blank line
+                output.append(centered)  # centered line
+                output.append(lines[i + 3])  # blank line
+                output.append(lines[i + 4])  # bottom border
+                file_changed = True
+                i += 5
+                continue
+
+        # Try to match a 3-line block
+        if (
+            i + 2 < len(lines)
+            and HEADER_BORDER_RE.match(lines[i])
+            and HEADER_BORDER_RE.match(lines[i + 2])
+        ):
+            centered = get_centered_line(lines[i + 1], lines[i])
+            if centered and centered != lines[i + 1]:
+                output.append(lines[i])  # top border
+                output.append(centered)  # centered line
+                output.append(lines[i + 2])  # bottom border
+                file_changed = True
+                i += 3
+                continue
+
+        # Otherwise, keep the line as-is
+        output.append(lines[i])
+        i += 1
+
+    if file_changed:
+        with open(path, "w") as f:
+            f.writelines(output)
+        print(f"Modified: {path}")
+
+
+def process_directory(root_dir):
+    for dirpath, _, files in os.walk(root_dir):
+        for filename in files:
+            if filename.lower().endswith((".f90", ".f", ".f95")):
+                process_file(os.path.join(dirpath, filename))
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process Fortran files to center headers.")
+    parser.add_argument("source_root", help="Path to the root directory of the source tree")
+    args = parser.parse_args()
+
+    process_directory(args.source_root)
