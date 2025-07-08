@@ -79,7 +79,7 @@ subroutine initialcondition
   case('polytrope')
    call polytrope
 
-  case('radstar')
+  case('radstar','radstar2d')
    call radstar
 
   case('agndisk')
