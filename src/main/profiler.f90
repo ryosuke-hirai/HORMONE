@@ -47,7 +47,7 @@ module profiler_mod
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                       SUBROUTINE INIT_PROFILER
+!                           SUBROUTINE INIT_PROFILER
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To initialize variables for profiler
@@ -137,7 +137,7 @@ subroutine init_profiler
 end subroutine init_profiler
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                         SUBROUTINE GET_MAXLBL
+!                            SUBROUTINE GET_MAXLBL
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To compute maximum number of characters in the label
@@ -176,7 +176,7 @@ function get_layer(i) result(ilayer)
 end function get_layer
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE START_CLOCK
+!                            SUBROUTINE START_CLOCK
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To start recording wall time for a given category
@@ -215,7 +215,7 @@ return
 end subroutine start_clock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE STOP_CLOCK
+!                            SUBROUTINE STOP_CLOCK
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To stop recording wall time for a given category
@@ -241,7 +241,7 @@ return
 end subroutine stop_clock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE RESET_CLOCK
+!                            SUBROUTINE RESET_CLOCK
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To reset the clock for a given category
@@ -279,7 +279,7 @@ return
 end subroutine reset_clock
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                          SUBROUTINE REDUCE_CLOCKS_MPI
+!                         SUBROUTINE REDUCE_CLOCKS_MPI
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To reduce profiling clocks across MPI tasks
@@ -318,7 +318,7 @@ subroutine reduce_clocks_mpi
 end subroutine reduce_clocks_mpi
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                      SUBROUTINE PROFILER_OUTPUT1
+!                         SUBROUTINE PROFILER_OUTPUT1
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output one line for profiler output

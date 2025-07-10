@@ -7,7 +7,7 @@ module pressure_mod
 contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE GETT_FROM_DE
+!                           SUBROUTINE GETT_FROM_DE
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
@@ -107,7 +107,7 @@ subroutine getT_from_de(d,eint,T,imu,X,Y,erec_out)
 end subroutine getT_from_de
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                        SUBROUTINE GETT_FROM_DP
+!                           SUBROUTINE GETT_FROM_DP
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
@@ -187,7 +187,7 @@ subroutine getT_from_dp(d,p,T,imu,X,Y,cveff,erec)
 end subroutine getT_from_dp
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE EOS_P_CS
+!                             SUBROUTINE EOS_P_CS
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate pressure and thermal sound speed from d and eint
@@ -734,7 +734,7 @@ function get_p_from_ds(d,S,imu,X,Y) result(p)
 end function get_p_from_ds
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!                           SUBROUTINE PRESSURE
+!                             SUBROUTINE PRESSURE
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To calculate pressure in all cells based on EoS.
@@ -796,7 +796,7 @@ end subroutine pressure
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE INTERNALENERGY
+!                          SUBROUTINE INTERNALENERGY
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
