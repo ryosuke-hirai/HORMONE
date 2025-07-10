@@ -18,7 +18,7 @@ contains
 
 subroutine setup_matrix(system)
   use settings, only: matrix_solver
-  use mpi_utils, only: nprocs, stop_mpi
+  use mpi_utils, only: nprocs, stop_mpi, myrank
   use grid, only: is, ie, js, je, ks, ke, gis, gie, gjs, gje, gks, gke, &
                   is_global, ie_global, js_global, je_global, ks_global, &
                   gis_global, gie_global, gjs_global, gje_global, gks_global
@@ -37,18 +37,25 @@ subroutine setup_matrix(system)
 
 #ifndef USE_PETSC
   if (matrix_solver == 1) then
-    print *, "Error: matrix_solver=0 (MICCG) is not available. Please compile with USE_PETSC."
+    if (myrank == 0) then
+      print*, "Error: matrix_solver=1 (PETSc) is not available. Please compile with USE_PETSC."
+    end if
     call stop_mpi(1)
   end if
 #endif
 
   ! MICCG solver does not work with MPI
   if (matrix_solver == 0 .and. (nprocs >= 2)) then
-    print *, "Error: MICCG solver is not compatible with MPI. Please use PETSc (matrix_solver=1)."
+    if (myrank == 0) then
+      print*, "Error: MICCG solver is not compatible with MPI. Please use PETSc (matrix_solver=1)."
+    end if
     call stop_mpi(1)
   end if
 
-  print*, "Setting up ", trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), " solver for ", trim(adjustl(merge("gravity  ", "radiation", system == igrv)))
+  if (myrank == 0) then
+    print*, "Setting up ", trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), " solver for ", trim(adjustl(merge("gravity  ", "radiation", system == igrv)))
+    print*, ""
+  end if
 
   select case (system)
   case (igrv)
