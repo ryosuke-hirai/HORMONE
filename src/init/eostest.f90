@@ -88,8 +88,8 @@ subroutine eostest
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
    rerrp3 = max(rerrp3,abs(p4/p-1d0))
-   rerrT1 = max(rerrT1,abs(T2/T-1d0))
-   rerrT2 = max(rerrT2,abs(T3/T-1d0))
+   rerrT1 = max(rerrT1,abs(T/T0-1d0))
+   rerrT2 = max(rerrT2,abs(T3/T0-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
    write(ui,'(2i5,16(1PE23.15e2))')&
     j,k,d,Q,e,&
@@ -151,8 +151,8 @@ subroutine eostest
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
    rerrp3 = max(rerrp3,abs(p4/p-1d0))
-   rerrT1 = max(rerrT1,abs(T2/T-1d0))
-   rerrT2 = max(rerrT2,abs(T3/T-1d0))
+   rerrT1 = max(rerrT1,abs(T/T0-1d0))
+   rerrT2 = max(rerrT2,abs(T3/T0-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
    write(ui,'(2i5,18(1PE23.15e2))')&
     j,k,d,Q,e,&
@@ -218,8 +218,8 @@ subroutine eostest
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
    rerrp3 = max(rerrp3,abs(p4/p-1d0))
-   rerrT1 = max(rerrT1,abs(T2/T-1d0))
-   rerrT2 = max(rerrT2,abs(T3/T-1d0))
+   rerrT1 = max(rerrT1,abs(T/T0-1d0))
+   rerrT2 = max(rerrT2,abs(T3/T0-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
    write(ui,'(2i5,20(1PE23.15e2))')&
     j,k,d,Q,e,X,&
@@ -286,8 +286,8 @@ subroutine eostest
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
    rerrp3 = max(rerrp3,abs(p4/p-1d0))
-   rerrT1 = max(rerrT1,abs(T2/T-1d0))
-   rerrT2 = max(rerrT2,abs(T3/T-1d0))
+   rerrT1 = max(rerrT1,abs(T/T0-1d0))
+   rerrT2 = max(rerrT2,abs(T3/T0-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
    write(ui,'(2i5,20(1PE23.15e2))')&
     j,k,d,Q,e+erad,X,&
@@ -355,8 +355,9 @@ subroutine eostest
    rerrp1 = max(rerrp1,abs(p2/p-1d0))
    rerrp2 = max(rerrp2,abs(p3/p-1d0))
    rerrp3 = max(rerrp3,abs(p4/p-1d0))
-   rerrT1 = max(rerrT1,abs(T2/T-1d0))
-   rerrT2 = max(rerrT2,abs(T3/T-1d0))
+!   rerrT1 = max(rerrT1,abs(T2/T-1d0))
+   rerrT1 = max(rerrT1,abs(T/T0-1d0))
+   rerrT2 = max(rerrT2,abs(T3/T0-1d0))
    rerrd1 = max(rerrd1,abs(d2/d-1d0))
    write(ui,'(2i5,20(1PE23.15e2))')&
     j,k,d,Q,e,X,&
