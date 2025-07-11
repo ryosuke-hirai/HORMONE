@@ -594,7 +594,7 @@ subroutine isentropic_star(mass,radius,mcore,rsoft,imu,m,r,rho,p)
 
   m(0) = mcore
   dmmin = (mass-mcore)/dble(Nmax)*1d-3
-  call geometrical_series(dm,dmmin,1,Nmax/2,0d0,(mass-mcore)/2d0)
+  call geometrical_series(dmmin,1,Nmax/2,0d0,(mass-mcore)/2d0,dm)
   do i = 1, Nmax/2
    m(i) = m(i-1) + dm(i)
   end do

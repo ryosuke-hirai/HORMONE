@@ -29,14 +29,12 @@ subroutine gridset
   deallocate(x1, xi1, dx1, dxi1, idx1, idxi1, &
              x2, xi2, dx2, dxi2, idx2, idxi2, &
              x3, xi3, dx3, dxi3, idx3, idxi3 )
-  allocate( &
-   x1(gis_global-2:gie_global+2), xi1(gis_global-2:gie_global+2), dx1(gis_global-2:gie_global+2), &
-   dxi1(gis_global-2:gie_global+2), idx1(gis_global-2:gie_global+2), idxi1(gis_global-2:gie_global+2), &
-   x2(gjs_global-2:gje_global+2), xi2(gjs_global-2:gje_global+2), dx2(gjs_global-2:gje_global+2), &
-   dxi2(gjs_global-2:gje_global+2), idx2(gjs_global-2:gje_global+2), idxi2(gjs_global-2:gje_global+2), &
-   x3(gks_global-2:gke_global+2), xi3(gks_global-2:gke_global+2), dx3(gks_global-2:gke_global+2), &
-   dxi3(gks_global-2:gke_global+2), idx3(gks_global-2:gke_global+2), idxi3(gks_global-2:gke_global+2) &
-  )
+  allocate(x1(gis_global-2:gie_global+2))
+  allocate(xi1,dx1,dxi1,idx1,idxi1,mold=x1)
+  allocate(x2(gjs_global-2:gje_global+2))
+  allocate(xi2,dx2,dxi2,idx2,idxi2,mold=x2)
+  allocate(x3(gks_global-2:gke_global+2))
+  allocate(xi3,dx3,dxi3,idx3,idxi3,mold=x3)
  end if
 
  if(start==0)then
@@ -49,9 +47,9 @@ subroutine gridset
    case(0) mesh_car1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie_global-is_global+1)
    case(1) mesh_car1 ! geometrical series
-    call geometrical_series(dxi1,x1min,is_global,ie_global,xi1s,xi1e)
+    call geometrical_series(x1min,is_global,ie_global,xi1s,xi1e,dxi1)
    case(2) mesh_car1 ! user specified mesh
-    call other_imesh(dxi1,is_global,ie_global,xi1s,xi1e)
+    call other_imesh(is_global,ie_global,xi1s,xi1e,dxi1)
    end select mesh_car1
 
    do i = is_global-1,ie_global+2
@@ -87,9 +85,9 @@ subroutine gridset
    case(0) mesh_car2 ! uniform mesh
     dxi2 = (xi2e-xi2s) / dble(je_global-js_global+1)
    case(1) mesh_car2 ! geometrical series
-    call geometrical_series(dxi2,x2min,js_global,je_global,xi2s,xi2e)
+    call geometrical_series(x2min,js_global,je_global,xi2s,xi2e,dxi2)
    case(2) mesh_car2 ! user specified mesh
-    call other_jmesh(dxi2,js_global,je_global,xi2s,xi2e)
+    call other_jmesh(js_global,je_global,xi2s,xi2e,dxi2)
    end select mesh_car2
 
    do j = js_global-1,je_global+2
@@ -125,9 +123,9 @@ subroutine gridset
    case(0) mesh_car3 ! uniform mesh
     dxi3 = (xi3e-xi3s) / dble(ke_global-ks_global+1)
    case(1) mesh_car3 ! geometrical series
-    call geometrical_series(dxi3,x3min,ks_global,ke_global,xi3s,xi3e)
+    call geometrical_series(x3min,ks_global,ke_global,xi3s,xi3e,dxi3)
    case(2) mesh_car3 ! user specified mesh
-    call other_kmesh(dxi3,ks_global,ke_global,xi3s,xi3e)
+    call other_kmesh(ks_global,ke_global,xi3s,xi3e,dxi3)
    end select mesh_car3
 
    do k = ks_global-1,ke_global+2
@@ -166,9 +164,9 @@ subroutine gridset
    case(0) mesh_cyl1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie_global-is_global+1)
    case(1) mesh_cyl1 ! geometrical series
-    call geometrical_series(dxi1,x1min,is_global,ie_global,xi1s,xi1e)
+    call geometrical_series(x1min,is_global,ie_global,xi1s,xi1e,dxi1)
    case(2) mesh_cyl1 ! user specified mesh
-    call other_imesh(dxi1,is_global,ie_global,xi1s,xi1e)
+    call other_imesh(is_global,ie_global,xi1s,xi1e,dxi1)
    end select mesh_cyl1
 
    do i = is_global-1,ie_global+2
@@ -237,9 +235,9 @@ subroutine gridset
    case(0) mesh_cyl3 ! uniform mesh
     dxi3 = (xi3e-xi3s) / dble(ke_global-ks_global+1)
    case(1) mesh_cyl3 ! geometrical series
-    call geometrical_series(dxi3,x3min,ks_global,ke_global,xi3s,xi3e)
+    call geometrical_series(x3min,ks_global,ke_global,xi3s,xi3e,dxi3)
    case(2) mesh_cyl3 ! user specified mesh
-    call other_kmesh(dxi3,ks_global,ke_global,xi3s,xi3e)
+    call other_kmesh(ks_global,ke_global,xi3s,xi3e,dxi3)
    end select mesh_cyl3
 
    do k = ks_global-1,ke_global+2
@@ -301,9 +299,9 @@ subroutine gridset
    case(0) mesh_sph1 ! uniform mesh
     dxi1 = (xi1e-xi1s) / dble(ie_global-is_global+1)
    case(1) mesh_sph1 ! geometrical series
-    call geometrical_series(dxi1,x1min,is_global,ie_global,xi1s,xi1e)
+    call geometrical_series(x1min,is_global,ie_global,xi1s,xi1e,dxi1)
    case(2) mesh_sph1 ! user specified mesh
-    call other_imesh(dxi1,is_global,ie_global,xi1s,xi1e)
+    call other_imesh(is_global,ie_global,xi1s,xi1e,dxi1)
    end select mesh_sph1
 
    do i = is_global-1,ie_global+2
@@ -353,8 +351,10 @@ subroutine gridset
      jetmp=je_global-js_global+1
     endif
     dxi2(js_global-2:je_global+2) = xi2e / dble(jetmp)
+   case(1) mesh_sph2 ! uniform in cos(theta)
+    call uniform_costheta(js_global,je_global,xi2s,xi2e,dxi2)
    case(2) mesh_sph2 ! user specified mesh
-    call other_jmesh(dxi2,js_global,je_global,xi2s,xi2e)
+    call other_jmesh(js_global,je_global,xi2s,xi2e,dxi2)
    end select mesh_sph2
 
    do j = js_global-1,je_global+2
@@ -403,7 +403,7 @@ subroutine gridset
     endif
     dxi3(ks_global-2:ke_global+2) = (xi3e-xi3s) / dble(ketmp)
    case(2) mesh_sph3 ! user specified mesh
-    call other_kmesh(dxi3,ks_global,ke_global,xi3s,xi3e)
+    call other_kmesh(ks_global,ke_global,xi3s,xi3e,dxi3)
    end select mesh_sph3
 
    do k = ks_global-1,ke_global+2
@@ -458,19 +458,62 @@ end subroutine gridset
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
+!                      SUBROUTINE UNIFORM_COSTHETA
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To compute grid spacing that is uniform in cos(theta)
+
+subroutine uniform_costheta(js,je,xi2s,xi2e,dxi2)
+
+ integer,intent(in):: js,je
+ real(8),intent(in):: xi2s,xi2e
+ real(8),intent(inout),allocatable:: dxi2(:)
+
+ integer::j
+ real(8),allocatable:: xi2(:)
+ real(8):: dcos
+
+!-----------------------------------------------------------------------------
+
+! for equal spacing in cos(theta)
+ allocate( xi2(js-2:je+2) )
+ dcos = (cos(xi2e)-cos(xi2s))/dble(je-js+1)
+
+ xi2(js-1) = cos(xi2s)
+ do j = js, je
+  xi2(j) = xi2(j-1) + dcos
+ end do
+ xi2(je) = cos(xi2e)
+ do j = js-1, je
+  xi2(j) = acos(xi2(j))
+ end do
+ do j = js, je
+  dxi2(j) = xi2(j) - xi2(j-1)
+ end do
+ dxi2(js-1) = dxi2(js)
+ dxi2(js-2) = dxi2(js+1)
+ dxi2(je+1) = dxi2(je)
+ dxi2(je+2) = dxi2(je-1)
+
+return
+end subroutine uniform_costheta
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
 !                            SUBROUTINE OTHER_IMESH
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: User specified i meshes
 
-subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
+subroutine other_imesh(is,ie,xi1s,xi1e,dxi1)
 
  use utils,only:geometrical_series
 
+ integer,intent(in):: is,ie
  real(8),intent(in):: xi1s,xi1e
  real(8),intent(inout),allocatable:: dxi1(:)
- integer,intent(in):: is,ie
 
 !-----------------------------------------------------------------------------
 
@@ -499,8 +542,8 @@ subroutine other_imesh(dxi1,is,ie,xi1s,xi1e)
  radstar = 1.75d11
  dxmin=2d8
  allocate(dx_inner(is-2:istar+2),dx_outer(is+istar+iflat-2:ie+2))
- call geometrical_series(dx_inner,dxmin,is,is+istar-1,xi1s,radstar)
- call geometrical_series(dx_outer,dxmin,is+istar+iflat,ie,radstar+dxmin*dble(iflat),xi1e)
+ call geometrical_series(dxmin,is,is+istar-1,xi1s,radstar,dx_inner)
+ call geometrical_series(dxmin,is+istar+iflat,ie,radstar+dxmin*dble(iflat),xi1e,dx_outer)
 
  dxi1(is-2:is+istar-1) = dx_inner(is+istar+1:is:-1)
  dxi1(is+istar:is+istar+iflat-1) = dxmin
@@ -517,11 +560,11 @@ end subroutine other_imesh
 
 ! PURPOSE: User specified j meshes
 
-subroutine other_jmesh(dxi2,js,je,xi2s,xi2e)
+subroutine other_jmesh(js,je,xi2s,xi2e,dxi2)
 
+ integer,intent(in):: js,je
  real(8),intent(in):: xi2s,xi2e
  real(8),intent(inout),allocatable:: dxi2(:)
- integer,intent(in):: js,je
 
  integer::j
  real(8),allocatable:: xi2(:)
@@ -601,13 +644,13 @@ end subroutine other_jmesh
 
 ! PURPOSE: User specified j meshes
 
-subroutine other_kmesh(dxi3,ks,ke,xi3s,xi3e)
+subroutine other_kmesh(ks,ke,xi3s,xi3e,dxi3)
 
  use grid,only:dxi1,xi1,is,ie
 
+ integer,intent(in):: ks,ke
  real(8),intent(inout):: xi3s,xi3e
  real(8),intent(inout),allocatable:: dxi3(:)
- integer,intent(in):: ks,ke
 
 !-----------------------------------------------------------------------------
 

@@ -348,7 +348,7 @@ contains
 
 ! PURPOSE: To calculate dxi's in a geometrical series.
 
-subroutine geometrical_series(dxi,xmin,is,ie,xis,xie)
+subroutine geometrical_series(xmin,is,ie,xis,xie,dxi)
 
  implicit none
 

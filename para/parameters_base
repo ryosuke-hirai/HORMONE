@@ -1,5 +1,5 @@
 ----------------------------- parameters --------------------------------
-! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
+! i,j,kmesh : 0=uniform mesh, 1=geometrical series/uniform costheta(for crdnt==2), 2=user specified mesh
 ! fmr_max   : Maximum levels of fixed mesh refinement
 ! fmr_lvl(i): Number of layers in a given FMR level
 &gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0

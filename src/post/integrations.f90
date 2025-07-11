@@ -40,7 +40,7 @@ subroutine get_luminosity(angle,lum)
  kkn = 100 ! depth resolution
  allocate(dr(-1:iin+2),rr(-1:iin+2))
  drmin = dxi1(is)*0.2d0
- call geometrical_series(dr,drmin,1,iin,0d0,xi1(ie))
+ call geometrical_series(drmin,1,iin,0d0,xi1(ie),dr)
  rr(0) = 0d0
  do ii = 1, iin
   rr(ii) = rr(ii-1)+dr(ii)
@@ -129,7 +129,7 @@ subroutine get_luminosity2(angle,lum)
  jjn = 100 ! angular resolution
  allocate(dr(-1:iin+2),rr(-1:iin+2))
  drmin = dxi1(is)*0.2d0
- call geometrical_series(dr,drmin,1,iin,0d0,xi1(ie))
+ call geometrical_series(drmin,1,iin,0d0,xi1(ie),dr)
  rr(0) = 0d0
  do ii = 1, iin
   rr(ii) = rr(ii-1)+dr(ii)
@@ -219,7 +219,7 @@ subroutine get_luminosity3(angle,lmda,lum,spec)
  jjn = 100 ! angular resolution
  allocate(dr(-1:iin+2),rr(-1:iin+2))
  drmin = dxi1(is)
- call geometrical_series(dr,drmin,1,iin,0d0,xi1(ie))
+ call geometrical_series(drmin,1,iin,0d0,xi1(ie),dr)
  rr(0) = 0d0
  do ii = 1, iin
   rr(ii) = rr(ii-1)+dr(ii)
@@ -332,7 +332,7 @@ subroutine get_luminosity4(angle,lmda,lum,spec)
  jjn = 100 ! angular resolution
  allocate(dr(-1:iin+2),rr(-1:iin+2))
  drmin = dxi1(is)
- call geometrical_series(dr,drmin,1,iin,0d0,xi1(ie))
+ call geometrical_series(drmin,1,iin,0d0,xi1(ie),dr)
  rr(0) = 0d0
  do ii = 1, iin
   rr(ii) = rr(ii-1)+dr(ii)
