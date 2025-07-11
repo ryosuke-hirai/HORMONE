@@ -610,6 +610,7 @@ subroutine write_grid_dat
 
   write(str,formhead)'  i','j','x1','x2','dvol'
   call write_string_master(ui,str)
+  call write_string_master(ui, '')
 
   if(crdnt==2)then
    k = ks_global
@@ -981,6 +982,7 @@ subroutine write_vertical_slice(slice,prefix)
   write(str,forma) trim(adjustl(header(n)))
   call write_string_master(ui,str,advance=.false.)
  end do
+ call write_string_master(ui, '')
  call write_string_master(ui, '')
 
  if(crdnt==2)then
