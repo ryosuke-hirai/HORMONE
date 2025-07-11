@@ -466,8 +466,6 @@ end subroutine gridset
 
 subroutine uniform_costheta(js,je,xi2s,xi2e,dxi2)
 
- use grid
-
  integer,intent(in):: js,je
  real(8),intent(in):: xi2s,xi2e
  real(8),intent(inout),allocatable:: dxi2(:)
@@ -544,8 +542,8 @@ subroutine other_imesh(is,ie,xi1s,xi1e,dxi1)
  radstar = 1.75d11
  dxmin=2d8
  allocate(dx_inner(is-2:istar+2),dx_outer(is+istar+iflat-2:ie+2))
- call geometrical_series(dx_inner,dxmin,is,is+istar-1,xi1s,radstar)
- call geometrical_series(dx_outer,dxmin,is+istar+iflat,ie,radstar+dxmin*dble(iflat),xi1e)
+ call geometrical_series(dxmin,is,is+istar-1,xi1s,radstar,dx_inner)
+ call geometrical_series(dxmin,is+istar+iflat,ie,radstar+dxmin*dble(iflat),xi1e,dx_outer)
 
  dxi1(is-2:is+istar-1) = dx_inner(is+istar+1:is:-1)
  dxi1(is+istar:is+istar+iflat-1) = dxmin
