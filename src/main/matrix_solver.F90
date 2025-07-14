@@ -127,7 +127,7 @@ subroutine write_A_grv
   if (matrix_solver == 0) then
     call start_clock(wtmga)
     call write_A_cg(igrv, cg_grv)
-    call stop_clock(wtmga)
+    call stop_clock(wtmga); call stop_clock(wtmig)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
     call start_clock(wtpga)
