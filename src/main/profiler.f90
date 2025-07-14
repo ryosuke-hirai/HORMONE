@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=38 ! number of profiling categories
+ integer,parameter:: n_wt=43 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -23,26 +23,31 @@ module profiler_mod
   wtgbn=16,& ! gravbound
   wtelg=17,& ! elliptic self-gravity
   wtmig=18,& ! MICCG solver for gravity
-  wtpeg=19,& ! PETSc solver for gravity
-  wthyp=20,& ! hyperbolic self-gravity
-  wtgsm=21,& ! gravity smearing
-  wtgs2=22,& ! MPI sweep gravity smearing
-  wtsho=23,& ! shockfind
-  wtrad=24,& ! radiation
-  wtmir=25,& ! MICCG solver for radiation
-  wtmra=26,& ! MICCG A matrix
-  wtper=27,& ! PETSc solver for radiation
-  wtprv=28,& ! PETSc vector assembly
-  wtpra=29,& ! PETSc A matrix
-  wtprc=30,& ! PETSc A matrix coefficients
-  wtprm=31,& ! PETSc A matrix MPI
-  wtopc=32,& ! opacity
-  wtrfl=33,& ! radiative flux
-  wtsnk=34,& ! sink motion
-  wtacc=35,& ! sink accretion
-  wtout=36,& ! output
-  wtmpi=37,& ! mpi exchange
-  wtwai=38,& ! mpi wait
+  wtmga=19,& ! MICCG A matrix
+  wtpeg=20,& ! PETSc solver for gravity
+  wtpgv=21,& ! PETSc gravity vector assembly
+  wtpga=22,& ! PETSc gravity A matrix
+  wtpgc=23,& ! PETSc gravity A matrix coefficients
+  wtpgm=24,& ! PETSc gravity A matrix MPI
+  wthyp=25,& ! hyperbolic self-gravity
+  wtgsm=26,& ! gravity smearing
+  wtgs2=27,& ! MPI sweep gravity smearing
+  wtsho=28,& ! shockfind
+  wtrad=29,& ! radiation
+  wtmir=30,& ! MICCG solver for radiation
+  wtmra=31,& ! MICCG A matrix
+  wtper=32,& ! PETSc solver for radiation
+  wtprv=33,& ! PETSc vector assembly
+  wtpra=34,& ! PETSc A matrix
+  wtprc=35,& ! PETSc A matrix coefficients
+  wtprm=36,& ! PETSc A matrix MPI
+  wtopc=37,& ! opacity
+  wtrfl=38,& ! radiative flux
+  wtsnk=39,& ! sink motion
+  wtacc=40,& ! sink accretion
+  wtout=41,& ! output
+  wtmpi=42,& ! mpi exchange
+  wtwai=43,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -83,7 +88,12 @@ subroutine init_profiler
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtelg) = wtgrv ! elliptic self-gravity
  parent(wtmig) = wtelg ! MICCG solver for gravity
+ parent(wtmga) = wtmig ! MICCG A matrix
  parent(wtpeg) = wtelg ! PETSc solver for gravity
+ parent(wtpgv) = wtpeg ! PETSc gravity vector assembly
+ parent(wtpga) = wtelg ! PETSc gravity A assembly
+ parent(wtpgc) = wtpga ! PETSc gravity A coefficients
+ parent(wtpgm) = wtpga ! PETSc gravity A MPI assembly
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
  parent(wtgsm) = wthyp ! gravity smearing
  parent(wtgs2) = wtgsm ! MPI sweep gravity smearing
@@ -124,7 +134,12 @@ subroutine init_profiler
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
  routine_name(wtelg) = 'Elliptic'    ! elliptic self-gravity
  routine_name(wtmig) = 'MICCG'       ! MICCG solver for gravity
+ routine_name(wtmga) = 'MICCG A'     ! MICCG A matrix
  routine_name(wtpeg) = 'PETSc'       ! PETSc solver for gravity
+ routine_name(wtpgv) = 'PETSc vec'   ! PETSc gravity vector assembly
+ routine_name(wtpga) = 'PETSc A'     ! PETSc gravity A matrix
+ routine_name(wtpgc) = 'PETSc Coeff' ! PETSc gravity A matrix coefficients
+ routine_name(wtpgm) = 'PETSc MPI'   ! PETSc gravity A matrix MPI
  routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
  routine_name(wtgsm) = 'Grav smear'  ! gravity smearing
  routine_name(wtgs2) = 'MPI sweep'   ! MPI sweep for gravity smearing

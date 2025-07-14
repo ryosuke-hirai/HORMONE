@@ -28,6 +28,7 @@ module matrix_vars
     integer :: js_global, je_global, jn_global
     integer :: ks_global, ke_global, kn_global
     integer, allocatable :: my_rows(:)
+    integer :: timer_vec, timer_coeffs, timer_matrix
     Mat :: A
     Vec :: x
     Vec :: b

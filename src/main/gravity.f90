@@ -79,6 +79,7 @@ subroutine gravsetup
  use gravity_hyperbolic_mod,only:setup_grv_hyperbolic
  use matrix_vars,only:igrv
  use matrix_solver_mod,only:setup_matrix,write_A_grv
+ use profiler_mod
 
 ! set initial x0
  if(tn==0 .and. isequal(maxval(grvphi(gis:gie,gjs:gje,gks:gke)), 0d0))&
@@ -87,8 +88,10 @@ subroutine gravsetup
  if(tn==0) cgrav_old = cgrav
 
  if(gravswitch==2.or.(gravswitch==3.and..not.grav_init_relax))then
+  call start_clock(wtelg)
   call setup_matrix(igrv)
   call write_A_grv ! writes to cg_grv or PETSc arrays
+  call stop_clock(wtelg)
  end if
 
 ! For Hyperbolic gravity solver ----------------------------------------------
