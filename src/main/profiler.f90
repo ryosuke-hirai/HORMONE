@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=33 ! number of profiling categories
+ integer,parameter:: n_wt=38 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -30,14 +30,19 @@ module profiler_mod
   wtsho=23,& ! shockfind
   wtrad=24,& ! radiation
   wtmir=25,& ! MICCG solver for radiation
-  wtper=26,& ! PETSc solver for radiation
-  wtopc=27,& ! opacity
-  wtrfl=28,& ! radiative flux
-  wtsnk=29,& ! sink motion
-  wtacc=30,& ! sink accretion
-  wtout=31,& ! output
-  wtmpi=32,& ! mpi exchange
-  wtwai=33,& ! mpi wait
+  wtmra=26,& ! MICCG A matrix
+  wtper=27,& ! PETSc solver for radiation
+  wtprv=28,& ! PETSc vector assembly
+  wtpra=29,& ! PETSc A matrix
+  wtprc=30,& ! PETSc A matrix coefficients
+  wtprm=31,& ! PETSc A matrix MPI
+  wtopc=32,& ! opacity
+  wtrfl=33,& ! radiative flux
+  wtsnk=34,& ! sink motion
+  wtacc=35,& ! sink accretion
+  wtout=36,& ! output
+  wtmpi=37,& ! mpi exchange
+  wtwai=38,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -86,7 +91,12 @@ subroutine init_profiler
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
  parent(wtmir) = wtrad ! MICCG solver for radiation
+ parent(wtmra) = wtrad ! MICCG A matrix
  parent(wtper) = wtrad ! PETSc solver for radiation
+ parent(wtprv) = wtper ! PETSc vector assembly
+ parent(wtpra) = wtrad ! PETSc A assembly
+ parent(wtprc) = wtpra ! PETSc A coefficients
+ parent(wtprm) = wtpra ! PETSc A MPI assembly
  parent(wtopc) = wtrad ! opacity
  parent(wtrfl) = wtrad ! radiative flux
  parent(wtsnk) = wtlop ! sink motion
@@ -121,8 +131,13 @@ subroutine init_profiler
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
- routine_name(wtmir) = 'MICCG'       ! MICCG solver for radiation
- routine_name(wtper) = 'PETSc'       ! PETSc solver for radiation
+ routine_name(wtmir) = 'MICCG solve' ! MICCG solver for radiation
+ routine_name(wtmra) = 'MICCG A'     ! MICCG A matrix
+ routine_name(wtper) = 'PETSc solve' ! PETSc solver for radiation
+ routine_name(wtprv) = 'PETSc vec'   ! PETSc vector assembly
+ routine_name(wtpra) = 'PETSc A'     ! PETSc A matrix
+ routine_name(wtprc) = 'PETSc Coeff' ! PETSc A matrix coefficients
+ routine_name(wtprm) = 'PETSc MPI'   ! PETSc A matrix MPI
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad flux'    ! radiative flux
  routine_name(wtsnk) = 'Sink motion' ! sink motion

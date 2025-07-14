@@ -137,16 +137,21 @@ subroutine write_A_rad
   use settings, only: matrix_solver
   use matrix_vars, only: irad, cg_rad
   use miccg_mod, only: write_A_cg
+  use profiler_mod
 #ifdef USE_PETSC
   use matrix_vars, only: petsc_rad
   use petsc_solver_mod, only: write_A_petsc
 #endif
 
   if (matrix_solver == 0) then
+    call start_clock(wtmra)
     call write_A_cg(irad, cg_rad)
+    call stop_clock(wtmra)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
+    call start_clock(wtpra)
     call write_A_petsc(irad, petsc_rad)
+    call stop_clock(wtpra)
 #endif
   endif
 

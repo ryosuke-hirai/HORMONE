@@ -162,6 +162,7 @@ subroutine write_A_petsc(system, pm)
   use matrix_coeffs, only:compute_coeffs, get_matrix_offsets
   use matrix_utils, only:l_from_ijk, get_raddim, ijk_from_l
   use matrix_vars, only: petsc_set, irad, igrv
+  use profiler_mod
   integer, intent(in) :: system
   type(petsc_set), intent(inout) :: pm
   integer :: dim, i, j, k, l, ll, ncoeff, m
@@ -206,8 +207,10 @@ subroutine write_A_petsc(system, pm)
   end do
 
   ! Finalize PETSc matrix assembly.
+  call start_clock(wtprm)
   call MatAssemblyBegin(pm%A, MAT_FINAL_ASSEMBLY, ierr)
   call MatAssemblyEnd(pm%A, MAT_FINAL_ASSEMBLY, ierr)
+  call stop_clock(wtprm)
 
   ! Set operators for the KSP solver.
   call KSPSetOperators(pm%ksp, pm%A, pm%A, ierr)
@@ -231,11 +234,14 @@ end subroutine write_A_petsc
 #ifdef USE_PETSC
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
+  use profiler_mod
   type(petsc_set), intent(in) :: pm
   real(8), intent(in)    :: b(pm%lmax)
   real(8), intent(inout) :: x(pm%lmax)
   integer :: ierr, l, ll
   real(8), pointer :: x_array(:)
+
+  call start_clock(wtprv)
 
   ! Set the right-hand side vector b.
   do ll = 1, pm%lmax
@@ -255,8 +261,12 @@ subroutine solve_system_petsc(pm, b, x)
   call VecAssemblyBegin(pm%x, ierr)
   call VecAssemblyEnd(pm%x, ierr)
 
+  call stop_clock(wtprv)
+
   ! Solve the linear system.
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
+
+  call start_clock(wtprv)
 
   ! Perform scatter to extract only our owned values using pre-created scatter context
   call VecScatterBegin(pm%scatter_ctx, pm%x, pm%x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
@@ -267,6 +277,8 @@ subroutine solve_system_petsc(pm, b, x)
   call VecGetArrayF90(pm%x_gather, x_array, ierr)
   x(1:pm%lmax) = x_array(1:pm%lmax)
   call VecRestoreArrayF90(pm%x_gather, x_array, ierr)
+
+  call stop_clock(wtprv)
 
 end subroutine solve_system_petsc
 #endif
