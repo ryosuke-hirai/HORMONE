@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=33 ! number of profiling categories
+ integer,parameter:: n_wt=43 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -23,21 +23,31 @@ module profiler_mod
   wtgbn=16,& ! gravbound
   wtelg=17,& ! elliptic self-gravity
   wtmig=18,& ! MICCG solver for gravity
-  wtpeg=19,& ! PETSc solver for gravity
-  wthyp=20,& ! hyperbolic self-gravity
-  wtgsm=21,& ! gravity smearing
-  wtgs2=22,& ! MPI sweep gravity smearing
-  wtsho=23,& ! shockfind
-  wtrad=24,& ! radiation
-  wtmir=25,& ! MICCG solver for radiation
-  wtper=26,& ! PETSc solver for radiation
-  wtopc=27,& ! opacity
-  wtrfl=28,& ! radiative flux
-  wtsnk=29,& ! sink motion
-  wtacc=30,& ! sink accretion
-  wtout=31,& ! output
-  wtmpi=32,& ! mpi exchange
-  wtwai=33,& ! mpi wait
+  wtmga=19,& ! MICCG A matrix
+  wtpeg=20,& ! PETSc solver for gravity
+  wtpgv=21,& ! PETSc gravity vector assembly
+  wtpga=22,& ! PETSc gravity A matrix
+  wtpgc=23,& ! PETSc gravity A matrix coefficients
+  wtpgm=24,& ! PETSc gravity A matrix MPI
+  wthyp=25,& ! hyperbolic self-gravity
+  wtgsm=26,& ! gravity smearing
+  wtgs2=27,& ! MPI sweep gravity smearing
+  wtsho=28,& ! shockfind
+  wtrad=29,& ! radiation
+  wtmir=30,& ! MICCG solver for radiation
+  wtmra=31,& ! MICCG A matrix
+  wtper=32,& ! PETSc solver for radiation
+  wtprv=33,& ! PETSc vector assembly
+  wtpra=34,& ! PETSc A matrix
+  wtprc=35,& ! PETSc A matrix coefficients
+  wtprm=36,& ! PETSc A matrix MPI
+  wtopc=37,& ! opacity
+  wtrfl=38,& ! radiative flux
+  wtsnk=39,& ! sink motion
+  wtacc=40,& ! sink accretion
+  wtout=41,& ! output
+  wtmpi=42,& ! mpi exchange
+  wtwai=43,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -78,7 +88,12 @@ subroutine init_profiler
  parent(wtgbn) = wtgrv ! gravbound
  parent(wtelg) = wtgrv ! elliptic self-gravity
  parent(wtmig) = wtelg ! MICCG solver for gravity
+ parent(wtmga) = wtmig ! MICCG A matrix
  parent(wtpeg) = wtelg ! PETSc solver for gravity
+ parent(wtpgv) = wtpeg ! PETSc gravity vector assembly
+ parent(wtpga) = wtelg ! PETSc gravity A assembly
+ parent(wtpgc) = wtpga ! PETSc gravity A coefficients
+ parent(wtpgm) = wtpga ! PETSc gravity A MPI assembly
  parent(wthyp) = wtgrv ! hyperbolic self-gravity
  parent(wtgsm) = wthyp ! gravity smearing
  parent(wtgs2) = wtgsm ! MPI sweep gravity smearing
@@ -86,7 +101,12 @@ subroutine init_profiler
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
  parent(wtmir) = wtrad ! MICCG solver for radiation
+ parent(wtmra) = wtrad ! MICCG A matrix
  parent(wtper) = wtrad ! PETSc solver for radiation
+ parent(wtprv) = wtper ! PETSc vector assembly
+ parent(wtpra) = wtrad ! PETSc A assembly
+ parent(wtprc) = wtpra ! PETSc A coefficients
+ parent(wtprm) = wtpra ! PETSc A MPI assembly
  parent(wtopc) = wtrad ! opacity
  parent(wtrfl) = wtrad ! radiative flux
  parent(wtsnk) = wtlop ! sink motion
@@ -114,15 +134,25 @@ subroutine init_profiler
  routine_name(wtgbn) = 'Gravbound'   ! gravbound
  routine_name(wtelg) = 'Elliptic'    ! elliptic self-gravity
  routine_name(wtmig) = 'MICCG'       ! MICCG solver for gravity
+ routine_name(wtmga) = 'A assembly'  ! MICCG A matrix
  routine_name(wtpeg) = 'PETSc'       ! PETSc solver for gravity
+ routine_name(wtpgv) = 'Vec MPI'     ! PETSc gravity vector assembly
+ routine_name(wtpga) = 'A assembly'  ! PETSc gravity A matrix
+ routine_name(wtpgc) = 'Coeffs'      ! PETSc gravity A matrix coefficients
+ routine_name(wtpgm) = 'Mat MPI'     ! PETSc gravity A matrix MPI
  routine_name(wthyp) = 'Hyperbolic'  ! hyperbolic self-gravity
  routine_name(wtgsm) = 'Grav smear'  ! gravity smearing
  routine_name(wtgs2) = 'MPI sweep'   ! MPI sweep for gravity smearing
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
- routine_name(wtmir) = 'MICCG'       ! MICCG solver for radiation
- routine_name(wtper) = 'PETSc'       ! PETSc solver for radiation
+ routine_name(wtmir) = 'MICCG solve' ! MICCG solver for radiation
+ routine_name(wtmra) = 'A assembly'  ! MICCG A matrix
+ routine_name(wtper) = 'PETSc solve' ! PETSc solver for radiation
+ routine_name(wtprv) = 'Vec MPI'     ! PETSc vector assembly
+ routine_name(wtpra) = 'A assembly'  ! PETSc A matrix
+ routine_name(wtprc) = 'Coeffs'      ! PETSc A matrix coefficients
+ routine_name(wtprm) = 'Mat MPI'     ! PETSc A matrix MPI
  routine_name(wtopc) = 'Opacity'     ! opacity
  routine_name(wtrfl) = 'Rad flux'    ! radiative flux
  routine_name(wtsnk) = 'Sink motion' ! sink motion

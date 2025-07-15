@@ -65,7 +65,7 @@ subroutine setup_matrix(system)
       call setup_cg(gis, gie, gjs, gje, gks, gke, cg_grv)
     case (1)
 #ifdef USE_PETSC
-      call setup_petsc(gis, gie, gjs, gje, gks, gke, gis_global, &
+      call setup_petsc(igrv, gis, gie, gjs, gje, gks, gke, gis_global, &
                        gie_global, gjs_global, gje_global, gks_global, gke_global, &
                        petsc_grv)
 #endif
@@ -86,7 +86,7 @@ subroutine setup_matrix(system)
       call setup_cg(is, ie, js, je, ks, ke, cg_rad)
     case (1)
 #ifdef USE_PETSC
-      call setup_petsc(is, ie, js, je, ks, ke, &
+      call setup_petsc(irad, is, ie, js, je, ks, ke, &
                        is_global, ie_global, js_global, je_global, ks_global, ke_global, &
                        petsc_rad)
 #endif
@@ -118,16 +118,21 @@ subroutine write_A_grv
   use settings, only: matrix_solver
   use matrix_vars, only: igrv, cg_grv
   use miccg_mod, only: write_A_cg
+  use profiler_mod
 #ifdef USE_PETSC
   use matrix_vars, only: petsc_grv
   use petsc_solver_mod, only: write_A_petsc
 #endif
 
   if (matrix_solver == 0) then
+    call start_clock(wtmga)
     call write_A_cg(igrv, cg_grv)
+    call stop_clock(wtmga); call stop_clock(wtmig)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
+    call start_clock(wtpga)
     call write_A_petsc(igrv, petsc_grv)
+    call stop_clock(wtpga)
 #endif
   end if
 
@@ -137,16 +142,21 @@ subroutine write_A_rad
   use settings, only: matrix_solver
   use matrix_vars, only: irad, cg_rad
   use miccg_mod, only: write_A_cg
+  use profiler_mod
 #ifdef USE_PETSC
   use matrix_vars, only: petsc_rad
   use petsc_solver_mod, only: write_A_petsc
 #endif
 
   if (matrix_solver == 0) then
+    call start_clock(wtmra)
     call write_A_cg(irad, cg_rad)
+    call stop_clock(wtmra)
   else if (matrix_solver == 1) then
 #ifdef USE_PETSC
+    call start_clock(wtpra)
     call write_A_petsc(irad, petsc_rad)
+    call stop_clock(wtpra)
 #endif
   endif
 

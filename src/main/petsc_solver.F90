@@ -31,11 +31,13 @@ module petsc_solver_mod
 
 
 #ifdef USE_PETSC
-subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, pm)
+subroutine setup_petsc(system, is, ie, js, je, ks, ke, is_global, ie_global, js_global, je_global, ks_global, ke_global, pm)
   use settings, only: cgerr
   use utils, only: get_dim
   use matrix_utils, only: l_from_ijk, ijk_from_l
-  use matrix_vars, only: petsc_set
+  use matrix_vars, only: petsc_set, irad, igrv
+  use profiler_mod
+  integer, intent(in) :: system
   integer, intent(in) :: is, ie, js, je, ks, ke
   integer, intent(in) :: is_global, ie_global, js_global, je_global, ks_global, ke_global
   type(petsc_set), intent(out) :: pm
@@ -68,6 +70,17 @@ subroutine setup_petsc(is, ie, js, je, ks, ke, is_global, ie_global, js_global, 
   pm%lmax_global = pm%in_global * pm%jn_global * pm%kn_global
 
   call get_dim(pm%is_global, pm%ie_global, pm%js_global, pm%je_global, pm%ks_global, pm%ke_global, pm%dim)
+
+  ! Set timer IDs based on system type
+  if (system == irad) then
+    pm%timer_vec = wtprv     ! vector assembly for radiation
+    pm%timer_coeffs = wtprc  ! coefficients for radiation
+    pm%timer_matrix = wtprm  ! matrix assembly for radiation
+  else if (system == igrv) then
+    pm%timer_vec = wtpgv     ! gravity vector assembly
+    pm%timer_coeffs = wtpgc  ! gravity coefficients
+    pm%timer_matrix = wtpgm  ! gravity matrix assembly
+  endif
 
   ! Set up matrix A
   call MatCreate(PETSC_COMM_WORLD, pm%A, ierr)
@@ -162,6 +175,7 @@ subroutine write_A_petsc(system, pm)
   use matrix_coeffs, only:compute_coeffs, get_matrix_offsets
   use matrix_utils, only:l_from_ijk, get_raddim, ijk_from_l
   use matrix_vars, only: petsc_set, irad, igrv
+  use profiler_mod
   integer, intent(in) :: system
   type(petsc_set), intent(inout) :: pm
   integer :: dim, i, j, k, l, ll, ncoeff, m
@@ -187,6 +201,7 @@ subroutine write_A_petsc(system, pm)
 
   ! Loop over all grid points.
   ! l is the row number in the matrix
+  call start_clock(pm%timer_coeffs)
   do ll = 1, pm%lmax
     l = pm%my_rows(ll)
     call ijk_from_l(l, pm%is_global, pm%js_global, pm%ks_global, pm%in_global, pm%jn_global, i, j, k)
@@ -204,10 +219,13 @@ subroutine write_A_petsc(system, pm)
       end if
     enddo
   end do
+  call stop_clock(pm%timer_coeffs)
 
   ! Finalize PETSc matrix assembly.
+  call start_clock(pm%timer_matrix)
   call MatAssemblyBegin(pm%A, MAT_FINAL_ASSEMBLY, ierr)
   call MatAssemblyEnd(pm%A, MAT_FINAL_ASSEMBLY, ierr)
+  call stop_clock(pm%timer_matrix)
 
   ! Set operators for the KSP solver.
   call KSPSetOperators(pm%ksp, pm%A, pm%A, ierr)
@@ -231,11 +249,14 @@ end subroutine write_A_petsc
 #ifdef USE_PETSC
 subroutine solve_system_petsc(pm, b, x)
   use matrix_vars, only: petsc_set
+  use profiler_mod
   type(petsc_set), intent(in) :: pm
   real(8), intent(in)    :: b(pm%lmax)
   real(8), intent(inout) :: x(pm%lmax)
   integer :: ierr, l, ll
   real(8), pointer :: x_array(:)
+
+  call start_clock(pm%timer_vec)
 
   ! Set the right-hand side vector b.
   do ll = 1, pm%lmax
@@ -255,8 +276,12 @@ subroutine solve_system_petsc(pm, b, x)
   call VecAssemblyBegin(pm%x, ierr)
   call VecAssemblyEnd(pm%x, ierr)
 
+  call stop_clock(pm%timer_vec)
+
   ! Solve the linear system.
   call KSPSolve(pm%ksp, pm%b, pm%x, ierr)
+
+  call start_clock(pm%timer_vec)
 
   ! Perform scatter to extract only our owned values using pre-created scatter context
   call VecScatterBegin(pm%scatter_ctx, pm%x, pm%x_gather, INSERT_VALUES, SCATTER_FORWARD, ierr)
@@ -267,6 +292,8 @@ subroutine solve_system_petsc(pm, b, x)
   call VecGetArrayF90(pm%x_gather, x_array, ierr)
   x(1:pm%lmax) = x_array(1:pm%lmax)
   call VecRestoreArrayF90(pm%x_gather, x_array, ierr)
+
+  call stop_clock(pm%timer_vec)
 
 end subroutine solve_system_petsc
 #endif
