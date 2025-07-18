@@ -123,9 +123,18 @@ module physval
   real(8),allocatable,dimension(:,:,:,:):: spc0
   real(8),allocatable,dimension(:,:,:):: radK
 
-  real(8):: gamma, muconst, ch
+  real(8):: gamma, muconst, ch, X_uniform, Y_uniform, Z_uniform
 
   integer,allocatable,dimension(:,:,:):: shock
+
+  interface
+   subroutine get_comp(i,j,k,X,Z)
+    integer,intent(in):: i,j,k
+    real(8),intent(out):: X,Z
+   end subroutine get_comp
+  end interface
+
+  procedure(get_comp),pointer:: get_XZ
 
 end module physval
 
