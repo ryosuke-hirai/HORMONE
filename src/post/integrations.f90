@@ -21,12 +21,11 @@ subroutine get_luminosity(angle,lum)
  use constants
  use utils
  use utils_analysis
-
- implicit none
+ use opacity_mod,only:kap_thomson
 
  real(8),intent(in):: angle
  real(8),intent(out):: lum
- real(8):: tau, tau0, drmin, dtheta, dA, rho, XX, TT, dzabs, lumt, dzabs0
+ real(8):: tau, tau0, drmin, dtheta, dA, rho, XX, ZZ, TT, dzabs, lumt, dzabs0
  real(8),dimension(1:3):: dz, x, xp, dz0
  real(8),parameter:: tauerr=1d-3
  real(8),allocatable:: dr(:), rr(:)
@@ -53,7 +52,7 @@ subroutine get_luminosity(angle,lum)
  lumt = 0d0
 
 !$omp parallel do default(none) reduction(+:lumt) &
-!$omp private(ii,jj,kk,dA,x,xp,tau,rho,XX,TT,dz,dzabs) &
+!$omp private(ii,jj,kk,dA,x,xp,tau,rho,XX,ZZ,TT,dz,dzabs) &
 !$omp shared(dtheta,tau0,angle,iin,jjn,kkn,xi1,ie,dz0,dzabs0,rr)
  do jj = 1, jjn
   do ii = 1, iin
@@ -69,11 +68,11 @@ subroutine get_luminosity(angle,lum)
    do while (dot_product(x,dz0)<xi1(ie)*dzabs0)
     x = x + dz
     xp = carpol(x)
-    call get_local_val(xp,rho,XX,TT)
-    tau = tau + rho*kap_es(XX)*dzabs
+    call get_local_val(xp,rho,XX,ZZ,TT)
+    tau = tau + rho*kap_thomson(XX)*dzabs
 
     if(tau-tau0>tauerr*tau0)then ! tan ran over tau0
-     tau = tau - rho*kap_es(XX)*dzabs
+     tau = tau - rho*kap_thomson(XX)*dzabs
      x = x - dz
      xp = carpol(x)
      dz = dz*0.1d0
@@ -81,7 +80,7 @@ subroutine get_luminosity(angle,lum)
      cycle
     elseif(tau>tau0.and.abs(tau-tau0)<tauerr*tau0)then ! tau=tau0
 ! add black body flux
-     call get_local_val(xp,rho,XX,TT)
+     call get_local_val(xp,rho,XX,ZZ,TT)
      lumt = lumt+dA*sigma*TT**4
 !     if(TT>0d0)print'(2i5,3(1PE13.5e2))',ii,jj,x(3),TT,tau
      exit
@@ -117,7 +116,7 @@ subroutine get_luminosity2(angle,lum)
 
  real(8),intent(in):: angle
  real(8),intent(out):: lum
- real(8):: tau, drmin, dtheta, dA, rho, XX, TT, dzabs, lumt, dtau
+ real(8):: tau, drmin, dtheta, dA, rho, XX, ZZ, TT, dzabs, lumt, dtau
  real(8),dimension(1:3):: x, xp, dz0
  real(8),allocatable:: dr(:), rr(:)
  integer:: ii, jj, iin, jjn
@@ -141,7 +140,7 @@ subroutine get_luminosity2(angle,lum)
  lumt = 0d0
 
 !$omp parallel do reduction(+:lumt) collapse(2)  &
-!$omp private(ii,jj,dA,x,xp,tau,rho,XX,TT,dzabs,dtau,source,intens)
+!$omp private(ii,jj,dA,x,xp,tau,rho,XX,ZZ,TT,dzabs,dtau,source,intens)
  do jj = 1, jjn
   do ii = 1, iin
 ! set initial position
@@ -164,8 +163,8 @@ subroutine get_luminosity2(angle,lum)
      stop
     end if
 
-    call get_local_val(xp,rho,XX,TT,dzabs)
-    dtau = rho*kap(XX,TT)*dzabs
+    call get_local_val(xp,rho,XX,ZZ,TT,dzabs)
+    dtau = rho*kap(XX,ZZ,rho,TT)*dzabs
     tau = tau + dtau
     source = sigma*TT**4/pi
     intens = (intens-source)*exp(-dtau)+source
@@ -206,7 +205,7 @@ subroutine get_luminosity3(angle,lmda,lum,spec)
  real(8),allocatable,intent(in):: lmda(:)
  real(8),intent(out):: lum
  real(8),allocatable,intent(inout):: spec(:)
- real(8):: drmin, dtheta, dA, rho, XX, TT, dzabs, lumt
+ real(8):: drmin, dtheta, dA, rho, XX, ZZ, TT, dzabs, lumt
  real(8),dimension(1:3):: x, xp, dz0
  real(8),allocatable,dimension(:):: dr, rr, int_nu, S_nu, dtau, tau
  integer:: ii, jj, iin, jjn
@@ -239,7 +238,7 @@ subroutine get_luminosity3(angle,lmda,lum,spec)
  allocate(int_nu,S_nu,tau,dtau,mold=lmda)
 
 !$omp parallel do reduction(+:lumt,spec) collapse(2)  &
-!$omp private(ii,jj,dA,x,xp,tau,rho,XX,TT,dzabs,dtau,source,intens,int_nu,S_nu,dtau_grey)
+!$omp private(ii,jj,dA,x,xp,tau,rho,XX,ZZ,TT,dzabs,dtau,source,intens,int_nu,S_nu,dtau_grey)
  do jj = 1, jjn
   do ii = 1, iin
 ! set initial position
@@ -268,10 +267,10 @@ subroutine get_luminosity3(angle,lmda,lum,spec)
      stop
     end if
 
-    call get_local_val(xp,rho,XX,TT,dzabs)
+    call get_local_val(xp,rho,XX,ZZ,TT,dzabs)
 ! Assuming grey opacities
-    dtau = rho*kap(XX,TT,lmda)*dzabs
-    dtau_grey = rho*kap(XX,TT)*dzabs
+    dtau = rho*kap(XX,ZZ,rho,TT,lmda)*dzabs
+    dtau_grey = rho*kap(XX,ZZ,rho,TT)*dzabs
     tau = tau + dtau
     source = sigma*TT**4/pi
     intens = (intens-source)*exp(-dtau_grey)+source
@@ -319,7 +318,7 @@ subroutine get_luminosity4(angle,lmda,lum,spec)
  real(8),allocatable,intent(in):: lmda(:)
  real(8),intent(out):: lum
  real(8),allocatable,intent(inout):: spec(:)
- real(8):: drmin, dtheta, dA, rho, XX, TT, dzabs, lumt
+ real(8):: drmin, dtheta, dA, rho, XX, ZZ, TT, dzabs, lumt
  real(8),dimension(1:3):: x, xp, dz0
  real(8),allocatable,dimension(:):: dr, rr, int_nu, S_nu, dtau, tau, dint_nu
  integer:: ii, jj, iin, jjn
@@ -352,7 +351,7 @@ subroutine get_luminosity4(angle,lmda,lum,spec)
  allocate(int_nu,S_nu,tau,dtau,mold=lmda)
 
 !$omp parallel do reduction(+:lumt,spec) collapse(2)  &
-!$omp private(ii,jj,dA,x,xp,rho,XX,TT,dzabs,dtau,tau,source,intens,dintens,&
+!$omp private(ii,jj,dA,x,xp,rho,XX,ZZ,TT,dzabs,dtau,tau,source,intens,dintens,&
 !$omp         int_nu,dint_nu,S_nu,dtau_grey,tau_grey)
  do jj = 1, jjn
   do ii = 1, iin
@@ -383,10 +382,10 @@ subroutine get_luminosity4(angle,lmda,lum,spec)
      stop
     end if
 
-    call get_local_val(xp,rho,XX,TT,dzabs)
+    call get_local_val(xp,rho,XX,ZZ,TT,dzabs)
 ! Assuming grey opacities
-    dtau = rho*kap(XX,TT,lmda)*dzabs
-    dtau_grey = rho*kap(XX,TT)*dzabs
+    dtau = rho*kap(XX,ZZ,rho,TT,lmda)*dzabs
+    dtau_grey = rho*kap(XX,ZZ,rho,TT)*dzabs
     source = sigma*TT**4/pi
     dintens = source*(1d0-exp(-dtau_grey))*exp(-tau_grey)
     intens = intens + dintens
@@ -420,7 +419,7 @@ end subroutine get_luminosity4
 
 ! PURPOSE: Get local values of density, temperature and hydrogen fraction
 
- subroutine get_local_val(xp,rho,XX,TT,dz)
+ subroutine get_local_val(xp,rho,XX,ZZ,TT,dz)
 
   use grid
   use settings
@@ -432,10 +431,10 @@ end subroutine get_luminosity4
 
   real(8),intent(in):: xp(1:3)
   real(8),intent(out):: rho
-  real(8),intent(out),optional:: XX, TT
+  real(8),intent(out),optional:: XX, ZZ, TT
   real(8),intent(inout),optional:: dz
   real(8):: xp1, xp2, xp3, rhot(1:2), XXt(1:2), TTt(1:2)
-  real(8):: uu,vv,ww
+  real(8):: uu,vv,ww,Xl,Yl,Zl
   integer:: i,j,k,ii,jj,kk
 
 !-----------------------------------------------------------------------------
@@ -444,7 +443,8 @@ end subroutine get_luminosity4
   if(crdnt==2.and..not.solve_k)then
    if(xp(1)>=x1(ie))then
     rho = 0d0
-    if(present(XX))XX  = 0.7d0
+    if(present(XX))XX  = X_uniform
+    if(present(ZZ))ZZ  = Z_uniform
     if(present(TT))TT  = 1d-30
     return
    end if
@@ -478,7 +478,8 @@ end subroutine get_luminosity4
 ! For 3D spherical coordinates
    if(xp(1)>=x1(ie))then ! Ignore when outside computational domain
     rho = 0d0
-    if(present(XX))XX  = 0.7d0
+    if(present(XX))XX  = X_uniform
+    if(present(ZZ))ZZ  = Z_uniform
     if(present(TT))TT  = 1d-30
     if(present(dz))dz  = dxi1(ie)
     return
@@ -505,7 +506,8 @@ end subroutine get_luminosity4
    ww = (xp3-x3(kk-1))/(x3(kk)-x3(kk-1))
 
    rho = 0d0
-   XX = 0.7d0
+   XX = 0d0
+   ZZ = 0d0
    TT = 0d0
    do k = 0, 1
     do j = 0, 1
@@ -513,10 +515,14 @@ end subroutine get_luminosity4
       rho = rho + d(ii+i-1,jj+j-1,kk+k-1)*(1d0-uu)**(1-i)*uu**i &
                                          *(1d0-vv)**(1-j)*vv**j &
                                          *(1d0-ww)**(1-k)*ww**k
-      if(present(XX).and.spn>0)then
-       XX = XX + spc(1,ii+i-1,jj+j-1,kk+k-1)*(1d0-uu)**(1-i)*uu**i &
-                                            *(1d0-vv)**(1-j)*vv**j &
-                                            *(1d0-ww)**(1-k)*ww**k
+      if(present(XX).or.present(ZZ))then
+       call get_XZ(ii+i-1,jj+j-1,kk+k-1,Xl,Zl)
+       XX = XX + Xl*(1d0-uu)**(1-i)*uu**i &
+                   *(1d0-vv)**(1-j)*vv**j &
+                   *(1d0-ww)**(1-k)*ww**k
+       ZZ = ZZ + Zl*(1d0-uu)**(1-i)*uu**i &
+                   *(1d0-vv)**(1-j)*vv**j &
+                   *(1d0-ww)**(1-k)*ww**k
       end if
       if(present(TT).and.eostype>0)then
        TT = TT + T(ii+i-1,jj+j-1,kk+k-1)*(1d0-uu)**(1-i)*uu**i &
