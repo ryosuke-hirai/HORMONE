@@ -37,6 +37,7 @@ subroutine radiation
  integer:: in,jn,kn
  integer:: in_global,jn_global,kn_global
  real(8),allocatable:: x(:)
+ real(8):: XX,ZZ
 
 !-----------------------------------------------------------------------------
 
@@ -72,12 +73,13 @@ subroutine radiation
  call solve_system_rad(rsrc, x) ! returns erad^{n+1}
 
 ! update erad and u
-!$omp parallel do private(l,i,j,k)
+!$omp parallel do private(l,i,j,k,XX,ZZ)
  do ll = 1, size(x)
   l = map_rad(ll)
   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
+  call get_XZ(i,j,k,XX,ZZ)
   erad(i,j,k) = x(ll)
-  T   (i,j,k) = update_Tgas(d(i,j,k),erad(i,j,k),T(i,j,k),dt)
+  T   (i,j,k) = update_Tgas(XX,ZZ,d(i,j,k),erad(i,j,k),T(i,j,k),dt)
   eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
   p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
   e   (i,j,k) = get_etot_from_eint(i,j,k)
@@ -134,14 +136,14 @@ subroutine get_diffusion_coeff
 
  use constants,only:clight
  use grid,only:is,ie,js,je,ks,ke
- use physval,only:erad,d,T,erad,radK
+ use physval,only:erad,d,T,erad,radK,get_XZ
 
  integer:: i,j,k
- real(8):: RR,ll,kappar
+ real(8):: RR,ll,kappar,X,Z
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private(i,j,k,RR,ll,kappar) collapse(3)
+!$omp parallel do private(i,j,k,RR,ll,kappar,X,Z) collapse(3)
  do k = ks-1, ke+1
   do j = js-1, je+1
    do i = is-1, ie+1
@@ -153,7 +155,8 @@ subroutine get_diffusion_coeff
     if ((j == js-1 .or. j == je+1) .and. &
       (k == ks-1 .or. k == ke+1)) cycle
 
-    kappar = kappa_r(d(i,j,k),T(i,j,k))
+    call get_XZ(i,j,k,X,Z)
+    kappar = kappa_r(X,Z,d(i,j,k),T(i,j,k))
     RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
     radK(i,j,k) = clight*ll/(d(i,j,k)*kappar)
@@ -179,12 +182,12 @@ subroutine get_radb
  use settings,only:radswitch
  use constants,only:clight,arad
  use grid,only:dvol,dt,is_global,js_global,ks_global,ie_global,je_global,ke_global
- use physval
+ use physval,only:d,T,erad,get_XZ
  use matrix_utils,only:ijk_from_l
  use matrix_vars,only:map_rad
 
  integer:: i,j,k,l,ll
- real(8):: kappap
+ real(8):: kappap, X, Z
  integer :: in_global,jn_global,kn_global
 !-----------------------------------------------------------------------------
 
@@ -192,16 +195,17 @@ subroutine get_radb
  jn_global = je_global-js_global+1
  kn_global = ke_global-ks_global+1
 
-!$omp parallel do private(l,i,j,k,kappap)
+!$omp parallel do private(l,i,j,k,kappap,X,Z)
  do ll = 1, size(rsrc)
    l = map_rad(ll)
    call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
 ! Note: Dirichlet boundary conditions should be included here.
-   kappap = kappa_p(d(i,j,k),T(i,j,k))
+   call get_XZ(i,j,k,X,Z)
+   kappap = kappa_p(X,Z,d(i,j,k),T(i,j,k))
    rsrc(ll) = erad(i,j,k)*dvol(i,j,k)/dt
    if(radswitch==1) &
     rsrc(ll) = rsrc(ll) + clight*kappap*d(i,j,k)*dvol(i,j,k)*arad &
-     * (4d0*T(i,j,k)**3*update_Tgas(d(i,j,k),0d0,T(i,j,k),dt)-3d0*T(i,j,k)**4)
+     * (4d0*T(i,j,k)**3*update_Tgas(X,Z,d(i,j,k),0d0,T(i,j,k),dt)-3d0*T(i,j,k)**4)
   end do
 !$omp end parallel do
 
@@ -254,7 +258,7 @@ subroutine radiative_force
  use physval
 
  integer:: i,j,k,l,m
- real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork,kappar
+ real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork,kappar,X,Z
  real(8),dimension(1:3):: frad,gradv1,gradv2,gradv3,nn
 
 !-----------------------------------------------------------------------------
@@ -262,11 +266,12 @@ subroutine radiative_force
  call get_gradE
 
 !$omp parallel do private(i,j,k,RR,ll,ff,frad,vdotfrad,gradv1,gradv2,gradv3,&
-!$omp nn,l,m,radwork,Pedd,kappar) collapse(3)
+!$omp nn,l,m,radwork,Pedd,kappar,X,Z) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    kappar = kappa_r(d(i,j,k),T(i,j,k))
+    call get_XZ(i,j,k,X,Z)
+    kappar = kappa_r(X,Z,d(i,j,k),T(i,j,k))
     if(kappar<=tiny(kappar))cycle
     RR = norm2(gradE(1:3,i,j,k)) / (d(i,j,k)*kappar*erad(i,j,k))
     ll = lambda(RR)
@@ -320,19 +325,20 @@ subroutine rad_heat_cool
 
  use constants,only:clight,sigma,Cv
  use grid
- use physval
+ use physval,only:d,T,erad,eint,e,imu,u,iene,irad,get_XZ
  use pressure_mod,only:get_etot_from_eint,getT_from_de,Trad
 
  integer:: i,j,k
- real(8):: a1,a2,c1,c2,kappap,eint1
+ real(8):: a1,a2,c1,c2,kappap,eint1,X,Z
 
 !-----------------------------------------------------------------------------
 
-!$omp parallel do private(i,j,k,a1,a2,c1,c2,kappap,eint1) collapse(3)
+!$omp parallel do private(i,j,k,a1,a2,c1,c2,kappap,eint1,X,Z) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    kappap = kappa_p(d(i,j,k),T(i,j,k))
+    call get_XZ(i,j,k,X,Z)
+    kappap = kappa_p(X,Z,d(i,j,k),T(i,j,k))
     if(kappap<=tiny(kappap))cycle
 
     a1 = 4d0*kappap*sigma/(Cv*imu(i,j,k))**4/d(i,j,k)**3*dt

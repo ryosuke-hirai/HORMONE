@@ -38,8 +38,7 @@ program lightcurve
 
   implicit none
 
-  integer,parameter:: iangle=0, fangle=90, dangle=15
-  integer:: outtn, angle, unitn(0:fangle), iviewing_angle, n
+  integer:: outtn, angle, unitn(0:8), iviewing_angle, n
   real(8):: outtime, rad, lum, Teff, Reff
   real(8),allocatable:: angles(:,:),lmda(:),spec(:)
   character(len=70):: file, outfile
@@ -76,15 +75,6 @@ program lightcurve
   call allocations
 
   call readgrid('data/gridfile.bin')
-
-!!$  do angle = iangle, fangle, dangle
-!!$   write(outfile,'("data/",i2.2,"deg_lightcurve.dat")')angle
-!!$   if(start>0)then
-!!$    open(newunit=unitn(angle),file=outfile,status='old',position='append')
-!!$   else
-!!$    open(newunit=unitn(angle),file=outfile,status='replace')
-!!$   end if
-!!$  end do
 
   allocate(lmda(1:6))
   allocate(spec,mold=lmda)
@@ -133,15 +123,6 @@ program lightcurve
    call readbin(file)
    call boundarycondition
 
-!!$   do angle = iangle, fangle, dangle
-!!$    rad = dble(angle)*pi/180d0
-!!$    call get_luminosity2(angle,lmda,lum,spec)
-!!$    print*,time,angle,lum
-!!$    flush(6)
-!!$    write(unitn(angle),'(i10,2(1PE14.6e2))')tn,time,lum
-!!$    flush(unitn(angle))
-!!$   end do
-
    do iviewing_angle = 0, 8
     call get_luminosity4(angles(:,iviewing_angle),lmda,lum,spec)
     call fit_blackbody(lmda,spec,Teff)
@@ -156,10 +137,6 @@ program lightcurve
 
    outtime = outtime + dt_out
    outtn   = outtn   + tn_out
-  end do
-
-  do angle = iangle, fangle, dangle
-   close(unitn(angle))
   end do
 
   call finalize_mpi

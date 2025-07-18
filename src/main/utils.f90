@@ -532,4 +532,25 @@ pure subroutine get_dim(is, ie, js, je, ks, ke, dim)
   if (ke > ks) dim = dim + 1
 end subroutine get_dim
 
+subroutine get_XZ_uniform(i,j,k,X,Z)
+ use physval,only:X_uniform,Z_uniform
+ integer,intent(in):: i,j,k
+ real(8),intent(out):: X,Z
+ X = X_uniform
+ Z = Z_uniform
+! Suppress warnings about unused variables
+ if(.false.)then
+  if(i>0.and.j>0.and.k>0)continue
+ end if
+end subroutine get_XZ_uniform
+
+subroutine get_XZ_grid(i,j,k,X,Z)
+ use physval,only:spc
+ integer,intent(in):: i,j,k
+ real(8),intent(out):: X,Z
+ X = spc(1,i,j,k)
+ Z = 1d0-sum(spc(1:2,i,j,k))
+end subroutine get_XZ_grid
+
+
 end module utils

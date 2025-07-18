@@ -1,31 +1,20 @@
 module utils_analysis
-  implicit none
+ implicit none
 
- contains
-
-! electron scattering opacity
- pure function kap_es(x)
-  real(8),intent(in):: x
-  real(8):: kap_es
-  kap_es = 0.2d0*(1d0+x)
- end function kap_es
+contains
 
 ! simplified opacity function
- elemental function kap(X,T,nu)
-  real(8),intent(in):: X,T
+ elemental function kap(X,Z,d,T,nu)
+  use opacity_mod,only:kappa_r
+  real(8),intent(in):: X,Z,d,T
   real(8),intent(in),optional:: nu
-  real(8):: x_ion
-  real(8),parameter:: Trec = 5d3
-  real(8),parameter:: opacity_floor = 1d-2 ! based on Bersten+2011
   real(8):: kap
   if(present(nu))then
 ! frequency-dependent opacity (same as grey opacity for now)
-   x_ion = 1d0/(1d0+(max(T,1d1)/Trec)**(-11))
-   kap = max(kap_es(X)*x_ion,opacity_floor)
+   kap = kappa_r(X,Z,d,T)
   else
    ! grey opacity
-   x_ion = 1d0/(1d0+(max(T,1d1)/Trec)**(-11))
-   kap = max(kap_es(X)*x_ion,opacity_floor)
+   kap = kappa_r(X,Z,d,T)
   end if
  end function kap
 

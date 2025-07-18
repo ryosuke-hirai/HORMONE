@@ -38,8 +38,12 @@
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
 ! gamma: gas adiabatic index
+! X_uniform : H mass fraction when compswitch=0
+! Y_uniform : He mass fraction when compswitch=0
+! Z_uniform : metallicity when compswitch=0
 &eos_con eostype = 0 eoserr=1d-15 compswitch=0 muconst=0.62d0 spn=0
-		 gamma=1.6666666666666667d0 /
+         gamma=1.6666666666666667d0
+	 X_uniform=0.7d0 Y_uniform=0.28d0 Z_uniform=0.02d0 /
 
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
@@ -93,12 +97,13 @@
          jet_ang = 45d0 /
 
 ! radswitch:0=off,1=FLD (Commercon+2011), 2=FLD (Moens+2022)
-! opacitytype:0=fixed,1=ionisation
-! c_kappa_{r,p,f}: values for fixed opacity (Rosseland, Planck, flux-weighted mean)
+! opacitytype:0=fixed,1=approximate analytical formula,2=table
+! c_kappa_{r,p,f}: values for fixed opacity (Rosseland, Planck, flux-weighted mean) only relevant for opacitytype=0
+! opacity_floor: Floor opacity (only relevant for opacitytype/=1)
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
 ! rbtype:0=zero-gradient boundary
 &rad_con radswitch=0 opacitytype=0 c_kappa_r=1d0 c_kappa_p=1d0 c_kappa_f=1d0
-         lambdatype=0 rbtype=0 /
+         opacity_floor=0.01d0 lambdatype=0 rbtype=0 /
 
 ! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
 &mat_con matrix_solver=0 /
