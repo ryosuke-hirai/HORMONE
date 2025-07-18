@@ -6,28 +6,28 @@ module opacity_mod
 contains
 
 ! Thomson scattering opacity
- pure elemental function kap_thomson(X)
+ elemental function kap_thomson(X)
   real(8),intent(in):: X
   real(8):: kap_thomson
   kap_thomson = 0.2d0*(1d0+X)
  end function kap_thomson
 
 ! electron scattering opacity (Klein-Nishina correction)
- pure elemental function kap_es(X,d,T)
+ elemental function kap_es(X,d,T)
   real(8),intent(in):: X,d,T
   real(8):: kap_es
   kap_es = kap_thomson(X) / (1d0+2.7d11*d/T**2)/(1d0+(T/4.5d8)**0.86d0)
  end function kap_es
 
 ! Kramers opacity (free-free + bound-free + bound-bound)
- pure elemental function kap_kramers(X,Z,d,T)
+ elemental function kap_kramers(X,Z,d,T)
   real(8),intent(in):: X,Z,d,T
   real(8):: kap_kramers
   kap_kramers = 4d25*(1d0+X)*(Z+1d-3)*d/T**3.5d0
  end function kap_kramers
 
 ! fit to H- opacity
- pure elemental function kap_negH(Z,d,T)
+ elemental function kap_negH(Z,d,T)
   real(8),intent(in):: Z,d,T
   real(8):: kap_negH
 !  kap_negH = 1.1d-25*sqrt(Z*d)*T**7.7d0 ! Metzger & Pejcha 2017
@@ -35,14 +35,14 @@ contains
  end function kap_negH
 
 ! approximate molecular opacity
- pure elemental function kap_mol(Z)
+ elemental function kap_mol(Z)
   real(8),intent(in):: Z
   real(8):: kap_mol
   kap_mol = 0.1d0*Z
  end function kap_mol
 
 ! approximate radiative opacity
- pure elemental function kap_rad(X,Z,d,T)
+ elemental function kap_rad(X,Z,d,T)
   real(8),intent(in):: X,Z,d,T
   real(8):: kap_rad
   kap_rad = kap_mol(Z) &
@@ -51,14 +51,14 @@ contains
  end function kap_rad
 
 ! approximate conductive opacity
- pure elemental function kap_cond(Z,d,T)
+ elemental function kap_cond(Z,d,T)
   real(8),intent(in):: Z,d,T
   real(8):: kap_cond
   kap_cond = 2.6d-7*Z*(T/d)**2*(1d0+(d/2d6)**(2d0/3d0))
  end function kap_cond
 
 ! (TEST FEATURE, DO NOT USE) attempt at adding hydrogen line effect
- pure elemental function kap_hline(d,T)
+ elemental function kap_hline(d,T)
   real(8),intent(in):: d,T
   real(8):: kap_hline, logT_h0
   logT_h0 = log10(d)/40+4.+11/40.
@@ -74,7 +74,7 @@ contains
  end function kap_approx
 
 ! Get Rosseland mean opacity
- function kappa_r(X,Z,d,T) result(kappa)
+ elemental function kappa_r(X,Z,d,T) result(kappa)
   use settings,only:opacitytype
   real(8),intent(in)::X,Z,d,T
   real(8):: kappa
@@ -89,7 +89,7 @@ contains
  end function kappa_r
 
 ! Get Planck mean opacity
- function kappa_p(X,Z,d,T) result(kappa)
+ elemental function kappa_p(X,Z,d,T) result(kappa)
   use settings,only:opacitytype
   real(8),intent(in)::X,Z,d,T
   real(8):: kappa
@@ -104,7 +104,7 @@ contains
  end function kappa_p
 
 ! Get Flux mean opacity
- function kappa_f(X,Z,d,T) result(kappa)
+ elemental function kappa_f(X,Z,d,T) result(kappa)
   use settings,only:opacitytype
   real(8),intent(in)::X,Z,d,T
   real(8):: kappa
