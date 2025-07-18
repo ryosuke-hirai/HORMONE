@@ -416,43 +416,43 @@ subroutine gravpot1d
  use physval,only:d
  use gravmod,only:grvphi,mc
  use mpi_utils,only:allreduce_mpi
- real(8) :: num_n, denom_n, ishell
- integer:: i,n,j,k
+ real(8) :: phi_external, shell_density, shell_mass, shell_volume
+ integer:: i,j,k
 
- ! Loop over each shell
- do i = is_global, ie_global-1
+ phi_external = 0d0
 
-  ! Add up contributions from all exterior shells
-  ishell = 0d0
-  do n = i+1, ie_global
-
-    num_n = 0d0
-    denom_n = 0d0
-
-    ! Loop over each cell in the shell, adding to counters if the cell is in the current mpi task
-    if (is<=n .and. n<=ie) then
-      do j = js, je
-        do k = ks, ke
-          num_n = num_n + d(n,j,k)*dvol(n,j,k)
-          denom_n = denom_n + dvol(n,j,k)
-        end do
-      end do
-    end if
-
-    ! Add up counters across tasks
-    call allreduce_mpi('sum',num_n)
-    call allreduce_mpi('sum',denom_n)
-
-    ! Add the contribution from shell n
-    ! (This should now be the same value on each MPI task...)
-    ishell = ishell - num_n/denom_n * x1(n)*dxi1(n)
-
-  end do
+ ! Loop over each shell backwards
+ do i = ie_global, is_global, -1
 
   ! If the cell(s) is in the current MPI task, update grvphi.
   if (is<=i .and. i<=ie) then
-    grvphi(i,js-2:je+2,ks-2:ke+2) = G*(-mc(i)/x1(i)+4d0*pi*ishell)
+    grvphi(i,js-2:je+2,ks-2:ke+2) = G*(-mc(i)/x1(i)+4d0*pi*phi_external)
   endif
+
+  ! No need to continue if we are at the innermost shell
+  if (i==is_global) exit
+
+  ! Compute and update the exterior contribution to the gravitational potential for the next shell
+
+  shell_mass = 0d0
+  shell_volume = 0d0
+
+  ! Loop over each cell in the shell, adding to counters if the cell is in the current mpi task
+  if (is<=i .and. i<=ie) then
+    do j = js, je
+      do k = ks, ke
+        shell_mass = shell_mass + d(i,j,k)*dvol(i,j,k)
+        shell_volume = shell_volume + dvol(i,j,k)
+      end do
+    end do
+  end if
+
+  ! Add up counters across tasks
+  call allreduce_mpi('sum',shell_mass)
+  call allreduce_mpi('sum',shell_volume)
+  shell_density = shell_mass / shell_volume
+
+  phi_external = phi_external - shell_density * x1(i)*dxi1(i)  ! (This should now be the same value on each MPI task...)
 
  end do
 
