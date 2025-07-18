@@ -416,17 +416,17 @@ subroutine gravpot1d
  use physval,only:d
  use gravmod,only:grvphi,mc
  use mpi_utils,only:allreduce_mpi
- real(8) :: ishell, shell_density, shell_mass, shell_volume
+ real(8) :: phi_external, shell_density, shell_mass, shell_volume
  integer:: i,j,k
 
- ishell = 0d0
+ phi_external = 0d0
 
  ! Loop over each shell backwards
  do i = ie_global, is_global, -1
 
   ! If the cell(s) is in the current MPI task, update grvphi.
   if (is<=i .and. i<=ie) then
-    grvphi(i,js-2:je+2,ks-2:ke+2) = G*(-mc(i)/x1(i)+4d0*pi*ishell)
+    grvphi(i,js-2:je+2,ks-2:ke+2) = G*(-mc(i)/x1(i)+4d0*pi*phi_external)
   endif
 
   ! No need to continue if we are at the innermost shell
@@ -452,7 +452,7 @@ subroutine gravpot1d
   call allreduce_mpi('sum',shell_volume)
   shell_density = shell_mass / shell_volume
 
-  ishell = ishell - shell_density * x1(i)*dxi1(i)  ! (This should now be the same value on each MPI task...)
+  phi_external = phi_external - shell_density * x1(i)*dxi1(i)  ! (This should now be the same value on each MPI task...)
 
  end do
 
