@@ -15,6 +15,7 @@ subroutine checksetup
   use settings
   use grid
   use physval
+  use utils
   use tests_mod
 
 !-----------------------------------------------------------------------------
@@ -242,6 +243,13 @@ subroutine checksetup
    print*,'Cannot select gas+radiation EoS if radswitch>0'
    print*,'eostype=',eostype
    stop
+  end if
+
+! get_XZ depends on whether composition is uniform or not
+  if(compswitch==0)then
+   get_XZ => get_XZ_uniform
+  else
+   get_XZ => get_XZ_grid
   end if
 
 ! Output temperature if eostype>=1
