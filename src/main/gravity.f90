@@ -87,7 +87,7 @@ subroutine gravsetup
 
  if(tn==0) cgrav_old = cgrav
 
- if(gravswitch==2.or.(gravswitch==3.and..not.grav_init_relax))then
+ if(gravswitch==2.or.(gravswitch==3.and..not.(grav_init_relax.or.grav_init_other)))then
   call start_clock(wtelg)
   call setup_matrix(igrv)
   call write_A_grv ! writes to cg_grv or PETSc arrays

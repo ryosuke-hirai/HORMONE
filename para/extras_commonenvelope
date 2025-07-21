@@ -1,0 +1,33 @@
+! Model parameters for commonenvelope
+
+! mesafile: Name of MESA profile file to be read. If blank, it creates an isentropic star
+! spc_list: List of all elements to be tracked in the simulation
+! mass: Mass of donor star if not using MESA profile
+! radius: Radius of donor star if not using MESA profile
+! mcore: Mass of donor core if not using MESA file
+! rcore: Size of core to be removed from the computation in Rsun
+! isentropic: Make an isentropic star inheriting mass/radius/mcore from the MESA profile
+! compmass: Mass of companion star in Msun
+! compsoft: Softening length of companion star in Rsun
+! dis: Pre-CE orbital semi-major axis in Rsun (ignore if <0)
+! Porb: Pre-CE orbital period in days (ignored if dis>0)
+! ecc: Pre-CE orbital eccentricity
+! comprad : Radius of companion star in km (only used for calculating feedback luminosity)
+! comp_jet_ang: Neutron star jet opening angle in degrees (no jet feedback if <0)
+
+&cee_con
+ mesafile=''
+! spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
+ mass=12d0
+ radius=500d0
+ mcore=3d0
+ rcore=15d0
+ isentropic=.true.
+ compmass=1.5d0
+ compsoft=3d0
+ dis=-1d0
+ Porb=350d0
+ ecc=0.d0
+ comprad=12d0
+ comp_jet_ang=-45d0
+/
