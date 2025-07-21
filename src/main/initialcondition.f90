@@ -35,6 +35,7 @@ subroutine initialcondition
  use windtunnel_mod
  use stellarcollision_mod
  use sn2022jli_mod
+ use commonenvelope_mod
  use smearingtest_mod
  use iotest_mod
  use radtests_mod
@@ -93,6 +94,9 @@ subroutine initialcondition
 
   case('sn2022jli')
    call sn2022jli
+
+  case('commonenvelope')
+   call commonenvelope
 
   case('modify')
    call modify
