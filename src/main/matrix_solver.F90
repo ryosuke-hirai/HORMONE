@@ -53,7 +53,9 @@ subroutine setup_matrix(system)
   end if
 
   if (myrank == 0) then
-    print*, "Setting up ", trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), " solver for ", trim(adjustl(merge("gravity  ", "radiation", system == igrv)))
+   print*, "Setting up ", &
+    trim(adjustl(merge("MICCG", "PETSc", matrix_solver == 0))), " solver for ",&
+    trim(adjustl(merge("gravity  ", "radiation", system == igrv)))
     print*, ""
   end if
 

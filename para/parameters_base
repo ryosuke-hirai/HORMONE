@@ -1,13 +1,21 @@
------------------------------ parameters --------------------------------
+-------------------------------- parameters --------------------------------
+
+############################### GRID CONTROLS ##############################
+! xi1s, xi1e: Left and right edge of the grid along the x1 direction
+! is,ie,js,je,ks,ke: Starting/Ending index for the x1,x2,x3 directions
 ! i,j,kmesh : 0=uniform mesh, 1=geometrical series/uniform costheta(for crdnt==2), 2=user specified mesh
+! x1min     : Minimum grid spacing for geometrical series case
 ! fmr_max   : Maximum levels of fixed mesh refinement
 ! fmr_lvl(i): Number of layers in a given FMR level
+
 &gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
 	  is=1 ie=10 js=1 je=1 ks=1 ke=1
 	  imesh=0 jmesh=0 kmesh=0
 	  x1min=0d0 x2min=0 x3min=0d0
 	  fmr_max=0 fmr_lvl(1:20)=0 /
 
+
+############################## OUTPUT CONTROLS #############################
 ! outdir : Output directory name
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
@@ -25,37 +33,46 @@
 ! write_other_slice : Output an alternative slice for 3D
 ! write_temp : Output temperature (only relevant for eostype=0)
 ! write_mc : Output mass coordinates (only relevant for crdnt=2)
+
 &out_con  outdir='data' outstyle=1 endstyle=1
           tnlim=0 t_end=0d0 dt_out=1d0 tn_out=1 tn_evo=10
           dt_unit='s' sigfig=7 outres=1 output_ascii=.true.
 	  write_other_vel =.false. write_shock =.false. write_evo=.false.
 	  write_other_slice=.false. write_temp = .false. write_mc=.false. /
 
+
+############################### EOS CONTROLS ###############################
 ! eostype : 0='ideal gas'
 !	    1='ideal gas + radiation pressure'
 !	    2='gas+radiation+ionisation'
+! eoserr  : Tolerance for equation of state calculations
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
-! muconst : mean molecular weight (if compswitch=0 or background)
-! spn : number of species (>=3)
-! gamma: gas adiabatic index
+! muconst : Mean molecular weight (if compswitch=0 or background)
+! spn : Number of species (>=3)
+! gamma: Gas adiabatic index
 ! X_uniform : H mass fraction when compswitch=0
 ! Y_uniform : He mass fraction when compswitch=0
 ! Z_uniform : metallicity when compswitch=0
+
 &eos_con eostype = 0 eoserr=1d-15 compswitch=0 muconst=0.62d0 spn=0
          gamma=1.6666666666666667d0
 	 X_uniform=0.7d0 Y_uniform=0.28d0 Z_uniform=0.02d0 /
 
+
+########################### SIMULATION CONTROLS ############################
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
-! rktype: order of Runge-Kutta (1 is for Euler method)
-! mag_on: Whether or not to include magnetic fields
+! courant: Courant number
+! rktype: Order of Runge-Kutta (1 is for Euler method)
+! mag_on: Switch to include magnetic fields
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-! alpha9wave: ratio between diffusive and advection timescales (td/ta) of divB
-! include_cooling: switch for cooling
-! include_extforce: switch for external force provided in externalforce
+! alpha9wave: Ratio between diffusive and advection timescales (td/ta) of divB
+! include_cooling: Switch for cooling
+! include_extforce: Switch for external force provided in externalforce
 ! frame: 0=inertial frame, >0=centre on sink(frame)
-! extrasfile: file containing model parameters
-! solve_hydro: switch to solve hydro equations. useful for testing non-hydro modules
-! fixed_dt: overrides dt with this value if fixed_dt>0
+! extrasfile: File containing model parameters
+! solve_hydro: Switch to solve hydro equations. Useful for testing non-hydro modules
+! fixed_dt: Overrides dt with this value if fixed_dt>0
+
 &simucon  crdnt=0 courant=0.9d0 rktype=3 mag_on=.false.
           flux_limiter='modified_mc' alpha9wave=0.1d0
           include_cooling = .false.
@@ -64,52 +81,79 @@
           extrasfile='extras'
 	  solve_hydro=.true. fixed_dt=-1d0 /
 
+
+############################ BOUNDARY CONTROLS #############################
+! Boundary conditions
+! 1,2,3: Coordinate axis, i/o: Inner or Outer boundary, s/v: Scalar of Vector
 ! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)
 ! eq_sym : Set to .true. for equatorial symmetry
+
 &bouncon  bc1is=0 bc1os=0 bc2is=0 bc2os=0 bc3is=0 bc3os=0
 	  bc1iv=0 bc1ov=0 bc2iv=0 bc2ov=0 bc3iv=0 bc3ov=0 eq_sym=.false. /
 
+
+############################# GRAVITY CONTROLS #############################
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grverr: Tolerance for multipole expansion for boundary condition
 ! cgerr: Tolerance for MICCG solver
 ! HGfac: Ratio of gravity propagation speed to the maximum characteristic speed
 ! hgcfl: CFL condition for the Hyperbolic gravity wave equation
 ! maxtngrv: Maximum substeps for HG. Negative value means no maximum
+! gbtype: 0=multipole expansion, 1=Robin boundary
+! grktype: Order of Runge-Kutta for Hyperbolic self-gravity
+! alphagrv: ratio between advective and diffusive timescales for HG solver
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! grav_init_relax: Start by relaxing the hyperbolic solver. Use MICCG method if set to false
-! gbtype: 0=multipole expansion, 1=Robin boundary
-! grktype: order of Runge-Kutta for Hyperbolic self-gravity
+! include_extgrv: Switch to include external gravitational potential
+! gis,gie,gjs,gje,gks,gke: Indicies for gravity grid.
 ! grvsrctype: What to use for source term in Poisson equation; 0=density, 1="hydrogen"
-! alphagrv: ratio between advective and diffusive timescales for HG solver
+
 &gravcon gravswitch=0 grverr=1d-5 cgerr=1d-15 HGfac=5d0 hgcfl=0.9d0 maxtngrv=-1
          gbtype=0 grktype=2 alphagrv=0.1d0 grav_init_other=.false.
 	 grav_init_relax=.false. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1
 	 grvsrctype=0 /
 
-! include_sinks: switch for sink particles
-! nsink: number of sink particles
-! include_accretion: switch for accretion onto sink particles
-! jet_ang: opening angle for kinetic feedback (deg)
+
+########################## SINK PARTICLE CONTROLS ##########################
+! include_sinks: Switch for sink particles
+! nsink: Number of sink particles
+! include_accretion: Switch for accretion onto sink particles
+! jet_ang: Opening angle for kinetic feedback (deg)
 !!! other quantities should be given in initial condition file
+
 &sinkcon include_sinks=.false. nsink=0 include_accretion=.false.
          jet_ang = 45d0 /
 
+
+############################ RADIATION CONTROLS ############################
 ! radswitch:0=off,1=FLD (Commercon+2011), 2=FLD (Moens+2022)
 ! opacitytype:0=fixed,1=approximate analytical formula,2=table
-! c_kappa_{r,p,f}: values for fixed opacity (Rosseland, Planck, flux-weighted mean) only relevant for opacitytype=0
-! opacity_floor: Floor opacity (only relevant for opacitytype/=1)
+! c_kappa_{r,p,f}: Values for fixed opacity (Rosseland, Planck, flux-weighted mean) only relevant for opacitytype=0
+! opacity_floor: Floor opacity (only relevant for opacitytype==1)
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
 ! rbtype:0=zero-gradient boundary
+
 &rad_con radswitch=0 opacitytype=0 c_kappa_r=1d0 c_kappa_p=1d0 c_kappa_f=1d0
          opacity_floor=0.01d0 lambdatype=0 rbtype=0 /
 
+
+########################## MATRIX SOLVER CONTROLS ##########################
 ! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
+
 &mat_con matrix_solver=0 /
+
+
+######################### TRACER PARTICLE CONTROLS #########################
+! include_particles: Switch to include tracer particles
+! maxptc: Maximum number of tracer particles
 
 &partcon include_particles=.false. maxptc=0 /
 
+
+############################### TEST CONTROLS ##############################
 ! test_tol: tolerance for test simulation
 ! Mach_tol: Normalize velocities by this Mach number to avoid dividing by zero
+
 &testcon test_tol=1d-15 Mach_tol=1d-5 /

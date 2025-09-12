@@ -415,9 +415,12 @@ subroutine write_grid_bin
 
  open(newunit=ui,file=filename,status='replace',form='unformatted')
 
- write(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2),&
-          x2(gjs_global-2:gje_global+2),xi2(gjs_global-2:gje_global+2),dx2(gjs_global-2:gje_global+2),dxi2(gjs_global-2:gje_global+2),&
-          x3(gks_global-2:gke_global+2),xi3(gks_global-2:gke_global+2),dx3(gks_global-2:gke_global+2),dxi3(gks_global-2:gke_global+2)
+ write(ui)x1 (gis_global-2:gie_global+2), xi1 (gis_global-2:gie_global+2), &
+          dx1(gis_global-2:gie_global+2), dxi1(gis_global-2:gie_global+2), &
+          x2 (gjs_global-2:gje_global+2), xi2 (gjs_global-2:gje_global+2), &
+          dx2(gjs_global-2:gje_global+2), dxi2(gjs_global-2:gje_global+2), &
+          x3 (gks_global-2:gke_global+2), xi3 (gks_global-2:gke_global+2), &
+          dx3(gks_global-2:gke_global+2), dxi3(gks_global-2:gke_global+2)
 
  close(ui)
 
@@ -720,7 +723,12 @@ subroutine write_bin
    call write_dummy_recordmarker(un)
  endif
 
- if(compswitch>=2) then
+ if(compswitch==1) then
+   call write_dummy_recordmarker(un)
+   call write_var(un, ubound(mudata,1))
+   call write_var(un, mudata, 0, ubound(mudata,1), 0, 1)
+   call write_dummy_recordmarker(un)
+ elseif(compswitch>=2) then
    call write_dummy_recordmarker(un)
    call write_var(un, spn)
    call write_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
