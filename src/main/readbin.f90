@@ -63,7 +63,13 @@ subroutine readbin(filename)
    call read_dummy_recordmarker(un)
  endif
 
- if(compswitch>=2) then
+ if(compswitch==1)then
+   call read_dummy_recordmarker(un)
+   call read_var(un, musize)
+   allocate(mudata(0:musize,0:1))
+   call read_var(un, mudata, 0, musize, 0, 1)
+   call read_dummy_recordmarker(un)
+ elseif(compswitch>=2) then
    call read_dummy_recordmarker(un)
    call read_var(un, spn)
    call read_var(un, spc, 1, spn, is, ie, js, je, ks, ke)
@@ -117,9 +123,12 @@ subroutine readgrid(filename)
 !-----------------------------------------------------------------------------
 
  open(newunit=ui,file=filename,status='old',form='unformatted', action='read')
- read(ui)x1(gis_global-2:gie_global+2),xi1(gis_global-2:gie_global+2),dx1(gis_global-2:gie_global+2),dxi1(gis_global-2:gie_global+2), &
-         x2(gjs_global-2:gje_global+2),xi2(gjs_global-2:gje_global+2),dx2(gjs_global-2:gje_global+2),dxi2(gjs_global-2:gje_global+2), &
-         x3(gks_global-2:gke_global+2),xi3(gks_global-2:gke_global+2),dx3(gks_global-2:gke_global+2),dxi3(gks_global-2:gke_global+2)
+ read(ui)x1 (gis_global-2:gie_global+2), xi1 (gis_global-2:gie_global+2), &
+         dx1(gis_global-2:gie_global+2), dxi1(gis_global-2:gie_global+2), &
+         x2 (gjs_global-2:gje_global+2), xi2 (gjs_global-2:gje_global+2), &
+         dx2(gjs_global-2:gje_global+2), dxi2(gjs_global-2:gje_global+2), &
+         x3 (gks_global-2:gke_global+2), xi3 (gks_global-2:gke_global+2), &
+         dx3(gks_global-2:gke_global+2), dxi3(gks_global-2:gke_global+2)
  close(ui)
 
  return
