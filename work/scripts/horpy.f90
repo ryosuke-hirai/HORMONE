@@ -1,0 +1,193 @@
+module readbin_python
+
+ integer:: is, ie, js, je, ks, ke
+ real(8),allocatable,dimension(:):: x1, x2, x3, xi1, xi2, xi3
+ real(8),allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3
+ real(8),allocatable,dimension(:,:,:):: T, eint, erad, mu
+
+contains
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                         SUBROUTINE SETUP_PYTHON
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Set up variables for python interface
+
+subroutine setup_python(dir)
+
+ use settings,only:parafile
+ use grid,only:isp=>is,iep=>ie,jsp=>js,jep=>je,ksp=>ks,kep=>ke
+ use setup_mod
+ use checksetup_mod
+ use mpi_domain,only:domain_decomp
+
+ character(len=*),intent(in):: dir
+ character(len=1000):: cwd
+
+!-----------------------------------------------------------------------------
+
+ call getcwd(cwd)
+ call chdir(dir)
+
+! Read startfile
+ call read_startfile
+
+! Read default parameter file
+ call read_default
+
+! Reading parameters
+ call read_parameters(parafile)
+
+ call checksetup
+ call domain_decomp
+
+ call allocate_subset
+
+ is = isp; ie = iep
+ js = jsp; je = jep
+ ks = ksp; ke = kep
+ allocate(x1 (is:ie),x2 (js:je),x3 (ks:ke))
+ allocate(xi1(is:ie),xi2(js:je),xi3(ks:ke))
+ allocate(d(is:ie,js:je,ks:ke))
+ allocate(p, e, v1, v2, v3, b1, b2, b3, T, eint, erad, mu,mold=d)
+
+ call chdir(cwd)
+
+return
+end subroutine setup_python
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE READ_GRIDFILE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Read gridfile in python
+
+subroutine read_gridfile(gridfile)
+
+ use grid,only:x1p=>x1,x2p=>x2,x3p=>x3,xi1p=>xi1,xi2p=>xi2,xi3p=>xi3
+ use readbin_mod
+
+ character(len=*),intent(in):: gridfile
+
+!-----------------------------------------------------------------------------
+
+ call readgrid(gridfile)
+
+ x1  = x1p (is:ie)
+ x2  = x2p (js:je)
+ x3  = x3p (ks:ke)
+ xi1 = xi1p(is:ie)
+ xi2 = xi2p(js:je)
+ xi3 = xi3p(ks:ke)
+
+ return
+end subroutine read_gridfile
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE READ_BINFILE
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: Read a bin file in python
+
+subroutine read_binfile(binfile)
+
+ use settings,only:eostype,mag_on
+ use grid
+ use physval,only:dp=>d,pp=>p,ep=>e,v1p=>v1,v2p=>v2,v3p=>v3,&
+                  b1p=>b1,b2p=>b2,b3p=>b3,Tp=>T,eintp=>eint,eradp=>erad,imup=>imu
+ use readbin_mod
+
+ character(len=*),intent(in):: binfile
+
+!-----------------------------------------------------------------------------
+
+ call readbin(binfile)
+
+ d  = dp (is:ie,js:je,ks:ke)
+ v1 = v1p(is:ie,js:je,ks:ke)
+ v2 = v2p(is:ie,js:je,ks:ke)
+ v3 = v3p(is:ie,js:je,ks:ke)
+ e  = ep (is:ie,js:je,ks:ke)
+ p  = pp (is:ie,js:je,ks:ke)
+ eint = eintp(is:ie,js:je,ks:ke)
+
+ if(eostype>=1) &
+  T = Tp(is:ie,js:je,ks:ke)
+
+ if(compswitch>0) &
+  mu = 1d0/imup(is:ie,js:je,ks:ke)
+
+ if(mag_on)then
+  b1 = b1p(is:ie,js:je,ks:ke)
+  b2 = b2p(is:ie,js:je,ks:ke)
+  b3 = b3p(is:ie,js:je,ks:ke)
+ end if
+
+ if(radswitch>0) &
+  erad = eradp(is:ie,js:je,ks:ke)
+
+return
+end subroutine read_binfile
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                        SUBROUTINE ALLOCATE_SUBSET
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To allocate only the necessary variables
+
+subroutine allocate_subset
+
+ use settings
+ use physval
+ use grid
+ use gravmod
+ use sink_mod
+
+!-----------------------------------------------------------------------------
+
+! 1 dimensional arrays =======================================================
+! grid-related variables
+
+ allocate(x1(gis_global-2:gie_global+2))
+ allocate(xi1,dx1,dxi1,mold=x1)
+
+ allocate(x2(gjs_global-2:gje_global+2))
+ allocate(xi2,dx2,dxi2,mold=x2)
+
+ allocate(x3(gks_global-2:gke_global+2))
+ allocate(xi3,dx3,dxi3,mold=x3)
+
+! 3 dimensional arrays =======================================================
+! physical variables
+!  Strictly non-zero quantities
+ allocate(d(is-2:ie+2,js-2:je+2,ks-2:ke+2))
+ allocate(p,e,T,eint,erad,imu,ptot,mold=d)
+
+!  Initially zero quantities
+ allocate(v1,v2,v3,b1,b2,b3,phi,mold=d)
+
+
+ if(gravswitch>=1)then
+  allocate(grvphi(gis-2:gie+2,gjs-2:gje+2,gks-2:gke+2))
+  allocate(grvpsi(gis:gie,gjs:gje,gks:gke))
+ end if
+
+
+ if(compswitch>0) &
+  allocate( spc(1:spn,is-2:ie+2,js-2:je+2,ks-2:ke+2) )
+
+! allocate sink particle-related variables if necessary
+ if(include_sinks) allocate(sink(1:nsink))
+
+return
+end subroutine allocate_subset
+ 
+end module readbin_python
