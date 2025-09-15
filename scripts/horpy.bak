@@ -1,9 +1,12 @@
 module readbin_python
 
- integer:: is, ie, js, je, ks, ke
+ integer:: is, ie, js, je, ks, ke, tn
+ real(8):: time
  real(8),allocatable,dimension(:):: x1, x2, x3, xi1, xi2, xi3
  real(8),allocatable,dimension(:,:,:):: d, p, e, v1, v2, v3, b1, b2, b3
- real(8),allocatable,dimension(:,:,:):: T, eint, erad, mu
+ real(8),allocatable,dimension(:,:,:):: T, eint, erad, mu, grvphi
+ real(8),allocatable,dimension(:,:,:,:):: spc
+ character(len=10),allocatable,dimension(:):: species
 
 contains
 
@@ -17,7 +20,7 @@ contains
 
 subroutine setup_python(dir)
 
- use settings,only:parafile
+ use settings,only:parafile,mag_on
  use grid,only:isp=>is,iep=>ie,jsp=>js,jep=>je,ksp=>ks,kep=>ke
  use setup_mod
  use checksetup_mod
