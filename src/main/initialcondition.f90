@@ -92,6 +92,9 @@ subroutine initialcondition
   case('stellarcollision')
    call stellarcollision
 
+  case('stellarcollision_rsg')
+   call stellarcollision_rsg
+
   case('sn2022jli')
    call sn2022jli
 
