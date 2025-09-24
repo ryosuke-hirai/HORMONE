@@ -25,6 +25,7 @@ contains
 subroutine setup_python(dir)
 
  use settings,only:parafile,include_sinks,nsink
+ use physval,only:d
  use setup_mod
  use checksetup_mod
  use mpi_domain,only:domain_decomp
@@ -51,9 +52,9 @@ subroutine setup_python(dir)
  call domain_decomp
 
 ! call allocate_subset
- call allocations
+ if(.not.allocated(d))call allocations
 
- if(include_sinks)then
+ if(include_sinks.and..not.allocated(sink_x))then
   allocate(sink_x(1:3,1:nsink))
   allocate(sink_v,mold=sink_x)
   allocate(sink_mass(1:nsink))
