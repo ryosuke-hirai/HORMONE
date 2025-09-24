@@ -161,7 +161,7 @@ subroutine sink_accretion
   r_circ = dot_product(accang,accang)/accmass**2/(G*sink(n)%mass)
   r_circ = max(r_circ,sink(n)%racc)
 ! Mass accreted onto NS
-  accmass_in = accmass * (sink(n)%racc/r_circ)**0.3d0
+  accmass_in = accmass * (sink(n)%racc/r_circ)**p_acc
 ! Jet energy is determined by accretion energy
   Ejet = Ejet + G*sink(n)%mass*accmass_in/sink(n)%racc
 
