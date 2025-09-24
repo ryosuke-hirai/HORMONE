@@ -123,7 +123,7 @@ module physval
   real(8),allocatable,dimension(:,:,:,:):: spc0
   real(8),allocatable,dimension(:,:,:):: radK
 
-  real(8):: gamma, muconst, ch, X_uniform, Y_uniform, Z_uniform
+  real(8):: gamma, muconst, ch, X_uniform, Y_uniform, Z_uniform, p_acc
 
   integer,allocatable,dimension(:,:,:):: shock
 

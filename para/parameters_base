@@ -120,11 +120,11 @@
 ! include_sinks: Switch for sink particles
 ! nsink: Number of sink particles
 ! include_accretion: Switch for accretion onto sink particles
-! jet_ang: Opening angle for kinetic feedback (deg)
+! p_acc: p value for accretion efficiency ( Mdot = Mcap * (Rns/Rcirc)**p_acc )
 !!! other quantities should be given in initial condition file
 
 &sinkcon include_sinks=.false. nsink=0 include_accretion=.false.
-         jet_ang = 45d0 /
+         p_acc=0.5d0 /
 
 
 ############################ RADIATION CONTROLS ############################

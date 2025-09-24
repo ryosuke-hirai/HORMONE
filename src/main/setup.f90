@@ -134,7 +134,7 @@ subroutine read_parameters(filename)
                     HGfac, hgcfl, maxtngrv, gbtype, grktype, alphagrv, &
                     grav_init_other, grav_init_relax, include_extgrv,&
                     gis, gie, gjs, gje, gks, gke
- namelist /sinkcon/ include_sinks, nsink, include_accretion
+ namelist /sinkcon/ include_sinks, nsink, include_accretion, p_acc
  namelist /rad_con/ radswitch, opacitytype, c_kappa_p, c_kappa_r, c_kappa_f, &
                     lambdatype, rbtype
  namelist /partcon/ include_particles, maxptc
