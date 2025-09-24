@@ -331,6 +331,7 @@ subroutine open_sinkfile
    write(iskf,forma,advance="no")trim(header)//'_mass'
    write(iskf,forma,advance="no")trim(header)//'_mdot'
    write(iskf,forma,advance="no")trim(header)//'_facc'
+   write(iskf,forma,advance="no")trim(header)//'_Lacc'
    write(iskf,forma,advance="no")trim(header)//'_Jspin'
    write(iskf,forma,advance="no")trim(header)//'_jdot'
   end if
@@ -378,6 +379,7 @@ subroutine sink_output
    call write_anyval(iskf,forme,sink(n)%mass/msun,1)
    call write_anyval(iskf,forme,sink(n)%mdot/msun*year,1)
    call write_anyval(iskf,forme,sink(n)%facc,1)
+   call write_anyval(iskf,forme,sink(n)%acclum,1)
    call write_anyval(iskf,forme,sink(n)%Jspin(3),1)
    call write_anyval(iskf,forme,sink(n)%jdot(3),1)
   end if

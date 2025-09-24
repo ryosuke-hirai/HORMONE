@@ -5,7 +5,7 @@ module derived_types
  type sink_prop
   sequence
   integer:: i,j,k,pad ! pad is added to align memory for 64-bit machines
-  real(8):: mass, softfac, lsoft, laccr, locres, dt, mdot, racc, facc, jet_ang
+  real(8):: mass, softfac, lsoft, laccr, locres, dt, mdot, racc, facc, jet_ang, acclum
   real(8),dimension(1:3):: x,v,a,xpol,Jspin,jdot,jet_dir
  end type sink_prop
 
@@ -26,6 +26,7 @@ contains
   sink%mdot=0d0
   sink%racc=0d0
   sink%facc=0d0
+  sink%acclum=0d0
   sink%jet_ang=0d0
   sink%x=0d0
   sink%v=0d0
