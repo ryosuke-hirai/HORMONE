@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# Unified setup_hormone: script + bash completion in one file
+
+STARTFILE="startfile"
+PARADIR="../para"
+TESTDIR="../tests"
+
+# ---------- Helper functions ----------
+
+latest_dump_number() {
+    local files=("$PWD"/data/bin*[0-9]*.dat)
+    [ -e "${files[0]}" ] || { echo 0; return; }
+    local latest=$(ls -1t "${files[@]}" 2>/dev/null | head -n1)
+    local num=$(basename "$latest" | sed -E 's/^bin0*([0-9]+).*/\1/')
+    echo "$num"
+}
+
+update_startfile() {
+    local mode="$1"
+    local simtype="$2"
+    local startnum="$3"
+
+    awk -v mode="$mode" -v simtype="$simtype" -v startnum="$startnum" '
+    BEGIN { inblock=0; seen_start=0; seen_simtype=0; seen_parafile=0; }
+    /^\s*&startcon/ { inblock=1 }
+    inblock && /^\s*\// {
+        if (!seen_start)    print "  start = " startnum
+        if (mode != "continue") {
+            if (!seen_simtype) printf("  simtype = '\''%s'\''\n", simtype)
+            if (!seen_parafile) printf("  parafile = '\''parameters'\''\n")
+        }
+        inblock=0
+    }
+    {
+        if (inblock && $0 ~ /^[[:space:]]*start[[:space:]]*=/) {
+            match($0, /^([[:space:]]*start[[:space:]]*=[[:space:]]*)[^!]*([!].*)?$/, arr)
+            indent=arr[1]; comment=arr[2]
+            if (comment == "") comment=""
+            printf("%s%d%s%s\n", indent, startnum, (comment != "" ? " " : ""), comment)
+            seen_start=1; next
+        }
+        if (inblock && $0 ~ /^[[:space:]]*simtype[[:space:]]*=/ && mode != "continue") {
+            match($0, /^([[:space:]]*simtype[[:space:]]*=[[:space:]]*)[^!]*([!].*)?$/, arr)
+            indent=arr[1]; comment=arr[2]
+            if (comment == "") comment=""
+            printf("%s'\''%s'\''%s%s\n", indent, simtype, (comment != "" ? " " : ""), comment)
+            seen_simtype=1; next
+        }
+        if (inblock && $0 ~ /^[[:space:]]*parafile[[:space:]]*=/ && mode != "continue") {
+            match($0, /^([[:space:]]*parafile[[:space:]]*=[[:space:]]*)[^!]*([!].*)?$/, arr)
+            indent=arr[1]; comment=arr[2]
+            if (comment == "") comment=""
+            printf("%s'\''parameters'\''%s%s\n", indent, (comment != "" ? " " : ""), comment)
+            seen_parafile=1; next
+        }
+        print
+    }' "$STARTFILE" > "$STARTFILE.tmp" && mv "$STARTFILE.tmp" "$STARTFILE"
+}
+
+# ---------- Main script ----------
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    if [ $# -lt 1 ]; then
+	shopt -s nullglob
+	for f in "$PARADIR"/parameters_*; do
+            bn=${f##*/parameters_}
+            [ "$bn" = "base" ] && continue
+            simtypes+=("$bn")
+	done
+	shopt -u nullglob
+	{
+        echo "Usage: $0 <simtype|continue> [test]"
+        echo
+        echo "<simtype> options"
+        for name in "${simtypes[@]}"; do
+            echo "- $name"
+        done
+	} | less -R
+        exit 1
+    fi
+
+    MODE="$1"
+    shift
+    TESTFLAG=""
+
+    if [ "$1" = "test" ]; then
+        TESTFLAG="test"
+        shift
+    fi
+
+    if [ "$MODE" = "continue" ]; then
+        STARTNUM=$(latest_dump_number)
+        update_startfile "continue" "" "$STARTNUM"
+    else
+        STARTNUM=0
+        # Append " test" if requested
+        SIMTYPE_TO_WRITE="$MODE"
+        if [ "$TESTFLAG" = "test" ]; then
+            SIMTYPE_TO_WRITE="$SIMTYPE_TO_WRITE test"
+        fi
+        update_startfile "new" "$SIMTYPE_TO_WRITE" "$STARTNUM"
+
+        cp "$PARADIR/parameters_$MODE" ./parameters || {
+            echo "Error: no parameters file for simtype '$MODE'"
+            exit 1
+        }
+        if [ -f "$PARADIR/extras_$MODE" ]; then
+            cp "$PARADIR/extras_$MODE" ./extras
+        fi
+    fi
+fi
+
+# ---------- Bash completion function ----------
+_setup_hormone_complete() {
+    local cur prev words cword
+    if type _get_comp_words_by_ref >/dev/null 2>&1; then
+        _get_comp_words_by_ref -n : cur prev words cword
+    else
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+        words=("${COMP_WORDS[@]}")
+        cword=$COMP_CWORD
+    fi
+
+    local PARADIR="../para"
+    local TESTDIR="../tests"
+    local simtypes=()
+    local name
+
+    shopt -s nullglob
+    for f in "$PARADIR"/parameters_*; do
+        bn=${f##*/parameters_}
+        [ "$bn" = "base" ] && continue
+        simtypes+=("$bn")
+    done
+    shopt -u nullglob
+
+    local opts="continue ${simtypes[*]}"
+
+    # First arg
+    if [ $cword -eq 1 ]; then
+        if [[ -z "$cur" && -n "${COMP_TYPE-}" && "$COMP_TYPE" -eq 63 ]]; then
+            {
+                echo "Restart simulation from the latest dump"
+                echo "- continue"
+                echo
+                echo "Start simulation for one of the following simtypes"
+                for name in "${simtypes[@]}"; do
+                    echo "- $name"
+                done
+            } | less -R  # <-- paged output
+            COMPREPLY=()
+        else
+            COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+        fi
+        return 0
+    fi
+
+    # Second arg: only "test"
+    if [ $cword -eq 2 ]; then
+        local chosen="${words[1]}"
+        if [ -f "$TESTDIR/${chosen}.bin" ]; then
+            if [ -z "$cur" ]; then
+                echo "Type 'test' if you want to run a test simulation"
+                COMPREPLY=()
+                return 0
+            fi
+            if [[ "$cur" == t* ]] && [[ ! " ${words[*]} " =~ " test " ]]; then
+                COMPREPLY=( $(compgen -W "test" -- "$cur") )
+                return 0
+            fi
+        fi
+        return 0
+    fi
+}
+
+# Register completion if interactive
+if [[ -n $PS1 ]]; then
+    complete -F _setup_hormone_complete setup_hormone ./setup
+fi

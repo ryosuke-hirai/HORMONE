@@ -10,7 +10,11 @@ If start==0, it will set the initial condition based on the choice of simtype.
           Tests should be run with compiler optimization switched off
 
 
-&startcon start=0 simtype='sodshock_x test' parafile='' /
+&startcon
+  start= 0 ! start file number
+  simtype= 'sodshock_x test' ! simulation type
+  parafile='parameters' ! parameters file
+/
 
 
 ++++++ SIMTYPE OPTIONS ++++++
