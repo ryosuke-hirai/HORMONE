@@ -69,12 +69,20 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 	done
 	shopt -u nullglob
 	{
-        echo "Usage: $0 <simtype|continue> [test]"
+        echo "Usage: $0 <continue|simtype> [test|startN]"
         echo
-        echo "<simtype> options"
+        echo "Restart simulation from the latest dump"
+	echo "- continue"
+	echo
+	echo "Start simulation for a simtype"
+	echo "<simtype> options"
         for name in "${simtypes[@]}"; do
             echo "- $name"
         done
+	echo
+	echo "Add 'test' as a second argument if running a test"
+	echo
+	echo "Add a number as a second argument to specify start file number"
 	} | less -R
     # bootstrap: if completions not yet registered
     if [ -z "${__SETUP_HORMONE_COMPLETION_LOADED+x}" ]; then
