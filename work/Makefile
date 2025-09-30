@@ -145,6 +145,7 @@ install:
 
 # Detect user shell and rc file
 	@read -p "Enter Shell environment [default: $$SHELL]: " SHELL_INPUT; \
+	if [ -z "$$SHELL_INPUT" ]; then SHELL_INPUT="$$SHELL"; fi; \
 	if [ -n "$$SHELL_INPUT" ]; then \
 	  case "$$SHELL_INPUT" in \
 	    */zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
@@ -181,6 +182,7 @@ install:
 uninstall:
 	@echo "Uninstalling setup_hormone..."
 	@read -p "Enter Shell environment [default: $$SHELL]: " SHELL_INPUT; \
+	if [ -z "$$SHELL_INPUT" ]; then SHELL_INPUT="$$SHELL"; fi; \
 	if [ -n "$$SHELL_INPUT" ]; then \
 	  case "$$SHELL_INPUT" in \
 	    */zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
