@@ -1,13 +1,27 @@
+
 ### hormone-setup begin ###
+
+## hormone-setup for bash ##
 function hormone-setup {
   export FC=@FC@
-  ulimit -s unlimited
   export OMP_NUM_THREADS=@OMP_NUM_THREADS@
   export OMP_PLACES=cores
   export OMP_PROC_BIND=close
   export OMP_STACKSIZE=512M
+  ulimit -s unlimited
   echo "Activated HORMONE"
 }
+## end hormone-setup for bash ##
+## hormone-setup for csh ##
+alias hormone-setup \
+      'setenv FC @FC@; \
+       setenv OMP_NUM_THREADS @OMP_NUM_THREADS@; \
+       setenv OMP_PLACES cores; \
+       setenv OMP_PROC_BIND close; \
+       setenv OMP_STACKSIZE 512M; \
+       limit stacksize unlimited; \
+       echo "Activated HORMONE (csh)"'
+## end hormone-setup for csh ##
 
 _setup_hormone_complete() {
     local cur prev words cword

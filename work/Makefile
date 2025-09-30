@@ -65,7 +65,6 @@ INI_DIR = ../src/init
 POS_DIR = ../src/post
 BIN_DIR = $(HORMONE_DIR)/bin
 
-BASHRC := ~/.bashrc
 SCRIPTS_DIR := ./scripts
 
 TARGET = hormone
@@ -144,29 +143,56 @@ clean:
 install:
 	@echo "Installing setup_hormone..."
 
-	 # Remove old hormone-setup block if exists
-	@sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $(BASHRC)
-
-	 # Prompt user for config
-	@read -p "Enter Fortran compiler [default: gfortran]: " FC_INPUT; \
-	 FC=$${FC_INPUT:-gfortran}; \
-	 if [ -z "$$FC_INPUT" ]; then FC=gfortran; fi; \
-	 read -p "Enter number of OpenMP threads [default: 8]: " OMP_INPUT; \
-	 OMP=$${OMP_INPUT:-8}; \
-	 if [ -z "$$OMP_INPUT" ]; then OMP=8; fi; \
-	 \
-	 sed -e "s/@FC@/$$FC/" \
-	     -e "s/@OMP_NUM_THREADS@/$$OMP/" \
-	     $(SCRIPTS_DIR)/hormone_setup | cat >> $(BASHRC); \
-	 echo "Updated $(BASHRC)"
-
-	 # Copy setup script into current directory
-	@cp $(SCRIPTS_DIR)/setup ./setup
-	@chmod +x ./setup
-	@echo "Done. Restart your shell or run 'source $(BASHRC)' to enable hormone-setup."
+# Detect user shell and rc file
+	@read -p "Enter Shell environment [default: $$SHELL]: " SHELL_INPUT; \
+	if [ -n "$$SHELL_INPUT" ]; then \
+	  case "$$SHELL_INPUT" in \
+	    */zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
+	    */bash) RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash;; \
+	    */tcsh) RCFILE="$$HOME/.tcshrc"; SHELLTYPE=csh;; \
+	    */csh) RCFILE="$$HOME/.cshrc"; SHELLTYPE=csh;; \
+	    *) RCFILE="$$HOME/.profile"; SHELLTYPE=sh;; \
+	  esac; \
+	else \
+	  RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash; \
+	fi; \
+	echo "Using rc file: $$RCFILE ($$SHELLTYPE)"; \
+	read -p "Enter Fortran compiler [default: gfortran]: " FC_INPUT; \
+	FC=$${FC_INPUT:-gfortran}; \
+	if [ -z "$$FC_INPUT" ]; then FC=gfortran; fi; \
+	read -p "Enter number of OpenMP threads [default: 8]: " OMP_INPUT; \
+	OMP=$${OMP_INPUT:-8}; \
+	if [ -z "$$OMP_INPUT" ]; then OMP=8; fi; \
+	echo "FC=$$FC, OMP_NUM_THREADS=$$OMP"; \
+	sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $${RCFILE}; \
+	sed -e "s/@FC@/$$FC/" \
+	    -e "s/@OMP_NUM_THREADS@/$$OMP/" \
+	    $(SCRIPTS_DIR)/hormone_setup | cat >> $${RCFILE}; \
+	if [ "$$SHELLTYPE" = "csh" ]; then \
+	  sed -i '/## hormone-setup for bash ##/,/## end hormone-setup for bash ##/d' $${RCFILE}; \
+	else \
+	  sed -i '/## hormone-setup for csh ##/,/## end hormone-setup for csh ##/d' $${RCFILE}; \
+	fi; \
+	echo "Updated $$RCFILE"; \
+	cp $(SCRIPTS_DIR)/setup ./setup; \
+	chmod +x ./setup; \
+	echo "Done. Restart your shell or run 'source $$RCFILE' to enable hormone-setup."
 
 uninstall:
 	@echo "Uninstalling setup_hormone..."
-	@sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $(BASHRC)
+	@read -p "Enter Shell environment [default: $$SHELL]: " SHELL_INPUT; \
+	if [ -n "$$SHELL_INPUT" ]; then \
+	  case "$$SHELL_INPUT" in \
+	    */zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
+	    */bash) RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash;; \
+	    */tcsh) RCFILE="$$HOME/.tcshrc"; SHELLTYPE=csh;; \
+	    */csh) RCFILE="$$HOME/.cshrc"; SHELLTYPE=csh;; \
+	    *) RCFILE="$$HOME/.profile"; SHELLTYPE=sh;; \
+	  esac; \
+	else \
+	  RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash; \
+	fi; \
+	echo "Using rc file: $$RCFILE ($$SHELLTYPE)"; \
+	sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $${RCFILE}
 	@rm -f ./setup
 	@echo "Uninstalled."
