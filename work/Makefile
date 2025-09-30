@@ -65,7 +65,9 @@ INI_DIR = ../src/init
 POS_DIR = ../src/post
 BIN_DIR = $(HORMONE_DIR)/bin
 
+# installer settings
 SCRIPTS_DIR := ./scripts
+SED_INPLACE := $(shell if sed --version >/dev/null 2>&1; then echo "sed -i"; else echo "sed -i ''"; fi)
 
 TARGET = hormone
 
@@ -148,10 +150,10 @@ install:
 	if [ -z "$$SHELL_INPUT" ]; then SHELL_INPUT="$$SHELL"; fi; \
 	if [ -n "$$SHELL_INPUT" ]; then \
 	  case "$$SHELL_INPUT" in \
-	    */zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
-	    */bash) RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash;; \
-	    */tcsh) RCFILE="$$HOME/.tcshrc"; SHELLTYPE=csh;; \
-	    */csh) RCFILE="$$HOME/.cshrc"; SHELLTYPE=csh;; \
+	    *zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
+	    *bash) RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash;; \
+	    *tcsh) RCFILE="$$HOME/.tcshrc"; SHELLTYPE=csh;; \
+	    *csh) RCFILE="$$HOME/.cshrc"; SHELLTYPE=csh;; \
 	    *) RCFILE="$$HOME/.profile"; SHELLTYPE=sh;; \
 	  esac; \
 	else \
@@ -165,14 +167,14 @@ install:
 	OMP=$${OMP_INPUT:-8}; \
 	if [ -z "$$OMP_INPUT" ]; then OMP=8; fi; \
 	echo "FC=$$FC, OMP_NUM_THREADS=$$OMP"; \
-	sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $${RCFILE}; \
+	$(SED_INPLACE) '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $${RCFILE}; \
 	sed -e "s/@FC@/$$FC/" \
 	    -e "s/@OMP_NUM_THREADS@/$$OMP/" \
 	    $(SCRIPTS_DIR)/hormone_setup | cat >> $${RCFILE}; \
 	if [ "$$SHELLTYPE" = "csh" ]; then \
-	  sed -i '/## hormone-setup for bash ##/,/## end hormone-setup for bash ##/d' $${RCFILE}; \
+	  $(SED_INPLACE) '/## hormone-setup for bash ##/,/## end hormone-setup for bash ##/d' $${RCFILE}; \
 	else \
-	  sed -i '/## hormone-setup for csh ##/,/## end hormone-setup for csh ##/d' $${RCFILE}; \
+	  $(SED_INPLACE) '/## hormone-setup for csh ##/,/## end hormone-setup for csh ##/d' $${RCFILE}; \
 	fi; \
 	echo "Updated $$RCFILE"; \
 	cp $(SCRIPTS_DIR)/setup ./setup; \
@@ -185,16 +187,16 @@ uninstall:
 	if [ -z "$$SHELL_INPUT" ]; then SHELL_INPUT="$$SHELL"; fi; \
 	if [ -n "$$SHELL_INPUT" ]; then \
 	  case "$$SHELL_INPUT" in \
-	    */zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
-	    */bash) RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash;; \
-	    */tcsh) RCFILE="$$HOME/.tcshrc"; SHELLTYPE=csh;; \
-	    */csh) RCFILE="$$HOME/.cshrc"; SHELLTYPE=csh;; \
+	    *zsh) RCFILE="$$HOME/.zshrc"; SHELLTYPE=zsh;; \
+	    *bash) RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash;; \
+	    *tcsh) RCFILE="$$HOME/.tcshrc"; SHELLTYPE=csh;; \
+	    *csh) RCFILE="$$HOME/.cshrc"; SHELLTYPE=csh;; \
 	    *) RCFILE="$$HOME/.profile"; SHELLTYPE=sh;; \
 	  esac; \
 	else \
 	  RCFILE="$$HOME/.bashrc"; SHELLTYPE=bash; \
 	fi; \
 	echo "Using rc file: $$RCFILE ($$SHELLTYPE)"; \
-	sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $${RCFILE}
+	$(SED_INPLACE) '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $${RCFILE}
 	@rm -f ./setup
 	@echo "Uninstalled."
