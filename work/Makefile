@@ -65,6 +65,9 @@ INI_DIR = ../src/init
 POS_DIR = ../src/post
 BIN_DIR = $(HORMONE_DIR)/bin
 
+BASHRC := ~/.bashrc
+SCRIPTS_DIR := ./scripts
+
 TARGET = hormone
 
 TARGETA = ascii_output
@@ -136,3 +139,34 @@ $(OBJ_DIR)/%.o: $(POS_DIR)/%.f90
 .PHONY: clean
 clean:
 	rm -f *~ $(SRC_DIR)/*~ $(INI_DIR)/*~ $(POS_DIR)/*~ $(TARGET) $(TARGETA) $(TARGETL) $(OBJ_DIR)/*
+
+
+install:
+	@echo "Installing setup_hormone..."
+
+	 # Remove old hormone-setup block if exists
+	@sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $(BASHRC)
+
+	 # Prompt user for config
+	@read -p "Enter Fortran compiler [default: gfortran]: " FC_INPUT; \
+	 FC=$${FC_INPUT:-gfortran}; \
+	 if [ -z "$$FC_INPUT" ]; then FC=gfortran; fi; \
+	 read -p "Enter number of OpenMP threads [default: 8]: " OMP_INPUT; \
+	 OMP=$${OMP_INPUT:-8}; \
+	 if [ -z "$$OMP_INPUT" ]; then OMP=8; fi; \
+	 \
+	 sed -e "s/@FC@/$$FC/" \
+	     -e "s/@OMP_NUM_THREADS@/$$OMP/" \
+	     $(SCRIPTS_DIR)/hormone_setup | cat >> $(BASHRC); \
+	 echo "Updated $(BASHRC)"
+
+	 # Copy setup script into current directory
+	@cp $(SCRIPTS_DIR)/setup ./setup
+	@chmod +x ./setup
+	@echo "Done. Restart your shell or run 'source $(BASHRC)' to enable hormone-setup."
+
+uninstall:
+	@echo "Uninstalling setup_hormone..."
+	@sed -i '/### hormone-setup begin ###/,/### hormone-setup end ###/d' $(BASHRC)
+	@rm -f ./setup
+	@echo "Uninstalled."
