@@ -176,6 +176,9 @@ install:
 	else \
 	  $(SED_INPLACE) '/## hormone-setup for csh ##/,/## end hormone-setup for csh ##/d' $${RCFILE}; \
 	fi; \
+	if [ "$$SHELLTYPE" != "zsh" ]; then \
+	  $(SED_INPLACE) '/## hormone-setup for zsh ##/,/## end hormone-setup for zsh ##/d' $${RCFILE}; \
+	fi; \
 	echo "Updated $$RCFILE"; \
 	cp $(SCRIPTS_DIR)/setup ./setup; \
 	chmod +x ./setup; \
