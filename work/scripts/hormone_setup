@@ -31,6 +31,16 @@ _setup_hormone_complete() {
     local simtypes=()
     local name
 
+
+    if type _get_comp_words_by_ref >/dev/null 2>&1; then
+        _get_comp_words_by_ref -n : cur prev words cword
+    else
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+        words=("${COMP_WORDS[@]}")
+        cword=$COMP_CWORD
+    fi
+
     shopt -s nullglob
     for f in "$PARADIR"/parameters_*; do
         bn=${f##*/parameters_}

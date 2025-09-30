@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Unified setup_hormone: script + bash completion in one file
 
 STARTFILE="startfile"
 PARADIR="../para"
@@ -69,7 +68,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 	done
 	shopt -u nullglob
 	{
-        echo "Usage: $0 <continue|simtype> [test|startN]"
+        echo "Usage: $0 <continue|simtype> [test]"
         echo
         echo "Restart simulation from the latest dump"
 	echo "- continue"
@@ -81,20 +80,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
         done
 	echo
 	echo "Add 'test' as a second argument if running a test"
-	echo
-	echo "Add a number as a second argument to specify start file number"
 	} | less -R
-    # bootstrap: if completions not yet registered
-    if [ -z "${__SETUP_HORMONE_COMPLETION_LOADED+x}" ]; then
-        export __SETUP_HORMONE_COMPLETION_LOADED=1
-        # source itself to register the full completion
-        source "$BASH_SOURCE" >/dev/null 2>&1
-        # execute it once to register completions
-        "$BASH_SOURCE" >/dev/null 2>&1
-        # no completions yet, just exit
-        COMPREPLY=()
-        return 0
-    fi
         exit 1
     fi
 
