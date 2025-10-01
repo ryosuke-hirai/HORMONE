@@ -20,18 +20,22 @@ update_startfile() {
     local startnum="$3"
 
     awk -v mode="$mode" -v simtype="$simtype" -v startnum="$startnum" '
-    function replace_line(line, key, value,    comment, cpos, indent) {
-        # Extract comment (if any)
+    function replace_line(line, key, value, quoted,    comment, cpos, indent) {
+        # Extract trailing comment
         comment=""
         cpos=index(line,"!")
         if (cpos > 0) {
             comment=substr(line,cpos)
             line=substr(line,1,cpos-1)
         }
-        # Extract indentation and "key ="
+        # Extract indentation + "key ="
         match(line, "^[[:space:]]*" key "[[:space:]]*=")
         indent=substr(line,RSTART,RLENGTH)
-        # Print formatted replacement
+        # Wrap in quotes if flagged
+        if (quoted) {
+            value = "'"'"'" value "'"'"'"
+        }
+        # Print replacement
         printf("%s%s%s%s\n", indent, value, (comment != "" ? " " : ""), comment)
     }
 
@@ -50,17 +54,17 @@ update_startfile() {
 
     {
         if (inblock && $0 ~ /^[[:space:]]*start[[:space:]]*=/) {
-            replace_line($0, "start", startnum)
+            replace_line($0, "start", startnum, 0)
             seen_start=1; next
         }
 
         if (inblock && $0 ~ /^[[:space:]]*simtype[[:space:]]*=/ && mode != "continue") {
-            replace_line($0, "simtype", "'"'"'" simtype "'"'"'")
+            replace_line($0, "simtype", simtype, 1)
             seen_simtype=1; next
         }
 
         if (inblock && $0 ~ /^[[:space:]]*parafile[[:space:]]*=/ && mode != "continue") {
-            replace_line($0, "parafile", "'"'"'"parameters"'"'"'")
+            replace_line($0, "parafile", "parameters", 1)
             seen_parafile=1; next
         }
 
