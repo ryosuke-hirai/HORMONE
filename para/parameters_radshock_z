@@ -27,7 +27,7 @@
 ! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)
 
-&bouncon  bc1is=1 bc1os=3 bc1iv=1 bc1ov=3 /
+&bouncon  bc3is=1 bc3os=3 bc3iv=1 bc3ov=3 /
 
 ############################### EOS CONTROLS ###############################
 ! eostype : 0='ideal gas'
