@@ -34,8 +34,9 @@
 !	    1='ideal gas + radiation pressure'
 !	    2='gas+radiation+ionisation'
 ! gamma: Gas adiabatic index
+! muconst : Mean molecular weight (if compswitch=0 or background)
 
-&eos_con eostype = 0 gamma=1.4d0 /
+&eos_con eostype = 0 gamma=1.4d0 muconst=1d0 /
 
 ########################### SIMULATION CONTROLS ############################
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
