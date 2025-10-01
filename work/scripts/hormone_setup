@@ -2,6 +2,8 @@
 ### hormone-setup begin ###
 
 ## hormone-setup for zsh ##
+autoload -Uz compinit
+compinit
 autoload -Uz bashcompinit
 bashcompinit
 ## end hormone-setup for zsh ##
