@@ -1,8 +1,9 @@
------------------------------ parameters --------------------------------
+! Default parameters file for eostest
 
-! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
-! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
-! muconst : mean molecular weight (if compswitch=0 or background)
-! spn : number of species (>=3)
+------------------------------- parameters ---------------------------------
+
+############################### EOS CONTROLS ###############################
+! eoserr  : Tolerance for equation of state calculations
+
 &eos_con  eoserr=2d-15 /
 

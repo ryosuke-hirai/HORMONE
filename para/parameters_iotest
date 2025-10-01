@@ -1,28 +1,45 @@
------------------------------ parameters --------------------------------
-! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
-! fmr_max   : Maximum levels of fixed mesh refinement
-! fmr_lvl(i): Number of layers in a given FMR level
-&gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
-	  is=1 ie=16 js=5 je=30 ks=-3 ke=43
-	  imesh=0 jmesh=0 kmesh=0
-	  x1min=0d0 x2min=0 x3min=0d0
-	  fmr_max=0 /
+! Default parameters file for iotest
 
-! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
+------------------------------- parameters ---------------------------------
+
+############################### GRID CONTROLS ##############################
+! xi1s, xi1e: Left and right edge of the grid along the x1 direction
+! is,ie,js,je,ks,ke: Starting/Ending index for the x1,x2,x3 directions
+
+&gridcon  xi1s=0d0 xi1e=1d0 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
+	  is=1 ie=16 js=5 je=30 ks=-3 ke=43 /
+
+############################### EOS CONTROLS ###############################
+! eostype : 0='ideal gas'
+!	    1='ideal gas + radiation pressure'
+!	    2='gas+radiation+ionisation'
+! eoserr  : Tolerance for equation of state calculations
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
-! muconst : mean molecular weight (if compswitch=0 or background)
-! spn : number of species (>=3)
+! muconst : Mean molecular weight (if compswitch=0 or background)
+! spn : Number of species (>=3)
+
 &eos_con eostype = 1 eoserr=1d-15 compswitch=2 muconst=0.62d0 spn=8 /
+
+########################### SIMULATION CONTROLS ############################
+! crdnt : cartesian:0,cylindrical:1,spherical:2
+! mag_on: Switch to include magnetic fields
 
 &simucon mag_on=.true. crdnt=2 /
 
+############################# GRAVITY CONTROLS #############################
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
+! grav_init_relax: Start by relaxing the hyperbolic solver. Use MICCG method if set to false
+! include_extgrv: Switch to include external gravitational potential
+
 &gravcon gravswitch=3 include_extgrv=.true. grav_init_relax=.true./
 
-! include_sinks: switch for sink particles
-! nsink: number of sink particles
-!!! other quantities should be given in initial condition file
+########################## SINK PARTICLE CONTROLS ##########################
+! include_sinks: Switch for sink particles
+! nsink: Number of sink particles
+
 &sinkcon include_sinks=.true. nsink=2 /
 
+########################## MATRIX SOLVER CONTROLS ##########################
 ! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
+
 &mat_con matrix_solver=0 /

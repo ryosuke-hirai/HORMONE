@@ -1,9 +1,15 @@
+! Default parameters file for commonenvelope
+
 -------------------------------- parameters --------------------------------
 
 ############################### GRID CONTROLS ##############################
-! i,j,kmesh : 0=uniform mesh, 1=geometrical series/uniform costheta(for crdnt==2), 2=other mesh
+! xi1s, xi1e: Left and right edge of the grid along the x1 direction
+! is,ie,js,je,ks,ke: Starting/Ending index for the x1,x2,x3 directions
+! i,j,kmesh : 0=uniform mesh, 1=geometrical series/uniform costheta(for crdnt==2), 2=user specified mesh
+! x1min     : Minimum grid spacing for geometrical series case
 ! fmr_max   : Maximum levels of fixed mesh refinement
 ! fmr_lvl(i): Number of layers in a given FMR level
+
 &gridcon  xi1s=0d0 xi1e=1.5d15 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
 	  is=1 ie=500 js=1 je=32 ks=1 ke=256
 	  imesh=1 jmesh=1 kmesh=0
@@ -27,6 +33,7 @@
 ! write_other_vel : Set to .true. if 2.5D
 ! write_shock : Output shock switch
 ! write_other_slice : Output an alternative slice for 3D
+
 &out_con  outstyle=1 endstyle=1
           tnlim=100000 t_end=180000d0 dt_out=1.d2 tn_out=1
           dt_unit='hr' sigfig=7 outres=1 output_ascii=.true.
@@ -38,12 +45,14 @@
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
 ! muconst : mean molecular weight (if compswitch=0 or background)
 ! spn : number of species (>=3)
+
 &eos_con eostype = 1 eoserr=1d-15 compswitch=0 muconst=0.62d0 spn=0 /
 
 ########################### SIMULATION CONTROLS ############################
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
 ! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
+
 &simucon  crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
           flux_limiter='modified_mc'
 	  include_cooling = .false.
@@ -54,6 +63,7 @@
 ! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5, 
 ! Dirichlet:9(provide in dirichlet.f90)
 ! eq_sym : Set to .true. for equatorial symmetry
+
 &bouncon  bc1is=1 bc1os=2 bc2is=1 bc2os=1 bc3is=0 bc3os=0
 	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.true. /
 
@@ -61,6 +71,7 @@
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
 ! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
 ! gbtype: 0=multipole expansion, 1=Robin boundary
+
 &gravcon gravswitch=3 grverr=1d-5 cgerr=1d-5 HGfac=3d0 hgcfl=0.9d0 maxtngrv=30
          gbtype=1 grav_init_relax=.false. grav_init_other=.true.
 	 include_extgrv=.false.
@@ -69,5 +80,7 @@
 ########################## SINK PARTICLE CONTROLS ##########################
 ! include_sinks: switch for sink particles
 ! nsink: number of sink particles
+! include_accretion: Switch for accretion onto sink particles
 !!! other quantities should be given in initial condition file
+
 &sinkcon include_sinks=.true. nsink=2 include_accretion=.false. /

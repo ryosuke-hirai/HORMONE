@@ -1,58 +1,89 @@
------------------------------ parameters --------------------------------
-! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
-! fmr_max   : Maximum levels of fixed mesh refinement (0 means no FMR)
+! Default parameters file for polytrope
+
+------------------------------- parameters ---------------------------------
+
+############################### GRID CONTROLS ##############################
+! xi1s, xi1e: Left and right edge of the grid along the x1 direction
+! is,ie,js,je,ks,ke: Starting/Ending index for the x1,x2,x3 directions
+! i,j,kmesh : 0=uniform mesh, 1=geometrical series/uniform costheta(for crdnt==2), 2=user specified mesh
+! x1min     : Minimum grid spacing for geometrical series case
+! fmr_max   : Maximum levels of fixed mesh refinement
 ! fmr_lvl(i): Number of layers in a given FMR level
+
 &gridcon  xi1s=0d0 xi1e=6.963d10 xi2s=0d0 xi2e=1d0 xi3s=0d0 xi3e=1d0
 	  is=1 ie=128 js=1 je=16 ks=1 ke=96
 	  imesh=1 jmesh=0 kmesh=0
 	  x1min=2d8 x2min=0d0 x3min=0d0
 	  fmr_max=2 fmr_lvl(1)=10 fmr_lvl(2)=20 /
 
+############################## OUTPUT CONTROLS #############################
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
 ! t_end : Upper limit for physical time (only when outstyle=1)
 ! dt_out : Interval for output time (only when outstyle=1)
 ! tn_out : Interval for output timesteps (only when outstyle=2)
-! dt_unit : Give name of dt_unit (current options are 's','hr','d','yr')
+! tn_evo : Interval for evo file output (only when write_evo=.true.)
+! dt_unit : Give name of dt_unit (current options are 'ns,'ms,'s','min','ks','hr','d','yr')
 ! sigfig : How many significant figures in output values
 ! outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
 ! write_other_vel : Set to .true. if 2.5D
 ! write_shock : Output shock switch
-! write_other_slice : Output an alternative slice for 3D
+
 &out_con  outstyle=1 endstyle=1
           tnlim=30 t_end=1d1 dt_out=2d1 tn_out=30
           dt_unit='s' sigfig=7 outres=1
 	  write_other_vel =.false. write_shock =.true. /
 
-! eostype : 0='ideal gas', 1='ideal gas + radiation pressure'
+############################### EOS CONTROLS ###############################
+! eostype : 0='ideal gas'
+!	    1='ideal gas + radiation pressure'
+!	    2='gas+radiation+ionisation'
+! eoserr  : Tolerance for equation of state calculations
 ! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
-! muconst : mean molecular weight (if compswitch=0 or background)
-! spn : number of species (>=3)
+! gamma: Gas adiabatic index
+
 &eos_con eostype = 0 eoserr=1d-15 compswitch=0 gamma=1.5d0/
 
+########################### SIMULATION CONTROLS ############################
 ! crdnt : cartesian:0,cylindrical:1,spherical:2
-! rktype: order of Runge-Kutta (1 is for Euler method)
 ! flux_limiter: 'modified_mc' or 'minmod' or 'flat'
-&simucon flux_limiter='modified_mc' crdnt=2 courant=0.9d0 rktype=3 mag_on=.false.
-	  include_cooling = .false.
-	  include_extforce = .false. /
 
+&simucon crdnt=2 
+         flux_limiter='modified_mc' /
+
+############################ BOUNDARY CONTROLS #############################
+! Boundary conditions
+! 1,2,3: Coordinate axis, i/o: Inner or Outer boundary, s/v: Scalar of Vector
 ! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
 ! Dirichlet:9(provide in dirichlet.f90)
-! Flux:10(provide in dirichlet.f90)
-! eq_sym : Set to .true. for equatorial symmetry
+
 &bouncon  bc1is=1 bc1os=2 bc2is=1 bc2os=1 bc3is=0 bc3os=0
 	  bc1iv=1 bc1ov=2 bc2iv=1 bc2ov=1 bc3iv=0 bc3ov=0 eq_sym=.false. /
 
+############################# GRAVITY CONTROLS #############################
 ! gravswitch:0=off,1=point source,2=MICCG,3=Hyperbolic
-! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
+! grverr: Tolerance for multipole expansion for boundary condition
+! cgerr: Tolerance for MICCG solver
+! HGfac: Ratio of gravity propagation speed to the maximum characteristic speed
+! hgcfl: CFL condition for the Hyperbolic gravity wave equation
 ! gbtype: 0=multipole expansion, 1=Robin boundary
-&gravcon gravswitch=3 grverr=1d-15 cgerr=1d-15 HGfac=10d0 hgcfl=0.9d0 gbtype=1 alphagrv=0.1d0
+! alphagrv: ratio between advective and diffusive timescales for HG solver
+! grav_init_other: Start from user defined initial condition. Use MICCG method if set to false
+! grav_init_relax: Start by relaxing the hyperbolic solver. Use MICCG method if set to false
+! include_extgrv: Switch to include external gravitational potential
+! gis,gie,gjs,gje,gks,gke: Indicies for gravity grid.
+
+&gravcon gravswitch=3 grverr=1d-15 cgerr=1d-15 HGfac=10d0 hgcfl=0.9d0
+         gbtype=1 alphagrv=0.1d0
 	 grav_init_other=.false. grav_init_relax=.true. include_extgrv=.false.
 	 gis=1 gie=1 gjs=1 gje=1 gks=1 gke=1 /
 
+########################## MATRIX SOLVER CONTROLS ##########################
 ! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
+
 &mat_con matrix_solver=0
 
-! test tolerance
+############################### TEST CONTROLS ##############################
+! test_tol: tolerance for test simulation
+
 &testcon  test_tol=3d-11 Mach_tol=1d-5/
