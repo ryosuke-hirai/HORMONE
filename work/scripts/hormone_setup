@@ -67,7 +67,9 @@ _setup_hormone_complete() {
                 for name in "${simtypes[@]}"; do
                     echo "- $name"
                 done
-            } | less -R  # <-- paged output
+		echo
+		echo "Type one of the above options:"
+            } | more  # <-- paged output
             COMPREPLY=()
         else
             COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
