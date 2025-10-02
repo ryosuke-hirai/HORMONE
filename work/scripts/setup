@@ -97,7 +97,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
         done
 	echo
 	echo "Add 'test' as a second argument if running a test"
-	} | less -R
+	} | more
         exit 1
     fi
 
