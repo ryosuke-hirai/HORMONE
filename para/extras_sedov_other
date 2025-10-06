@@ -1,4 +1,4 @@
-! Model parameters for other_shocktube
+! Model parameters for sedov_other
 
 ! gamma: Adiabatic index
 ! damb: Ambient density
