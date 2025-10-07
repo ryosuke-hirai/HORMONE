@@ -1,0 +1,7 @@
+! Model parameters for sedov_other
+
+! gamma: Adiabatic index
+! damb: Ambient density
+! Eexp: Explosion energy
+
+&sedocon gamma=1.4d0 damb=1d0 Eexp=1d0 /
