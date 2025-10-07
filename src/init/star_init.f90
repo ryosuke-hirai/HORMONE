@@ -33,7 +33,7 @@ subroutine star_init
  namelist /starcon/ mesafile,spc_list
 
  spc_list='aaa'
- if(is_test) extrasfile='../para/extras_star'
+ if(is_test) extrasfile='../para/extras_star_sph'
 
 ! Specify input file, elements you want to track, and a softening length
  open(newunit=nn,file=extrasfile,status='old',iostat=istat)
