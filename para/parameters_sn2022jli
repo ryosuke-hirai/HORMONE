@@ -1,4 +1,6 @@
------------------------------ parameters --------------------------------
+! Default parameters file for sn2022jli
+
+------------------------------- parameters ---------------------------------
 
 ############################### GRID CONTROLS ##############################
 ! xi1s, xi1e: Left and right edge of the grid along the x1 direction

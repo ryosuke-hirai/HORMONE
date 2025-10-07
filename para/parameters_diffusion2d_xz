@@ -1,38 +1,70 @@
------------------------------ parameters --------------------------------
-! i,j,kmesh : 0=uniform mesh, 1=geometrical series, 2=other mesh
-! fmr_max   : Maximum levels of fixed mesh refinement
-! fmr_lvl(i): Number of layers in a given FMR level
+! Default parameters file for diffusion2d_xz
+
+------------------------------- parameters ---------------------------------
+
+############################### GRID CONTROLS ##############################
+! xi1s, xi1e: Left and right edge of the grid along the x1 direction
+! is,ie,js,je,ks,ke: Starting/Ending index for the x1,x2,x3 directions
+
 &gridcon  xi1s=-2d0 xi1e=2d0 xi2s=-0.02d0 xi2e=0.02d0 xi3s=-2d0 xi3e=2d0
-	  is=1 ie=51 js=1 je=1 ks=1 ke=51
-	  imesh=0 jmesh=0 kmesh=0
-	  x1min=0d0 x2min=0 x3min=0d0
-	  fmr_max=0 fmr_lvl(1:20)=0 /
+	  is=1 ie=51 js=1 je=1 ks=1 ke=51 /
 
-&simucon  crdnt=0 courant=0.9d0
-          flux_limiter='modified_mc'
-	  solve_hydro=.false. fixed_dt=1d-14 /
-
+############################## OUTPUT CONTROLS #############################
 ! outdir : Output directory name
 ! outstyle/endstyle : time=1, timestep=2
 ! tnlim : Upper limit for number of timesteps (only when outstyle=2)
 ! t_end : Upper limit for physical time (only when outstyle=1)
 ! dt_out : Interval for output time (only when outstyle=1)
 ! tn_out : Interval for output timesteps (only when outstyle=2)
+! dt_unit : Give name of dt_unit (current options are 'ns,'ms,'s','min','ks','hr','d','yr')
+! write_temp : Output temperature (only relevant for eostype=0)
+
 &out_con  outdir='data' outstyle=1 endstyle=1
           tnlim=10 t_end=4.2d-12 dt_out=1d3 tn_out=10 write_temp=.true. /
 
-&bouncon  bc1is=3 bc1os=3 bc1iv=3 bc1ov=3 bc3is=0 bc3os=0 bc3iv=0 bc3ov=0 /
+############################### EOS CONTROLS ###############################
+! eostype : 0='ideal gas'
+!	    1='ideal gas + radiation pressure'
+!	    2='gas+radiation+ionisation'
+! eoserr  : Tolerance for equation of state calculations
+! compswitch:0=uniform,1=spherical,2=advection(3=reaction?)
+! muconst : Mean molecular weight (if compswitch=0 or background)
+! spn : Number of species (>=3)
 
 &eos_con eostype = 0 eoserr=1d-15 compswitch=0 muconst=1d0 spn=0
           /
 
-! radswitch:0=off,1=flux limited diffusion
-! opacitytype:0=fixed,1=ionisation
-! c_kappa: value of fixed opacity (only relevant for opacitytype=0)
+########################### SIMULATION CONTROLS ############################
+! solve_hydro: Switch to solve hydro equations. Useful for testing non-hydro modules
+! fixed_dt: Overrides dt with this value if fixed_dt>0
+
+&simucon  solve_hydro=.false. fixed_dt=1d-14 /
+
+############################ BOUNDARY CONTROLS #############################
+! Boundary conditions
+! 1,2,3: Coordinate axis, i/o: Inner or Outer boundary, s/v: Scalar of Vector
+! periodic:0, reflective:1, outgoing:2, free:3, linear:4, linear+outgoing:5,
+! Dirichlet:9(provide in dirichlet.f90)
+
+&bouncon  bc1is=3 bc1os=3 bc1iv=3 bc1ov=3 bc3is=0 bc3os=0 bc3iv=0 bc3ov=0 /
+
+
+############################ RADIATION CONTROLS ############################
+! radswitch:0=off,1=FLD (Commercon+2011), 2=FLD (Moens+2022)
+! opacitytype:0=fixed,1=approximate analytical formula,2=table
+! c_kappa_{r,p,f}: Values for fixed opacity (Rosseland, Planck, flux-weighted mean) only relevant for opacitytype=0
+! opacity_floor: Floor opacity (only relevant for opacitytype==1)
 ! lambdatype:0=Eddington approximation, 1=Levermore&Pomraning 1981, 2=Minerbo 1978, 3=Kley 1989
+! rbtype:0=zero-gradient boundary
+
 &rad_con radswitch=1 opacitytype=0 c_kappa_p=0d0 c_kappa_r=1d0 lambdatype=0 rbtype=0 /
 
+########################## MATRIX SOLVER CONTROLS ##########################
 ! matrix_solver:0=MICCG, 1=PETSc (must be compiled with PETSc, needed for MPI)
+
 &mat_con matrix_solver=0
+
+############################### TEST CONTROLS ##############################
+! test_tol: tolerance for test simulation
 
 &testcon test_tol=1d-14 /

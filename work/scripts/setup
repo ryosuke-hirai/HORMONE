@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Unified setup_hormone: script + bash completion in one file
 
 STARTFILE="startfile"
 PARADIR="../para"
@@ -21,9 +20,30 @@ update_startfile() {
     local startnum="$3"
 
     awk -v mode="$mode" -v simtype="$simtype" -v startnum="$startnum" '
-    BEGIN { inblock=0; seen_start=0; seen_simtype=0; seen_parafile=0; }
-    /^\s*&startcon/ { inblock=1 }
-    inblock && /^\s*\// {
+    function replace_line(line, key, value, quoted,    comment, cpos, indent) {
+        # Extract trailing comment
+        comment=""
+        cpos=index(line,"!")
+        if (cpos > 0) {
+            comment=substr(line,cpos)
+            line=substr(line,1,cpos-1)
+        }
+        # Extract indentation + "key ="
+        match(line, "^[[:space:]]*" key "[[:space:]]*=")
+        indent=substr(line,RSTART,RLENGTH)
+        # Wrap in quotes if flagged
+        if (quoted) {
+            value = "'"'"'" value "'"'"'"
+        }
+        # Print replacement
+        printf("%s%s%s%s\n", indent, value, (comment != "" ? " " : ""), comment)
+    }
+
+    BEGIN { inblock=0; seen_start=0; seen_simtype=0; seen_parafile=0 }
+
+    /^[[:space:]]*&startcon/ { inblock=1 }
+
+    inblock && /^[[:space:]]*\// {
         if (!seen_start)    print "  start = " startnum
         if (mode != "continue") {
             if (!seen_simtype) printf("  simtype = '\''%s'\''\n", simtype)
@@ -31,30 +51,26 @@ update_startfile() {
         }
         inblock=0
     }
+
     {
         if (inblock && $0 ~ /^[[:space:]]*start[[:space:]]*=/) {
-            match($0, /^([[:space:]]*start[[:space:]]*=[[:space:]]*)[^!]*([!].*)?$/, arr)
-            indent=arr[1]; comment=arr[2]
-            if (comment == "") comment=""
-            printf("%s%d%s%s\n", indent, startnum, (comment != "" ? " " : ""), comment)
+            replace_line($0, "start", startnum, 0)
             seen_start=1; next
         }
+
         if (inblock && $0 ~ /^[[:space:]]*simtype[[:space:]]*=/ && mode != "continue") {
-            match($0, /^([[:space:]]*simtype[[:space:]]*=[[:space:]]*)[^!]*([!].*)?$/, arr)
-            indent=arr[1]; comment=arr[2]
-            if (comment == "") comment=""
-            printf("%s'\''%s'\''%s%s\n", indent, simtype, (comment != "" ? " " : ""), comment)
+            replace_line($0, "simtype", simtype, 1)
             seen_simtype=1; next
         }
+
         if (inblock && $0 ~ /^[[:space:]]*parafile[[:space:]]*=/ && mode != "continue") {
-            match($0, /^([[:space:]]*parafile[[:space:]]*=[[:space:]]*)[^!]*([!].*)?$/, arr)
-            indent=arr[1]; comment=arr[2]
-            if (comment == "") comment=""
-            printf("%s'\''parameters'\''%s%s\n", indent, (comment != "" ? " " : ""), comment)
+            replace_line($0, "parafile", "parameters", 1)
             seen_parafile=1; next
         }
+
         print
-    }' "$STARTFILE" > "$STARTFILE.tmp" && mv "$STARTFILE.tmp" "$STARTFILE"
+    }
+    ' "$STARTFILE" > "$STARTFILE.tmp" && mv "$STARTFILE.tmp" "$STARTFILE"
 }
 
 # ---------- Main script ----------
@@ -69,24 +85,19 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 	done
 	shopt -u nullglob
 	{
-        echo "Usage: $0 <simtype|continue> [test]"
+        echo "Usage: $0 <continue|simtype> [test]"
         echo
-        echo "<simtype> options"
+        echo "Restart simulation from the latest dump"
+	echo "- continue"
+	echo
+	echo "Start simulation for a simtype"
+	echo "<simtype> options"
         for name in "${simtypes[@]}"; do
             echo "- $name"
         done
-	} | less -R
-    # bootstrap: if completions not yet registered
-    if [ -z "${__SETUP_HORMONE_COMPLETION_LOADED+x}" ]; then
-        export __SETUP_HORMONE_COMPLETION_LOADED=1
-        # source itself to register the full completion
-        source "$BASH_SOURCE" >/dev/null 2>&1
-        # execute it once to register completions
-        "$BASH_SOURCE" >/dev/null 2>&1
-        # no completions yet, just exit
-        COMPREPLY=()
-        return 0
-    fi
+	echo
+	echo "Add 'test' as a second argument if running a test"
+	} | more
         exit 1
     fi
 

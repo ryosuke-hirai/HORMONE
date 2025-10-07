@@ -1,11 +1,30 @@
+
 ### hormone-setup begin ###
+
+## hormone-setup for zsh ##
+autoload -Uz compinit
+compinit
+autoload -Uz bashcompinit
+bashcompinit
+## end hormone-setup for zsh ##
+## hormone-setup for csh ##
+alias hormone-setup \
+      'setenv FC @FC@; \
+       setenv OMP_NUM_THREADS @OMP_NUM_THREADS@; \
+       setenv OMP_PLACES cores; \
+       setenv OMP_PROC_BIND close; \
+       setenv OMP_STACKSIZE 512M; \
+       limit stacksize unlimited; \
+       echo "Activated HORMONE (csh)"'
+## end hormone-setup for csh ##
+## hormone-setup for bash ##
 function hormone-setup {
   export FC=@FC@
-  ulimit -s unlimited
   export OMP_NUM_THREADS=@OMP_NUM_THREADS@
   export OMP_PLACES=cores
   export OMP_PROC_BIND=close
   export OMP_STACKSIZE=512M
+  ulimit -s unlimited
   echo "Activated HORMONE"
 }
 
@@ -16,6 +35,16 @@ _setup_hormone_complete() {
     local TESTDIR="../tests"
     local simtypes=()
     local name
+
+
+    if type _get_comp_words_by_ref >/dev/null 2>&1; then
+        _get_comp_words_by_ref -n : cur prev words cword
+    else
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+        words=("${COMP_WORDS[@]}")
+        cword=$COMP_CWORD
+    fi
 
     shopt -s nullglob
     for f in "$PARADIR"/parameters_*; do
@@ -38,7 +67,9 @@ _setup_hormone_complete() {
                 for name in "${simtypes[@]}"; do
                     echo "- $name"
                 done
-            } | less -R  # <-- paged output
+		echo
+		echo "Type one of the above options:"
+            } | more  # <-- paged output
             COMPREPLY=()
         else
             COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
@@ -65,5 +96,7 @@ _setup_hormone_complete() {
 }
 
 complete -F _setup_hormone_complete setup_hormone ./setup
+
+## end hormone-setup for bash ##
 
 ### hormone-setup end ###

@@ -1,3 +1,6 @@
+! Default parameters for all simulations
+! -> gets overwritten by simtype-specific parameters files
+
 -------------------------------- parameters --------------------------------
 
 ############################### GRID CONTROLS ##############################

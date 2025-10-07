@@ -1,6 +1,7 @@
 *.o
 *.mod
 hormone
+work/setup
 .vscode
 **/data/*.bin
 *.dat
