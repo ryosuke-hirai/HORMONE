@@ -17,7 +17,7 @@ subroutine shocktube
  use physval,only:gamma
  use input_mod,only:error_extras,error_nml
 
- integer::dir,ui,strl,istat
+ integer:: dir,ui,strl,istat
  real(8):: dl,dr,pl,pr,v1l,v1r,v2l,v2r,v3l,v3r,b1l,b1r,b2l,b2r,b3l,b3r
 !-----------------------------------------------------------------------------
 
@@ -66,7 +66,7 @@ subroutine shocktube
    b3l = 0.75d0 ; b3r = 0.75d0
   end select
 
- case('other_shocktube')
+ case('othershock')
   open(newunit=ui,file=extrasfile,status='old',iostat=istat)
   if(istat/=0)call error_extras('shocktube',extrasfile)
   read(ui,NML=tubecon,iostat=istat)
