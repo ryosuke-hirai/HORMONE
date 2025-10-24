@@ -1,4 +1,4 @@
-#!../../pyenv/bin/python3
+#!../../pyenv/bin/python
 import horpy as hp
 import numpy as np
 import pyvista as pv
@@ -25,6 +25,7 @@ os.makedirs("frames", exist_ok=True)
 # Fixed camera position for consistency
 camera_pos = [(-7e12, -7e12, 7e12), (0, 0, 0), (0, 0, 1)]
 
+# Some physical constants
 clight = 2.99792458e10
 kbol = 1.380649e-16
 hplanck = 6.62607015e-27
@@ -73,22 +74,24 @@ for binfile in binfiles:
     pres= parray[r_slice, th_slice, phi_slice]
     ent = 1/0.62*np.log(temp**1.5/rho) + 4*arad*temp**3/(3*rho)
 
+    plotval = ent
+
     # ==========================
     # Step 4: Extend grid
     # ==========================
     phi_ext = np.append(phi, phi[0])
-    rho_phiext = np.concatenate([ent, ent[:, :, :1]], axis=2)
+    val_phiext = np.concatenate([plotval, plotval[:, :, :1]], axis=2)
 
     th_ext = np.append(0.0, th)
-    rho0 = np.expand_dims(rho_phiext[:, 0, :], axis=1)
-    rho_thext = np.concatenate([rho0, rho_phiext], axis=1)
+    val0 = np.expand_dims(val_phiext[:, 0, :], axis=1)
+    val_thext = np.concatenate([val0, val_phiext], axis=1)
 
     th_mirror = np.pi - th_ext
     th_full = np.concatenate([th_ext, th_mirror[::-1]])
-    rho_mirror = rho_thext[:, ::-1, :]
-    rho_full = np.concatenate([rho_thext, rho_mirror], axis=1)
+    val_mirror = val_thext[:, ::-1, :]
+    val_full = np.concatenate([val_thext, val_mirror], axis=1)
 
-    rho_log = np.log10(np.clip(rho_full, 1e-30, None))
+    val_log = np.log10(np.clip(val_full, 1e-30, None))
 
     # ==========================
     # Step 5: Build StructuredGrid and visualize
@@ -99,10 +102,10 @@ for binfile in binfiles:
     z = rr * np.cos(tt)
 
     grid = pv.StructuredGrid(x, y, z)
-    grid['log_density'] = rho_log.ravel(order='F')
+    grid['log_density'] = val_log.ravel(order='F')
 
 #    vmin, vmax = -9, -6
-    vmin, vmax = np.percentile(rho_log, [5, 95])
+    vmin, vmax = np.percentile(val_log, [5, 95])
     iso_values = np.linspace(vmin, vmax, 5)
 #    iso_values = np.append(iso_values, -4)
     contours = grid.contour(isosurfaces=iso_values, scalars='log_density')
@@ -110,31 +113,22 @@ for binfile in binfiles:
     sink_coord = sink_x[:, 1]  # second sink
     point_mesh = pv.PolyData(sink_coord.reshape(1, 3))
 
-    p = pv.Plotter(off_screen=False)
+    p = pv.Plotter(off_screen=True)
 
-    opacity = [1, 0.3, 0.1, 0.1, 0.01]
-    p.add_mesh(contours, cmap='plasma', opacity=opacity)
+    opacity = [1, 0.3, 0.05, 0.02, 0.01]
+    p.add_mesh(contours, cmap='plasma', opacity=0.1)
     p.add_mesh(point_mesh, color='black', point_size=10, render_points_as_spheres=True, opacity=1)
     
-#    p.add_volume(
-#        grid,
-#        scalars='log_density',
-#        cmap='viridis',
-#        opacity=opacity,
-#        shade=True,
-#        clim=[vmin, vmax],
-#    )
     p.camera_position = camera_pos
 #    p.set_background("black")
 
     # Output filename (denXXXXX.png)
-    # outname = os.path.join("frames", f"den{i:05d}.png")
-    outname = f"frames/ene{filenum}min.png"
+    outname = f"frames/den{filenum}min.png"
 
     # Render and save
-    p.show()
-#    p.show(auto_close=False)
-#    p.screenshot(outname, window_size=[960, 560])
-#    p.close()
+#    p.show()
+    p.show(auto_close=False)
+    p.screenshot(outname, window_size=[960, 560])
+    p.close()
 
     print(f"Saved {outname}")
