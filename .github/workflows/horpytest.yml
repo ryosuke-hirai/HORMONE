@@ -1,5 +1,14 @@
 name: horpy f2py build test
 
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - 'README.md'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+
 jobs:
   horpy:
     runs-on: ubuntu-latest
