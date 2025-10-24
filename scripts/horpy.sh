@@ -11,17 +11,22 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # -----------------------------------------------------------------------------
 # Ask user where to place the virtual environment
 # -----------------------------------------------------------------------------
-DEFAULT_PYENV_DIR="$PROJECT_ROOT/pyenv_hormone"
-echo "Default virtual environment directory: $DEFAULT_PYENV_DIR"
-read -r -p "Enter custom path for virtual environment (or press Enter to use default): " USER_PYENV_DIR
+DEFAULT_PYENV_DIR="$PROJECT_ROOT/pyenv"
 
-if [ -n "${USER_PYENV_DIR:-}" ]; then
-    PYENV_DIR="$(realpath "$USER_PYENV_DIR")"
-else
+if [ -n "${CI:-}" ]; then
+    # Non-interactive mode for CI
+    echo "Running in CI mode — using default virtual environment path."
     PYENV_DIR="$DEFAULT_PYENV_DIR"
+else
+    echo "Default virtual environment directory: $DEFAULT_PYENV_DIR"
+    read -r -p "Enter custom path for virtual environment (or press Enter to use default): " USER_PYENV_DIR
+    if [ -n "${USER_PYENV_DIR:-}" ]; then
+        PYENV_DIR="$(realpath "$USER_PYENV_DIR")"
+    else
+        PYENV_DIR="$DEFAULT_PYENV_DIR"
+    fi
 fi
 
-#PYENV_DIR="$PROJECT_ROOT/pyenv_hormone"
 PYTHON="$PYENV_DIR/bin/python3"
 F2PY_MODULE="numpy.f2py"
 
@@ -117,11 +122,10 @@ fi
 
 echo "Installing horpy.so into $SITE_PACKAGES_DIR ..."
 mv horpy*.so "$SITE_PACKAGES_DIR/horpy.so"
-rm horpy.pyf
+rm $SCRIPT_DIR/horpy.pyf
 
 echo "✅ Installed horpy.so to virtual environment site-packages"
 
 echo "✅ Build complete!"
-echo "   Shared object: $SO_TARGET"
 echo "   Virtual env:   $PYENV_DIR"
 echo "----------------------------------------"

@@ -27,8 +27,7 @@ jobs:
         working-directory: ./scripts
         run: |
           set -eux
-          ./horpy.sh <<EOF
-          EOF
+          CI=1 ./horpy.sh
 
       - name: Verify import
         run: |
