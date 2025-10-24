@@ -1,0 +1,27 @@
+name: horpy f2py build test
+
+jobs:
+  horpy:
+    runs-on: ubuntu-latest
+    name: Build horpy via f2py
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show system versions
+        run: |
+          python3 --version
+          gfortran --version
+
+      - name: Run horpy.sh
+        working-directory: ./scripts
+        run: |
+          set -eux
+          ./horpy.sh <<EOF
+          # Press Enter immediately to use default venv path
+          EOF
+
+      - name: Verify import
+        run: |
+          ./pyenv/bin/python3 -c "import horpy; print('✅ horpy imported successfully!')"
