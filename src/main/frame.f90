@@ -49,8 +49,8 @@ subroutine centre_on_sink(n)
 !-----------------------------------------------------------------------------
 
  frame_acc = -sink(n)%a
- frame_vel = frame_acc + frame_acc*dt
- frame_pos = frame_vel + frame_vel*dt
+ frame_vel = frame_vel + frame_acc*dt
+ frame_pos = frame_pos + frame_vel*dt
 
 return
 end subroutine centre_on_sink
