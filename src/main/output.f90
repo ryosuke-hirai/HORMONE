@@ -361,7 +361,7 @@ subroutine sink_output
 
  use constants, only: msun,year
  use settings,  only: sigfig,include_sinks,include_accretion
- use grid,      only: tn,time,frame_acc,frame_vel
+ use grid,      only: tn,time,frame_acc,frame_vel,frame_pos
  use sink_mod,  only: nsink,sink
  use mpi_utils, only: myrank
 
