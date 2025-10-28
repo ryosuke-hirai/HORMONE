@@ -319,6 +319,15 @@ subroutine open_sinkfile
 
  write(iskf,'(a10)',advance='no')'tn'
  write(iskf,forma,advance="no")'time'
+ write(iskf,forma,advance="no")'frame_acc_x1'
+ write(iskf,forma,advance="no")'frame_acc_x2'
+ write(iskf,forma,advance="no")'frame_acc_x3'
+ write(iskf,forma,advance="no")'frame_vel_x1'
+ write(iskf,forma,advance="no")'frame_vel_x2'
+ write(iskf,forma,advance="no")'frame_vel_x3'
+ write(iskf,forma,advance="no")'frame_pos_x1'
+ write(iskf,forma,advance="no")'frame_pos_x2'
+ write(iskf,forma,advance="no")'frame_pos_x3'
  do n = 1, nsink
   write(header,'("sink_",i0)')n
   write(iskf,forma,advance="no")trim(header)//'_x1'
@@ -352,7 +361,7 @@ subroutine sink_output
 
  use constants, only: msun,year
  use settings,  only: sigfig,include_sinks,include_accretion
- use grid,      only: tn,time
+ use grid,      only: tn,time,frame_acc,frame_vel
  use sink_mod,  only: nsink,sink
  use mpi_utils, only: myrank
 
@@ -368,6 +377,15 @@ subroutine sink_output
 
  write(iskf,'(i10)',advance='no')tn
  call write_anyval(iskf,forme,time,1)
+ call write_anyval(iskf,forme,frame_acc(1),1)
+ call write_anyval(iskf,forme,frame_acc(2),1)
+ call write_anyval(iskf,forme,frame_acc(3),1)
+ call write_anyval(iskf,forme,frame_vel(1),1)
+ call write_anyval(iskf,forme,frame_vel(2),1)
+ call write_anyval(iskf,forme,frame_vel(3),1)
+ call write_anyval(iskf,forme,frame_pos(1),1)
+ call write_anyval(iskf,forme,frame_pos(2),1)
+ call write_anyval(iskf,forme,frame_pos(3),1)
  do n = 1, nsink
   call write_anyval(iskf,forme,sink(n)%x(1),1)
   call write_anyval(iskf,forme,sink(n)%x(2),1)
