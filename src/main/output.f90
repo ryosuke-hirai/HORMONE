@@ -319,7 +319,7 @@ subroutine open_sinkfile
 
  write(iskf,'(a10)',advance='no')'tn'
  write(iskf,forma,advance="no")'time'
- if(frame==1)then
+ if(frame>0)then
   write(iskf,forma,advance="no")'frame_acc_x1'
   write(iskf,forma,advance="no")'frame_acc_x2'
   write(iskf,forma,advance="no")'frame_acc_x3'
@@ -379,7 +379,7 @@ subroutine sink_output
 
  write(iskf,'(i10)',advance='no')tn
  call write_anyval(iskf,forme,time,1)
- if(frame==1)then
+ if(frame>0)then
   call write_anyval(iskf,forme,frame_acc(1),1)
   call write_anyval(iskf,forme,frame_acc(2),1)
   call write_anyval(iskf,forme,frame_acc(3),1)
