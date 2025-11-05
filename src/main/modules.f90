@@ -71,7 +71,7 @@ module grid
   real(8),allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real(8),allocatable,dimension(:,:,:,:):: car_x
   real(8),allocatable,dimension(:):: spinc_r,spinc_t
-  real(8):: frame_acc(1:3)
+  real(8):: frame_acc(1:3), frame_vel(1:3), frame_pos(1:3)
 
 end module grid
 
