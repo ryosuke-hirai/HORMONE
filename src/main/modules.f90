@@ -27,7 +27,7 @@ module settings
 ! test tolerance
  real(8):: test_tol, Mach_tol
 ! switches
- logical:: solve_i, solve_j, solve_k, solve_hydro
+ logical:: solve_i, solve_j, solve_k, solve_hydro, solve_grav
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, include_sinks, include_accretion, is_test
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
