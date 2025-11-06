@@ -32,65 +32,71 @@ contains
 
   call start_clock(wttim)
 
-  allocate( dti(is:ie,js:je,ks:ke) )
+  if(fixed_dt>0d0)then
 
-  cfmax = 0d0
-  cgrav = tiny
+   dt = fixed_dt
+
+  else
+
+   allocate( dti(is:ie,js:je,ks:ke) )
+
+   cfmax = 0d0
+   cgrav = tiny
 !$omp parallel do private(i,j,k,cfmax0) reduction(max:cfmax,cgrav) collapse(3)
-  do k = ks, ke
-   do j = js, je
-    do i = is, ie
-     call dti_cell(i,j,k,dti,cfmax=cfmax0)
-     cfmax = max(cfmax,cfmax0)
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      call dti_cell(i,j,k,dti,cfmax=cfmax0)
+      cfmax = max(cfmax,cfmax0)
+     end do
     end do
    end do
-  end do
 !$omp end parallel do
 
-  call allreduce_mpi('max',cfmax)
+   call allreduce_mpi('max',cfmax)
 
 ! Use longer time step if using nested grids
-  if(fmr_max>0.and.crdnt==2)then
+   if(fmr_max>0.and.crdnt==2)then
 !$omp parallel do private(i,j,k,l,jb,kb) schedule(dynamic)
-   do n = 1, nsmear
-    l = lijk_from_id(0,n)
-    if(fmr_lvl(l)==0)cycle
-    i = lijk_from_id(1,n)
-    j = lijk_from_id(2,n)
-    k = lijk_from_id(3,n)
-    jb = block_j(l)
-    kb = block_k(l)
-    if(partially_my_domain(i,j,k,1,jb,kb))call dti_cell(i,j,k,dti,jb=jb,kb=kb)
-   end do
+    do n = 1, nsmear
+     l = lijk_from_id(0,n)
+     if(fmr_lvl(l)==0)cycle
+     i = lijk_from_id(1,n)
+     j = lijk_from_id(2,n)
+     k = lijk_from_id(3,n)
+     jb = block_j(l)
+     kb = block_k(l)
+     if(partially_my_domain(i,j,k,1,jb,kb))call dti_cell(i,j,k,dti,jb=jb,kb=kb)
+    end do
 !$omp end parallel do
-  end if
-
-  dt = courant * minval(dti)
-
-  if(outstyle==1)then
-   if(endstyle==1)t_ref = min(t_out,t_end)
-   if(t_ref-time-dt>0d0.and.t_ref-time-2d0*dt<0d0)then
-    dt = 0.5d0*(t_ref-time)
-   else
-    dt = min(dt,t_out-time)
    end if
-  end if
 
-  if(endstyle==1)dt = min(dt,t_end-time)
+   dt = courant * minval(dti)
 
-  if(fixed_dt>0d0)dt = fixed_dt
+   if(outstyle==1)then
+    if(endstyle==1)t_ref = min(t_out,t_end)
+    if(t_ref-time-dt>0d0.and.t_ref-time-2d0*dt<0d0)then
+     dt = 0.5d0*(t_ref-time)
+    else
+     dt = min(dt,t_out-time)
+    end if
+   end if
 
-  call allreduce_mpi('min',dt)
+   if(endstyle==1)dt = min(dt,t_end-time)
 
-  ch = cfmax
+   call allreduce_mpi('min',dt)
+
+   ch = cfmax
 
 ! Compute dtgrav if using hyperbolic self-gravity
-  if(gravswitch==3)then
-   cgrav = HGfac*cfmax
+   if(gravswitch==3)then
+    cgrav = HGfac*cfmax
 ! Limit number of substeps if HG becomes prohibitively slow (use with care!!)
-   if(maxtngrv>0) cgrav = min(cgrav,hgcfl*dtg_unit*dble(maxtngrv)/dt)
-   dtgrav = min(dt,hgcfl*dtg_unit/cgrav)
-   cgrav2 = cgrav**2
+    if(maxtngrv>0) cgrav = min(cgrav,hgcfl*dtg_unit*dble(maxtngrv)/dt)
+    dtgrav = min(dt,hgcfl*dtg_unit/cgrav)
+    cgrav2 = cgrav**2
+   end if
+
   end if
 
   call stop_clock(wttim)

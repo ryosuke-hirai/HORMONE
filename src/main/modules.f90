@@ -27,7 +27,7 @@ module settings
 ! test tolerance
  real(8):: test_tol, Mach_tol
 ! switches
- logical:: solve_i, solve_j, solve_k, solve_hydro
+ logical:: solve_i, solve_j, solve_k, solve_hydro, solve_grav
  logical:: include_extgrv, include_particles, include_cooling, mag_on
  logical:: include_extforce, include_sinks, include_accretion, is_test
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
@@ -71,7 +71,7 @@ module grid
   real(8),allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real(8),allocatable,dimension(:,:,:,:):: car_x
   real(8),allocatable,dimension(:):: spinc_r,spinc_t
-  real(8):: frame_acc(1:3), frame_vel(1:3), frame_pos(1:3)
+  real(8),dimension(1:3):: frame_acc, frame_vel, frame_pos
 
 end module grid
 

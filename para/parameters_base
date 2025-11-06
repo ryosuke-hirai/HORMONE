@@ -74,6 +74,7 @@
 ! frame: 0=inertial frame, >0=centre on sink(frame)
 ! extrasfile: File containing model parameters
 ! solve_hydro: Switch to solve hydro equations. Useful for testing non-hydro modules
+! solve_grav : Switch to evolve gravitational potential. Useful for testing non-gravity modules but still requires the initial gravitational potential.
 ! fixed_dt: Overrides dt with this value if fixed_dt>0
 
 &simucon  crdnt=0 courant=0.9d0 rktype=3 mag_on=.false.
@@ -82,7 +83,7 @@
   	  include_extforce= .false.
 	  frame=0
           extrasfile='extras'
-	  solve_hydro=.true. fixed_dt=-1d0 /
+	  solve_hydro=.true. solve_grav=.true. fixed_dt=-1d0 /
 
 
 ############################ BOUNDARY CONTROLS #############################

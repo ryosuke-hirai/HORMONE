@@ -127,7 +127,7 @@ program hormone
 
     call terminal_output
 
-    call gravity
+    if(solve_grav)   call gravity
     if(radswitch>0)  call get_gradE
     if(include_sinks)call get_sink_acc(sink) ! updates dt
     call set_frame_acc
