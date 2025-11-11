@@ -96,6 +96,19 @@ subroutine readbin(filename)
    call read_dummy_recordmarker(un)
    call read_var(un, sink, 1, nsink)
    call read_dummy_recordmarker(un)
+   if(frame>0) then
+     call write_dummy_recordmarker(un)
+     call write_var(un, frame_acc(1))
+     call write_var(un, frame_acc(2))
+     call write_var(un, frame_acc(3))
+     call write_var(un, frame_vel(1))
+     call write_var(un, frame_vel(2))
+     call write_var(un, frame_vel(3))
+     call write_var(un, frame_pos(1))
+     call write_var(un, frame_pos(2))
+     call write_var(un, frame_pos(3))
+     call write_dummy_recordmarker(un)
+   endif
  endif
 
  call close_file(un)
