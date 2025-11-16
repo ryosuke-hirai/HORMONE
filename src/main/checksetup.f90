@@ -201,6 +201,7 @@ subroutine checksetup
   dt_out = dt_out*dt_unit_in_sec
   t_end = t_end*dt_unit_in_sec
   t_out = min(dt_out,t_end)
+  if(fixed_dt>0d0)fixed_dt = fixed_dt * dt_unit_in_sec
   if(is_test)then
    t_out  = t_end
    tn_out = tnlim
