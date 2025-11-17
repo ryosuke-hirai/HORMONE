@@ -700,7 +700,7 @@ subroutine write_bin
  use settings
  use mpi_utils, only:myrank
  use io, only:open_file_write,close_file, write_var, write_dummy_recordmarker
- use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn
+ use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,tn,frame_acc,frame_vel,frame_pos
  use physval
  use gravmod,only:grvphi,grvpsi,cgrav_old
  use sink_mod,only:nsink,sink
@@ -776,9 +776,16 @@ subroutine write_bin
  end if
 
  if(include_sinks) then
+  call write_dummy_recordmarker(un)
+  call write_var(un, sink, 1, nsink)
+  call write_dummy_recordmarker(un)
+  if(frame>0) then
    call write_dummy_recordmarker(un)
-   call write_var(un, sink, 1, nsink)
+   call write_var(un, frame_acc, 1, 3)
+   call write_var(un, frame_vel, 1, 3)
+   call write_var(un, frame_pos, 1, 3)
    call write_dummy_recordmarker(un)
+  endif
  endif
 
  call close_file(un)

@@ -93,9 +93,16 @@ subroutine readbin(filename)
  end if
 
  if(include_sinks) then
+  call read_dummy_recordmarker(un)
+  call read_var(un, sink, 1, nsink)
+  call read_dummy_recordmarker(un)
+  if(frame>0) then
    call read_dummy_recordmarker(un)
-   call read_var(un, sink, 1, nsink)
+   call read_var(un, frame_acc, 1, 3)
+   call read_var(un, frame_vel, 1, 3)
+   call read_var(un, frame_pos, 1, 3)
    call read_dummy_recordmarker(un)
+  endif
  endif
 
  call close_file(un)
