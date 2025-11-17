@@ -12,6 +12,7 @@ module io
     module procedure read_int4
     module procedure read_real8
     module procedure read_array_1d_char
+    module procedure read_array_1d_real8
     module procedure read_array_2d_real8
     module procedure read_array_3d_real8
     module procedure read_array_spc
@@ -22,6 +23,7 @@ module io
     module procedure write_int4
     module procedure write_real8
     module procedure write_array_1d_char
+    module procedure write_array_1d_real8
     module procedure write_array_2d_real8
     module procedure write_array_3d_real8
     module procedure write_array_spc
@@ -182,7 +184,7 @@ subroutine read_array_1d_char(fh, arr, istart, iend)
   call mpi_file_set_view(fh, offset, MPI_CHARACTER, MPI_CHARACTER, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_read_all(fh, arr(istart:iend), nbuff, MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
   do i = 1,nbuff
-    call update_offset(fh, MPI_CHARACTER)
+   call update_offset(fh, MPI_CHARACTER)
   end do
 #else
   read(fh) arr(istart:iend)
@@ -190,23 +192,40 @@ subroutine read_array_1d_char(fh, arr, istart, iend)
 
 end subroutine read_array_1d_char
 
+subroutine read_array_1d_real8(fh, arr, istart, iend)
+! For reading frame values
+  integer, intent(in) :: fh
+  real(8), intent(inout) :: arr(:)
+  integer, intent(in) :: istart, iend
+#ifdef MPI
+  integer :: i, nbuff
+
+  nbuff = iend-istart+1
+  call mpi_file_set_view(fh, offset, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+  do i = 1,nbuff
+   call update_offset(fh, MPI_REAL8)
+  end do
+#else
+  read(fh) arr(istart:iend)
+#endif
+
+ end subroutine read_array_1d_real8
+
 subroutine read_array_2d_real8(fh, arr, istart, iend, jstart, jend)
+! For reading mudata
   integer, intent(in) :: fh
   real(8), allocatable, intent(inout) :: arr(:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend
 #ifdef MPI
-  integer :: nbuff, itype, sizes(2), starts(2)
+  integer :: i, nbuff
 
-! Set up the subarray for arbitrary 2d array
-  sizes = [size(arr,1),size(arr,2)]
-  starts = [0,0]
-  call mpi_type_create_subarray(2, sizes, sizes, starts, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, itype, ierr)
-  call mpi_type_commit(itype, ierr)
-  nbuff = (iend-istart+1)*(jend-jstart+1)
-
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, itype, 'native', MPI_INFO_NULL, ierr)
-  call mpi_file_read_all(fh, arr(istart:iend,jstart:jend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, itype)
+  nbuff = (iend-istart+1) * (jend-jstart+1)
+  call mpi_file_set_view(fh, offset, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend, jstart:jend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+  do i = 1,nbuff
+   call update_offset(fh, MPI_REAL8)
+  end do
 #else
   read(fh) arr(istart:iend,jstart:jend)
 #endif
@@ -237,8 +256,8 @@ subroutine read_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend
   end if
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, itype, 'native', MPI_INFO_NULL, ierr)
-  call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  call mpi_file_set_view(fh, offset, MPI_REAL8, itype, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
   call update_offset(fh, itype)
 #else
   read(fh) arr(istart:iend,jstart:jend,kstart:kend)
@@ -254,8 +273,8 @@ subroutine read_array_spc(fh, arr, istart, iend, jstart, jend, kstart, kend, lst
   integer :: nbuff
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)*(lend-lstart+1)
 
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpi_subarray_spc, 'native', MPI_INFO_NULL, ierr)
-  call mpi_file_read_all(fh, arr(istart:iend, jstart:jend, kstart:kend, lstart:lend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  call mpi_file_set_view(fh, offset, MPI_REAL8, mpi_subarray_spc, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend, jstart:jend, kstart:kend, lstart:lend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
   call update_offset(fh, mpi_subarray_spc)
 #else
   read(fh) arr(istart:iend, jstart:jend, kstart:kend, lstart:lend)
@@ -303,8 +322,8 @@ subroutine read_extgrv_array(fh, arr)
 #ifdef MPI
   nbuff = (iend-istart+1)*(jend-jstart+1)*(kend-kstart+1)
 
-  call mpi_file_set_view(fh, offset, MPI_DOUBLE_PRECISION, mpi_subarray_extgrtv, 'native', MPI_INFO_NULL, ierr)
-  call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  call mpi_file_set_view(fh, offset, MPI_REAL8, mpi_subarray_extgrtv, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_read_all(fh, arr(istart:iend,jstart:jend,kstart:kend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
   call update_offset(fh, mpi_subarray_extgrtv)
 #else
   read(fh) arr(istart:iend,jstart:jend,kstart:kend)
@@ -364,32 +383,51 @@ subroutine write_real8(fh, var)
 
 end subroutine write_real8
 
+subroutine write_array_1d_real8(fh, arr, istart, iend)
+! For writing frame values
+  integer, intent(in) :: fh
+  real(8), intent(in) :: arr(:)
+  integer, intent(in) :: istart, iend
+#ifdef MPI
+  integer(kind=MPI_OFFSET_KIND) :: end_bytes
+  integer:: i, nbuff
+
+  nbuff = iend-istart+1
+  call get_file_end(fh, end_bytes)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_write_all(fh, arr(istart:iend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
+  do i = 1,nbuff
+   call update_offset(fh, MPI_REAL8)
+  end do
+#else
+  write(fh) arr(istart:iend)
+#endif
+
+end subroutine write_array_1d_real8
+
 subroutine write_array_2d_real8(fh, arr, istart, iend, jstart, jend)
+! For writing mudata array
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend
 #ifdef MPI
   integer(kind=MPI_OFFSET_KIND) :: end_bytes
-  integer :: nbuff, itype, sizes(2), starts(2)
+  integer :: i, nbuff
 
-! Set up the subarray for arbitrary 2d array
-  sizes = [size(arr,1),size(arr,2)]
-  starts = [0,0]
-  call mpi_type_create_subarray(2, sizes, sizes, starts, MPI_ORDER_FORTRAN, MPI_DOUBLE_PRECISION, itype, ierr)
-  call mpi_type_commit(itype, ierr)
   nbuff = (iend-istart+1)*(jend-jstart+1)
-
   call get_file_end(fh, end_bytes)
-  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, itype, 'native', MPI_INFO_NULL, ierr)
+  call mpi_file_set_view(fh, end_bytes, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ierr)
   call mpi_file_write_all(fh, arr(istart:iend,jstart:jend), nbuff, MPI_REAL8, MPI_STATUS_IGNORE, ierr)
-  call update_offset(fh, itype)
+  do i = 1,nbuff
+   call update_offset(fh, MPI_REAL8)
+  end do
 #else
   write(fh) arr(istart:iend,jstart:jend)
 #endif
-
 end subroutine write_array_2d_real8
 
 subroutine write_array_3d_real8(fh, arr, istart, iend, jstart, jend, kstart, kend, grav)
+! For writing physical quantities on the grid
   integer, intent(in) :: fh
   real(8), intent(in), allocatable :: arr(:,:,:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend, jstart, jend, kstart, kend
@@ -466,6 +504,7 @@ subroutine write_array_1d_sink(fh, arr, istart, iend)
 end subroutine write_array_1d_sink
 
 subroutine write_array_1d_char(fh, arr, istart, iend)
+! For writing species array
   integer, intent(in) :: fh
   character(len=10), intent(in), allocatable :: arr(:) ! use allocatable attribute to preserve lower and upper bound indices
   integer, intent(in) :: istart, iend
