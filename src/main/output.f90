@@ -606,7 +606,7 @@ subroutine write_grid_dat
    k=ke_global+1
    do j = je_global, je_global
     do i = is_global, ie_global
-     call write_my_grid_3d(ui,formval,i,j,k,x1(i),x2(j),xi3(k),dvol,i,j,k)
+     call write_my_grid_3d(ui,formval,i,j,k,x1(i),x2(j),xi3(k-1),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end do
