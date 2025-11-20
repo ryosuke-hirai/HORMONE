@@ -182,7 +182,7 @@ install:
 	echo "Updated $$RCFILE"; \
 	cp $(SCRIPTS_DIR)/setup ./setup; \
 	chmod +x ./setup; \
-	echo "Done. Restart your shell or run 'source $$RCFILE' to enable hormone-setup."
+	echo "Done. Restart your shell or run 'source $$(echo $$RCFILE | sed "s:^$$HOME:~:")' to enable hormone-setup."
 
 uninstall:
 	@echo "Uninstalling setup_hormone..."

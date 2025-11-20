@@ -54,6 +54,7 @@ subroutine commonenvelope
  close(nn)
 
  rcore = rcore*rsun
+ dis = dis*rsun
  compmass = compmass*msun
  compsoft = compsoft*rsun
  comprad  = comprad *1d5
