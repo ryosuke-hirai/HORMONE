@@ -76,13 +76,38 @@ end subroutine setup_python
 
 subroutine read_gridfile(gridfile)
 
+ use grid
  use readbin_mod
+ use metric_mod
 
  character(len=*),intent(in):: gridfile
+ integer :: j
 
 !-----------------------------------------------------------------------------
 
  call readgrid(gridfile)
+
+ idxi1(gis-1:gie+2)=1d0/dxi1(gis-1:gie+2)
+ idx1 (gis-1:gie+2)=1d0/dx1 (gis-1:gie+2)
+ idxi2(gjs-1:gje+2)=1d0/dxi2(gjs-1:gje+2)
+ idx2 (gjs-1:gje+2)=1d0/dx2 (gjs-1:gje+2)
+ idxi3(gks-1:gke+2)=1d0/dxi3(gks-1:gke+2)
+ idx3 (gks-1:gke+2)=1d0/dx3 (gks-1:gke+2)
+
+ xi1e = xi1(ie)
+ xi1s = xi1(is-1)
+
+ if(crdnt==2)then
+  allocate( sinc, sini, cosc, cosi, mold=x2 )
+  do j = js_global-2, je_global+2
+   sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))
+   sini(j)=real(sin(real(xi2(j),kind=16)),kind=8)!sin0(xi2(j))
+   cosc(j)=real(cos(real(x2 (j),kind=16)),kind=8)!cos0(x2 (j))
+   cosi(j)=real(cos(real(xi2(j),kind=16)),kind=8)!cos0(xi2(j))
+  end do
+ end if
+
+ call metric
 
  return
 end subroutine read_gridfile
