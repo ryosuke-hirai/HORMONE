@@ -112,11 +112,9 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 
     if [ "$MODE" = "continue" ]; then
         STARTNUM=$(latest_dump_number)
-	echo "Start=$STARTNUM"
         update_startfile "continue" "" "$STARTNUM"
     else
         STARTNUM=0
-	echo "Start=$STARTNUM"
         # Append " test" if requested
         SIMTYPE_TO_WRITE="$MODE"
         if [ "$TESTFLAG" = "test" ]; then
@@ -132,4 +130,5 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
             cp "$PARADIR/extras_$MODE" ./extras
         fi
     fi
+    echo "Start=$STARTNUM"  
 fi
