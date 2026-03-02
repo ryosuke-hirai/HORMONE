@@ -130,5 +130,5 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
             cp "$PARADIR/extras_$MODE" ./extras
         fi
     fi
-    echo "Start=$STARTNUM"  
+    echo "Start=$STARTNUM"
 fi
