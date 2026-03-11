@@ -74,7 +74,7 @@ subroutine sink_accretion
  kappa = 0.d0 ! Temporary: ignore radiative heating
 
  do n = 1, nsink
-  if(sink(n)%mass<=0d0)cycle
+  if(sink(n)%laccr<=0d0)cycle
   accmass = 0d0
   accmom  = 0d0
   accang  = 0d0
