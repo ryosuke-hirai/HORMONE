@@ -186,9 +186,6 @@ subroutine commonenvelope
   if(i>=is.and.i<=ie)p(i,js:je,ks:ke) = p1d(i)
  end do
 
-! Remember core mass
- if (is==is_global) mc(is-1) = mcore
-
 ! place colliding object
  sink(2)%mass = compmass
  sink(2)%lsoft = compsoft
