@@ -54,6 +54,7 @@ subroutine metric
 ! Cylindrical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(1)
 
+  if(allocated(rdis))deallocate(rdis,sincyl,coscyl)
   allocate( rdis(-1:gie+2,gks-2:gke+2) )
   allocate( sincyl,coscyl,mold=rdis )
 
@@ -151,6 +152,7 @@ subroutine metric
   end do
 
   if(include_extforce)then
+   if(allocated(spinc_r))deallocate(spinc_r,spinc_t)
    allocate(spinc_r(is_global:ie_global),spinc_t(js_global:je_global))
    do i = is_global, ie_global
     spinc_r(i) = 0.75d0*(xi1(i)**2+xi1(i-1)**2) &

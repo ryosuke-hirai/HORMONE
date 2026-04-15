@@ -90,7 +90,11 @@ F2PY="$PYTHON -m $F2PY_MODULE"
 # Generate .pyf signature interface
 # -----------------------------------------------------------------------------
 echo "Generating .pyf interface file..."
-$F2PY -h "$PYF_FILE" -m horpy "$PROJECT_ROOT/src/main/modules.f90" "$SCRIPT_DIR/horpy.f90"
+$F2PY -h "$PYF_FILE" -m horpy \
+      "$PROJECT_ROOT/src/main/modules.f90" \
+      "$PROJECT_ROOT/src/main/opacity.f90" \
+      "$PROJECT_ROOT/src/main/ionization.f90" \
+      "$SCRIPT_DIR/horpy.f90"
 
 # -----------------------------------------------------------------------------
 # Compile Fortran code into shared object
@@ -113,6 +117,7 @@ $F2PY -c "$SCRIPT_DIR/horpy.pyf" -m horpy \
 # -----------------------------------------------------------------------------
 # Move resulting .so file into the venv's site-packages/
 # -----------------------------------------------------------------------------
+
 SITE_PACKAGES_DIR="$($PYTHON -c 'import site; print(site.getsitepackages()[0])')"
 
 if [ ! -d "$SITE_PACKAGES_DIR" ]; then
