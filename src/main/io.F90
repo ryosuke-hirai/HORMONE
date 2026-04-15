@@ -92,12 +92,22 @@ subroutine open_file_write_ascii(filename, fh)
 #endif
 end subroutine open_file_write_ascii
 
-subroutine open_file_read(filename, fh)
+subroutine open_file_read(filename, fh, istat)
   character(len=*), intent(in) :: filename
-  integer, intent(out) :: fh
-#ifndef MPI
-  integer :: istat
-#endif
+  integer, intent(out) :: fh, istat
+  logical:: exist
+
+! Check if file exists.
+! This was added in response to weird Jupyter notebook behaviour
+  inquire(file=filename,exist=exist)
+  if(exist)then
+   istat = 0
+  else
+   print*,'Error: File does not exist!!'
+   print*,'input file name = ',trim(filename)
+   istat = 1
+   return
+  end if
 
 #ifdef MPI
   offset = 0   ! reset the offset counter
@@ -113,6 +123,7 @@ subroutine open_file_read(filename, fh)
   if(istat/=0)then
     print*,'Error opening binary dump file'
     print'(3a)','File name = "',trim(filename),'"'
+    print*,'iostat = ',istat
     stop
   end if
 #endif

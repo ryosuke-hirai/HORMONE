@@ -126,7 +126,7 @@ $(TARGETL): $(OBJL_F)
 	$(FC) $(FCFLAG) -o $@ $(OBJL_F)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.F90
-	$(FC) $(FPPFLAG) $(FCFLAG) -c $< -o $@ $(MODFLAG)$(OBJ_DIR)
+	$(FC) $(FCFLAG) -c $< -o $@ $(MODFLAG)$(OBJ_DIR) $(FPPFLAG)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90
 	$(FC) $(FCFLAG) -c $< -o $@ $(MODFLAG)$(OBJ_DIR)

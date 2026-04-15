@@ -52,12 +52,13 @@ subroutine setup_python(dir)
  call domain_decomp
 
 ! call allocate_subset
- if(.not.allocated(d))call allocations
+ if(allocated(d))call deallocate_all
+ call allocations
 
- if(include_sinks.and..not.allocated(sink_x))then
-  allocate(sink_x(1:3,1:nsink))
+ if(include_sinks)then
+  if(allocated(sink_x))deallocate(sink_x,sink_v,sink_mass,sink_mdot)
+  allocate(sink_x(1:3,1:nsink),sink_mass(1:nsink))
   allocate(sink_v,mold=sink_x)
-  allocate(sink_mass(1:nsink))
   allocate(sink_mdot,mold=sink_mass)
  end if
 
@@ -98,6 +99,7 @@ subroutine read_gridfile(gridfile)
  xi1s = xi1(is-1)
 
  if(crdnt==2)then
+  if(allocated(sinc))deallocate(sinc,sini,cosc,cosi)
   allocate( sinc, sini, cosc, cosi, mold=x2 )
   do j = js_global-2, je_global+2
    sinc(j)=real(sin(real(x2 (j),kind=16)),kind=8)!sin0(x2 (j))

@@ -25,11 +25,12 @@ subroutine readbin(filename)
  use sink_mod,only:sink
 
  character(len=*),intent(in):: filename
- integer:: un
+ integer:: un, ierr
 
 !-----------------------------------------------------------------------------
 
- call open_file_read(filename, un)
+ call open_file_read(filename, un, ierr)
+ if(ierr/=0)return
 
  call read_dummy_recordmarker(un)
  call read_var(un, tn)
@@ -154,11 +155,12 @@ subroutine read_extgrv(filename)
  use gravmod, only:coremass, extgrv, mc
  use io, only:open_file_read, read_dummy_recordmarker, read_var, read_extgrv_array, close_file
  character(len=*), intent(in) :: filename
- integer:: ui, istart, iend, jstart, jend, kstart, kend
+ integer:: ui, istart, iend, jstart, jend, kstart, kend, ierr
 
  extgrv = 0d0
 
- call open_file_read(filename, ui)
+ call open_file_read(filename, ui, ierr)
+ if(ierr/=0) return
 
  call read_dummy_recordmarker(ui)
  call read_var(ui, coremass)
