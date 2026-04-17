@@ -48,7 +48,7 @@ subroutine allocations
 
  allocate(dvol(is_global-2:ie_global+2,js_global-2:je_global+2,ks_global-2:ke_global+2))
  allocate(idetg3,sa1,sa2,sa3,Imom,mold=dvol)
- allocate(car_x(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1))
+ if(crdnt/=0)allocate(car_x(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1))
 
 ! 3 dimensional arrays =======================================================
 ! physical variables
@@ -333,5 +333,90 @@ subroutine allocations
 
  return
 end subroutine allocations
+
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                          SUBROUTINE DEALLOCATE_ALL
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To deallocate all variables that are allocated in allocations
+
+subroutine deallocate_all
+
+ use settings
+ use derived_types,only:null_sink
+ use grid
+ use physval
+ use gravmod
+ use sink_mod
+ use dirichlet_mod
+
+!-----------------------------------------------------------------------------
+
+! 1 dimensional arrays =======================================================
+! grid-related variables
+ deallocate(x1,xi1,dx1,dxi1,idx1,idxi1)
+ deallocate(x2,xi2,dx2,dxi2,idx2,idxi2)
+ deallocate(x3,xi3,dx3,dxi3,idx3,idxi3)
+
+!  metric-related variables
+ deallocate(detg1,idetg1,sx1,g22,scot,sisin,&
+            detg2,idetg2,g33,dvol,idetg3,sa1,sa2,sa3,Imom)
+ if(crdnt/=0)deallocate(car_x)
+
+
+! 3 dimensional arrays =======================================================
+! physical variables
+!  Strictly non-zero quantities
+ deallocate(d,p,e,T,ptot,cs,eint,erad,imu,phi,&
+            v1,v2,v3,b1,b2,b3,grv1,grv2,grv3,shock)
+
+! 4 dimensional arrays =======================================================
+! gradients
+ deallocate(dd,de,dphi,dm1,dm2,dm3,db1,db2,db3,dmu)
+ if(radswitch>0)deallocate(der)
+
+! conserved quantities and flux
+ deallocate(u,flux1,flux2,flux3)
+ deallocate(src,uorg)
+
+! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+! gravity-related variables
+ if(gravswitch>=1)then
+  deallocate(grvphi,totphi,hgsrc,grvpsi,gsrc,lapphi,grvphiorg)
+!  for gravbound
+  deallocate(phiio,phiii,phi1o,phi3i,phi3o,mc)
+ end if
+
+! deallocate Dirichlet variables if Dirichlet boundary is applied
+ if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
+    bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9.or. &
+    is_test)then
+  deallocate(d0,p0,v10,v20,v30,b10,b20,b30)
+ end if
+
+! deallocate chemical composition if compswitch/=0
+ if(compswitch>0)then
+  deallocate(spc,spcorg,dspc,spcflx,species)
+  if(bc1is==9.or.bc1os==9.or.bc2is==9.or.bc2os==9.or.bc3is==9.or.bc3os==9.or. &
+     bc1iv==9.or.bc1ov==9.or.bc2iv==9.or.bc2ov==9.or.bc3iv==9.or.bc3ov==9)then
+   deallocate(spc0)
+  end if
+ end if
+
+! deallocate external gravitational field if necessary
+ if(include_extgrv)deallocate(extgrv)
+
+! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+! deallocate sink particle-related variables if necessary
+ if(include_sinks)deallocate(snkphi,sink)
+
+ return
+end subroutine deallocate_all
+
 
 end module allocation_mod
