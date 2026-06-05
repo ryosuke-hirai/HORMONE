@@ -59,9 +59,9 @@ subroutine setup_python(dir)
 
  if(include_sinks)then
     if(allocated(sink_x))deallocate(sink_i,sink_j,sink_k,sink_x,sink_v,sink_a,sink_xpol,&
-         sink_jspin,sink_jdot,sink_jet_dir,sink_mass,sink_mdot,sink_softfac,&
-         sink_lsoft,sink_laccr,sink_locres,sink_dt,sink_racc,sink_facc,&
-         sink_jet_ang,sink_acclum)
+                                    sink_jspin,sink_jdot,sink_jet_dir,sink_mass,sink_mdot,sink_softfac,&
+                                    sink_lsoft,sink_laccr,sink_locres,sink_dt,sink_racc,sink_facc,&
+                                    sink_jet_ang,sink_acclum)
   allocate(sink_x(1:3,1:nsink),sink_mass(1:nsink),sink_i(1:nsink))
   
   !allocate integer variables
@@ -69,12 +69,12 @@ subroutine setup_python(dir)
   
   !allocate multi-d variables
   allocate(sink_v,sink_a,sink_xpol,sink_jspin,&
-       sink_jdot,sink_jet_dir,mold=sink_x)
+           sink_jdot,sink_jet_dir,mold=sink_x)
 
   !allocate real 1-d variables
   allocate(sink_mdot,sink_softfac,sink_lsoft,&
-       sink_laccr,sink_locres,sink_dt,sink_racc,&
-       sink_facc,sink_jet_ang,sink_acclum,mold=sink_mass)
+           sink_laccr,sink_locres,sink_dt,sink_racc,&
+           sink_facc,sink_jet_ang,sink_acclum,mold=sink_mass)
 
  end if
 
