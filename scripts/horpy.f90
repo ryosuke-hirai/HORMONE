@@ -2,9 +2,11 @@ module readbin_python
 
  implicit none
 
-! Re-define sink particle properties here because f2py cannot deal with derived types
- real(8),allocatable,dimension(:,:):: sink_x,sink_v
- real(8),allocatable,dimension(:):: sink_mass, sink_mdot
+ ! Re-define sink particle properties here because f2py cannot deal with derived types
+ integer,allocatable,dimension(:):: sink_i, sink_j, sink_k
+ real(8),allocatable,dimension(:,:):: sink_x, sink_v, sink_a, sink_xpol, sink_jspin, sink_jdot, sink_jet_dir
+ real(8),allocatable,dimension(:):: sink_mass, sink_mdot, sink_softfac, sink_lsoft, sink_laccr, sink_locres
+ real(8),allocatable,dimension(:):: sink_dt, sink_racc, sink_facc, sink_jet_ang, sink_acclum
 
  interface get_interior
   module procedure get_interior_1D
@@ -56,10 +58,24 @@ subroutine setup_python(dir)
  call allocations
 
  if(include_sinks)then
-  if(allocated(sink_x))deallocate(sink_x,sink_v,sink_mass,sink_mdot)
-  allocate(sink_x(1:3,1:nsink),sink_mass(1:nsink))
-  allocate(sink_v,mold=sink_x)
-  allocate(sink_mdot,mold=sink_mass)
+    if(allocated(sink_x))deallocate(sink_i,sink_j,sink_k,sink_x,sink_v,sink_a,sink_xpol,&
+                                    sink_jspin,sink_jdot,sink_jet_dir,sink_mass,sink_mdot,sink_softfac,&
+                                    sink_lsoft,sink_laccr,sink_locres,sink_dt,sink_racc,sink_facc,&
+                                    sink_jet_ang,sink_acclum)
+  allocate(sink_x(1:3,1:nsink),sink_mass(1:nsink),sink_i(1:nsink))
+  
+  !allocate integer variables
+  allocate(sink_j,sink_k,mold=sink_i)
+  
+  !allocate multi-d variables
+  allocate(sink_v,sink_a,sink_xpol,sink_jspin,&
+           sink_jdot,sink_jet_dir,mold=sink_x)
+
+  !allocate real 1-d variables
+  allocate(sink_mdot,sink_softfac,sink_lsoft,&
+           sink_laccr,sink_locres,sink_dt,sink_racc,&
+           sink_facc,sink_jet_ang,sink_acclum,mold=sink_mass)
+
  end if
 
  call chdir(cwd)
@@ -136,11 +152,35 @@ subroutine read_binfile(binfile)
  call readbin(binfile)
 
  if(include_sinks)then
-  do n = 1, nsink
-   sink_x(1:3,n)   = sink(n)%x(1:3) 
-   sink_v(1:3,n)   = sink(n)%v(1:3) 
-   sink_mass(n) = sink(n)%mass
-   sink_mdot(n) = sink(n)%mdot
+   do n = 1, nsink
+
+   !integers
+   sink_i(n)   = sink(n)%i
+   sink_j(n)   = sink(n)%j
+   sink_k(n)   = sink(n)%k
+
+   !reals, 3d
+   sink_x(1:3,n)       = sink(n)%x(1:3) 
+   sink_v(1:3,n)       = sink(n)%v(1:3)
+   sink_a(1:3,n)       = sink(n)%a(1:3)
+   sink_xpol(1:3,n)    = sink(n)%xpol(1:3)
+   sink_jspin(1:3,n)   = sink(n)%jspin(1:3)
+   sink_jdot(1:3,n)    = sink(n)%jdot(1:3)
+   sink_jet_dir(1:3,n) = sink(n)%jet_dir(1:3)
+
+   !reals, 1d
+   sink_mass(n)    = sink(n)%mass
+   sink_mdot(n)    = sink(n)%mdot
+   sink_softfac(n) = sink(n)%softfac
+   sink_lsoft(n)   = sink(n)%lsoft
+   sink_laccr(n)   = sink(n)%laccr
+   sink_locres(n)  = sink(n)%locres
+   sink_dt(n)      = sink(n)%dt
+   sink_racc(n)    = sink(n)%racc
+   sink_facc(n)    = sink(n)%facc
+   sink_acclum(n)  = sink(n)%acclum
+   sink_jet_ang(n) = sink(n)%jet_ang
+   
   end do
  end if
 
