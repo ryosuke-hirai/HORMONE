@@ -3,7 +3,7 @@ module readbin_python
  implicit none
 
  ! Re-define sink particle properties here because f2py cannot deal with derived types
- integer,allocatable,dimension(:):: sink_i, sink_j, sink_k, sink_pad
+ integer,allocatable,dimension(:):: sink_i, sink_j, sink_k
  real(8),allocatable,dimension(:,:):: sink_x, sink_v, sink_a, sink_xpol, sink_jspin, sink_jdot, sink_jet_dir
  real(8),allocatable,dimension(:):: sink_mass, sink_mdot, sink_softfac, sink_lsoft, sink_laccr, sink_locres
  real(8),allocatable,dimension(:):: sink_dt, sink_racc, sink_facc, sink_jet_ang, sink_acclum
@@ -58,35 +58,24 @@ subroutine setup_python(dir)
  call allocations
 
  if(include_sinks)then
-  if(allocated(sink_x))deallocate(sink_i,sink_j,sink_k,sink_pad,sink_x,sink_v,sink_a,sink_xpol)
-  if(allocated(sink_x))deallocate(sink_jspin,sink_jdot,sink_jet_dir,sink_mass,sink_mdot,sink_softfac)
-  if(allocated(sink_x))deallocate(sink_lsoft,sink_laccr,sink_locres,sink_dt,sink_racc,sink_facc,sink_jet_ang,sink_acclum)
+    if(allocated(sink_x))deallocate(sink_i,sink_j,sink_k,sink_x,sink_v,sink_a,sink_xpol,&
+         sink_jspin,sink_jdot,sink_jet_dir,sink_mass,sink_mdot,sink_softfac,&
+         sink_lsoft,sink_laccr,sink_locres,sink_dt,sink_racc,sink_facc,&
+         sink_jet_ang,sink_acclum)
   allocate(sink_x(1:3,1:nsink),sink_mass(1:nsink),sink_i(1:nsink))
   
   !allocate integer variables
-  allocate(sink_j,   mold=sink_i)
-  allocate(sink_k,   mold=sink_i)
-  allocate(sink_pad, mold=sink_i)
+  allocate(sink_j,sink_k,mold=sink_i)
   
   !allocate multi-d variables
-  allocate(sink_v,       mold=sink_x)
-  allocate(sink_a,       mold=sink_x)
-  allocate(sink_xpol,    mold=sink_x)
-  allocate(sink_jspin,   mold=sink_x)
-  allocate(sink_jdot,    mold=sink_x)
-  allocate(sink_jet_dir, mold=sink_x)
+  allocate(sink_v,sink_a,sink_xpol,sink_jspin,&
+       sink_jdot,sink_jet_dir,mold=sink_x)
 
   !allocate real 1-d variables
-  allocate(sink_mdot,    mold=sink_mass)
-  allocate(sink_softfac, mold=sink_mass)
-  allocate(sink_lsoft,   mold=sink_mass)
-  allocate(sink_laccr,   mold=sink_mass)
-  allocate(sink_locres,  mold=sink_mass)
-  allocate(sink_dt,      mold=sink_mass)
-  allocate(sink_racc,    mold=sink_mass)
-  allocate(sink_facc,    mold=sink_mass)
-  allocate(sink_jet_ang, mold=sink_mass)
-  allocate(sink_acclum,  mold=sink_mass)
+  allocate(sink_mdot,sink_softfac,sink_lsoft,&
+       sink_laccr,sink_locres,sink_dt,sink_racc,&
+       sink_facc,sink_jet_ang,sink_acclum,mold=sink_mass)
+
  end if
 
  call chdir(cwd)
@@ -169,7 +158,6 @@ subroutine read_binfile(binfile)
    sink_i(n)   = sink(n)%i
    sink_j(n)   = sink(n)%j
    sink_k(n)   = sink(n)%k
-   sink_pad(n) = sink(n)%pad
 
    !reals, 3d
    sink_x(1:3,n)       = sink(n)%x(1:3) 
