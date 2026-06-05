@@ -5,7 +5,8 @@ module readbin_python
  ! Re-define sink particle properties here because f2py cannot deal with derived types
  integer,allocatable,dimension(:):: sink_i, sink_j, sink_k, sink_pad
  real(8),allocatable,dimension(:,:):: sink_x, sink_v, sink_a, sink_xpol, sink_jspin, sink_jdot, sink_jet_dir
- real(8),allocatable,dimension(:):: sink_mass, sink_mdot, sink_softfac, sink_lsoft, sink_laccr, sink_locres, sink_dt, sink_racc, sink_facc, sink_jet_ang, sink_acclum
+ real(8),allocatable,dimension(:):: sink_mass, sink_mdot, sink_softfac, sink_lsoft, sink_laccr, sink_locres
+ real(8),allocatable,dimension(:):: sink_dt, sink_racc, sink_facc, sink_jet_ang, sink_acclum
 
  interface get_interior
   module procedure get_interior_1D
@@ -57,7 +58,9 @@ subroutine setup_python(dir)
  call allocations
 
  if(include_sinks)then
-  if(allocated(sink_x))deallocate(sink_i,sink_j,sink_k,sink_pad,sink_x,sink_v,sink_a,sink_xpol,sink_jspin,sink_jdot,sink_jet_dir,sink_mass,sink_mdot,sink_softfac,sink_lsoft,sink_laccr,sink_locres,sink_dt,sink_racc,sink_facc,sink_jet_ang,sink_acclum)
+  if(allocated(sink_x))deallocate(sink_i,sink_j,sink_k,sink_pad,sink_x,sink_v,sink_a,sink_xpol)
+  if(allocated(sink_x))deallocate(sink_jspin,sink_jdot,sink_jet_dir,sink_mass,sink_mdot,sink_softfac)
+  if(allocated(sink_x))deallocate(sink_lsoft,sink_laccr,sink_locres,sink_dt,sink_racc,sink_facc,sink_jet_ang,sink_acclum)
   allocate(sink_x(1:3,1:nsink),sink_mass(1:nsink),sink_i(1:nsink))
   
   !allocate integer variables
