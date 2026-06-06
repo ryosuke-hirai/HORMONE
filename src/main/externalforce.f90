@@ -15,8 +15,8 @@ subroutine externalforce
 
  use settings,only:frame
  use external_settings,only:include_spinup
- use grid
- use physval
+ use grid,only:crdnt,is,ie,js,je,ks,ke,dt
+ use physval,only:d,v1,v2,v3,src,imo1,imo2,imo3,iene
  use utils,only:polcar,cylcar,get_vpol,get_vcyl
 
  integer:: i,j,k
@@ -108,7 +108,7 @@ end subroutine externalforce
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                           SUBROUTINE FRAME_FORCE
+!                            SUBROUTINE FRAME_FORCE
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -116,7 +116,7 @@ end subroutine externalforce
 
 subroutine frame_force(atot)
 
- use grid
+ use grid,only:crdnt,is,ie,js,je,ks,ke,x1,x2,x3,car_x,frame_acc
  use utils,only:polcar,cylcar,get_vpol,get_vcyl
 
  real(8),allocatable,dimension(:,:,:,:),intent(inout):: atot
@@ -168,7 +168,7 @@ end subroutine frame_force
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                             SUBROUTINE SPINUP
+!                              SUBROUTINE SPINUP
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
