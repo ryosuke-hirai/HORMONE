@@ -177,9 +177,9 @@ end subroutine frame_force
 subroutine spinup(atot)
 
  use external_settings,only:omegadot,j_max
- use grid
+ use grid,only:crdnt,is,ie,js,je,ks,ke,x1,x2,sinc,spinc_r,spinc_t
  use physval,only:v1,v2,v3
- use gravmod,only:extgrv,totphi
+ use gravmod,only:totphi
 
  real(8),allocatable,dimension(:,:,:,:),intent(inout):: atot
  integer:: i,j,k
