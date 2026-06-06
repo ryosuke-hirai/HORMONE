@@ -27,9 +27,9 @@ module settings
 ! test tolerance
  real(8):: test_tol, Mach_tol
 ! switches
- logical:: solve_i, solve_j, solve_k, solve_hydro, solve_grav
+ logical:: solve_i, solve_j, solve_k, solve_hydro, solve_grav, is_test
  logical:: include_extgrv, include_particles, include_cooling, mag_on
- logical:: include_extforce, include_sinks, include_accretion, is_test
+ logical:: include_extforce, include_sinks, include_accretion
  logical:: write_other_vel, write_shock, write_evo, write_other_slice
  logical:: write_temp, write_mc, output_ascii
  logical:: grav_init_other, grav_init_relax
@@ -173,3 +173,13 @@ module ejectamod
   character(len=40):: ejtbinfile
 
 end module ejectamod
+
+!XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+module external_settings
+
+ implicit none
+
+ logical:: include_spinup
+ real(8):: omegadot,j_max
+
+end module external_settings

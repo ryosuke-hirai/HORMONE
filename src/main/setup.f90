@@ -105,6 +105,7 @@ end subroutine read_default
 subroutine read_parameters(filename)
 
  use settings
+ use external_settings
  use grid
  use physval
  use opacity_mod
@@ -139,6 +140,7 @@ subroutine read_parameters(filename)
                     lambdatype, rbtype
  namelist /partcon/ include_particles, maxptc
  namelist /mat_con/ matrix_solver
+ namelist /extfcon/ include_spinup, omegadot, j_max
  namelist /testcon/ test_tol, Mach_tol
 
  if(filename=='')return
@@ -159,6 +161,7 @@ subroutine read_parameters(filename)
  read(ui,NML=rad_con,iostat=istat);rewind(ui)
  read(ui,NML=partcon,iostat=istat);rewind(ui)
  read(ui,NML=mat_con,iostat=istat);rewind(ui)
+ read(ui,NML=extfcon,iostat=istat);rewind(ui)
  read(ui,NML=testcon,iostat=istat)
  close(ui)
 

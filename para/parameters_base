@@ -156,6 +156,14 @@
 &partcon include_particles=.false. maxptc=0 /
 
 
+########################## EXTERNAL FORCE CONTROLS #########################
+! include_spinup: Switch to add rigid body spinup
+! omegadot: Torque for spinup in rad/s^2
+! j_max: Maximum allowed specific angular momentum (cgs)
+
+&extfcon include_spinup=.false. omegadot=0d0 j_max=0d0 /
+
+
 ############################### TEST CONTROLS ##############################
 ! test_tol: tolerance for test simulation
 ! Mach_tol: Normalize velocities by this Mach number to avoid dividing by zero
