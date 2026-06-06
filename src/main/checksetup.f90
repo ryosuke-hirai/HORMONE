@@ -13,6 +13,7 @@ subroutine checksetup
 ! purpose: To check whether the setups are consistent.
 
   use settings
+  use external_settings
   use grid
   use physval
   use utils
@@ -261,6 +262,9 @@ subroutine checksetup
    include_extforce = .true.
    include_sinks = .true.
   end if
+
+! Enable external force if using spinup
+  if(include_spinup)include_extforce = .true.
 
 ! Only do accretion when sinks are enabled
   if(.not.include_sinks) include_accretion = .false.
