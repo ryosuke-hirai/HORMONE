@@ -262,6 +262,9 @@ subroutine checksetup
    include_sinks = .true.
   end if
 
+! Enable external force if using spinup
+  if(include_spinup)include_extforce = .true.
+
 ! Only do accretion when sinks are enabled
   if(.not.include_sinks) include_accretion = .false.
 
