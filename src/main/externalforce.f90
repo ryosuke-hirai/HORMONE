@@ -20,7 +20,7 @@ subroutine externalforce
  use utils,only:polcar,cylcar,get_vpol,get_vcyl
 
  integer:: i,j,k
- real(8),dimension(1:3):: ftot,xcar,atotijk
+ real(8),dimension(1:3):: ftot,atotijk
  real(8),allocatable,dimension(:,:,:,:):: atot
 
 !-----------------------------------------------------------------------------
