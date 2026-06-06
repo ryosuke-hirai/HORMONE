@@ -13,6 +13,7 @@ subroutine checksetup
 ! purpose: To check whether the setups are consistent.
 
   use settings
+  use external_settings
   use grid
   use physval
   use utils
