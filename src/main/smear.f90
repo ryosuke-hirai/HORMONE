@@ -1,4 +1,7 @@
 module smear_mod
+
+ use settings,only:smeartype
+
  implicit none
 
  public:: smear_setup,smear
@@ -10,7 +13,7 @@ module smear_mod
  integer,private:: nsmear_mydom, nsmear_split
  integer,allocatable,public:: block_j(:),block_k(:),lijk_from_id(:,:)
  integer,allocatable,private:: list_split(:),list_mydom(:,:)
- real(8),allocatable,private:: dvol_block(:)
+ real(8),allocatable,private:: dvol_block(:), Imom_block(:)
 
 contains
 
@@ -25,11 +28,11 @@ contains
  subroutine smear_setup
 
   use grid,only:is_global,js_global,je_global,ks_global,ke_global,&
-                fmr_max,fmr_lvl,crdnt,dvol
+                fmr_max,fmr_lvl,crdnt,dvol,x1,sinc
   use mpi_domain,only:fully_my_domain,partially_my_domain
   use mpi_utils,only:allreduce_mpi
 
-  integer:: n,nn,i,j,k,jb,kb
+  integer:: n,nn,i,j,k,jb,kb,jj,kk
   integer,allocatable:: temp1(:),temp2(:)
 
 !-----------------------------------------------------------------------------
@@ -65,8 +68,10 @@ contains
 ! Record effective cell properties
    allocate(dvol_block(1:nsmear),lijk_from_id(0:3,1:nsmear),temp1(1:nsmear))
    allocate(temp2,mold=temp1)
+   allocate(Imom_block,mold=dvol_block)
    nsmear_mydom = 0
    temp1 = 0; temp2 = 0
+   Imom_block = 0d0
    do n = 1, fmr_max
     if(fmr_lvl(n)==0)cycle
     jb = block_j(n)
@@ -75,6 +80,12 @@ contains
      do j = js_global, je_global, jb
       do i = is_global+sum(fmr_lvl(0:n-1)), is_global+sum(fmr_lvl(0:n))-1
        dvol_block(get_id(i,j,k)) = sum(dvol(i,j:j+jb-1,k:k+kb-1))
+       do kk = k, k+kb-1
+        do jj = j, j+jb-1
+         Imom_block(get_id(i,j,k)) = Imom_block(get_id(i,j,k)) &
+                                   + (x1(i)*sinc(jj))**2*dvol(i,jj,kk)
+        end do
+       end do
        lijk_from_id(0,get_id(i,j,k)) = n
        lijk_from_id(1,get_id(i,j,k)) = i
        lijk_from_id(2,get_id(i,j,k)) = j
@@ -231,9 +242,7 @@ contains
     if(which=='hydro')then
      deallocate(exchange)
      allocate(exchange(1,nsmear_split))
-!$omp parallel workshare
      exchange = 0d0
-!$omp end parallel workshare
     end if
     call stop_clock(wtin2)
    end if
@@ -327,7 +336,7 @@ contains
    jn = (je_global-js_global+1)/block_j(n)
    kn = (ke_global-ks_global+1)/block_k(n)
    id = id + (i-sum(fmr_lvl(0:n-1))-1) * jn * kn &
-           + int(j/block_j(n)) + int(k/block_k(n))*jn + 1
+           + int((j-1)/block_j(n)) + int((k-1)/block_k(n))*jn + 1
   end if
 
   return
@@ -344,13 +353,14 @@ contains
 
  subroutine angular_smear_e(i,js_,je_,ks_,ke_,etot)
 
+  use settings,only:smeartype
   use grid,only:js,je,ks,ke
-  use physval,only:u,iene
+  use physval,only:u,iene,icnt,imo1,imo2,imo3
 
   integer,intent(in):: i,js_,je_,ks_,ke_
   real(8),intent(in)::etot
   real(8):: vol
-  integer:: jl,jr,kl,kr
+  integer:: j,k,jl,jr,kl,kr
 
 !-----------------------------------------------------------------------------
 
@@ -359,8 +369,22 @@ contains
 
   vol = dvol_block(get_id(i,js_,ks_))
 
-  u(i,jl:jr,kl:kr,iene) = etot / vol  
-  
+  select case (smeartype)
+  case(1) ! Conserve linear momentum
+   ! Kinetic energy is uniform, so just average out total energy
+   u(i,jl:jr,kl:kr,iene) = etot / vol
+
+  case(2) ! Conserve angular momentum
+   ! Kinetic energy is NOT uniform, so average out internal energy and then add kinetic energy
+   do k = kl, kr
+    do j = jl, jr
+     u(i,j,k,iene) = etot / vol &
+                   + 0.5d0*(u(i,j,k,imo1)**2+u(i,j,k,imo2)**2+u(i,j,k,imo3)**2)&
+                          / u(i,j,k,icnt)
+    end do
+   end do
+  end select
+
  end subroutine angular_smear_e
  
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -373,8 +397,8 @@ contains
 
  subroutine angular_smear_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
 
-  use settings,only:spn,compswitch
-  use grid,only:x3,dvol,car_x,js,je,ks,ke
+  use settings,only:spn,compswitch,smeartype
+  use grid,only:x3,dvol,car_x,js,je,ks,ke,x1,sinc
   use physval,only:u,spc,v1,v2,v3,icnt,imo1,imo2,imo3
   use utils,only:get_vpol
   use gravmod,only:totphi,gravswitch
@@ -392,26 +416,48 @@ contains
 
   vol = dvol_block(get_id(i,js_,ks_))
   dave = mtot/vol    ! get average density
-  vave = momtot/mtot ! get average cartesian velocity
 
   if(compswitch>=2)then
    do n = 1, spn
     spc(n,i,jl:jr,kl:kr) = spctot(n) / mtot
    end do
   end if
-  
-  do k = kl, kr
-   do j = jl, jr
-    u(i,j,k,icnt) = dave ! density
-    call get_vpol(car_x(:,i,j,k),x3(k),vave,&
-                  v1(i,j,k),v2(i,j,k),v3(i,j,k))
-    u(i,j,k,imo1) = v1(i,j,k)*dave
-    u(i,j,k,imo2) = v2(i,j,k)*dave
-    u(i,j,k,imo3) = v3(i,j,k)*dave
-    if(gravswitch>0)&
-     etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+
+  select case (smeartype)
+  case(1) ! Conserve linear momentum
+   vave = momtot/mtot ! get average cartesian velocity
+   do k = kl, kr
+    do j = jl, jr
+     u(i,j,k,icnt) = dave ! density
+     call get_vpol(car_x(:,i,j,k),x3(k),vave,&
+                   v1(i,j,k),v2(i,j,k),v3(i,j,k))
+     u(i,j,k,imo1) = dave*v1(i,j,k)
+     u(i,j,k,imo2) = dave*v2(i,j,k)
+     u(i,j,k,imo3) = dave*v3(i,j,k)
+     if(gravswitch>0)&
+      etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+    end do
    end do
-  end do
+
+  case(2) ! Conserve angular momentum
+   vave(1:2) = momtot(1:2)/mtot
+   vave(3) = momtot(3)/(dave*Imom_block(get_id(i,js_,ks_))) ! =Omega
+   do k = kl, kr
+    do j = jl, jr
+     u(i,j,k,icnt) = dave ! density
+     u(i,j,k,imo1) = dave*vave(1)
+     u(i,j,k,imo2) = dave*vave(2)
+     u(i,j,k,imo3) = dave*vave(3)*x1(i)*sinc(j)
+     etot = etot &
+          - 0.5d0*dave*(vave(1)**2+vave(2)**2+(vave(3)*x1(i)*sinc(j))**2) &
+            *dvol(i,j,k)
+
+     if(gravswitch>0)&
+      etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+    end do
+   end do
+
+  end select
 
  end subroutine angular_smear_hydro
  
@@ -425,8 +471,8 @@ contains
 
  subroutine angular_sums_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
 
-  use settings,only:spn,compswitch
-  use grid,only:x3,dvol,car_x,js,je,ks,ke
+  use settings,only:spn,compswitch,smeartype
+  use grid,only:x3,dvol,car_x,js,je,ks,ke,x1,sinc
   use physval,only:u,spc,icnt,iene,imo1,imo2,imo3
   use utils
   use gravmod,only:totphi,gravswitch
@@ -452,22 +498,43 @@ contains
   end if
 
   momtot=0d0;etot=0d0;compen=0d0
-  do k = kl, kr
-   do j = jl, jr
-    call get_vcar(car_x(:,i,j,k),x3(k),&
-                  u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
+  select case (smeartype)
+  case(1) ! Conserve linear momentum
+   do k = kl, kr
+    do j = jl, jr
+     call get_vcar(car_x(:,i,j,k),x3(k),&
+                   u(i,j,k,imo1),u(i,j,k,imo2),u(i,j,k,imo3),vcar)
 ! Use Kahan summation algorithm to minimize roundoff error
-    element = vcar*dvol(i,j,k)
-    tempsum = momtot + element
-    compen = get_compensation(compen,element,tempsum,momtot)
-    momtot = tempsum ! add up momenta using the Kahan algorithm
+     element = vcar*dvol(i,j,k)
+     tempsum = momtot + element
+     compen = get_compensation(compen,element,tempsum,momtot)
+     momtot = tempsum ! add up momenta using the Kahan algorithm
 
-    etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
-    if(gravswitch>0)& ! and gravitational energy
-     etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+     etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
+     if(gravswitch>0)& ! and gravitational energy
+      etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+    end do
    end do
-  end do
-  momtot = momtot + compen
+   momtot = momtot + compen
+
+  case(2) ! Conserve angular momentum
+   do k = kl, kr
+    do j = jl, jr
+! Use Kahan summation algorithm to minimize roundoff error
+     element(1) = u(i,j,k,imo1)*dvol(i,j,k)
+     element(2) = u(i,j,k,imo2)*dvol(i,j,k)
+     element(3) = u(i,j,k,imo3)*dvol(i,j,k)*x1(i)*sinc(j)
+     tempsum = momtot + element
+     compen = get_compensation(compen,element,tempsum,momtot)
+     momtot = tempsum ! add up momenta using the Kahan algorithm
+
+     etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
+     if(gravswitch>0)& ! and gravitational energy
+      etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
+    end do
+   end do
+   momtot = momtot + compen
+  end select
 
  end subroutine angular_sums_hydro
 
