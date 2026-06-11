@@ -100,15 +100,6 @@ subroutine metric
    sa3  = sa3  * 4d0
   end if
 
-  if(include_spinup)then
-   if(allocated(spinc_r))deallocate(spinc_r)
-   allocate(spinc_r(is_global:ie_global))
-   do i = is_global, ie_global
-    spinc_r(i) = 2d0/3d0*(xi1(i)**2+xi1(i)*xi1(i-1)+xi1(i-1)**2) &
-                        /(xi1(i)+xi1(i-1))
-   end do
-  end if
-
 ! Spherical >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  case(2)
 
@@ -159,20 +150,6 @@ subroutine metric
    scot(j)  = ( sini(j) - sini(j-1) ) / ( cosi(j-1) - cosi(j) )
    sisin(j) = ( xi2(j) - xi2(j-1) ) / ( cosi(j-1) - cosi(j) )
   end do
-
-  if(include_spinup)then
-   if(allocated(spinc_r))deallocate(spinc_r,spinc_t)
-   allocate(spinc_r(is_global:ie_global),spinc_t(js_global:je_global))
-   do i = is_global, ie_global
-    spinc_r(i) = 0.75d0*(xi1(i)**2+xi1(i-1)**2) &
-                       *(xi1(i)+xi1(i-1)) &
-                       /(xi1(i)**2+xi1(i)*xi1(i-1)+xi1(i-1)**2)
-   end do
-   do j = js_global, je_global
-    spinc_t(j) = 0.25d0*(2d0*dxi2(j)-sin(2d0*xi2(j)) &
-                         +sin(2d0*xi2(j-1)))/(cosi(j-1)-cosi(j))
-   end do
-  end if
 
  end select
 
