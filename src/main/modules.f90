@@ -17,7 +17,7 @@ module settings
  integer:: rktype, crdnt, tnlim, start, tn_out, tn_evo, outstyle, endstyle
  integer:: gravswitch, compswitch, radswitch, frame
  integer:: eostype, spn, sigfig, outres, gbtype, grktype, maxptc, rbtype
- integer:: grvsrctype, opacitytype, lambdatype
+ integer:: grvsrctype, opacitytype, lambdatype, smeartype
  real(8):: courant, t_end, dt_out, dt_unit_in_sec, alpha9wave
  character(len=5):: dt_unit
  real(8):: grverr, cgerr, eoserr, HGfac, hgcfl, alphagrv
@@ -70,7 +70,6 @@ module grid
   real(8),allocatable,dimension(:,:,:):: sa1, sa2, sa3, Imom
   real(8),allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real(8),allocatable,dimension(:,:,:,:):: car_x
-  real(8),allocatable,dimension(:):: spinc_r,spinc_t
   real(8),dimension(1:3):: frame_acc, frame_vel, frame_pos
 
 end module grid
@@ -180,6 +179,6 @@ module external_settings
  implicit none
 
  logical:: include_spinup
- real(8):: omegadot,j_max
+ real(8):: omegadot,j_max,spinup_dfloor
 
 end module external_settings

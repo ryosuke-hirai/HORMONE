@@ -106,6 +106,14 @@ subroutine checksetup
    stop
   end if
 
+! Set boundary condition for polar coordinates
+  if(crdnt==1)then
+   bc2is=0 ; bc2os=0 ; bc2iv=0 ; bc2ov=0
+  elseif(crdnt==2)then
+   bc2is=1 ; bc2os=1 ; bc2iv=1 ; bc2ov=1
+   bc3is=0 ; bc3os=0 ; bc3iv=0 ; bc3ov=0
+  end if
+
 ! Setting boundary conditions for 1D and 2D simulations
   if(.not.solve_i)then
    bc1is=2 ; bc1os=2 ; bc1iv=2 ; bc1ov=2
@@ -117,14 +125,6 @@ subroutine checksetup
 
   if(.not.solve_k)then
    bc3is=3 ; bc3os=3 ; bc3iv=3 ; bc3ov=3
-  end if
-
-! Set boundary condition for polar coordinates
-  if(crdnt==1)then
-   bc2is=0 ; bc2os=0 ; bc2iv=0 ; bc2ov=0
-  elseif(crdnt==2)then
-   bc2is=1 ; bc2os=1 ; bc2iv=1 ; bc2ov=1
-   bc3is=0 ; bc3os=0 ; bc3iv=0 ; bc3ov=0
   end if
 
 ! Setting boundary condition for equatorial symmetry
