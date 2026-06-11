@@ -13,7 +13,6 @@ contains
 
 subroutine metric
 
- use external_settings,only:include_spinup
  use grid
  use utils,only:polcar
 
