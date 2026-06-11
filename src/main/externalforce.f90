@@ -44,7 +44,6 @@ subroutine externalforce
 ! Spin up star
  if(include_spinup)call spinup(atot)
 
-
 ! Add external acceleration to the source term in hydrodynamic equations
  select case(crdnt)
  case(0) ! cartesian coordinates
@@ -176,9 +175,9 @@ end subroutine frame_force
 
 subroutine spinup(atot)
 
- use external_settings,only:omegadot,j_max
- use grid,only:crdnt,is,ie,js,je,ks,ke,x1,x2,sinc,spinc_r,spinc_t
- use physval,only:v1,v2,v3
+ use external_settings,only:omegadot,j_max,spinup_dfloor
+ use grid,only:crdnt,is,ie,js,je,ks,ke,x1,x2,sinc
+ use physval,only:d,v1,v2,v3
  use gravmod,only:totphi
 
  real(8),allocatable,dimension(:,:,:,:),intent(inout):: atot
@@ -213,7 +212,7 @@ subroutine spinup(atot)
      j_local = x1(i)*v2(i,j,k)
      v_kep = sqrt(-totphi(i,j,k))
      if(j_local<=j_max.and.v2(i,j,k)<=v_kep)then
-      atot(2,i,j,k) = atot(2,i,j,k) + omegadot*spinc_r(i)
+      atot(2,i,j,k) = atot(2,i,j,k) + omegadot*x1(i)
      end if
     end do
    end do
@@ -227,8 +226,8 @@ subroutine spinup(atot)
     do i = is, ie
      j_local = x1(i)*sinc(j)*v3(i,j,k)
      v_kep = sqrt(-totphi(i,j,k))
-     if(j_local<=j_max.and.v3(i,j,k)<=v_kep)then
-      atot(3,i,j,k) = atot(3,i,j,k) + omegadot*spinc_r(i)*spinc_t(j)
+     if(j_local<=j_max.and.v3(i,j,k)<=v_kep.and.d(i,j,k)>spinup_dfloor)then
+      atot(3,i,j,k) = atot(3,i,j,k) + omegadot*x1(i)*sinc(j)
      end if
     end do
    end do
