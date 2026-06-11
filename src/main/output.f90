@@ -537,7 +537,7 @@ subroutine write_grid_dat
    if(crdnt==1.or.crdnt==2)then
     j=je_global+1
     do i = is_global, ie_global
-     call write_my_grid_2d(ui,formval,i,j,x1(i),xi2e,dvol,i,j,k)
+     call write_my_grid_2d(ui,formval,i,j,x1(i),xi2(je),dvol,i,j,k)
     end do
     call write_string_master(ui, '')
    end if

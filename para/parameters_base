@@ -76,6 +76,7 @@
 ! solve_hydro: Switch to solve hydro equations. Useful for testing non-hydro modules
 ! solve_grav : Switch to evolve gravitational potential. Useful for testing non-gravity modules but still requires the initial gravitational potential.
 ! fixed_dt: Overrides dt with this value if fixed_dt>0
+! smeartype: How to smear fmr cells. 1=conserve linear momentum, 2=conserve angular momentum
 
 &simucon  crdnt=0 courant=0.9d0 rktype=3 mag_on=.false.
           flux_limiter='modified_mc' alpha9wave=0.1d0
@@ -83,7 +84,8 @@
   	  include_extforce= .false.
 	  frame=0
           extrasfile='extras'
-	  solve_hydro=.true. solve_grav=.true. fixed_dt=-1d0 /
+	  solve_hydro=.true. solve_grav=.true. fixed_dt=-1d0
+	  smeartype=1 /
 
 
 ############################ BOUNDARY CONTROLS #############################
@@ -160,8 +162,9 @@
 ! include_spinup: Switch to add rigid body spinup
 ! omegadot: Torque for spinup in rad/s^2
 ! j_max: Maximum allowed specific angular momentum (cgs)
+! spinup_dfloor: Floor density above which spinup is applied
 
-&extfcon include_spinup=.false. omegadot=0d0 j_max=0d0 /
+&extfcon include_spinup=.false. omegadot=0d0 j_max=1d99 spinup_dfloor=0d0 /
 
 
 ############################### TEST CONTROLS ##############################

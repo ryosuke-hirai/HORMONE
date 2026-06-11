@@ -1,0 +1,23 @@
+! Model parameters for commonenvelope
+
+! mesafile: Name of MESA profile file to be read. If blank, it creates an isentropic star
+! spc_list: List of all elements to be tracked in the simulation
+! mass: Mass of donor star if not using MESA profile
+! radius: Radius of donor star if not using MESA profile
+! mcore: Mass of donor core if not using MESA file
+! rcore: Size of core to be removed from the computation in Rsun
+! isentropic: Make an isentropic star inheriting mass/radius/mcore from the MESA profile
+! Supply spinup rate and maximum specific angular momentum in extfcon in parameters file
+! omegadot << G*M/R^3
+! j_max ~ few*sqrt(G*M*R)
+
+
+&spincon
+ mesafile=''
+! spc_list = 'h1','he4','he3','c12','n14','o16','fe56','others'
+ mass=20d0
+ radius=500d0
+ mcore=4d0
+ rcore=15d0
+ isentropic=.true.
+/

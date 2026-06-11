@@ -77,6 +77,9 @@ subroutine initialcondition
   case('rsg_sph')
    call redsupergiant
 
+  case('spinup_rsg')
+   call spinup_rsg
+
   case('polytrope')
    call polytrope
 

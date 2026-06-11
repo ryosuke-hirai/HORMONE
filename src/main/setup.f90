@@ -128,7 +128,7 @@ subroutine read_parameters(filename)
                     X_uniform, Y_uniform, Z_uniform
  namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, alpha9wave,&
                     include_cooling, include_extforce, frame, extrasfile, &
-                    solve_hydro, solve_grav, fixed_dt
+                    solve_hydro, solve_grav, fixed_dt, smeartype
  namelist /bouncon/ bc1is, bc1os, bc2is, bc2os, bc3is, bc3os, &
                     bc1iv, bc1ov, bc2iv, bc2ov, bc3iv, bc3ov, eq_sym
  namelist /gravcon/ gravswitch, grvsrctype, grverr, cgerr, &
@@ -140,7 +140,7 @@ subroutine read_parameters(filename)
                     lambdatype, rbtype
  namelist /partcon/ include_particles, maxptc
  namelist /mat_con/ matrix_solver
- namelist /extfcon/ include_spinup, omegadot, j_max
+ namelist /extfcon/ include_spinup, omegadot, j_max, spinup_dfloor
  namelist /testcon/ test_tol, Mach_tol
 
  if(filename=='')return
