@@ -40,11 +40,11 @@ subroutine hydro_step
   call rungekutta
  end do
 
- ! if solving radiation, the boudary and ghost cells need to be updated
-  if (radswitch > 0) then
-    call exchange_mpi
-    call boundarycondition
-  endif
+ ! if solving radiation, the boundary and ghost cells need to be updated
+ if (radswitch > 0) then
+  call exchange_mpi
+  call boundarycondition
+ endif
 
  call stop_clock(wthyd)
 
