@@ -107,6 +107,9 @@ subroutine initialcondition
   case('modify')
    call modify
 
+  case('radify')
+   call radify
+
   case('smearing')
    call smearingtest
 
