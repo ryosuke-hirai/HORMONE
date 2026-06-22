@@ -3,8 +3,8 @@ module output_mod
 
  integer:: ievo,iskf
  public:: output,terminal_output,set_file_name,write_extgrv,evo_output,&
-          scaling_output,write_grid,write_plt,write_grid_dat
- private:: write_bin,get_header,add_column, add_directory_to_filename,&
+          scaling_output,write_grid,write_bin,write_ascii,write_grid_dat
+ private:: get_header,add_column, add_directory_to_filename,&
            write_val,write_vertical_slice
 
  contains
@@ -19,8 +19,9 @@ module output_mod
 
 subroutine output
 
- use settings,only:is_test,output_ascii
- use grid,only:tn
+ use settings,only:is_test,output_ascii,write_other_slice,&
+                   prefix_bin,prefix_ascii,prefix_xzslice,prefix_yzslice
+ use grid,only:tn,ks_global,ke_global
  use profiler_mod
  use mpi_utils,only:barrier_mpi
 
@@ -40,8 +41,14 @@ subroutine output
 
  if(tn==0)call write_grid
 
- call write_bin
- if(output_ascii)call write_plt
+ call write_bin(prefix_bin)
+ if(output_ascii)then
+  call write_ascii(prefix_ascii)
+  if(write_other_slice)then
+   call write_vertical_slice(ks_global                          ,prefix_xzslice)
+   call write_vertical_slice(ks_global+(ke_global-ks_global+1)/4,prefix_yzslice)
+  end if
+ end if
 
 ! Tracer particle outputs
  call write_bpt
@@ -694,7 +701,7 @@ end subroutine write_grid_dat
 
 ! PURPOSE: To output binary full dump file
 
-subroutine write_bin
+subroutine write_bin(prefix)
 
  use settings
  use mpi_utils, only:myrank
@@ -704,14 +711,13 @@ subroutine write_bin
  use gravmod,only:grvphi,grvpsi,cgrav_old
  use sink_mod,only:nsink,sink
 
- implicit none
-
+ character(len=*),intent(in):: prefix
  character(len=70):: binfile
  integer :: un
 
 !-----------------------------------------------------------------------------
 
- call set_file_name('bin',tn,time,binfile)
+ call set_file_name(prefix,tn,time,binfile)
  call open_file_write(binfile, un)
 
  call write_dummy_recordmarker(un)
@@ -796,19 +802,22 @@ end subroutine write_bin
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                             SUBROUTINE WRITE_PLT
+!                            SUBROUTINE WRITE_ASCII
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To output ascii file for plotting
 
-subroutine write_plt
+subroutine write_ascii(prefix)
+
  use settings
  use grid
  use utils,only:gravpot1d
  use shockfind_mod,only:shockfind
  use mpi_utils, only:myrank
  use io, only:open_file_write_ascii, write_string_master, close_file
+
+ character(len=*),intent(in):: prefix
  character(len=50):: pltfile
  character(len=20):: header(50)='aaa',forma,forme,formi
  character(len=200):: str
@@ -825,7 +834,7 @@ subroutine write_plt
  write(formi,'("(i",i2,")")')sigfig+8 ! for integers
 
 ! Open file
- call set_file_name('plt',tn,time,pltfile)
+ call set_file_name(prefix,tn,time,pltfile)
  call open_file_write_ascii(pltfile,ui)
 
 ! Write time and time step
@@ -958,15 +967,8 @@ subroutine write_plt
 
  if (myrank==0) print*,"Outputted: ",trim(pltfile)
 
-!othfile----------------------------------------------------------------------
-
- if(write_other_slice)then
-  call write_vertical_slice(ks_global                          ,'oth')
-  call write_vertical_slice(ks_global+(ke_global-ks_global+1)/4,'ver')
- end if
-
  return
-end subroutine write_plt
+end subroutine write_ascii
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -1473,8 +1475,10 @@ subroutine get_header(header,columns)
  end if
 
 ! Output radiation energy density if radswitch>=1
- if(radswitch>0) &
+ if(radswitch>0)then
   call add_column('erad',columns,header)
+  if(opacitytype>0)call add_column('kappa',columns,header)
+ end if
 
 ! Output mean molecular weight if compswitch>=1
  if(compswitch>=1)then
@@ -1528,6 +1532,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  use physval
  use gravmod,only:grvphi,extgrv,totphi,mc
  use pressure_mod,only:Trad
+ use opacity_mod,only:kappa_r
  use mpi_domain,only:is_my_domain
  use mpi_utils,only:barrier_mpi
  use io,only:write_string
@@ -1535,6 +1540,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  integer,intent(in):: ui,i,j,k
  character(len=*),intent(in):: forme, header(:)
  integer:: n, nn
+ real(8):: X,Z
 
 !-----------------------------------------------------------------------------
 
@@ -1575,6 +1581,9 @@ subroutine write_val(ui,i,j,k,forme,header)
    call write_anyval(ui,forme,totphi(i,j,k))
   case('erad')!radiation energy
    call write_anyval(ui,forme,erad(i,j,k))
+  case('kappa')!opacity
+   call get_XZ(i,j,k,X,Z)
+   call write_anyval(ui,forme,kappa_r(X,Z,d(i,j,k),T(i,j,k)))
   case('mu')!mean molecular weight
    call write_anyval(ui,forme,1d0/imu(i,j,k))
   case('shock')!shock position
