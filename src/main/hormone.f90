@@ -29,7 +29,7 @@ program hormone
   use tools_mod
   use checksetup_mod
   use gridset_mod
-  use pressure_mod
+  use eos_mod
   use conserve_mod
   use timestep_mod
   use metric_mod

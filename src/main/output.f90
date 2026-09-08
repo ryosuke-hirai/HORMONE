@@ -1527,7 +1527,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  use settings,only:spn
  use physval
  use gravmod,only:grvphi,extgrv,totphi,mc
- use pressure_mod,only:Trad
+ use eos_mod,only:Trad
  use mpi_domain,only:is_my_domain
  use mpi_utils,only:barrier_mpi
  use io,only:write_string

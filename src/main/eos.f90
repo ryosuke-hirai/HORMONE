@@ -1,4 +1,4 @@
-module pressure_mod
+module eos_mod
  use constants,only:Cv,Rgas,arad,huge
  use physval,only:gamma
  use settings,only:eostype,eoserr
@@ -874,4 +874,4 @@ function get_etot_from_eint(i,j,k) result(e)
  if(mag_on)e = e + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**3)
 end function get_etot_from_eint
 
-end module pressure_mod
+end module eos_mod

@@ -19,7 +19,7 @@ subroutine eruption
  use physval
  use input_mod
  use star_mod
- use pressure_mod,only:eos_e,pressure
+ use eos_mod,only:eos_e,pressure
  use composition_mod,only:meanmolweight,get_imu
  use gravmod,only:mc
 

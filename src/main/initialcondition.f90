@@ -16,7 +16,7 @@ subroutine initialcondition
  use settings,only:start,eostype,simtype
  use grid
  use physval
- use pressure_mod
+ use eos_mod
  use composition_mod
  use restart_mod
 

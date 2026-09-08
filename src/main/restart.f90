@@ -18,7 +18,7 @@ subroutine restart
  use grid
  use physval
  use gravmod
- use pressure_mod
+ use eos_mod
  use particle_mod
  use dirichlet_mod
  use output_mod,only:set_file_name

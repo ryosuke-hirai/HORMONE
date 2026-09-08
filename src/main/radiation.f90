@@ -28,7 +28,7 @@ subroutine radiation
  use physval
  use miccg_mod,only:miccg
  use profiler_mod
- use pressure_mod,only:Trad,get_etot_from_eint
+ use eos_mod,only:Trad,get_etot_from_eint
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
  use matrix_utils,only:ijk_from_l,l_from_ijk
  use matrix_vars,only:map_rad
@@ -326,7 +326,7 @@ subroutine rad_heat_cool
  use constants,only:clight,sigma,Cv
  use grid
  use physval,only:d,T,erad,eint,e,imu,u,iene,irad,get_XZ
- use pressure_mod,only:get_etot_from_eint,getT_from_de,Trad
+ use eos_mod,only:get_etot_from_eint,getT_from_de,Trad
 
  integer:: i,j,k
  real(8):: a1,a2,c1,c2,kappap,eint1,X,Z
