@@ -499,7 +499,7 @@ end function entropy_from_de
 ! **************************************************************************
 
 function get_d_from_ps(p,S,imu,X,Y) result(d)
-! PURPOSE: Calculate density given pressure and entropy​
+! PURPOSE: Calculate density given pressure and entropy
  implicit none
 
  real(8),intent(in):: p,S
@@ -599,7 +599,7 @@ end function get_d_from_ps
 ! **************************************************************************
 
 function get_e_from_ds(d,S,imu,X,Y) result(e)
-! PURPOSE: Calculate internal energy given density and entropy​
+! PURPOSE: Calculate internal energy given density and entropy
  implicit none
 
  real(8),intent(in):: d,S
@@ -699,7 +699,7 @@ end function get_e_from_ds
 ! **************************************************************************
 
 function get_p_from_ds(d,S,imu,X,Y) result(p)
-! PURPOSE: Calculate internal energy given density and entropy​
+! PURPOSE: Calculate internal energy given density and entropy
  implicit none
 
  real(8),intent(in):: d,S
