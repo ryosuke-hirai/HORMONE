@@ -195,7 +195,7 @@ end subroutine get_runge_coeff
   use settings,only:mag_on,radswitch
   use grid
   use physval
-  use pressure_mod,only:pressure
+  use eos_mod,only:pressure
   use composition_mod,only:meanmolweight
 
   integer:: i,j,k

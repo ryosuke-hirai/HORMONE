@@ -17,7 +17,7 @@ subroutine agndisk
  use settings,only:extrasfile
  use physval
  use constants,only:pi,clight,G,msun
- use pressure_mod,only:eos_p
+ use eos_mod,only:eos_p
  use composition_mod,only:get_imu
  use input_mod,only:error_extras,error_nml
 

@@ -169,7 +169,7 @@ subroutine spinup_rsg
  use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot,polcar,get_vpol,gravpot1d
  use composition_mod,only:get_imu
- use pressure_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
+ use eos_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
  use mpi_utils,only:allreduce_mpi
 
  character(len=100):: mesafile

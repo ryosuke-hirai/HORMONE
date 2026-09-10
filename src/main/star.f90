@@ -317,7 +317,7 @@ end subroutine set_star_cyl_grid
 subroutine one_shot_inwards(Sc,imu,r,mcore,msoft,rho,p,mass)
 
  use constants,only:G,pi
- use pressure_mod,only:get_d_from_ps
+ use eos_mod,only:get_d_from_ps
  use utils,only:softened_acc
 
  real(8),intent(in)::Sc,mcore,msoft
@@ -364,7 +364,7 @@ end subroutine one_shot_inwards
 subroutine isentropic_star1(Sc,imu,m,rsoft,r,rho,p)
 
  use constants,only:G,pi
- use pressure_mod,only:get_d_from_ps
+ use eos_mod,only:get_d_from_ps
 
  real(8),intent(in)::Sc,rsoft
  real(8),intent(inout)::imu
@@ -429,7 +429,7 @@ end subroutine isentropic_star1
 subroutine next_p_r(p1,r1,rsoft,m1,m2,mc,Sc,imu,p2,r2,rho2)
 
  use constants,only:G,pi
- use pressure_mod,only:get_d_from_ps
+ use eos_mod,only:get_d_from_ps
  use utils,only:softened_acc
 
  real(8),intent(in):: p1,r1,rsoft,m1,m2,mc,Sc
@@ -487,7 +487,7 @@ end subroutine next_p_r
 subroutine get_softened_profile(r,mpt,mh,imuh,rho,p,ierr)
 
  use settings,only:eostype
- use pressure_mod,only:entropy_from_dp
+ use eos_mod,only:entropy_from_dp
 
  real(8),allocatable,dimension(:),intent(in)::r
  real(8),intent(in)::mh,imuh
@@ -563,7 +563,7 @@ end subroutine get_softened_profile
 subroutine isentropic_star(mass,radius,mcore,rsoft,imu,m,r,rho,p)
 
  use constants,only:G,pi
- use pressure_mod,only:eostype,entropy_from_dp
+ use eos_mod,only:eostype,entropy_from_dp
  use utils,only:geometrical_series
  use mpi_utils,only:myrank,allreduce_mpi
 

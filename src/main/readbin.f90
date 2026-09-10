@@ -19,7 +19,7 @@ subroutine readbin(filename)
  use grid
  use physval
  use io
- use pressure_mod
+ use eos_mod
  use composition_mod
  use gravmod
  use sink_mod,only:sink

@@ -14,7 +14,7 @@ subroutine eostest
 
  use settings,only:compswitch,eoserr
  use grid
- use pressure_mod
+ use eos_mod
  use composition_mod,only:get_imu
  use ionization_mod
 

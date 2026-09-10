@@ -16,7 +16,7 @@ subroutine sedov
  use settings,only:simtype,extrasfile
  use grid
  use physval
- use pressure_mod,only:eos_p
+ use eos_mod,only:eos_p
  use input_mod,only:error_extras,error_nml
 
  real(8):: damb, Eexp, ein, pin, pamb, Tin, imuconst

@@ -29,7 +29,7 @@ contains
   use grid
   use physval
   use gravmod
-  use pressure_mod
+  use eos_mod
   use output_mod
   use utils, only: isequal
 

@@ -17,7 +17,7 @@ subroutine boundarycondition
  use grid
  use physval
  use dirichlet_mod
- use pressure_mod
+ use eos_mod
  use composition_mod
  use profiler_mod
  use radiation_mod,only:rad_boundary
