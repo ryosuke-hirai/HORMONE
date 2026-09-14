@@ -7,19 +7,19 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                              SUBROUTINE READBIN
+!                              SUBROUTINE READBIN_IO
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To read physval's from a binary file
 
-subroutine readbin(filename)
+subroutine readbin_io(filename)
 
  use settings
  use grid
  use physval
  use io
- use pressure_mod
+ use eos_mod
  use composition_mod
  use gravmod
  use sink_mod,only:sink
@@ -108,6 +108,27 @@ subroutine readbin(filename)
 
  call close_file(un)
 
+return
+end subroutine readbin_io
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
+!                              SUBROUTINE READBIN
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To read physval's from a binary file and calculate extra quantities.
+
+subroutine readbin(filename)
+
+ use eos_mod,only:pressure
+ use composition_mod,only:meanmolweight
+
+ character(len=*),intent(in):: filename
+
+!-----------------------------------------------------------------------------
+
+ call readbin_io(filename)
  call meanmolweight
  call pressure
 

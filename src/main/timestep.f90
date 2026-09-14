@@ -128,7 +128,7 @@ subroutine dti_cell(i,j_,k_,dti,jb,kb,cfmax)
  use grid,only:js,je,ks,ke,js_global,je_global,ks_global,ke_global,&
                sa1,sa2,sa3,dvol
  use physval,only:d,eint,T,imu,p,cs,v1,v2,v3,b1,b2,b3,spc,erad
- use pressure_mod,only:eos_p_cs,get_cf
+ use eos_mod,only:eos_p_cs,get_cf
 
  integer,intent(in):: i,j_,k_
  real(8),allocatable,intent(inout)::dti(:,:,:)

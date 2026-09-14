@@ -57,7 +57,7 @@ subroutine sink_accretion
  use utils,only:softened_pot,get_vcar,cross,get_vpol
  use grid,only:is,ie,js,je,ks,ke,dt,dvol,car_x,x3
  use physval
- use pressure_mod,only:eos_p,eos_e
+ use eos_mod,only:eos_p,eos_e
  use mpi_utils,only:allreduce_mpi
  use profiler_mod
 

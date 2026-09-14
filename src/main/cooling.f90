@@ -75,7 +75,7 @@ subroutine cooling
  use settings,only:eostype,mag_on
  use physval
  use constants
- use pressure_mod
+ use eos_mod
  use conserve_mod
 
  implicit none

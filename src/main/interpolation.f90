@@ -20,7 +20,7 @@ subroutine interpolation
  use grid
  use physval
  use fluxlimiter_mod
- use pressure_mod
+ use eos_mod
  use profiler_mod
 
  integer:: i,j,k,n

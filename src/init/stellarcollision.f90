@@ -24,7 +24,7 @@ subroutine stellarcollision
  use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot,polcar
  use composition_mod,only:get_imu
- use pressure_mod,only:eos_e,eos_p
+ use eos_mod,only:eos_e,eos_p
 
  character(len=100):: mesafile
  real(8),allocatable,dimension(:):: r,m,rho,pres
@@ -195,7 +195,7 @@ subroutine stellarcollision_rsg
  use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot,polcar,get_vpol,gravpot1d
  use composition_mod,only:get_imu
- use pressure_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
+ use eos_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
  use mpi_utils,only:allreduce_mpi
 
  character(len=100):: mesafile
