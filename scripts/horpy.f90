@@ -149,7 +149,7 @@ subroutine read_binfile(binfile)
 
 !-----------------------------------------------------------------------------
 
- call readbin(binfile)
+ call readbin_io(binfile)
 
  if(include_sinks)then
    do n = 1, nsink
