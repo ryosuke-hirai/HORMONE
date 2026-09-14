@@ -61,8 +61,8 @@ contains
  elemental function kap_hline(d,T)
   real(8),intent(in):: d,T
   real(8):: kap_hline, logT_h0
-  logT_h0 = log10(d)/40+4.+11/40.
-  kap_hline=1d2*d**0.2d0/(1d0+(2d0*(log10(T)-logT_h0)/0.15d0)**4)
+!  logT_h0 = log10(d)/40+4.+11/40.
+  kap_hline=0d0!1d2*d**0.2d0/(1d0+(2d0*(log10(T)-logT_h0)/0.15d0)**4)
  end function kap_hline
 
 ! approximate opacity function

@@ -98,6 +98,67 @@ end subroutine extend2Dto3D
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
+!                              SUBROUTINE RADIFY
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To turn a hydro simulation dump into a radiation hydro dump
+
+subroutine radify
+
+ use settings,only:extrasfile,eostype,radswitch
+ use constants,only:arad
+ use grid,only:is,ie,js,je,ks,ke
+ use physval,only:d,p,T,imu,eint,erad,e
+ use pressure_mod,only:eos_e
+ use readbin_mod,only:readbin
+ use input_mod,only:error_extras,error_nml
+ use output_mod,only:write_bin
+
+ character(len=100):: infile,outfile
+ integer:: i,j,k,nn,istat
+
+!-----------------------------------------------------------------------------
+
+ namelist /rdfycon/ infile,outfile
+
+ open(newunit=nn,file=extrasfile,status='old',iostat=istat)
+ if(istat/=0)call error_extras('radify',extrasfile)
+ read(nn,NML=rdfycon,iostat=istat)
+ if(istat/=0)call error_nml('radify',extrasfile)
+
+ call readbin(infile)
+
+! Set radiation pressure
+ eostype=1
+!$omp parallel do private(i,j,k) collapse(3)
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
+    erad(i,j,k) = arad*T(i,j,k)**4
+    e(i,j,k) = e(i,j,k) - erad(i,j,k)
+   end do
+  end do
+ end do
+!$omp end parallel do
+ eostype=0
+ radswitch=1
+
+ call write_bin(outfile)
+
+ print*,'File converted to a radiation hydrodynamics dump.'
+ print*,'Make sure to update the parameters file to switch on radiation.'
+ print*,'e.g.'
+ print*,'- eostype=0   in &eos_con'
+ print*,'- radswitch=1 in &rad_con'
+ stop
+
+ return
+end subroutine radify
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
 !                              SUBROUTINE BLOWUP
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

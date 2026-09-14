@@ -36,12 +36,16 @@
 ! write_other_slice : Output an alternative slice for 3D
 ! write_temp : Output temperature (only relevant for eostype=0)
 ! write_mc : Output mass coordinates (only relevant for crdnt=2)
+! prefix_bin : Prefix for binary dump file name
+! prefix_{xyslice/xzslice/yzslice} : Prefix for ascii slice file names
 
 &out_con  outdir='data' outstyle=1 endstyle=1
           tnlim=0 t_end=0d0 dt_out=1d0 tn_out=1 tn_evo=10
           dt_unit='s' sigfig=7 outres=1 output_ascii=.true.
 	  write_other_vel =.false. write_shock =.false. write_evo=.false.
-	  write_other_slice=.false. write_temp = .false. write_mc=.false. /
+	  write_other_slice=.false. write_temp = .false. write_mc=.false.
+	  prefix_bin='bin'
+	  prefix_ascii='plt' prefix_xzslice='xz_' prefix_yzslice='yz_' /
 
 
 ############################### EOS CONTROLS ###############################

@@ -36,6 +36,7 @@ module settings
  logical:: in_loop
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile, outdir
+ character(len=20):: prefix_bin,prefix_ascii,prefix_xzslice,prefix_yzslice
 
 end module settings
 

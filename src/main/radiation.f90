@@ -51,7 +51,7 @@ subroutine radiation
 ! Advection and radiative acceleration terms are updated in hydro step
 
 ! Update heating/cooling term first if following Moens+2022
- if(radswitch==2)call rad_heat_cool
+! if(radswitch==2)call rad_heat_cool
 
 ! Then update the diffusion term
  call get_gradE
@@ -87,6 +87,9 @@ subroutine radiation
   u(i,j,k,irad) = erad(i,j,k)
  end do
 !$omp end parallel do
+
+! Update heating/cooling term first if following Moens+2022
+ if(radswitch==2)call rad_heat_cool
 
  call stop_clock(wtrad)
 
@@ -301,8 +304,9 @@ subroutine radiative_force
     src(i,j,k,imo1) = src(i,j,k,imo1) + frad(1)
     src(i,j,k,imo2) = src(i,j,k,imo2) + frad(2)
     src(i,j,k,imo3) = src(i,j,k,imo3) + frad(3)
-    src(i,j,k,iene) = src(i,j,k,iene) + vdotfrad
-    src(i,j,k,irad) = -radwork
+    src(i,j,k,iene) = src(i,j,k,iene) &
+                    + vdotfrad! + 0.5d0*dot_product(frad,frad)/d(i,j,k)*dt
+    src(i,j,k,irad) = -radwork!( vdotfrad + 0.5d0*dot_product(frad,frad)/d(i,j,k)*dt)!radwork
 
    end do
   end do
@@ -373,42 +377,51 @@ end subroutine rad_heat_cool
 
 subroutine rad_boundary
 
+ use settings,only:solve_i,solve_j,solve_k
  use grid
  use physval
 
- integer:: i,j,k
+ integer:: i,j,k,ib
 
 !-----------------------------------------------------------------------------
 
 ! Only zero-flux boundary for now
 
+ ib = 0
+ if(solve_i) ib = 1
 !$omp parallel do private(j,k) collapse(2)
  do k = ks, ke
   do j = js, je
-   if (is == is_global) erad(is-2,j,k) = erad(is+1,j,k)
-   if (is == is_global) erad(is-1,j,k) = erad(is  ,j,k)
-   if (ie == ie_global) erad(ie+1,j,k) = erad(ie  ,j,k)
-   if (ie == ie_global) erad(ie+2,j,k) = erad(ie-1,j,k)
+   if (is == is_global) erad(is-2,j,k) = erad(is+ib,j,k)
+   if (is == is_global) erad(is-1,j,k) = erad(is   ,j,k)
+   if (ie == ie_global) erad(ie+1,j,k) = erad(ie   ,j,k)
+   if (ie == ie_global) erad(ie+2,j,k) = erad(ie-ib,j,k)
+!   if (ie == ie_global) erad(ie+1,j,k) = erad(ie,j,k)*(x1(ie)/x1(ie+1))
+!   if (ie == ie_global) erad(ie+2,j,k) = erad(ie,j,k)*(x1(ie)/x1(ie+2))
   end do
  end do
-!$omp end parallel do
+ !$omp end parallel do
+ ib = 0
+ if(solve_j) ib = 1
 !$omp parallel do private(i,k) collapse(2)
  do k = ks, ke
   do i = is, ie
-   if (js == js_global) erad(i,js-2,k) = erad(i,js+1,k)
-   if (js == js_global) erad(i,js-1,k) = erad(i,js  ,k)
-   if (je == je_global) erad(i,je+1,k) = erad(i,je  ,k)
-   if (je == je_global) erad(i,je+2,k) = erad(i,je-1,k)
+   if (js == js_global) erad(i,js-2,k) = erad(i,js+ib,k)
+   if (js == js_global) erad(i,js-1,k) = erad(i,js   ,k)
+   if (je == je_global) erad(i,je+1,k) = erad(i,je   ,k)
+   if (je == je_global) erad(i,je+2,k) = erad(i,je-ib,k)
   end do
  end do
 !$omp end parallel do
+ ib = 0
+ if(solve_k) ib = 1
 !$omp parallel do private(i,j) collapse(2)
  do j = js, je
   do i = is, ie
-   if (ks == ks_global) erad(i,j,ks-2) = erad(i,j,ks+1)
-   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks  )
-   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke  )
-   if (ke == ke_global) erad(i,j,ke+2) = erad(i,j,ke-1)
+   if (ks == ks_global) erad(i,j,ks-2) = erad(i,j,ks+ib)
+   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks   )
+   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke   )
+   if (ke == ke_global) erad(i,j,ke+2) = erad(i,j,ke-ib)
   end do
  end do
 !$omp end parallel do
