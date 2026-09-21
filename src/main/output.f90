@@ -1532,6 +1532,7 @@ subroutine write_val(ui,i,j,k,forme,header)
  use physval
  use gravmod,only:grvphi,extgrv,totphi,mc
  use eos_mod,only:Trad
+ use opacity_mod,only:kappa_r
  use mpi_domain,only:is_my_domain
  use mpi_utils,only:barrier_mpi
  use io,only:write_string
