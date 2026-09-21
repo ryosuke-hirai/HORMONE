@@ -110,7 +110,7 @@ subroutine radify
  use constants,only:arad
  use grid,only:is,ie,js,je,ks,ke,time,dvol
  use physval,only:d,p,T,imu,eint,erad,e
- use pressure_mod,only:eos_e
+ use eos_mod,only:eos_e
  use readbin_mod,only:readbin
  use input_mod,only:error_extras,error_nml
  use output_mod,only:write_bin,write_ascii

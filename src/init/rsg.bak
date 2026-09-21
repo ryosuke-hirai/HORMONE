@@ -149,7 +149,7 @@ end subroutine redsupergiant
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                          SUBROUTINE SPINUP_RSG
+!                            SUBROUTINE SPINUP_RSG
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -168,8 +168,8 @@ subroutine spinup_rsg
  use gravmod,only:mc ,grvphi,totphi
  use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot,polcar,get_vpol,gravpot1d
- use composition_mod,only:get_imu,meanmolweight
- use eos_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
+ use composition_mod,only:get_imu
+ use pressure_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
  use mpi_utils,only:allreduce_mpi
 
  character(len=100):: mesafile
@@ -177,11 +177,11 @@ subroutine spinup_rsg
  real(8),allocatable,dimension(:,:):: comp
  character(len=10),allocatable:: comp_list(:)
  character(len=10)::spc_list(1:1000)
- integer:: i,j,k,istat,nn,sn,ih1,ihe4
+ integer:: i,j,k,istat,nn,sn,ih1,ihe4,Nprof
  real(8)::rcore,mcore,dbg,mass,spc_bg(1:spn),radius,imu_const,gradphi
  real(8),allocatable:: comptmp(:),p1d(:)
  logical::isentropic
- real(8):: dnow,phinow(3),newphi
+ real(8):: dnow,phinow(3),newphi,Tsurf,esurf
 
 !-----------------------------------------------------------------------------
 
@@ -218,15 +218,15 @@ subroutine spinup_rsg
 
 ! Read MESA file
   call read_mesa(mesafile,r,m,rho,pres,comp=comp,comp_list=comp_list)
-
-  mass = m(size(m)-1)
-  dbg = rho(size(rho)-1)*1d-3
+  Nprof = size(rho)-1
+  mass = m(Nprof)
+  dbg = rho(Nprof)*1d-3
 ! Use outermost composition as the ambient gas composition
   if(compswitch==2)then
    do nn = 1, spn-1
     do sn = 1, size(comp_list)
      if(trim(comp_list(sn))==trim(species(nn)))then
-      spc_bg(nn) = comp(sn,size(rho)-1)
+      spc_bg(nn) = comp(sn,Nprof)
       exit
      end if
     end do
@@ -238,8 +238,8 @@ subroutine spinup_rsg
   call replace_core(rcore,r,m,rho,pres,comp,comp_list)
 
   mcore = m(0)
-  mass  = m(size(m)-1)
-  radius= r(size(r)-1)
+  mass  = m(Nprof)
+  radius= r(Nprof)
 
 ! Isentropic envelope
   if(isentropic)then
@@ -257,7 +257,7 @@ subroutine spinup_rsg
    call isentropic_star(mass,radius,mcore,rcore,imu_const,m,r,rho,pres)
 ! re-insert composition
    allocate(comp(1:size(comp_list),0:size(m)-1))
-   do i = 0, size(m)-1
+   do i = 0, Nprof
     comp(:,i) = comptmp
    end do
   end if
@@ -269,7 +269,7 @@ subroutine spinup_rsg
   mcore  = mcore*msun
   imu_const = 1d0/muconst
   call isentropic_star(mass,radius,mcore,rcore,imu_const,m,r,rho,pres)
-  dbg = rho(size(rho)-1)*1d-3
+  dbg = rho(Nprof)*1d-3
 
  end if
 
@@ -288,7 +288,7 @@ subroutine spinup_rsg
  m = m-mcore
  call set_star_sph_grid(r,m,pres,comp,comp_list)
 
-! Attach a uniform density atmosphere
+! Attach a wind-like atmosphere
  do k = ks, ke
   do j = js, je
    do i = is, ie
@@ -325,7 +325,7 @@ subroutine spinup_rsg
  end do
 
 
-! Try to make companion atmosphere hydrostatic
+!!$! Try to make companion atmosphere hydrostatic
 !!$!$omp parallel do private(i,j,k) collapse(3)
 !!$ do k = ks, ke
 !!$  do j = js, je
@@ -343,26 +343,21 @@ subroutine spinup_rsg
 !!$   end do
 !!$  end do
 !!$ end do
-!!$ !$omp end parallel do
+!!$!$omp end parallel do
 
- ! Set radiation pressure
+! Set radiation pressure
  if(radswitch>0)then
+  esurf = eos_e(rho(Nprof),pres(Nprof),Tsurf,imu_const)! NOTE: make sure to update imu_const if using MESA star
   eostype=1
-  call meanmolweight
   do k = ks, ke
    do j = js, je
     do i = is, ie
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
      erad(i,j,k) = arad*T(i,j,k)**4
+!     if(d(i,j,k)<=dbg) erad(i,j,k) = arad*Tsurf**4
      p(i,j,k) = p(i,j,k) - erad(i,j,k)/3d0
     end do
    end do
-  end do
-  do i = ie, is, -1
-   if(x1(i)<radius)then
-    erad(i,js:je,ks:ke) = erad(i+1,js:je,ks:ke)
-    exit
-   end if
   end do
   eostype=0
  end if
