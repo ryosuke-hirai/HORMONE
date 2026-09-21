@@ -94,6 +94,7 @@ $F2PY -h "$PYF_FILE" -m horpy \
       "$PROJECT_ROOT/src/main/modules.f90" \
       "$PROJECT_ROOT/src/main/opacity.f90" \
       "$PROJECT_ROOT/src/main/ionization.f90" \
+      "$PROJECT_ROOT/src/main/eos.f90" \
       "$SCRIPT_DIR/horpy.f90"
 
 # -----------------------------------------------------------------------------

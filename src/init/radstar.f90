@@ -18,7 +18,7 @@ subroutine radstar
  use grid
  use physval
  use star_mod
- use pressure_mod,only:eos_e
+ use eos_mod,only:eos_e
 
  real(8),allocatable,dimension(:):: r,m,rho,pres
  real(8)::mass,radius,mcore,rsoft,imu_const,dbg,pbg,omega

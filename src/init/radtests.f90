@@ -18,7 +18,7 @@ subroutine matrad_coupling
  use grid
  use physval
  use radiation_mod,only:radiative_diffusion,rad_heat_cool
- use pressure_mod,only:Trad
+ use eos_mod,only:Trad
 
  real(8):: d_0,erad0,eint0,dt0,eint_equil,Tgas,TTrad,error
  real(8),parameter:: tolerance=1d-5

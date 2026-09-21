@@ -35,7 +35,7 @@ subroutine extend2Dto3D
  use grid,only:is,ie,js,je,ks,ke,gis,gie,gjs,gje,gks,gke,time,t_out,tn
  use physval,only:d,e,v1,v2,v3,b1,b2,b3,phi,spc
  use readbin_mod,only:readbin,read_extgrv
- use pressure_mod,only:pressure
+ use eos_mod,only:pressure
  use composition_mod,only:meanmolweight
  use gravmod,only:grvphi,grvpsi,extgrv,grvtime
  use output_mod,only:write_extgrv
@@ -188,7 +188,7 @@ subroutine blowup
  use grid
  use physval
  use readbin_mod,only:readbin,read_extgrv
- use pressure_mod,only:eos_p
+ use eos_mod,only:eos_p
  use source_mod,only:get_totphi
  use gravmod,only:grvtime,grvphi,totphi
  use input_mod,only:error_extras,error_nml

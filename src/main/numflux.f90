@@ -19,7 +19,7 @@ contains
   use grid
   use physval
   use hllflux_mod
-  use pressure_mod
+  use eos_mod
   use composition_mod
   use interpolation_mod
   use fluxbound_mod
