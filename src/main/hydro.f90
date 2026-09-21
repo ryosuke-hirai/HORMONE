@@ -264,7 +264,7 @@ subroutine imex_explicit_terms
  use radiation_mod,only:rad_heat_cool
  use rungekutta_mod,only:primitive,flux_sum,spcflx_sum
  use numflux_mod,only:numflux
- use pressure_mod,only:pressure
+ use eos_mod,only:pressure
  use mpi_domain,only:exchange_mpi
  use boundary_mod,only:boundarycondition
  use profiler_mod
