@@ -257,7 +257,7 @@ subroutine radiative_force!(dt)
  use utils,only:get_grad
  use grid,only:is,ie,js,je,ks,ke
  use physval,only:d,v1,v2,v3,T,erad,imo1,imo2,imo3,iene,irad,get_XZ,src!,e,eint,erad,u,icnt
- use pressure_mod,only:pressure
+ use eos_mod,only:pressure
  use profiler_mod
 
 ! real(8),intent(in):: dt
