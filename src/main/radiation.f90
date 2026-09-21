@@ -350,8 +350,8 @@ subroutine rad_heat_cool
 
  use constants,only:clight,sigma,Cv
  use grid,only:is,ie,js,je,ks,ke,dt
- use physval,only:d,T,erad,eint,e,imu,u,iene,irad,get_XZ
- use eos_mod,only:get_etot_from_eint,getT_from_de,Trad
+ use physval,only:d,T,p,erad,eint,e,imu,u,iene,irad,get_XZ
+ use eos_mod,only:get_etot_from_eint,eos_p
  use profiler_mod
 
  integer:: i,j,k
