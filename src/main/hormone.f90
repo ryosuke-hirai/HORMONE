@@ -128,17 +128,14 @@ program hormone
     call terminal_output
 
     if(solve_grav)   call gravity
-    if(radswitch>0)  call get_gradE
     if(include_sinks)call get_sink_acc(sink) ! updates dt
     call set_frame_acc
 
-!######### Main hydro step #########!
-    if(solve_hydro)call hydro_step  !
-!###################################!
+!###### Main hydro step ######!
+    call advance_step         !
+!#############################!
 
 ! All other effects included by operator splitting
-    if(mag_on.and.dim>1) call phidamp
-    if(radswitch>0)      call radiation
     if(include_cooling)  call cooling
     if(include_particles)call particles
     if(include_sinks)    call sink_motion
