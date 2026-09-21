@@ -246,7 +246,7 @@ subroutine phidamp
 
 !-----------------------------------------------------------------------------
 
- if(mag_on.or.dim==1)return
+ if((.not.mag_on).or.dim==1)return
 
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
