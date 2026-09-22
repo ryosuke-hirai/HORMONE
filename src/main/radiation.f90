@@ -1,12 +1,13 @@
 module radiation_mod
 
+ use settings,only:radswitch
  use matrix_vars,only:cg_set
  use opacity_mod
  use radiation_utils
 
  implicit none
 
- public :: radiation,radiation_setup,radiative_force,rad_heat_cool,get_gradE
+ public :: radiative_diffusion,radiation_setup,radiative_force,rad_heat_cool,get_gradE
  private:: get_diffusion_coeff,get_radb
  real(8),allocatable,private:: rsrc(:),gradE(:,:,:,:)
 
@@ -14,15 +15,14 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                             SUBROUTINE RADIATION
+!                       SUBROUTINE RADIATIVE_DIFFUSION
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ! PURPOSE: To compute radiation transport with flux limited diffusion
 
-subroutine radiation
+subroutine radiative_diffusion
 
- use settings,only:radswitch
  use constants,only:Cv,Rgas
  use grid
  use physval
@@ -50,9 +50,6 @@ subroutine radiation
 
 ! Advection and radiative acceleration terms are updated in hydro step
 
-! Update heating/cooling term first if following Moens+2022
- if(radswitch==2)call rad_heat_cool
-
 ! Then update the diffusion term
  call get_gradE
  call get_diffusion_coeff ! use erad^n for diffusion coefficients
@@ -79,19 +76,21 @@ subroutine radiation
   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
   call get_XZ(i,j,k,XX,ZZ)
   erad(i,j,k) = x(ll)
-  T   (i,j,k) = update_Tgas(XX,ZZ,d(i,j,k),erad(i,j,k),T(i,j,k),dt)
-  eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
-  p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
-  e   (i,j,k) = get_etot_from_eint(i,j,k)
-  u(i,j,k,iene) = e   (i,j,k)
   u(i,j,k,irad) = erad(i,j,k)
+  if(radswitch==1)then
+   T   (i,j,k) = update_Tgas(XX,ZZ,d(i,j,k),erad(i,j,k),T(i,j,k),dt)
+   eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
+   p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
+   e   (i,j,k) = get_etot_from_eint(i,j,k)
+   u(i,j,k,iene) = e(i,j,k)
+  end if
  end do
 !$omp end parallel do
 
  call stop_clock(wtrad)
 
 return
-end subroutine radiation
+end subroutine radiative_diffusion
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -111,10 +110,12 @@ subroutine get_gradE
 
 !-----------------------------------------------------------------------------
 
+ call rad_boundary
+
 !$omp parallel do private(i,j,k) collapse(3)
- do k = ks-1, ke+1
-  do j = js-1, je+1
-   do i = is-1, ie+1
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
     call get_grad(erad,i,j,k,gradE(1:3,i,j,k))
    end do
   end do
@@ -144,9 +145,9 @@ subroutine get_diffusion_coeff
 !-----------------------------------------------------------------------------
 
 !$omp parallel do private(i,j,k,RR,ll,kappar,X,Z) collapse(3)
- do k = ks-1, ke+1
-  do j = js-1, je+1
-   do i = is-1, ie+1
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
     ! Skip if this is a corner ghost cell, which is uninitialised and unused)
     if ((i == is-1 .or. i == ie+1) .and. &
       (j == js-1 .or. j == je+1)) cycle
@@ -179,9 +180,8 @@ end subroutine get_diffusion_coeff
 
 subroutine get_radb
 
- use settings,only:radswitch
  use constants,only:clight,arad
- use grid,only:dvol,dt,is_global,js_global,ks_global,ie_global,je_global,ke_global
+ use grid,only:dt,dvol,is_global,js_global,ks_global,ie_global,je_global,ke_global
  use physval,only:d,T,erad,get_XZ
  use matrix_utils,only:ijk_from_l
  use matrix_vars,only:map_rad
@@ -204,8 +204,10 @@ subroutine get_radb
    kappap = kappa_p(X,Z,d(i,j,k),T(i,j,k))
    rsrc(ll) = erad(i,j,k)*dvol(i,j,k)/dt
    if(radswitch==1) &
-    rsrc(ll) = rsrc(ll) + clight*kappap*d(i,j,k)*dvol(i,j,k)*arad &
-     * (4d0*T(i,j,k)**3*update_Tgas(X,Z,d(i,j,k),0d0,T(i,j,k),dt)-3d0*T(i,j,k)**4)
+    rsrc(ll) = rsrc(ll) + clight*d(i,j,k)*kappap*dvol(i,j,k)*arad &
+                          * (4d0*T(i,j,k)**3&
+                             *update_Tgas(X,Z,d(i,j,k),0d0,T(i,j,k),dt)&
+                            - 3d0*T(i,j,k)**4)
   end do
 !$omp end parallel do
 
@@ -223,7 +225,6 @@ end subroutine get_radb
 
 subroutine radiation_setup
 
- use settings,only:radswitch
  use grid,only:is,ie,js,je,ks,ke
  use matrix_vars,only:irad
  use matrix_solver_mod,only:setup_matrix
@@ -251,17 +252,23 @@ end subroutine radiation_setup
 
 ! PURPOSE: To compute radiative acceleration and associated source terms
 
-subroutine radiative_force
+subroutine radiative_force!(dt)
 
  use utils,only:get_grad
- use grid
- use physval
+ use grid,only:is,ie,js,je,ks,ke
+ use physval,only:d,v1,v2,v3,T,erad,imo1,imo2,imo3,iene,irad,get_XZ,src!,e,eint,erad,u,icnt
+ use eos_mod,only:pressure
+ use profiler_mod
 
+! real(8),intent(in):: dt
  integer:: i,j,k,l,m
  real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork,kappar,X,Z
  real(8),dimension(1:3):: frad,gradv1,gradv2,gradv3,nn
 
 !-----------------------------------------------------------------------------
+
+ call start_clock(wtrad)
+ call start_clock(wtrfo)
 
  call get_gradE
 
@@ -301,13 +308,31 @@ subroutine radiative_force
     src(i,j,k,imo1) = src(i,j,k,imo1) + frad(1)
     src(i,j,k,imo2) = src(i,j,k,imo2) + frad(2)
     src(i,j,k,imo3) = src(i,j,k,imo3) + frad(3)
-    src(i,j,k,iene) = src(i,j,k,iene) + vdotfrad
-    src(i,j,k,irad) = -radwork
+    src(i,j,k,iene) = src(i,j,k,iene) + vdotfrad !&
+                    !+ 0.5d0*dot_product(frad,frad)/d(i,j,k)*dt
+    src(i,j,k,irad) = -radwork!( vdotfrad + 0.5d0*dot_product(frad,frad)/d(i,j,k)*dt)!radwork
+!!$
+!!$    u(i,j,k,imo1) = u(i,j,k,imo1) + frad(1)*dt 
+!!$    u(i,j,k,imo2) = u(i,j,k,imo2) + frad(2)*dt 
+!!$    u(i,j,k,imo3) = u(i,j,k,imo3) + frad(3)*dt 
+!!$    u(i,j,k,iene) = u(i,j,k,iene) + vdotfrad*dt
+!!$    u(i,j,k,irad) = max(u(i,j,k,irad) - radwork*dt,u(i,j,k,iene)*1d-5)
+!!$
+!!$    v1(i,j,k) = u(i,j,k,imo1)/u(i,j,k,icnt)
+!!$    v2(i,j,k) = u(i,j,k,imo2)/u(i,j,k,icnt)
+!!$    v3(i,j,k) = u(i,j,k,imo3)/u(i,j,k,icnt)
+!!$    e (i,j,k) = u(i,j,k,iene)
+!!$    erad(i,j,k) = u(i,j,k,irad)
 
    end do
   end do
  end do
 !$omp end parallel do
+
+! call pressure
+
+ call stop_clock(wtrfo)
+ call stop_clock(wtrad)
 
 return
 end subroutine radiative_force
@@ -324,14 +349,18 @@ end subroutine radiative_force
 subroutine rad_heat_cool
 
  use constants,only:clight,sigma,Cv
- use grid
- use physval,only:d,T,erad,eint,e,imu,u,iene,irad,get_XZ
- use eos_mod,only:get_etot_from_eint,getT_from_de,Trad
+ use grid,only:is,ie,js,je,ks,ke,dt
+ use physval,only:d,T,p,erad,eint,e,imu,u,iene,irad,get_XZ
+ use eos_mod,only:get_etot_from_eint,eos_p
+ use profiler_mod
 
  integer:: i,j,k
  real(8):: a1,a2,c1,c2,kappap,eint1,X,Z
 
 !-----------------------------------------------------------------------------
+ 
+ call start_clock(wtrad)
+ call start_clock(wtrhc)
 
 !$omp parallel do private(i,j,k,a1,a2,c1,c2,kappap,eint1,X,Z) collapse(3)
  do k = ks, ke
@@ -347,11 +376,12 @@ subroutine rad_heat_cool
     c2 = -c1*eint(i,j,k)-a2/a1*erad(i,j,k)
 
     eint1 = max(eint(i,j,k),erad(i,j,k))
+
     call solve_quartic(c1,c2,eint1)
     erad(i,j,k) = (a1*eint1**4+erad(i,j,k))/(1d0+a2)
     eint(i,j,k) = eint1
     e(i,j,k) = get_etot_from_eint(i,j,k)
-    call getT_from_de(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))
+    p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))
 
     u(i,j,k,iene) = e   (i,j,k)
     u(i,j,k,irad) = erad(i,j,k)
@@ -359,6 +389,9 @@ subroutine rad_heat_cool
   end do
  end do
 !$omp end parallel do
+
+ call stop_clock(wtrhc)
+ call stop_clock(wtrad)
 
 return
 end subroutine rad_heat_cool
@@ -373,42 +406,54 @@ end subroutine rad_heat_cool
 
 subroutine rad_boundary
 
+ use settings,only:solve_i,solve_j,solve_k
  use grid
  use physval
+ use mpi_domain,only:exchange_mpi
 
- integer:: i,j,k
+ integer:: i,j,k,ib
 
 !-----------------------------------------------------------------------------
 
+ call exchange_mpi
+
 ! Only zero-flux boundary for now
 
+ ib = 0
+ if(solve_i) ib = 1
 !$omp parallel do private(j,k) collapse(2)
  do k = ks, ke
   do j = js, je
-   if (is == is_global) erad(is-2,j,k) = erad(is+1,j,k)
-   if (is == is_global) erad(is-1,j,k) = erad(is  ,j,k)
-   if (ie == ie_global) erad(ie+1,j,k) = erad(ie  ,j,k)
-   if (ie == ie_global) erad(ie+2,j,k) = erad(ie-1,j,k)
+   if (is == is_global) erad(is-2,j,k) = erad(is+ib,j,k)
+   if (is == is_global) erad(is-1,j,k) = erad(is   ,j,k)
+   if (ie == ie_global) erad(ie+1,j,k) = erad(ie   ,j,k)
+   if (ie == ie_global) erad(ie+2,j,k) = erad(ie-ib,j,k)
+!   if (ie == ie_global) erad(ie+1,j,k) = erad(ie,j,k)*(x1(ie)/x1(ie+1))
+!   if (ie == ie_global) erad(ie+2,j,k) = erad(ie,j,k)*(x1(ie)/x1(ie+2))
   end do
  end do
-!$omp end parallel do
+ !$omp end parallel do
+ ib = 0
+ if(solve_j) ib = 1
 !$omp parallel do private(i,k) collapse(2)
  do k = ks, ke
   do i = is, ie
-   if (js == js_global) erad(i,js-2,k) = erad(i,js+1,k)
-   if (js == js_global) erad(i,js-1,k) = erad(i,js  ,k)
-   if (je == je_global) erad(i,je+1,k) = erad(i,je  ,k)
-   if (je == je_global) erad(i,je+2,k) = erad(i,je-1,k)
+   if (js == js_global) erad(i,js-2,k) = erad(i,js+ib,k)
+   if (js == js_global) erad(i,js-1,k) = erad(i,js   ,k)
+   if (je == je_global) erad(i,je+1,k) = erad(i,je   ,k)
+   if (je == je_global) erad(i,je+2,k) = erad(i,je-ib,k)
   end do
  end do
 !$omp end parallel do
+ ib = 0
+ if(solve_k) ib = 1
 !$omp parallel do private(i,j) collapse(2)
  do j = js, je
   do i = is, ie
-   if (ks == ks_global) erad(i,j,ks-2) = erad(i,j,ks+1)
-   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks  )
-   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke  )
-   if (ke == ke_global) erad(i,j,ke+2) = erad(i,j,ke-1)
+   if (ks == ks_global) erad(i,j,ks-2) = erad(i,j,ks+ib)
+   if (ks == ks_global) erad(i,j,ks-1) = erad(i,j,ks   )
+   if (ke == ke_global) erad(i,j,ke+1) = erad(i,j,ke   )
+   if (ke == ke_global) erad(i,j,ke+2) = erad(i,j,ke-ib)
   end do
  end do
 !$omp end parallel do

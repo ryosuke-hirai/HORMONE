@@ -1,0 +1,9 @@
+! Model parameters for radify
+
+! infile: Name of file to modify. Must be a non-radiation file.
+! outfile: Name of output file. This is a radiation file.
+
+&rdfycon
+  infile  = 'infile.dat'
+  outfile = 'outfile.dat'
+/

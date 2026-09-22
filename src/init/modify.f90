@@ -98,6 +98,83 @@ end subroutine extend2Dto3D
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
+!                              SUBROUTINE RADIFY
+!
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+! PURPOSE: To turn a hydro simulation dump into a radiation hydro dump
+
+subroutine radify
+
+ use settings,only:extrasfile,eostype,radswitch,eq_sym
+ use constants,only:arad
+ use grid,only:is,ie,js,je,ks,ke,time,dvol
+ use physval,only:d,p,T,imu,eint,erad,e
+ use eos_mod,only:eos_e
+ use readbin_mod,only:readbin
+ use input_mod,only:error_extras,error_nml
+ use output_mod,only:write_bin,write_ascii
+
+ character(len=100):: infile,outfile
+ integer:: i,j,k,nn,istat
+
+!-----------------------------------------------------------------------------
+
+ namelist /rdfycon/ infile,outfile
+
+ open(newunit=nn,file=extrasfile,status='old',iostat=istat)
+ if(istat/=0)call error_extras('radify',extrasfile)
+ read(nn,NML=rdfycon,iostat=istat)
+ if(istat/=0)call error_nml('radify',extrasfile)
+
+ eostype=1
+ radswitch=0
+ call readbin(infile)
+
+! Set radiation pressure
+ do k = ks, ke
+  do j = js, je
+   do i = is, ie
+    eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
+    erad(i,j,k) = arad*T(i,j,k)**4
+    e(i,j,k) = e(i,j,k) - erad(i,j,k)
+   end do
+  end do
+ end do
+
+ eostype=0
+ radswitch=1
+ time = 3600d3
+
+!!$! Add thermal bomb
+!!$ Eheat = 1d50
+!!$ vol   = sum(dvol(is:is+30,js:je,ks:ke))
+!!$ if(eq_sym)vol=vol*2d0
+!!$ do k = ks, ke
+!!$  do j = js, je
+!!$   do i = is, is+30
+!!$!    eint(i,j,k) = eint(i,j,k) + Eheat/vol
+!!$    !    e   (i,j,k) = e   (i,j,k) + Eheat/vol
+!!$    erad(i,j,k) = erad(i,j,k) + Eheat/vol
+!!$   end do
+!!$  end do
+!!$ end do
+
+ call write_bin(outfile)
+ call write_ascii('plt')
+
+ print*,'File converted to a radiation hydrodynamics dump.'
+ print*,'Make sure to update the parameters file to switch on radiation.'
+ print*,'e.g.'
+ print*,'- eostype=0   in &eos_con'
+ print*,'- radswitch=1 in &rad_con'
+ stop
+
+ return
+end subroutine radify
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+!
 !                              SUBROUTINE BLOWUP
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -106,31 +183,40 @@ end subroutine extend2Dto3D
 
 subroutine blowup
 
- use settings,only:start,dt_unit,eq_sym,dt_out,gravswitch
+ use settings,only:start,dt_unit,eq_sym,dt_out,gravswitch,extrasfile
+ use constants,only:rsun
  use grid
  use physval
  use readbin_mod,only:readbin,read_extgrv
  use eos_mod,only:eos_p
- use gravmod,only:grvtime,grvphi,extgrv
+ use source_mod,only:get_totphi
+ use gravmod,only:grvtime,grvphi,totphi
+ use input_mod,only:error_extras,error_nml
+ use output_mod,only:write_bin,write_ascii
 
- integer:: i,j,k,iinj
+ integer:: i,j,k,iinj,nn,istat
  real(8):: Ebind,Eexp,Rinj,rad,Mheat
- character(len=30)::startfile
+ character(len=100):: infile,outfile
 
 !-----------------------------------------------------------------------------
 
- start = 20000
- write(startfile,'(a,i11.11,a,a)')'data/bin',start,trim(dt_unit),'_old.dat'
- call readbin(startfile)
- call read_extgrv('data/extgrv.bin')
+ namelist /blwpcon/ infile,outfile,Eexp,Rinj
 
- start = 0
+ open(newunit=nn,file=extrasfile,status='old',iostat=istat)
+ if(istat/=0)call error_extras('blowup',extrasfile)
+ read(nn,NML=blwpcon,iostat=istat)
+ if(istat/=0)call error_nml('blowup',extrasfile)
+
+ call readbin(infile)
+ call get_totphi
+
+ Rinj = Rinj * rsun
 
  Ebind = 0d0
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    Ebind = Ebind + (e(i,j,k)+(0.5d0*grvphi(i,j,k)+extgrv(i,j,k))*d(i,j,k))*dvol(i,j,k)
+    Ebind = Ebind + (e(i,j,k)+0.5d0*totphi(i,j,k)*d(i,j,k))*dvol(i,j,k)
    end do
   end do
  end do
@@ -138,9 +224,7 @@ subroutine blowup
  t_out = time + dt_out
  if(gravswitch==3)grvtime = time
 
- rad = 7.4d13
- Rinj = rad*1d0/15d0
- Eexp = 0.5d0*abs(Ebind)
+ Eexp = Eexp*abs(Ebind)
 
  do i = is, ie
   if(xi1(i)>=Rinj)then
@@ -155,11 +239,18 @@ subroutine blowup
  do k = ks, ke
   do j = js, je
    do i = is, iinj
-    eint(i,j,k) = eint(i,j,k) + Eexp/Mheat*d(i,j,k)
+    erad(i,j,k) = erad(i,j,k) + Eexp/Mheat*d(i,j,k)
     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),spc(1,i,j,k),spc(2,i,j,k))
+    !    e(i,j,k) = e(i,j,k) + Eexp/Mheat*d(i,j,k)
    end do
   end do
  end do
+
+ call write_bin(outfile)
+
+ print*,'Energy injected into specified dump.'
+ print*,'Eexp=',Eexp
+ stop
 
  return
 end subroutine blowup

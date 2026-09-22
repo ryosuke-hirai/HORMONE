@@ -13,10 +13,11 @@ contains
 
 subroutine matrad_coupling
 
+ use settings,only:radswitch
  use constants
  use grid
  use physval
- use radiation_mod,only:radiation
+ use radiation_mod,only:radiative_diffusion,rad_heat_cool
  use eos_mod,only:Trad
 
  real(8):: d_0,erad0,eint0,dt0,eint_equil,Tgas,TTrad,error
@@ -31,11 +32,16 @@ subroutine matrad_coupling
 ! Heating test ===============================================================
  eint0 = 1d6 ! start from low gas temperature
 
- d=d_0;erad=erad0-eint0;eint=eint0;e=eint0;T=eint/(d*Cv*imu);dt=dt0
+ d=d_0;erad=erad0-eint0;eint=eint0;e=eint0;T=eint/(d*Cv*imu)
  p=(gamma-1d0)*eint
- time=0d0
+ time=0d0;dt=dt0
  do while(time<=1d-6)
-  call radiation
+  select case(radswitch)
+  case(1)
+   call radiative_diffusion
+  case(2)
+   call rad_heat_cool
+  end select
   time = time + dt
   dt = dt * 1.01d0
 !  write(60,*)time,eint(1,1,1)/(Cv*d(1,1,1)*imu(1,1,1)),Trad(erad(1,1,1))
@@ -62,10 +68,16 @@ subroutine matrad_coupling
 ! Cooling test ===============================================================
  eint0 = 1d10 ! start from high gas temperature
 
- d=d_0;erad=erad0-eint0;eint=eint0;e=eint0;T=eint/(d*Cv*imu);dt=dt0
- time=0d0
+ d=d_0;erad=erad0-eint0;eint=eint0;e=eint0;T=eint/(d*Cv*imu)
+ p=(gamma-1d0)*eint
+ time=0d0;dt=dt0
  do while(time<=1d-6)
-  call radiation
+  select case(radswitch)
+  case(1)
+   call radiative_diffusion
+  case(2)
+   call rad_heat_cool
+  end select
   time = time + dt
   dt = dt * 1.01d0
 !  write(70,*)time,eint(1,1,1)/(Cv*d(1,1,1)*imu(1,1,1)),Trad(erad(1,1,1))
@@ -160,7 +172,7 @@ subroutine lin_diffusion
  use grid
  use physval
  use output_mod
- use radiation_mod,only:radiation
+ use radiation_mod,only:radiative_diffusion
 
  integer:: strl, imid, i,j,k
  real(8):: Etilde

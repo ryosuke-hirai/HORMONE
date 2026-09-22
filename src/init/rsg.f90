@@ -159,8 +159,8 @@ end subroutine redsupergiant
 
 subroutine spinup_rsg
 
- use settings,only:compswitch,spn,extrasfile,eostype
- use constants,only:G,msun,rsun
+ use settings,only:compswitch,spn,extrasfile,eostype,radswitch
+ use constants,only:G,msun,rsun,arad
  use grid
  use physval
  use input_mod
@@ -168,7 +168,7 @@ subroutine spinup_rsg
  use gravmod,only:mc ,grvphi,totphi
  use sink_mod,only:sink,sinkfield
  use utils,only:softened_pot,polcar,get_vpol,gravpot1d
- use composition_mod,only:get_imu
+ use composition_mod,only:get_imu,meanmolweight
  use eos_mod,only:eos_e,eos_p,get_e_from_ds,entropy_from_dT
  use mpi_utils,only:allreduce_mpi
 
@@ -326,24 +326,46 @@ subroutine spinup_rsg
 
 
 ! Try to make companion atmosphere hydrostatic
-!$omp parallel do private(i,j,k) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
-    select case(eostype)
-    case(0,1)
+!!$!$omp parallel do private(i,j,k) collapse(3)
+!!$ do k = ks, ke
+!!$  do j = js, je
+!!$   do i = is, ie
+!!$    select case(eostype)
+!!$    case(0,1)
+!!$     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
+!!$     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))
+!!$    case(2)
+!!$     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
+!!$                         spc(1,i,j,k),spc(2,i,j,k))
+!!$     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
+!!$                      spc(1,i,j,k),spc(2,i,j,k))
+!!$    end select
+!!$   end do
+!!$  end do
+!!$ end do
+!!$ !$omp end parallel do
+
+ ! Set radiation pressure
+ if(radswitch>0)then
+  eostype=1
+  call meanmolweight
+  do k = ks, ke
+   do j = js, je
+    do i = is, ie
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
-     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k))
-    case(2)
-     eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
-                         spc(1,i,j,k),spc(2,i,j,k))
-     p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
-                      spc(1,i,j,k),spc(2,i,j,k))
-    end select
+     erad(i,j,k) = arad*T(i,j,k)**4
+     p(i,j,k) = p(i,j,k) - erad(i,j,k)/3d0
+    end do
    end do
   end do
- end do
-!$omp end parallel do
+  do i = ie, is, -1
+   if(x1(i)<radius)then
+    erad(i,js:je,ks:ke) = erad(i+1,js:je,ks:ke)
+    exit
+   end if
+  end do
+  eostype=0
+ end if
 
 return
 end subroutine spinup_rsg
