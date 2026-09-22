@@ -409,10 +409,13 @@ subroutine rad_boundary
  use settings,only:solve_i,solve_j,solve_k
  use grid
  use physval
+ use mpi_domain,only:exchange_mpi
 
  integer:: i,j,k,ib
 
 !-----------------------------------------------------------------------------
+
+ call exchange_mpi
 
 ! Only zero-flux boundary for now
 
