@@ -108,6 +108,8 @@ subroutine radhydro_imex_step
 
 !-----------------------------------------------------------------------------
 
+!!!!! CURRENTLY DOES NOT PASS RADSHOCK TEST !!!!!
+
  allocate(u_half,u_half_plus,mold=u)
  allocate(G_im_half,mold=d)
  if(compswitch>=2)allocate(spc_half,mold=spc)
@@ -157,7 +159,6 @@ subroutine radhydro_imex_step
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     !u_half_plus(i,j,k,ufn) = u(i,j,k,ufn)
      u(i,j,k,ufn) = 0.5d0*(u(i,j,k,ufn)+uorg(i,j,k,ufn))
      u_half_plus(i,j,k,ufn) = u(i,j,k,ufn)
     end do

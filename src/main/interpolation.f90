@@ -31,18 +31,15 @@ subroutine interpolation
 
 !-----------------------------------------------------------------------------
 
- call start_clock(wtint)
+! Flat reconstruction
+ if(flux_limiter=='flat')return
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! Notations !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! slopes : dd, de, dm1, dm2, dm3, db1, db2, db3, der
 ! *l, *r are cell boundary values at left and right looking from x1(i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Flat reconstruction
- if(flux_limiter=='flat')then
-  call stop_clock(wtint)
-  return
- end if
+ call start_clock(wtint)
 
 !$omp parallel
 
