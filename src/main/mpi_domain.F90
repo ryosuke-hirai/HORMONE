@@ -222,7 +222,7 @@ module mpi_domain
 
       ! Starting indices of the real and ghost zones involved in the exchange
       l_real_grad (:,1) = [1, is,   js-1, ks-1]
-      r_real_grad (:,1) = [1, ie-1, js-1, ks-1]
+      r_real_grad (:,1) = [1, ie,   js-1, ks-1]
       l_ghost_grad(:,1) = [1, is-1, js-1, ks-1]
       r_ghost_grad(:,1) = [1, ie+1, js-1, ks-1]
 
@@ -234,7 +234,7 @@ module mpi_domain
 
       ! Starting indices of the real and ghost zones involved in the exchange
       l_real_grad (:,2) = [1, is-1, js,   ks-1]
-      r_real_grad (:,2) = [1, is-1, je-1, ks-1]
+      r_real_grad (:,2) = [1, is-1, je,   ks-1]
       l_ghost_grad(:,2) = [1, is-1, js-1, ks-1]
       r_ghost_grad(:,2) = [1, is-1, je+1, ks-1]
 
@@ -246,7 +246,7 @@ module mpi_domain
 
       ! Starting indices of the real and ghost zones involved in the exchange
       l_real_grad (:,3) = [1, is-1, js-1, ks  ]
-      r_real_grad (:,3) = [1, is-1, js-1, ke-1]
+      r_real_grad (:,3) = [1, is-1, js-1, ke  ]
       l_ghost_grad(:,3) = [1, is-1, js-1, ks-1]
       r_ghost_grad(:,3) = [1, is-1, js-1, ke+1]
 
