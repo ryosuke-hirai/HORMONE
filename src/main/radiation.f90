@@ -71,14 +71,15 @@ subroutine radiative_diffusion
  call solve_system_rad(rsrc, x) ! returns erad^{n+1}
 
 ! update erad and u
-!$omp parallel do private(l,i,j,k,XX,ZZ)
+!$omp parallel do private(l,i,j,k,ll,XX,ZZ)
  do ll = 1, size(x)
   l = map_rad(ll)
   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
-  call get_XZ(i,j,k,XX,ZZ)
   erad(i,j,k) = x(ll)
   u(i,j,k,irad) = erad(i,j,k)
   if(radswitch==1)then
+   ! update gas values if using Commercon et al. 2011 method
+   call get_XZ(i,j,k,XX,ZZ)
    T   (i,j,k) = update_Tgas(XX,ZZ,d(i,j,k),erad(i,j,k),T(i,j,k),dt)
    eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
    p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
