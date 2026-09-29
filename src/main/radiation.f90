@@ -15,7 +15,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                       SUBROUTINE RADIATIVE_DIFFUSION
+!                        SUBROUTINE RADIATIVE_DIFFUSION
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -136,18 +136,28 @@ end subroutine get_gradE
 subroutine get_diffusion_coeff
 
  use constants,only:clight
- use grid,only:is,ie,js,je,ks,ke
+ use grid,only:is,ie,js,je,ks,ke,&
+               is_global,ie_global,js_global,je_global,ks_global,ke_global
  use physval,only:erad,d,T,erad,radK,get_XZ
 
- integer:: i,j,k
+ integer:: i,j,k,ibs,jbs,kbs,ibe,jbe,kbe
  real(8):: RR,ll,kappar,X,Z
 
 !-----------------------------------------------------------------------------
 
+ ! Calculate boundary values if domain boundary is not a true boundary
+ ibs=0;jbs=0;kbs=0; ibe=0;jbe=0;kbe=0
+ if(is/=is_global)ibs=1
+ if(ie/=ie_global)ibe=1
+ if(js/=js_global)jbs=1
+ if(je/=je_global)jbe=1
+ if(ks/=ks_global)kbs=1
+ if(ke/=ke_global)kbe=1
+
 !$omp parallel do private(i,j,k,RR,ll,kappar,X,Z) collapse(3)
- do k = ks, ke
-  do j = js, je
-   do i = is, ie
+ do k = ks-kbs, ke+kbe
+  do j = js-jbs, je+jbe
+   do i = is-ibs, ie+ibe
     ! Skip if this is a corner ghost cell, which is uninitialised and unused)
     if ((i == is-1 .or. i == ie+1) .and. &
       (j == js-1 .or. j == je+1)) cycle

@@ -49,7 +49,7 @@ subroutine hydro_step
  use mpi_domain,only:exchange_mpi
  use profiler_mod,only:start_clock,stop_clock,wthyd
  use radiation_mod,only:radiative_diffusion
-use physval
+
 !-----------------------------------------------------------------------------
 
  if(solve_hydro)then
@@ -73,10 +73,7 @@ use physval
 
  end if
 
- if(radswitch==1)then
-  call exchange_mpi
-  call radiative_diffusion
- end if
+ if(radswitch==1)call radiative_diffusion
 
  return
 end subroutine hydro_step
