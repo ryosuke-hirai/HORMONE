@@ -135,30 +135,13 @@ subroutine radify
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k))
     erad(i,j,k) = arad*T(i,j,k)**4
-    e(i,j,k) = e(i,j,k) - erad(i,j,k)
    end do
   end do
  end do
 
  eostype=0
  radswitch=1
- time = 3600d3
-
-!!$! Add thermal bomb
-!!$ Eheat = 1d50
-!!$ vol   = sum(dvol(is:is+30,js:je,ks:ke))
-!!$ if(eq_sym)vol=vol*2d0
-!!$ do k = ks, ke
-!!$  do j = js, je
-!!$   do i = is, is+30
-!!$!    eint(i,j,k) = eint(i,j,k) + Eheat/vol
-!!$    !    e   (i,j,k) = e   (i,j,k) + Eheat/vol
-!!$    erad(i,j,k) = erad(i,j,k) + Eheat/vol
-!!$   end do
-!!$  end do
-!!$ end do
 
  call write_bin(outfile)
  call write_ascii('plt')

@@ -218,13 +218,14 @@ endif
 
  end select x1_inner_vector
 
-! Set e and ptot =========================================================
+! set e and ptot =========================================================
 !$omp do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is-2, is-1
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    if(radswitch==1)ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
     T(i,j,k) = T(is,j,k)
     select case (eostype)
     case(0:1) ! without recombination
@@ -233,10 +234,7 @@ endif
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
-    e   (i,j,k) = eint(i,j,k) &
-                + 0.5d0*( d(i,j,k)*&
-                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
-                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    e(i,j,k) = get_etot_from_eint(i,j,k)
    end do
   end do
  end do
@@ -499,6 +497,7 @@ endif
    do i = ie+1, ie+2
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    if(radswitch==1)ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
     T(i,j,k) = T(ie,j,k)
     select case (eostype)
     case(0:1) ! without recombination
@@ -507,15 +506,12 @@ endif
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
-    e   (i,j,k) = eint(i,j,k) &
-                + 0.5d0*( d(i,j,k)*&
-                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
-                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    e(i,j,k) = get_etot_from_eint(i,j,k)
    end do
   end do
  end do
 !$omp end do
- ! =======================================================================
+! =======================================================================
 end if
 
 ! x2-direction ***********************************************************
@@ -683,11 +679,13 @@ endif
     end do
    end do
   end do
+!$omp end do
 
  case(10) x2_inner_vector ! Flux -----------------------------------------
 
  case default x2_inner_vector ! Error ------------------------------------
   print *, "Error from x2 velocity inner boundary condition" ; stop
+
  end select x2_inner_vector
 
 ! set e and ptot =========================================================
@@ -697,6 +695,7 @@ endif
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    if(radswitch==1)ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
     T(i,j,k) = T(i,js,k)
     select case (eostype)
     case(0:1) ! without recombination
@@ -705,10 +704,7 @@ endif
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
-    e   (i,j,k) = eint(i,j,k) &
-                + 0.5d0*( d(i,j,k)*&
-                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
-                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    e(i,j,k) = get_etot_from_eint(i,j,k)
    end do
   end do
  end do
@@ -868,11 +864,13 @@ endif
     end do
    end do
   end do
+!$omp end do
 
  case(10) x2_outer_vector ! Flux -----------------------------------------
 
  case default x2_outer_vector ! Error ------------------------------------
   print *, "Error from x2 velocity outer boundary condition" ; stop
+
  end select x2_outer_vector
 
 ! set e and ptot =========================================================
@@ -882,6 +880,7 @@ endif
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    if(radswitch==1)ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
     T(i,j,k) = T(i,je,k)
     select case (eostype)
     case(0:1) ! without recombination
@@ -890,13 +889,10 @@ endif
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
-    e   (i,j,k) = eint(i,j,k) &
-                + 0.5d0*( d(i,j,k)*&
-                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
-                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    e(i,j,k) = get_etot_from_eint(i,j,k)
    end do
   end do
-end do
+ end do
 !$omp end do
 ! ========================================================================
 end if
@@ -1135,11 +1131,13 @@ endif
     end do
    end do
   end do
+!$omp end do
 
  case(10) x3_inner_vector ! Flux -----------------------------------------
 
  case default x3_inner_vector ! Error ------------------------------------
   print *, "Error from x3 velocity inner boundary condition" ; stop
+
  end select x3_inner_vector
 
 ! set e and ptot =========================================================
@@ -1149,6 +1147,7 @@ endif
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    if(radswitch==1)ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
     T(i,j,k) = T(i,j,ks)
     select case (eostype)
     case(0:1) ! without recombination
@@ -1157,10 +1156,7 @@ endif
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
-     e   (i,j,k) = eint(i,j,k) &
-                + 0.5d0*( d(i,j,k)*&
-                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
-                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    e(i,j,k) = get_etot_from_eint(i,j,k)
    end do
   end do
  end do
@@ -1402,6 +1398,7 @@ endif
 
  case default x3_outer_vector ! Error ------------------------------------
   print *, "Error from x3 velocity outer boundary condition" ; stop
+
  end select x3_outer_vector
 
 ! set e and ptot =========================================================
@@ -1411,6 +1408,7 @@ endif
    do i = is, ie
     ptot(i,j,k) = p(i,j,k) &
                 + 0.5d0*( b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    if(radswitch==1)ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
     T(i,j,k) = T(i,j,ke)
     select case (eostype)
     case(0:1) ! without recombination
@@ -1419,10 +1417,7 @@ endif
      eint(i,j,k) = eos_e(d(i,j,k),p(i,j,k),T(i,j,k),imu(i,j,k),&
                          spc(1,i,j,k),spc(2,i,j,k))
     end select
-    e   (i,j,k) = eint(i,j,k) &
-                + 0.5d0*( d(i,j,k)*&
-                         ( v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2 )&
-                         + b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2 )
+    e(i,j,k) = get_etot_from_eint(i,j,k)
    end do
   end do
  end do

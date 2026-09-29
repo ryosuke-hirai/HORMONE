@@ -185,7 +185,6 @@ subroutine lin_diffusion
  d(is:ie,js:je,ks:ke) = 1d0
  p(is:ie,js:je,ks:ke) = 1d0
  eint(is:ie,js:je,ks:ke) = p(is:ie,js:je,ks:ke)/(gamma-1d0)
- e(is:ie,js:je,ks:ke) = eint(is:ie,js:je,ks:ke)
  erad(is:ie,js:je,ks:ke) = 1d0
 
 ! Find the direction of shock tube

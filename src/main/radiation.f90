@@ -279,7 +279,7 @@ subroutine radiative_force
  use profiler_mod
 
  integer:: i,j,k,l,m
- real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork,kappar,X,Z
+ real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork,kappar,X,Z,divv
  real(8),dimension(1:3):: frad,gradv1,gradv2,gradv3,nn
 
 !-----------------------------------------------------------------------------
@@ -290,7 +290,7 @@ subroutine radiative_force
  call get_gradE
 
 !$omp parallel do private(i,j,k,RR,ll,ff,frad,vdotfrad,gradv1,gradv2,gradv3,&
-!$omp nn,l,m,radwork,Pedd,kappar,X,Z) collapse(3)
+!$omp nn,l,m,radwork,Pedd,kappar,X,Z,divv) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
@@ -301,7 +301,7 @@ subroutine radiative_force
     ll = lambda(RR)
     ff = ll + (ll*RR)**2
 
-    frad(1:3) = -ll*gradE(1:3,i,j,k)
+    frad(1:3) = -(ll-1d0/3d0)*gradE(1:3,i,j,k)
     vdotfrad = frad(1)*v1(i,j,k) + frad(2)*v2(i,j,k) + frad(3)*v3(i,j,k)
 
     call get_grad(v1,i,j,k,gradv1)
@@ -322,11 +322,13 @@ subroutine radiative_force
             + Pedd(1,2)*gradv2(1) + Pedd(2,2)*gradv2(2) + Pedd(2,3)*gradv2(3) &
             + Pedd(1,3)*gradv3(1) + Pedd(2,3)*gradv3(2) + Pedd(3,3)*gradv3(3)
 
+    divv = gradv1(1) + gradv2(2) + gradv3(3)
+
     src(i,j,k,imo1) = src(i,j,k,imo1) + frad(1)
     src(i,j,k,imo2) = src(i,j,k,imo2) + frad(2)
     src(i,j,k,imo3) = src(i,j,k,imo3) + frad(3)
-    src(i,j,k,iene) = src(i,j,k,iene) + vdotfrad
-    src(i,j,k,irad) = -radwork
+    src(i,j,k,iene) = src(i,j,k,iene) + vdotfrad + erad(i,j,k)/3d0*divv - radwork
+    src(i,j,k,irad) = - radwork
    end do
   end do
  end do

@@ -97,8 +97,6 @@ contains
       end if
 
       Tl = T(i,j,k) ; Tr = T(i+1,j,k)
-      eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
-      eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
       if(radswitch>0)then
        erl = erad(i  ,j,k) + dx(1) * der(i  ,j,k,1)
@@ -106,6 +104,9 @@ contains
       else
        erl = 0d0 ; err = 0d0
       end if
+
+      eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,erl,ierr)
+      eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,err,ierr)
 
       select case (eostype)
       case(0:1) ! without recombination
@@ -122,9 +123,8 @@ contains
        call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,1,ierr)
       end select
-      ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
-      ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
-
+      ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2) + erl/3d0 
+      ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2) + err/3d0 
       cfl = get_cf(dl,csl,b1l,b2l,b3l)
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
@@ -270,8 +270,6 @@ contains
       end if
 
       Tl = T(i,j,k) ; Tr = T(i,j+1,k)
-      eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
-      eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
       if(radswitch>0)then
        erl = erad(i,j  ,k) + dx(1) * der(i,j  ,k,2)
@@ -280,6 +278,9 @@ contains
        erl = 0d0 ; err = 0d0
       end if
       
+      eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,erl,ierr)
+      eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,err,ierr)
+
       select case (eostype)
       case(0:1) ! without recombination
        imul = 1d0/imu(i,j  ,k) + dx(1) * dmu(i,j  ,k,2)
@@ -295,8 +296,8 @@ contains
        call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,2,ierr)
       end select
-      ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
-      ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+      ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2) + erl/3d0 
+      ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2) + err/3d0 
       cfl = get_cf(dl,csl,b1l,b2l,b3l)
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
@@ -443,8 +444,6 @@ contains
       end if
 
       Tl = T(i,j,k) ; Tr = T(i,j,k+1)
-      eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,ierr)
-      eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,ierr)
 
       if(radswitch>0)then
        erl = erad(i,j,k  ) + dx(1) * der(i,j,k  ,3)
@@ -452,6 +451,9 @@ contains
       else
        erl = 0d0 ; err = 0d0
       end if
+
+      eil = get_eint(el,dl,v1l,v2l,v3l,b1l,b2l,b3l,erl,ierr)
+      eir = get_eint(er,dr,v1r,v2r,v3r,b1r,b2r,b3r,err,ierr)
 
       select case (eostype)
       case(0:1) ! without recombination
@@ -468,8 +470,8 @@ contains
        call eos_p_cs(dr,eir,Tr,imur,ptr,csr,spcr(1),spcr(2),ierr=ierr)
        if(ierr>0)call error_flux(i,j,k,3,ierr)
       end select
-      ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2)
-      ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2)
+      ptl = ptl + 0.5d0*(b1l**2+b2l**2+b3l**2) + erl/3d0 
+      ptr = ptr + 0.5d0*(b1r**2+b2r**2+b3r**2) + err/3d0 
       cfl = get_cf(dl,csl,b1l,b2l,b3l)
       cfr = get_cf(dr,csr,b1r,b2r,b3r)
 
