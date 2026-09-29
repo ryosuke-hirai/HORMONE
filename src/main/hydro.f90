@@ -5,7 +5,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                          SUBROUTINE ADVANCE_STEP
+!                           SUBROUTINE ADVANCE_STEP
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -73,7 +73,10 @@ use physval
 
  end if
 
- if(radswitch==1)call radiative_diffusion
+ if(radswitch==1)then
+  call exchange_mpi
+  call radiative_diffusion
+ end if
 
  return
 end subroutine hydro_step
@@ -181,8 +184,8 @@ subroutine radhydro_imex_step
 !$omp end parallel
 
  ! Then do implicit diffusion for half a step
- call exchange_mpi
  dt = dt_global
+ call exchange_mpi
  call radiative_diffusion
 
  ! Compute the implicit derivative
@@ -248,7 +251,7 @@ end subroutine radhydro_imex_step
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                      SUBROUTINE IMEX_EXPLICIT_TERMS
+!                        SUBROUTINE IMEX_EXPLICIT_TERMS
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -276,6 +279,7 @@ subroutine imex_explicit_terms
  if(solve_hydro)then
   call start_clock(wthyd)
 
+  call exchange_mpi
   call boundarycondition
   call source
 
