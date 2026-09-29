@@ -415,7 +415,7 @@ module mpi_domain
    subroutine exchange_grad(val)
       use grid
 
-      real(8), intent(inout) :: val(1:3,is-2:ie+2,js-2:je+2,ks-2:ke+2)
+      real(8), intent(inout) :: val(1:3,is-1:ie+1,js-1:je+1,ks-1:ke+1)
 
 #ifdef MPI
       integer :: d
