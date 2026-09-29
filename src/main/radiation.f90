@@ -143,7 +143,7 @@ subroutine get_diffusion_coeff
  use grid,only:is,ie,js,je,ks,ke
  use physval,only:erad,d,T,erad,radK,get_XZ
 
- integer:: i,j,k,ibs,jbs,kbs,ibe,jbe,kbe
+ integer:: i,j,k
  real(8):: RR,ll,kappar,X,Z
 
 !-----------------------------------------------------------------------------

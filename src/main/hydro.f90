@@ -92,7 +92,7 @@ subroutine radhydro_imex_step
 
  use settings,only:dirichlet_on,spn,compswitch
  use grid,only:dt,is,ie,js,je,ks,ke
- use physval,only:u,uorg,d,spc,spcorg,irad,ufnmax,T
+ use physval,only:u,uorg,d,spc,spcorg,irad,ufnmax
  use boundary_mod,only:boundarycondition
  use numflux_mod,only:numflux
  use source_mod,only:source
@@ -259,7 +259,7 @@ subroutine imex_explicit_terms
 
  use settings,only:compswitch,spn,solve_hydro
  use grid,only:dt,is,ie,js,je,ks,ke
- use physval,only:u,spc,src,ufnmax,irad,iene
+ use physval,only:u,spc,src,ufnmax
  use source_mod,only:source,phidamp
  use radiation_mod,only:rad_heat_cool
  use rungekutta_mod,only:primitive,flux_sum,spcflx_sum
