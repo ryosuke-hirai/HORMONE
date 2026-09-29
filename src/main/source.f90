@@ -277,10 +277,13 @@ subroutine get_totphi
  use gravmod,only:totphi,grvphi
  use externalforce_mod,only:externalfield
  use sink_mod,only:sinkfield
+ use mpi_domain,only:exchange_gravity_mpi
 
  integer:: i,j,k
 
 !-----------------------------------------------------------------------------
+
+ call exchange_gravity_mpi
 
 !$omp parallel do private(i,j,k) collapse(3)
   do k = ks-1, ke+1
