@@ -106,9 +106,9 @@ end subroutine extend2Dto3D
 
 subroutine radify
 
- use settings,only:extrasfile,eostype,radswitch,eq_sym
+ use settings,only:extrasfile,eostype,radswitch
  use constants,only:arad
- use grid,only:is,ie,js,je,ks,ke,time,dvol
+ use grid,only:is,ie,js,je,ks,ke,time
  use physval,only:d,p,T,imu,eint,erad,e
  use eos_mod,only:eos_e
  use readbin_mod,only:readbin
@@ -183,19 +183,19 @@ end subroutine radify
 
 subroutine blowup
 
- use settings,only:start,dt_unit,eq_sym,dt_out,gravswitch,extrasfile
+ use settings,only:eq_sym,dt_out,gravswitch,extrasfile
  use constants,only:rsun
  use grid
  use physval
  use readbin_mod,only:readbin,read_extgrv
  use eos_mod,only:eos_p
  use source_mod,only:get_totphi
- use gravmod,only:grvtime,grvphi,totphi
+ use gravmod,only:grvtime,totphi
  use input_mod,only:error_extras,error_nml
  use output_mod,only:write_bin,write_ascii
 
  integer:: i,j,k,iinj,nn,istat
- real(8):: Ebind,Eexp,Rinj,rad,Mheat
+ real(8):: Ebind,Eexp,Rinj,Mheat
  character(len=100):: infile,outfile
 
 !-----------------------------------------------------------------------------
