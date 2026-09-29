@@ -426,13 +426,13 @@ module mpi_domain
       do d = 1, 3
          do i = 1, n_exchange(d)
             ! Send left real cells to left neighbour's right ghost cells
-            call MPI_Sendrecv(val(l_real_spc (1,d), l_real_spc (2,d), l_real_spc (3,d), l_real_spc (4,d)), 1, subarray_spc(d), left_rank (d), 0, &
-                              val(r_ghost_spc(1,d), r_ghost_spc(2,d), r_ghost_spc(3,d), r_ghost_spc(4,d)), 1, subarray_spc(d), right_rank(d), 0, &
+            call MPI_Sendrecv(val(l_real_grad (1,d), l_real_grad (2,d), l_real_grad (3,d), l_real_grad (4,d)), 1, subarray_grad(d), left_rank (d), 0, &
+                              val(r_ghost_grad(1,d), r_ghost_grad(2,d), r_ghost_grad(3,d), r_ghost_grad(4,d)), 1, subarray_grad(d), right_rank(d), 0, &
                               cart_comm, MPI_STATUS_IGNORE, ierr)
 
             ! Send right real cells to right neighbour's left ghost cells
-            call MPI_Sendrecv(val(r_real_spc (1,d), r_real_spc (2,d), r_real_spc (3,d), r_real_spc (4,d)), 1, subarray_spc(d), right_rank(d), 0, &
-                              val(l_ghost_spc(1,d), l_ghost_spc(2,d), l_ghost_spc(3,d), l_ghost_spc(4,d)), 1, subarray_spc(d), left_rank (d), 0, &
+            call MPI_Sendrecv(val(r_real_grad (1,d), r_real_grad (2,d), r_real_grad (3,d), r_real_grad (4,d)), 1, subarray_grad(d), right_rank(d), 0, &
+                              val(l_ghost_grad(1,d), l_ghost_grad(2,d), l_ghost_grad(3,d), l_ghost_grad(4,d)), 1, subarray_grad(d), left_rank (d), 0, &
                               cart_comm, MPI_STATUS_IGNORE, ierr)
          enddo
       enddo
