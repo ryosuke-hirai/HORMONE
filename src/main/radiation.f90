@@ -9,6 +9,7 @@ module radiation_mod
 
  public :: radiative_diffusion,radiation_setup,radiative_force,rad_heat_cool,get_gradE
  private:: get_diffusion_coeff,get_radb
+ integer,private:: ibs,ibe,jbs,jbe,kbs,kbe
  real(8),allocatable,private:: rsrc(:),gradE(:,:,:,:)
 
 contains
@@ -105,6 +106,7 @@ subroutine get_gradE
  use utils,only:get_grad
  use physval,only:erad
  use grid,only:is,ie,js,je,ks,ke
+ use mpi_domain,only:exchange_grad
 
  integer:: i,j,k
 
@@ -120,7 +122,9 @@ subroutine get_gradE
    end do
   end do
  end do
-!$omp end parallel do
+ !$omp end parallel do
+
+ call exchange_grad(gradE)
 
 return
 end subroutine get_gradE
@@ -136,8 +140,7 @@ end subroutine get_gradE
 subroutine get_diffusion_coeff
 
  use constants,only:clight
- use grid,only:is,ie,js,je,ks,ke,&
-               is_global,ie_global,js_global,je_global,ks_global,ke_global
+ use grid,only:is,ie,js,je,ks,ke
  use physval,only:erad,d,T,erad,radK,get_XZ
 
  integer:: i,j,k,ibs,jbs,kbs,ibe,jbe,kbe
@@ -145,26 +148,17 @@ subroutine get_diffusion_coeff
 
 !-----------------------------------------------------------------------------
 
- ! Calculate boundary values if domain boundary is not a true boundary
- ibs=0;jbs=0;kbs=0; ibe=0;jbe=0;kbe=0
- if(is/=is_global)ibs=1
- if(ie/=ie_global)ibe=1
- if(js/=js_global)jbs=1
- if(je/=je_global)jbe=1
- if(ks/=ks_global)kbs=1
- if(ke/=ke_global)kbe=1
-
 !$omp parallel do private(i,j,k,RR,ll,kappar,X,Z) collapse(3)
  do k = ks-kbs, ke+kbe
   do j = js-jbs, je+jbe
    do i = is-ibs, ie+ibe
     ! Skip if this is a corner ghost cell, which is uninitialised and unused)
     if ((i == is-1 .or. i == ie+1) .and. &
-      (j == js-1 .or. j == je+1)) cycle
+        (j == js-1 .or. j == je+1)) cycle
     if ((i == is-1 .or. i == ie+1) .and. &
-      (k == ks-1 .or. k == ke+1)) cycle
+        (k == ks-1 .or. k == ke+1)) cycle
     if ((j == js-1 .or. j == je+1) .and. &
-      (k == ks-1 .or. k == ke+1)) cycle
+        (k == ks-1 .or. k == ke+1)) cycle
 
     call get_XZ(i,j,k,X,Z)
     kappar = kappa_r(X,Z,d(i,j,k),T(i,j,k))
@@ -235,7 +229,8 @@ end subroutine get_radb
 
 subroutine radiation_setup
 
- use grid,only:is,ie,js,je,ks,ke
+ use grid,only:is,ie,js,je,ks,ke,&
+               is_global,ie_global,js_global,je_global,ks_global,ke_global
  use matrix_vars,only:irad
  use matrix_solver_mod,only:setup_matrix
  use miccg_mod,only:setup_cg
@@ -244,6 +239,17 @@ subroutine radiation_setup
 !-----------------------------------------------------------------------------
 
  if(radswitch==1.or.radswitch==2)then
+
+ ! Calculate boundary values for diffusion coefficient if the
+ ! domain boundary is not a true boundary
+  ibs=0;jbs=0;kbs=0; ibe=0;jbe=0;kbe=0
+  if(is/=is_global)ibs=1
+  if(ie/=ie_global)ibe=1
+  if(js/=js_global)jbs=1
+  if(je/=je_global)jbe=1
+  if(ks/=ks_global)kbs=1
+  if(ke/=ke_global)kbe=1
+
   call setup_matrix(irad)
   call get_geo
 
@@ -262,15 +268,14 @@ end subroutine radiation_setup
 
 ! PURPOSE: To compute radiative acceleration and associated source terms
 
-subroutine radiative_force!(dt)
+subroutine radiative_force
 
  use utils,only:get_grad
  use grid,only:is,ie,js,je,ks,ke
- use physval,only:d,v1,v2,v3,T,erad,imo1,imo2,imo3,iene,irad,get_XZ,src!,e,eint,erad,u,icnt
+ use physval,only:d,v1,v2,v3,T,erad,imo1,imo2,imo3,iene,irad,get_XZ,src
  use eos_mod,only:pressure
  use profiler_mod
 
-! real(8),intent(in):: dt
  integer:: i,j,k,l,m
  real(8):: RR,ll,ff,vdotfrad,Pedd(1:3,1:3),radwork,kappar,X,Z
  real(8),dimension(1:3):: frad,gradv1,gradv2,gradv3,nn
@@ -318,22 +323,8 @@ subroutine radiative_force!(dt)
     src(i,j,k,imo1) = src(i,j,k,imo1) + frad(1)
     src(i,j,k,imo2) = src(i,j,k,imo2) + frad(2)
     src(i,j,k,imo3) = src(i,j,k,imo3) + frad(3)
-    src(i,j,k,iene) = src(i,j,k,iene) + vdotfrad !&
-                    !+ 0.5d0*dot_product(frad,frad)/d(i,j,k)*dt
-    src(i,j,k,irad) = -radwork!( vdotfrad + 0.5d0*dot_product(frad,frad)/d(i,j,k)*dt)!radwork
-!!$
-!!$    u(i,j,k,imo1) = u(i,j,k,imo1) + frad(1)*dt 
-!!$    u(i,j,k,imo2) = u(i,j,k,imo2) + frad(2)*dt 
-!!$    u(i,j,k,imo3) = u(i,j,k,imo3) + frad(3)*dt 
-!!$    u(i,j,k,iene) = u(i,j,k,iene) + vdotfrad*dt
-!!$    u(i,j,k,irad) = max(u(i,j,k,irad) - radwork*dt,u(i,j,k,iene)*1d-5)
-!!$
-!!$    v1(i,j,k) = u(i,j,k,imo1)/u(i,j,k,icnt)
-!!$    v2(i,j,k) = u(i,j,k,imo2)/u(i,j,k,icnt)
-!!$    v3(i,j,k) = u(i,j,k,imo3)/u(i,j,k,icnt)
-!!$    e (i,j,k) = u(i,j,k,iene)
-!!$    erad(i,j,k) = u(i,j,k,irad)
-
+    src(i,j,k,iene) = src(i,j,k,iene) + vdotfrad
+    src(i,j,k,irad) = -radwork
    end do
   end do
  end do
@@ -419,13 +410,13 @@ subroutine rad_boundary
  use settings,only:solve_i,solve_j,solve_k
  use grid
  use physval
- use mpi_domain,only:exchange_mpi
+ use mpi_domain,only:exchange_scalar
 
  integer:: i,j,k,ib
 
 !-----------------------------------------------------------------------------
 
- call exchange_mpi
+ call exchange_scalar(erad)
 
 ! Only zero-flux boundary for now
 
@@ -438,8 +429,6 @@ subroutine rad_boundary
    if (is == is_global) erad(is-1,j,k) = erad(is   ,j,k)
    if (ie == ie_global) erad(ie+1,j,k) = erad(ie   ,j,k)
    if (ie == ie_global) erad(ie+2,j,k) = erad(ie-ib,j,k)
-!   if (ie == ie_global) erad(ie+1,j,k) = erad(ie,j,k)*(x1(ie)/x1(ie+1))
-!   if (ie == ie_global) erad(ie+2,j,k) = erad(ie,j,k)*(x1(ie)/x1(ie+2))
   end do
  end do
  !$omp end parallel do
