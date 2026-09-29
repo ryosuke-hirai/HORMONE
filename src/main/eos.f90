@@ -882,7 +882,7 @@ function get_etot_from_eint(i,j,k) result(e)
  integer,intent(in):: i,j,k
  real(8):: e
  e = eint(i,j,k) + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
- if(mag_on)e = e + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**3)
+ if(mag_on)e = e + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2)
  if(radswitch>0)e = e + erad(i,j,k)
 end function get_etot_from_eint
 
