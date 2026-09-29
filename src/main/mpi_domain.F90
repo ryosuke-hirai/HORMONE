@@ -212,43 +212,43 @@ module mpi_domain
       ! Gradient quantities ------------------------------------------------------------------------------------------
 
       ! Size of the array on this task
-      sizes4 = [3, ie - is + 3, je - js + 3, ke - ks + 3]
+      sizes4 = [3, ie - is + 5, je - js + 5, ke - ks + 5]
 
       ! --- x-1 direction ---
-      subsizes4 = [3, 1, je-js+1, ke-ks+1] ! Size of the ghost cells to send
-      starts4   = [0, 0, 1, 1] ! Offset relative to the address passed to MPI_Sendrecv
+      subsizes4 = [3, 2, je-js+1, ke-ks+1] ! Size of the ghost cells to send
+      starts4   = [0, 0, 2, 2] ! Offset relative to the address passed to MPI_Sendrecv
       call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_grad(1), ierr)
       call MPI_Type_commit(subarray_grad(1), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real_grad (:,1) = [1, is,   js-1, ks-1]
-      r_real_grad (:,1) = [1, ie-1, js-1, ks-1]
-      l_ghost_grad(:,1) = [1, is-1, js-1, ks-1]
-      r_ghost_grad(:,1) = [1, ie+1, js-1, ks-1]
+      l_real_grad (:,1) = [1, is,   js-2, ks-2]
+      r_real_grad (:,1) = [1, ie-1, js-2, ks-2]
+      l_ghost_grad(:,1) = [1, is-2, js-2, ks-2]
+      r_ghost_grad(:,1) = [1, ie+1, js-2, ks-2]
 
       ! --- x-2 direction ---
-      subsizes4 = [3, ie-is+1, 1, ke-ks+1] ! Size of the ghost cells to send
-      starts4   = [0, 1, 0, 1] ! Offset relative to the address passed to MPI_Sendrecv
+      subsizes4 = [spn, ie-is+1, 2, ke-ks+1] ! Size of the ghost cells to send
+      starts4   = [0, 2, 0, 2] ! Offset relative to the address passed to MPI_Sendrecv
       call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_grad(2), ierr)
       call MPI_Type_commit(subarray_grad(2), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real_grad (:,2) = [1, is-1, js,   ks-1]
-      r_real_grad (:,2) = [1, is-1, je-1, ks-1]
-      l_ghost_grad(:,2) = [1, is-1, js-1, ks-1]
-      r_ghost_grad(:,2) = [1, is-1, je+1, ks-1]
+      l_real_grad (:,2) = [1, is-2, js,   ks-2]
+      r_real_grad (:,2) = [1, is-2, je-1, ks-2]
+      l_ghost_grad(:,2) = [1, is-2, js-2, ks-2]
+      r_ghost_grad(:,2) = [1, is-2, je+1, ks-2]
 
       ! --- x-3 direction ---
-      subsizes4 = [3, ie-is+1, je-js+1, 1] ! Size of the ghost cells to send
-      starts4   = [0, 1, 1, 0] ! Offset relative to the address passed to MPI_Sendrecv
+      subsizes4 = [spn, ie-is+1, je-js+1, 2] ! Size of the ghost cells to send
+      starts4   = [0, 2, 2, 0] ! Offset relative to the address passed to MPI_Sendrecv
       call MPI_Type_create_subarray(4, sizes4, subsizes4, starts4, MPI_ORDER_FORTRAN, MPI_REAL8, subarray_grad(3), ierr)
       call MPI_Type_commit(subarray_grad(3), ierr)
 
       ! Starting indices of the real and ghost zones involved in the exchange
-      l_real_grad (:,3) = [1, is-1, js-1, ks  ]
-      r_real_grad (:,3) = [1, is-1, js-1, ke-1]
-      l_ghost_grad(:,3) = [1, is-1, js-1, ks-1]
-      r_ghost_grad(:,3) = [1, is-1, js-1, ke+1]
+      l_real_grad (:,3) = [1, is-2, js-2, ks  ]
+      r_real_grad (:,3) = [1, is-2, js-2, ke-1]
+      l_ghost_grad(:,3) = [1, is-2, js-2, ks-2]
+      r_ghost_grad(:,3) = [1, is-2, js-2, ke+1]
 
 
       ! Species quantities --------------------------------------------------------------------------------------------
@@ -413,7 +413,6 @@ module mpi_domain
    end subroutine exchange_spc
 
    subroutine exchange_grad(val)
-      use settings
       use grid
 
       real(8), intent(inout) :: val(1:3,is-2:ie+2,js-2:je+2,ks-2:ke+2)
