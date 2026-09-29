@@ -107,7 +107,6 @@ subroutine get_gradE
  use utils,only:get_grad
  use physval,only:erad
  use grid,only:is,ie,js,je,ks,ke
- use mpi_domain,only:exchange_grad
 
  integer:: i,j,k
 
@@ -125,8 +124,6 @@ subroutine get_gradE
  end do
  !$omp end parallel do
 
- call exchange_grad(gradE)
-
 return
 end subroutine get_gradE
 
@@ -143,11 +140,15 @@ subroutine get_diffusion_coeff
  use constants,only:clight
  use grid,only:is,ie,js,je,ks,ke
  use physval,only:erad,d,T,erad,radK,get_XZ
+ use mpi_domain,only:exchange_grad,exchange_scalar
 
  integer:: i,j,k
  real(8):: RR,ll,kappar,X,Z
 
 !-----------------------------------------------------------------------------
+
+ call exchange_grad(gradE)
+ call exchange_scalar(d)
 
 !$omp parallel do private(i,j,k,RR,ll,kappar,X,Z) collapse(3)
  do k = ks-kbs, ke+kbe
