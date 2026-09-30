@@ -14,7 +14,9 @@ contains
 subroutine tools
 
  use settings,only:crdnt,gravswitch,radswitch,include_cooling,eostype
- use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_max,fmr_lvl
+ use grid,only:coscyl,gis,gie,gks,gke,cosc,is,ie,js,je,ks,ke,fmr_max,fmr_lvl,&
+               is_global,ie_global,js_global,je_global,ks_global,ke_global,&
+               grad_c1,grad_c2,grad_c3,dx1,dx2,dx3,x1,x2,x3
  use physval,only:gamma,imu,muconst
  use gravmod,only:llmax,Plc,Pl,dtg_unit
  use constants,only:Cv,Rgas
@@ -29,6 +31,7 @@ subroutine tools
 
  integer:: i,j,k,n,l,ll,jb,kb
  real(8),allocatable,dimension(:,:,:):: dtg
+ real(8):: fac1, fac2, denom
 
 !-----------------------------------------------------------------------------
 
@@ -131,6 +134,54 @@ subroutine tools
 !!$ deallocate(comp_ej)
 !!$ allocate(comp_ej(0:8,1:compsize))
 !!$ comp_ej(0:8,1:compsize) = dat(0:8,compsize:1:-1)
+
+! Gradient coefficients %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ ! Third-order for 5-point stencil
+ do i = is_global, ie_global
+  fac1 = dx1(i)**2*dx1(i+1)**2*(dx1(i)+dx1(i+1))
+  fac2 = (dx1(i-1)+dx1(i))**2*(dx1(i+1)+dx1(i+2))**2*(x1(i+2)-x1(i-2))
+  denom = fac2* dx1(i)          * dx1(i+1)          *(dx1(i)+dx1(i+1)) &
+        - fac1*(dx1(i-1)+dx1(i))*(dx1(i+1)+dx1(i+2))*(x1(i+2)-x1(i-2))
+
+  grad_c1(-2,i) =  (dx1(i+1)+dx1(i+2))**2*fac1/denom
+  grad_c1( 2,i) = -(dx1(i-1)+dx1(i  ))**2*fac1/denom
+  grad_c1(-1,i) = -dx1(i+1)**2*fac2/denom
+  grad_c1( 1,i) =  dx1(i  )**2*fac2/denom
+  grad_c1( 0,i) = ( (dx1(i+1)**2-dx1(i)**2)*fac2 &
+                  - ((dx1(i+1)+dx1(i+2))**2-(dx1(i-1)+dx1(i))**2)*fac1 ) &
+                / denom
+ end do
+
+ do j = js_global, je_global
+  fac1 = dx2(j)**2*dx2(j+1)**2*(dx2(j)+dx2(j+1))
+  fac2 = (dx2(j-1)+dx2(j))**2*(dx2(j+1)+dx2(j+2))**2*(x2(j+2)-x2(j-2))
+  denom = fac2* dx2(j)          * dx2(j+1)          *(dx2(j)+dx2(j+1)) &
+        - fac1*(dx2(j-1)+dx2(j))*(dx2(j+1)+dx2(j+2))*(x2(j+2)-x2(j-2))
+
+  grad_c2(-2,j) =  (dx2(j+1)+dx2(j+2))**2*fac1/denom
+  grad_c2( 2,j) = -(dx2(j-1)+dx2(j  ))**2*fac1/denom
+  grad_c2(-1,j) = -dx2(j+1)**2*fac2/denom
+  grad_c2( 1,j) =  dx2(j  )**2*fac2/denom
+  grad_c2( 0,j) = ( (dx2(j+1)**2-dx2(j)**2)*fac2 &
+                  - ((dx2(j+1)+dx2(j+2))**2-(dx2(j-1)+dx2(j))**2)*fac1 ) &
+                / denom
+ end do
+
+ do k = ks_global, ke_global
+  fac1 = dx3(k)**2*dx3(k+1)**2*(dx3(k)+dx3(k+1))
+  fac2 = (dx3(k-1)+dx3(k))**2*(dx3(k+1)+dx3(k+2))**2*(x3(k+2)-x3(k-2))
+  denom = fac2* dx3(k)          * dx3(k+1)          *(dx3(k)+dx3(k+1)) &
+        - fac1*(dx3(k-1)+dx3(k))*(dx3(k+1)+dx3(k+2))*(x3(k+2)-x3(k-2))
+
+  grad_c3(-2,k) =  (dx3(k+1)+dx3(k+2))**2*fac1/denom
+  grad_c3( 2,k) = -(dx3(k-1)+dx3(k  ))**2*fac1/denom
+  grad_c3(-1,k) = -dx3(k+1)**2*fac2/denom
+  grad_c3( 1,k) =  dx3(k  )**2*fac2/denom
+  grad_c3( 0,k) = ( (dx3(k+1)**2-dx3(k)**2)*fac2 &
+                  - ((dx3(k+1)+dx3(k+2))**2-(dx3(k-1)+dx3(k))**2)*fac1 ) &
+                / denom
+ end do
 
 ! EoS parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  Cv = Rgas/(gamma-1d0) ! frequently used factor for egas
