@@ -30,7 +30,7 @@
 ! sigfig : How many significant figures in output values
 ! outres : Resolution of output grid (1 means output everything, 2 means every 2 grid points, etc)
 ! output_ascii : Output plt file (some machines are extremely slow at writing ascii files, especially in MPI)
-! write_other_vel : Set to .true. if 2.5D
+! write_other_vel : Set to .true. to write all velocity components in ascii
 ! write_shock : Output shock switch
 ! write_evo : Output evofile
 ! write_other_slice : Output an alternative slice for 3D
