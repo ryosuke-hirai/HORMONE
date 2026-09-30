@@ -1419,9 +1419,15 @@ subroutine get_header(header,columns)
  case(1)
   if(ie>is)then
    call add_column('v1',columns,header)
+   if(write_other_vel)call add_column('v2',columns,header)
+   if(write_other_vel)call add_column('v3',columns,header)
   elseif(je>js)then
+   if(write_other_vel)call add_column('v1',columns,header)
    call add_column('v2',columns,header)
+   if(write_other_vel)call add_column('v3',columns,header)
   elseif(ke>ks)then
+   if(write_other_vel)call add_column('v1',columns,header)
+   if(write_other_vel)call add_column('v2',columns,header)
    call add_column('v3',columns,header)
   end if
  case(2)

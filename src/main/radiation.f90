@@ -334,8 +334,6 @@ subroutine radiative_force
  end do
 !$omp end parallel do
 
-! call pressure
-
  call stop_clock(wtrfo)
  call stop_clock(wtrad)
 

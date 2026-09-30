@@ -1,9 +1,0 @@
-! Default parameters file for eostest
-
-------------------------------- parameters ---------------------------------
-
-############################### EOS CONTROLS ###############################
-! eoserr  : Tolerance for equation of state calculations
-
-&eos_con  eoserr=2d-15 /
-
