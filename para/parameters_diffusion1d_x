@@ -20,7 +20,7 @@
 ! write_temp : Output temperature (only relevant for eostype=0)
 
 &out_con  outdir='data' outstyle=2 endstyle=1
-          tnlim=10 t_end=4.2d-12 dt_out=1d3 tn_out=1 write_temp=.true. /
+          tnlim=10 t_end=4.2d-12 dt_out=1d3 tn_out=1000 write_temp=.true. /
 
 ############################### EOS CONTROLS ###############################
 ! eostype : 0='ideal gas'
