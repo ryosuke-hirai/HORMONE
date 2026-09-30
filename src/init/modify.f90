@@ -108,7 +108,7 @@ subroutine radify
 
  use settings,only:extrasfile,eostype,radswitch
  use constants,only:arad
- use grid,only:is,ie,js,je,ks,ke
+ use grid,only:is,ie,js,je,ks,ke,time
  use physval,only:d,p,T,erad
  use eos_mod,only:eos_e
  use readbin_mod,only:readbin
