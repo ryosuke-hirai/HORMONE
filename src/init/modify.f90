@@ -108,8 +108,8 @@ subroutine radify
 
  use settings,only:extrasfile,eostype,radswitch
  use constants,only:arad
- use grid,only:is,ie,js,je,ks,ke,time
- use physval,only:d,p,T,imu,eint,erad,e
+ use grid,only:is,ie,js,je,ks,ke
+ use physval,only:d,p,T,erad
  use eos_mod,only:eos_e
  use readbin_mod,only:readbin
  use input_mod,only:error_extras,error_nml
@@ -117,10 +117,11 @@ subroutine radify
 
  character(len=100):: infile,outfile
  integer:: i,j,k,nn,istat
+ real(8):: newtime
 
 !-----------------------------------------------------------------------------
 
- namelist /rdfycon/ infile,outfile
+ namelist /rdfycon/ infile,outfile,newtime
 
  open(newunit=nn,file=extrasfile,status='old',iostat=istat)
  if(istat/=0)call error_extras('radify',extrasfile)
@@ -131,7 +132,9 @@ subroutine radify
  radswitch=0
  call readbin(infile)
 
-! Set radiation pressure
+ if(newtime>=0d0)time = newtime
+ ! Set radiation pressure
+!$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
@@ -139,6 +142,7 @@ subroutine radify
    end do
   end do
  end do
+!$omp end parallel do
 
  eostype=0
  radswitch=1

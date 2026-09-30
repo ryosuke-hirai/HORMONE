@@ -2,8 +2,10 @@
 
 ! infile: Name of file to modify. Must be a non-radiation file.
 ! outfile: Name of output file. This is a radiation file.
+! newtime: New time stamp. Inherits the original time if newtime<0
 
 &rdfycon
   infile  = 'infile.dat'
   outfile = 'outfile.dat'
+  newtime = -1d0
 /
