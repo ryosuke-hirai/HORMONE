@@ -141,16 +141,16 @@ contains
 
  subroutine smear(which)
 
-  use settings,only:spn,compswitch
+  use settings,only:spn,compswitch,radswitch
   use grid,only:fmr_max,dim,crdnt
   use profiler_mod
   use mpi_utils,only:allreduce_mpi
 
   character(len=*),intent(in):: which
-  integer:: i,j,k,l,n,nn,m,jb,kb,wtind,wtin2
+  integer:: i,j,k,l,n,nn,m,jb,kb,wtind,wtin2,neq
   real(8),allocatable,dimension(:,:):: exchange,momtot,spctot
-  real(8),allocatable,dimension(:):: spctot1,mtot,etot,phitot,psitot
-  real(8):: mtot1,momtot1(1:3),etot1,phitot1,psitot1
+  real(8),allocatable,dimension(:):: spctot1,mtot,etot,phitot,psitot,eradtot
+  real(8):: mtot1,momtot1(1:3),etot1,phitot1,psitot1,eradtot1
 
 !-----------------------------------------------------------------------------
 
@@ -162,9 +162,11 @@ contains
   select case(which)
   case('hydro')
    wtind = wtsmr ; wtin2 = wtsm2
-   allocate(exchange(4+spn,max(nsmear_split,1)),spctot1(max(spn,1)),&
+   neq = 4
+   if(radswitch>0)neq = neq+1
+   allocate(exchange(neq+spn,max(nsmear_split,1)),spctot1(max(spn,1)),&
             mtot(nsmear_mydom),etot(nsmear_mydom),momtot(3,nsmear_mydom),&
-            spctot(max(spn,1),nsmear_mydom))
+            spctot(max(spn,1),nsmear_mydom),eradtot(nsmear_mydom))
   case('grav')
    wtind = wtgsm ; wtin2 = wtgs2
    allocate(exchange(2,max(nsmear_split,1)),&
@@ -179,7 +181,7 @@ contains
 ! Integrate quantities over effective cells ++++++++++++++++++++++++++++++++++
    if(nsmear_mydom>0)then
 !$omp parallel do private(i,j,k,l,n,nn,m,jb,kb,mtot1,momtot1,etot1,spctot1,&
-!$omp phitot1,psitot1) schedule(dynamic,1)
+!$omp phitot1,psitot1,eradtot1) schedule(dynamic,1)
     do nn = 1, nsmear_mydom
      n = list_mydom(1,nn)
      l = lijk_from_id(0,n)
@@ -191,17 +193,20 @@ contains
 
      select case(which)
      case('hydro')
-      call angular_sums_hydro(i,j,j+jb-1,k,k+kb-1,mtot1,momtot1,etot1,spctot1)
+      call angular_sums_hydro(i,j,j+jb-1,k,k+kb-1,&
+                              mtot1,momtot1,etot1,eradtot1,spctot1)
       mtot(nn) = mtot1
       momtot(1:3,nn) = momtot1(1:3)
       etot(nn) = etot1
+      if(radswitch>0) eradtot(nn) = eradtot1
       if(compswitch>=2) spctot(1:spn,nn) = spctot1(1:spn)
 
       if(list_mydom(2,nn)>0)then
        m = list_mydom(2,nn)
        exchange(1  ,m) = mtot(nn)
        exchange(2:4,m) = momtot(1:3,nn)
-       if(compswitch>=2) exchange(5:4+spn,m) = spctot(1:spn,nn)
+       if(radswitch>0) exchange(5,m) = eradtot(nn)
+       if(compswitch>=2) exchange(neq+1:neq+spn,m) = spctot(1:spn,nn)
       end if
 
      case('grav')
@@ -231,7 +236,8 @@ contains
       case('hydro')
        mtot(n) = exchange(1,nn)
        momtot(1:3,n) = exchange(2:4,nn)
-       if(compswitch>=2) spctot(1:spn,n) = exchange(5:4+spn,nn)
+       if(radswitch>0)eradtot(n) = exchange(5,nn)
+       if(compswitch>=2) spctot(1:spn,n) = exchange(neq:neq+spn,nn)
       case('grav')
        phitot(n) = exchange(1,nn)
        psitot(n) = exchange(2,nn)
@@ -262,7 +268,7 @@ contains
      case('hydro')
       call angular_smear_hydro(i,j,j+jb-1,k,k+kb-1,&
                                mtot(nn),momtot(1:3,nn),etot(nn),&
-                               spctot(1:max(spn,1),nn))
+                               eradtot(nn),spctot(1:max(spn,1),nn))
       if(list_mydom(2,nn)>0)then
        m = list_mydom(2,nn)
        exchange(1,m) = etot(nn)
@@ -395,19 +401,19 @@ contains
 
 ! PURPOSE: Average out hydro quantities over several cells in the jk direction
 
- subroutine angular_smear_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
+ subroutine angular_smear_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,eradtot,spctot)
 
-  use settings,only:spn,compswitch,smeartype
+  use settings,only:spn,compswitch,smeartype,radswitch
   use grid,only:x3,dvol,car_x,js,je,ks,ke,x1,sinc
-  use physval,only:u,spc,v1,v2,v3,icnt,imo1,imo2,imo3
+  use physval,only:u,spc,v1,v2,v3,icnt,imo1,imo2,imo3,irad
   use utils,only:get_vpol
   use gravmod,only:totphi,gravswitch
 
   integer,intent(in)::i,js_,je_,ks_,ke_
-  real(8),intent(in):: mtot,momtot(1:3),spctot(1:max(spn,1))
+  real(8),intent(in):: mtot,momtot(1:3),eradtot,spctot(1:max(spn,1))
   real(8),intent(inout):: etot
   integer:: n,j,k,jl,jr,kl,kr
-  real(8):: vol, dave, vave(1:3)
+  real(8):: vol, dave, vave(1:3), eradave
 
 !-----------------------------------------------------------------------------
 
@@ -415,7 +421,9 @@ contains
   kl = max(ks_,ks); kr = min(ke_,ke)
 
   vol = dvol_block(get_id(i,js_,ks_))
-  dave = mtot/vol    ! get average density
+  dave = mtot/vol  ! get average density
+  if(radswitch>0)& ! get average radiation energy density
+   eradave = eradtot/vol
 
   if(compswitch>=2)then
    do n = 1, spn
@@ -434,6 +442,7 @@ contains
      u(i,j,k,imo1) = dave*v1(i,j,k)
      u(i,j,k,imo2) = dave*v2(i,j,k)
      u(i,j,k,imo3) = dave*v3(i,j,k)
+     if(radswitch>0) u(i,j,k,irad) = eradave
      if(gravswitch>0)&
       etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
@@ -451,7 +460,7 @@ contains
      etot = etot &
           - 0.5d0*dave*(vave(1)**2+vave(2)**2+(vave(3)*x1(i)*sinc(j))**2) &
             *dvol(i,j,k)
-
+     if(radswitch>0) u(i,j,k,irad) = eradave
      if(gravswitch>0)&
       etot = etot - u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
@@ -469,16 +478,16 @@ contains
 
 ! PURPOSE: To integrate total mass/momentum/energy/species over effective cells
 
- subroutine angular_sums_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,spctot)
+ subroutine angular_sums_hydro(i,js_,je_,ks_,ke_,mtot,momtot,etot,eradtot,spctot)
 
-  use settings,only:spn,compswitch,smeartype
+  use settings,only:spn,compswitch,smeartype,radswitch
   use grid,only:x3,dvol,car_x,js,je,ks,ke,x1,sinc
-  use physval,only:u,spc,icnt,iene,imo1,imo2,imo3
+  use physval,only:u,spc,icnt,iene,imo1,imo2,imo3,irad
   use utils
   use gravmod,only:totphi,gravswitch
 
   integer,intent(in)::i,js_,je_,ks_,ke_
-  real(8),intent(out):: mtot,momtot(1:3),etot
+  real(8),intent(out):: mtot,momtot(1:3),etot,eradtot
   real(8),allocatable,intent(inout):: spctot(:)
   integer:: n,j,k,jl,jr,kl,kr
   real(8),dimension(1:3):: compen, tempsum, element, vcar
@@ -497,7 +506,7 @@ contains
    end do
   end if
 
-  momtot=0d0;etot=0d0;compen=0d0
+  momtot=0d0;etot=0d0;eradtot=0d0;compen=0d0
   select case (smeartype)
   case(1) ! Conserve linear momentum
    do k = kl, kr
@@ -511,6 +520,8 @@ contains
      momtot = tempsum ! add up momenta using the Kahan algorithm
 
      etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
+     if(radswitch>0)&  ! and radiation energy
+      eradtot = eradtot + u(i,j,k,irad)*dvol(i,j,k)
      if(gravswitch>0)& ! and gravitational energy
       etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do
@@ -529,6 +540,8 @@ contains
      momtot = tempsum ! add up momenta using the Kahan algorithm
 
      etot = etot + u(i,j,k,iene)*dvol(i,j,k)! add up energy
+     if(radswitch>0)&  ! and radiation energy
+      eradtot = eradtot + u(i,j,k,irad)*dvol(i,j,k)
      if(gravswitch>0)& ! and gravitational energy
       etot = etot + u(i,j,k,icnt)*totphi(i,j,k)*dvol(i,j,k)
     end do

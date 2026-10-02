@@ -1,7 +1,7 @@
 module rungekutta_mod
  implicit none
 
- public:: rungekutta,euler,get_runge_coeff,primitive
+ public:: rungekutta,get_runge_coeff,primitive,flux_sum,spcflx_sum
 
 contains
 
@@ -41,17 +41,7 @@ contains
       if(rungen==1)uorg(i,j,k,ufn) = u(i,j,k,ufn)
       u(i,j,k,ufn) = faco*uorg(i,j,k,ufn) &
                    + facn*u(i,j,k,ufn) &
-                   + fact*dt * &
-                     ( idetg1(i) * &
-                       ( detg1(i-1)*flux1(i-1,j,k,ufn)   &
-                       - detg1(i  )*flux1(i  ,j,k,ufn) ) &
-                     + idetg2(i,j) * &
-                       ( detg2(i,j-1)*flux2(i,j-1,k,ufn)   &
-                       - detg2(i,j  )*flux2(i,j  ,k,ufn) ) &
-                     + idetg3(i,j,k) * &
-                       ( flux3(i,j,k-1,ufn)   &
-                       - flux3(i,j,k  ,ufn) ) &
-                   + src(i,j,k,ufn) )
+                   + fact*dt*( flux_sum(i,j,k,ufn) + src(i,j,k,ufn) )
      end do
     end do
    end do
@@ -67,16 +57,7 @@ contains
        if(rungen==1)spcorg(n,i,j,k) = spc(n,i,j,k)*uorg(i,j,k,icnt)
        spc(n,i,j,k) = ( faco*spcorg(n,i,j,k) &
                       + facn*spc(n,i,j,k)*d(i,j,k) &
-                      + fact*dt * &
-                      ( idetg1(i) * &
-                        ( detg1(i-1)*spcflx(n,i-1,j,k,1)   &
-                        - detg1(i  )*spcflx(n,i  ,j,k,1) ) &
-                      + idetg2(i,j) * &
-                        ( detg2(i,j-1)*spcflx(n,i,j-1,k,2)   &
-                        - detg2(i,j  )*spcflx(n,i,j  ,k,2) ) &
-                      + idetg3(i,j,k) * &
-                        ( spcflx(n,i,j,k-1,3) &
-                        - spcflx(n,i,j,k  ,3) ) ) ) &
+                      + fact*dt*spcflx_sum(n,i,j,k) ) &
                       / u(i,j,k,icnt)
       end do
      end do
@@ -96,44 +77,6 @@ contains
 
   return
  end subroutine rungekutta
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-!
-!                               SUBROUTINE EULER
-!
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-! PURPOSE: To integrate numflux using Euler method
-
- subroutine euler
-
-  use grid
-  use physval
-
-  integer:: i,j,k,ufn
-
-!-----------------------------------------------------------------------------
-
-!$omp parallel do private(i,j,k,ufn) collapse(4)
-  do ufn = 1,ufnmax
-   do k = ks,ke
-    do j = js,je
-     do i = is,ie
-      u(i,j,k,ufn) = u(i,j,k,ufn) - dt * &
-           ( idetg1(i) * &
-             (detg1(i  )*flux1(i,j,k,ufn)-detg1(i-1  )*flux1(i-1,j,k,ufn)) &
-           + idetg2(i,j) * &
-             (detg2(i,j)*flux2(i,j,k,ufn)-detg2(i,j-1)*flux2(i,j-1,k,ufn)) &
-           + idetg3(i,j,k) * (flux3(i,j,k,ufn)-flux3(i,j,k-1,ufn)) &
-           + src(i,j,k,ufn) )
-     end do
-    end do
-   end do
-  end do
-!$omp end parallel do
-
-  return
- end subroutine euler
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
@@ -218,8 +161,9 @@ end subroutine get_runge_coeff
       if(dim>1)&! for 9 wave method
        phi(i,j,k)= u(i,j,k,i9wv)
      end if
-     if(radswitch>0)&
+     if(radswitch>0)then
       erad(i,j,k) = u(i,j,k,irad)
+     end if
     end do
    end do
   end do
@@ -231,5 +175,38 @@ end subroutine get_runge_coeff
   return
  end subroutine primitive
 
+! Sum of numerical fluxes over all interfaces of a given cell
+ function flux_sum(i,j,k,ufn)
+  use grid,only:idetg1,detg1,idetg2,detg2,idetg3
+  use physval,only:flux1,flux2,flux3
+  integer,intent(in):: i,j,k,ufn
+  real(8):: flux_sum
+  flux_sum = idetg1(i) * &
+             ( detg1(i-1)*flux1(i-1,j,k,ufn)   &
+             - detg1(i  )*flux1(i  ,j,k,ufn) ) &
+           + idetg2(i,j) * &
+             ( detg2(i,j-1)*flux2(i,j-1,k,ufn)   &
+             - detg2(i,j  )*flux2(i,j  ,k,ufn) ) &
+           + idetg3(i,j,k) * &
+             ( flux3(i,j,k-1,ufn)   &
+             - flux3(i,j,k  ,ufn) )
+ end function flux_sum
+
+! Sum of chemical fluxes over all interfaces of a given cell
+ function spcflx_sum(n,i,j,k)
+  use grid,only:idetg1,detg1,idetg2,detg2,idetg3
+  use physval,only:spcflx
+  integer,intent(in):: n,i,j,k
+  real(8):: spcflx_sum
+  spcflx_sum = idetg1(i) * &
+               ( detg1(i-1)*spcflx(n,i-1,j,k,1)   &
+               - detg1(i  )*spcflx(n,i  ,j,k,1) ) &
+             + idetg2(i,j) * &
+               ( detg2(i,j-1)*spcflx(n,i,j-1,k,2)   &
+               - detg2(i,j  )*spcflx(n,i,j  ,k,2) ) &
+             + idetg3(i,j,k) * &
+               ( spcflx(n,i,j,k-1,3) &
+               - spcflx(n,i,j,k  ,3) )
+ end function spcflx_sum
 
 end module rungekutta_mod

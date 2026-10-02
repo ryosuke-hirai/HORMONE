@@ -16,7 +16,7 @@
 
 !############################################################################
 
-program write_ascii
+program ascii_output
 
   use mpi_utils
   use mpi_domain
@@ -78,20 +78,30 @@ program write_ascii
 
   outtn = start
   outtime = dble(start)*dt_unit_in_sec
-  do
-   call set_file_name('bin',outtn,outtime,file)
+  main_loop:do
+   call set_file_name(prefix_bin,outtn,outtime,file)
    print*,'Reading ',file
    call readbin(file)
-   call set_file_name('plt',outtn,outtime,file)
+   call set_file_name(prefix_ascii,outtn,outtime,file)
    if(gravswitch>=2)call get_totphi
    print*,'Writing ',file
-   call write_plt
+   call write_ascii(prefix_ascii)
    outtime = outtime + dt_out
    outtn = outtn + tn_out
-  end do
+
+! End sequence ------------------ !
+   select case (endstyle)         !
+   case(1) ! time up              !
+    if(time>=t_end)exit main_loop !
+   case(2) ! timestep up          !
+    if(tn>=tnlim)exit main_loop   !
+   end select                     !
+! ------------------------------- !
+
+  end do main_loop
 
   call finalize_mpi
 
 !------------------------------- end program ---------------------------------
 
- end program write_ascii
+ end program ascii_output

@@ -5,7 +5,7 @@ contains
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                           SUBROUTINE ADVANCE_STEP
+!                          SUBROUTINE ADVANCE_STEP
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -104,13 +104,11 @@ subroutine radhydro_imex_step
 
  integer:: ufn,i,j,k,n
  real(8):: dt_global,G_ex_half
- real(8),allocatable:: u_half(:,:,:,:),G_im_half(:,:,:),spc_half(:,:,:,:),u_half_plus(:,:,:,:)
+ real(8),allocatable:: u_half(:,:,:,:),G_im_half(:,:,:),spc_half(:,:,:,:)
 
 !-----------------------------------------------------------------------------
 
-!!!!! CURRENTLY DOES NOT PASS RADSHOCK TEST !!!!!
-
- allocate(u_half,u_half_plus,mold=u)
+ allocate(u_half,mold=u)
  allocate(G_im_half,mold=d)
  if(compswitch>=2)allocate(spc_half,mold=spc)
 
@@ -121,49 +119,50 @@ subroutine radhydro_imex_step
 
 !$omp parallel
 !$omp do private (ufn,i,j,k) collapse(4)
- do ufn = 1,ufnmax
+  do ufn = 1,ufnmax
 
-  do k = ks,ke
-   do j = js,je
-    do i = is,ie
-     uorg(i,j,k,ufn) = u(i,j,k,ufn)
-    end do
-   end do
-  end do
-
- end do
-!$omp end do
- if(compswitch>=2)then
-!$omp do private (i,j,k,n) collapse(4)
-  do k = ks, ke
-   do j = js, je
-    do i = is, ie
-     do n = 1, spn
-      spcorg(n,i,j,k) = spc(n,i,j,k)*d(i,j,k)
-      spc(n,i,j,k) = spcorg(n,i,j,k)
+   do k = ks,ke
+    do j = js,je
+     do i = is,ie
+      uorg(i,j,k,ufn) = u(i,j,k,ufn)
      end do
     end do
    end do
+
   end do
 !$omp end do
- end if
+  if(compswitch>=2)then
+!$omp do private (i,j,k,n) collapse(4)  
+   do k = ks, ke
+    do j = js, je
+     do i = is, ie
+      do n = 1, spn
+       spcorg(n,i,j,k) = spc(n,i,j,k)*d(i,j,k)
+       spc(n,i,j,k) = spcorg(n,i,j,k)
+      end do
+     end do
+    end do
+   end do
+!$omp end do
+  end if
 !$omp end parallel
 
  ! First do half an explicit step
- dt = dt_global
+ dt = 0.5d0*dt_global
  call imex_explicit_terms
 
 !$omp parallel
 !$omp do private (ufn,i,j,k) collapse(4)
  do ufn = 1,ufnmax
+
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     u(i,j,k,ufn) = 0.5d0*(u(i,j,k,ufn)+uorg(i,j,k,ufn))
-     u_half_plus(i,j,k,ufn) = u(i,j,k,ufn)
+     u_half(i,j,k,ufn) = u(i,j,k,ufn)
     end do
    end do
   end do
+
  end do
 !$omp end do
  if(compswitch>=2)then
@@ -182,7 +181,6 @@ subroutine radhydro_imex_step
 !$omp end parallel
 
  ! Then do implicit diffusion for half a step
- dt = dt_global
  call exchange_mpi
  call radiative_diffusion
 
@@ -193,9 +191,8 @@ subroutine radhydro_imex_step
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     if(ufn==irad)G_im_half(i,j,k) = u(i,j,k,ufn)-u_half_plus(i,j,k,ufn)
-     u_half(i,j,k,ufn) = 0.5d0*(u(i,j,k,ufn)+u_half_plus(i,j,k,ufn))
-     u(i,j,k,ufn) = u_half(i,j,k,ufn)
+     if(ufn==irad)G_im_half(i,j,k) = (u(i,j,k,ufn)-u_half(i,j,k,ufn))*2d0
+     u_half(i,j,k,ufn) = u(i,j,k,ufn)
     end do
    end do
   end do
@@ -206,20 +203,21 @@ subroutine radhydro_imex_step
  ! Finally do an explicit step from n+1/2
  dt = dt_global
  call imex_explicit_terms
-
  ! Compute the explicit derivative
 !$omp parallel
 !$omp do private (ufn,i,j,k,G_ex_half) collapse(4)
  do ufn = 1,ufnmax
+
   do k = ks,ke
    do j = js,je
     do i = is,ie
-     G_ex_half = u(i,j,k,ufn) - u_half(i,j,k,ufn)
+     G_ex_half = u(i,j,k,ufn)-u_half(i,j,k,ufn)
      u(i,j,k,ufn) = uorg(i,j,k,ufn) + G_ex_half
      if(ufn==irad)u(i,j,k,ufn) = u(i,j,k,ufn) + G_im_half(i,j,k)
     end do
    end do
   end do
+
  end do
 !$omp end do
  if(compswitch>=2)then
@@ -228,7 +226,6 @@ subroutine radhydro_imex_step
    do j = js, je
     do i = is, ie
      do n = 1, spn
-      print*,n,i,j,k
       spc(n,i,j,k) = spcorg(n,i,j,k) + spc(n,i,j,k)-spc_half(n,i,j,k)
      end do
      spc(:,i,j,k) = spc(:,i,j,k) / sum(spc(:,i,j,k))
@@ -239,8 +236,7 @@ subroutine radhydro_imex_step
  end if
 !$omp end parallel
 
- deallocate(u_half,u_half_plus,G_im_half)
- if(compswitch>=2)deallocate(spc_half)
+ deallocate(u_half,G_im_half)
 
  call primitive
 
@@ -249,7 +245,7 @@ end subroutine radhydro_imex_step
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 !
-!                        SUBROUTINE IMEX_EXPLICIT_TERMS
+!                      SUBROUTINE IMEX_EXPLICIT_TERMS
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -265,7 +261,6 @@ subroutine imex_explicit_terms
  use radiation_mod,only:rad_heat_cool
  use rungekutta_mod,only:primitive,flux_sum,spcflx_sum
  use numflux_mod,only:numflux
- use eos_mod,only:pressure
  use mpi_domain,only:exchange_mpi
  use boundary_mod,only:boundarycondition
  use profiler_mod
@@ -277,12 +272,11 @@ subroutine imex_explicit_terms
  if(solve_hydro)then
   call start_clock(wthyd)
 
-  call exchange_mpi
-  call boundarycondition
   call source
 
 !$omp parallel do private (ufn,i,j,k) collapse(4)
   do ufn = 1,ufnmax
+
    do k = ks,ke
     do j = js,je
      do i = is,ie
@@ -290,6 +284,7 @@ subroutine imex_explicit_terms
      end do
     end do
    end do
+
   end do
 !$omp end parallel do
 
@@ -309,6 +304,7 @@ subroutine imex_explicit_terms
 !$omp parallel
 !$omp do private (ufn,i,j,k) collapse(4)
   do ufn = 1,ufnmax
+
    do k = ks,ke
     do j = js,je
      do i = is,ie
@@ -316,6 +312,7 @@ subroutine imex_explicit_terms
      end do
     end do
    end do
+  
   end do
 !$omp end do
   if(compswitch>=2)then

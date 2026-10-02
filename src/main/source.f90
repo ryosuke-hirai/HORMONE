@@ -238,19 +238,22 @@ end subroutine get_fieldforce
 
 subroutine phidamp
 
- use settings,only:courant,alpha9wave
+ use settings,only:courant,alpha9wave,mag_on
  use grid
- use physval,only:phi
+ use physval,only:phi,u,i9wv
 
  integer:: i,j,k
 
 !-----------------------------------------------------------------------------
 
+ if((.not.mag_on).or.dim==1)return
+
 !$omp parallel do private(i,j,k) collapse(3)
  do k = ks, ke
   do j = js, je
    do i = is, ie
-    phi(i,j,k) = phi(i,j,k)*exp(-alpha9wave*courant)
+    u(i,j,k,i9wv) = u(i,j,k,i9wv)*exp(-alpha9wave*courant)
+    phi(i,j,k)    = u(i,j,k,i9wv)
    end do
   end do
  end do

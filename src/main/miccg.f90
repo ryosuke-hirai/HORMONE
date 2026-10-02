@@ -22,7 +22,7 @@ contains
 subroutine setup_cg(is, ie, js, je, ks, ke, cg)
   use utils, only: get_dim
   use matrix_vars, only: cg_set
-  use matrix_coeffs, only: compute_coeffs, get_matrix_offsets
+  use matrix_coeffs, only: get_matrix_offsets
   integer, intent(in) :: is, ie, js, je, ks, ke
   type(cg_set), intent(out) :: cg
   integer :: in, jn, kn, ln

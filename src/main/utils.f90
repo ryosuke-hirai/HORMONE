@@ -254,7 +254,7 @@ contains
  subroutine get_grad(u,i,j,k,gradu)
 
   use settings,only:solve_i,solve_j,solve_k
-  use grid,only:dx1,dx2,dx3,sx1,sisin
+  use grid,only:grad_c1,grad_c2,grad_c3,sx1,sisin
 
   integer,intent(in):: i,j,k
   real(8),intent(in),allocatable:: u(:,:,:)
@@ -263,22 +263,14 @@ contains
 !-----------------------------------------------------------------------------
 
   gradu = 0d0
-  if(solve_i) &
-   gradu(1) = ( dx1(i)**2*u(i+1,j,k)-dx1(i+1)**2*u(i-1,j,k)  &
-               +(dx1(i)+dx1(i+1))*(dx1(i+1)-dx1(i))*u(i,j,k) )&
-              / (dx1(i)*dx1(i+1)*(dx1(i)+dx1(i+1)))
+  if(solve_i)&
+   gradu(1) = sum(grad_c1(-2:2,i)*u(i-2:i+2,j,k))
 
-  if(solve_j) &
-   gradu(2) = ( dx2(j)**2*u(i,j+1,k)-dx2(j+1)**2*u(i,j-1,k)  &
-               +(dx2(j)+dx2(j+1))*(dx2(j+1)-dx2(j))*u(i,j,k) )&
-              / (dx2(j)*dx2(j+1)*(dx2(j)+dx2(j+1))) &
-            * sx1(i)
+  if(solve_j)&
+   gradu(2) = sum(grad_c2(-2:2,j)*u(i,j-2:j+2,k)) * sx1(i)
 
-  if(solve_k) &
-   gradu(3) = ( dx3(k)**2*u(i,j,k+1)-dx3(k+1)**2*u(i,j,k-1)  &
-               +(dx3(k)+dx3(k+1))*(dx3(k+1)-dx3(k))*u(i,j,k) )&
-              / (dx3(k)*dx3(k+1)*(dx3(k)+dx3(k+1))) &
-            * sx1(i)*sisin(j)
+  if(solve_k)&
+   gradu(3) = sum(grad_c3(-2:2,k)*u(i,j,k-2:k+2)) * sx1(i)*sisin(j)
 
  end subroutine get_grad
 

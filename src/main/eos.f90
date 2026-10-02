@@ -741,9 +741,9 @@ end function get_p_from_ds
 
 subroutine pressure
 
- use settings,only:mag_on,eostype
+ use settings,only:mag_on,eostype,radswitch
  use grid,only:is,ie,js,je,ks,ke
- use physval,only:p,ptot,b1,b2,b3,d,eint,T,imu,spc
+ use physval,only:p,ptot,b1,b2,b3,d,eint,T,imu,spc,erad
 
  real(8):: bsq=0d0
  integer:: i,j,k
@@ -761,6 +761,10 @@ subroutine pressure
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k)) ! gets T too
      ptot(i,j,k) = p(i,j,k)
 
+     if(radswitch>0)then
+      ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
+     end if
+
      if(.not.mag_on)cycle
      bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
      ptot(i,j,k) = ptot(i,j,k) + 0.5d0*bsq
@@ -777,6 +781,10 @@ subroutine pressure
      p(i,j,k) = eos_p(d(i,j,k),eint(i,j,k),T(i,j,k),imu(i,j,k),&
                       spc(1,i,j,k),spc(2,i,j,k)) ! gets T too
      ptot(i,j,k) = p(i,j,k)
+
+     if(radswitch>0)then
+      ptot(i,j,k) = ptot(i,j,k) + erad(i,j,k)/3d0
+     end if
 
      if(.not.mag_on)cycle
      bsq = b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2
@@ -805,7 +813,7 @@ end subroutine pressure
 subroutine internalenergy
 
  use grid,only:is,ie,js,je,ks,ke
- use physval,only:d,e,eint,v1,v2,v3,b1,b2,b3
+ use physval,only:d,e,eint,v1,v2,v3,b1,b2,b3,erad
 
  implicit none
 
@@ -820,7 +828,8 @@ subroutine internalenergy
    do i = is, ie
     eint(i,j,k) = get_eint(e (i,j,k),d (i,j,k),&
                            v1(i,j,k),v2(i,j,k),v3(i,j,k),&
-                           b1(i,j,k),b2(i,j,k),b3(i,j,k),ierr )
+                           b1(i,j,k),b2(i,j,k),b3(i,j,k),&
+                           erad(i,j,k), ierr )
     if(ierr==1)then
      err = .true.
      erri = i; errj = j; errk = k
@@ -843,11 +852,11 @@ end subroutine internalenergy
 
 ! **************************************************************************
 
-function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
-!PURPOSE: To calculate eint from etot, v and B
- use settings,only:mag_on
+function get_eint(etot,d,v1,v2,v3,b1,b2,b3,erad,ierr) result(eint)
+!PURPOSE: To calculate eint from etot, v, B and erad
+ use settings,only:mag_on,radswitch
  implicit none
- real(8),intent(in):: etot,d,v1,v2,v3,b1,b2,b3
+ real(8),intent(in):: etot,d,v1,v2,v3,b1,b2,b3,erad
  integer,intent(out),optional::ierr
  real(8):: eint, vsq, bsq
 
@@ -860,18 +869,21 @@ function get_eint(etot,d,v1,v2,v3,b1,b2,b3,ierr) result(eint)
   eint = eint - 0.5d0*bsq
  end if
 
+ if(radswitch>0) eint = eint - erad
+
  if(present(ierr).and.eint<=0d0)ierr=1
 
 end function get_eint
 
 function get_etot_from_eint(i,j,k) result(e)
 !PURPOSE: To calculate etot from eint
- use settings,only:mag_on
- use physval,only:eint,d,v1,v2,v3,b1,b2,b3
+ use settings,only:mag_on,radswitch
+ use physval,only:eint,d,v1,v2,v3,b1,b2,b3,erad
  integer,intent(in):: i,j,k
  real(8):: e
  e = eint(i,j,k) + 0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2+v3(i,j,k)**2)
- if(mag_on)e = e + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**3)
+ if(mag_on)e = e + 0.5d0*(b1(i,j,k)**2+b2(i,j,k)**2+b3(i,j,k)**2)
+ if(radswitch>0)e = e + erad(i,j,k)
 end function get_etot_from_eint
 
 end module eos_mod

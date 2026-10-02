@@ -128,7 +128,7 @@ subroutine solve_quartic(c1,c2,x)
  end do
 
  if(n>500)then
-  print*,'Error in solve_quartic in radiation.f90'
+  print*,'Error in solve_quartic in radiation_utils.f90'
   stop
  end if
 
@@ -137,7 +137,7 @@ end subroutine solve_quartic
 
 
 function update_Tgas(X,Z,d,erad,T,dt) result(Tnew)
-! PURPOSE: Update Tgas based on linear approximation
+! PURPOSE: Update Tgas based on linear approximation (Commercon et al. 2011)
  use constants,only:a=>arad,c=>clight,Cv
  use opacity_mod,only:kappa_p
 
