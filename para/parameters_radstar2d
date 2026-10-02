@@ -30,7 +30,7 @@
 &out_con  outstyle=1 endstyle=1
           tnlim=300 t_end=2d1 dt_out=2d1 tn_out=500
 	  write_other_vel =.true. write_shock =.true.
-          write_other_slice=.true. /
+          write_other_slice=.true. write_temp=.true. /
 
 ############################### EOS CONTROLS ###############################
 ! eostype : 0='ideal gas'

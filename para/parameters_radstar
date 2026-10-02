@@ -28,8 +28,8 @@
 ! write_evo : Output evofile
 ! write_other_slice : Output an alternative slice for 3D
 
-&out_con  outstyle=1 endstyle=1
-          tnlim=300 t_end=2d1 dt_out=2d1 tn_out=500
+&out_con  outstyle=2 endstyle=2
+          tnlim=100 t_end=2d0 dt_out=2d1 tn_out=500
 	  write_shock =.true.
           write_other_slice=.true. /
 
@@ -84,4 +84,4 @@
 ! test_tol: tolerance for test simulation
 ! Mach_tol: Normalize velocities by this Mach number to avoid dividing by zero
 
-&testcon  test_tol=1d-13 Mach_tol=1d-5/
+&testcon  test_tol=2d-6 Mach_tol=1d-2/

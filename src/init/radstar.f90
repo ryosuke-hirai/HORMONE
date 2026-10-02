@@ -17,29 +17,33 @@ subroutine radstar
  use constants,only:msun,rsun,arad,G
  use grid
  use physval
- use star_mod
+ use input_mod,only:read_mesa
+ use star_mod,only:set_star_sph_grid
  use eos_mod,only:eos_e
 
+ character(len=100):: mesafile
  real(8),allocatable,dimension(:):: r,m,rho,pres
- real(8)::mass,radius,mcore,rsoft,imu_const,dbg,pbg,omega
+ real(8)::mass,radius,imu_const,dbg,pbg,omega
  integer::i,j,k
 
 !-----------------------------------------------------------------------------
 
- mass = 20d0*msun
- radius = 4d0*rsun
- mcore = 0.0d0
- rsoft = 0.0d0
  imu_const = 1.0d0
 
- call isentropic_star(mass,radius,mcore,rsoft,imu_const,m,r,rho,pres)
+ mesafile='../tests/5Msun_earlyMS.data'
+
+! Read MESA file
+ call read_mesa(mesafile,r,m,rho,pres)
+
+ mass = m(size(m)-1)
+ radius = r(size(r)-1)
 
  ! Place the star at the origin
  call set_star_sph_grid(r,m,pres)
 
 ! Attach a wind-like atmosphere
 ! (Hardwire values to avoid compiler-dependent atmospheres)
- dbg = 1d-5
+ dbg = 1d-9
  pbg = 2d0*G*mass/(3d0*radius**2*0.3d0)
 
  do k = ks, ke
