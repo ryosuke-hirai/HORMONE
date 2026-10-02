@@ -14,7 +14,7 @@ contains
 subroutine radstar
 
  use settings,only:eostype
- use constants,only:msun,rsun,arad,G
+ use constants,only:arad,G
  use grid
  use physval
  use input_mod,only:read_mesa
