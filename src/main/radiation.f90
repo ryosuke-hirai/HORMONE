@@ -150,6 +150,10 @@ subroutine get_diffusion_coeff
 
 !-----------------------------------------------------------------------------
 
+ call exchange_grad(gradE)
+ call exchange_scalar(d)
+ call exchange_scalar(T)
+
 !$omp parallel do private(i,j,k,RR,ll,kappar,X,Z) collapse(3)
  do k = ks-kbs, ke+kbe
   do j = js-jbs, je+jbe
@@ -171,8 +175,6 @@ subroutine get_diffusion_coeff
   end do
  end do
 !$omp end parallel do
-
- call exchange_scalar(radK)
 
 return
 end subroutine get_diffusion_coeff
