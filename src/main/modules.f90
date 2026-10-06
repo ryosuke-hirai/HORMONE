@@ -36,6 +36,7 @@ module settings
  logical:: in_loop
  character(len=30):: flux_limiter, simtype
  character(len=50):: parafile,extrasfile, outdir
+ character(len=20):: prefix_bin,prefix_ascii,prefix_xzslice,prefix_yzslice
 
 end module settings
 
@@ -71,6 +72,7 @@ module grid
   real(8),allocatable,dimension(:,:):: rdis, sincyl, coscyl
   real(8),allocatable,dimension(:,:,:,:):: car_x
   real(8),dimension(1:3):: frame_acc, frame_vel, frame_pos
+  real(8),allocatable,dimension(:,:):: grad_c1, grad_c2, grad_c3
 
 end module grid
 

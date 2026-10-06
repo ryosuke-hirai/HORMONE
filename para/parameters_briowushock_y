@@ -20,10 +20,12 @@
 ! tn_out : Interval for output timesteps (only when outstyle=2)
 ! dt_unit : Give name of dt_unit (current options are 'ns,'ms,'s','min','ks','hr','d','yr')
 ! sigfig : How many significant figures in output values
+! write_other_vel : Set to .true. to plot all velocity components in ascii
 
 &out_con  outstyle=1 endstyle=1
           tnlim=100000 t_end=200d0 dt_out=200d0 tn_out=1
-          dt_unit='ms' sigfig=7 /
+          dt_unit='ms' sigfig=7
+          write_other_vel=.true. /
 
 ############################### EOS CONTROLS ###############################
 ! eostype : 0='ideal gas'

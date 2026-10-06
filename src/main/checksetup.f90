@@ -53,7 +53,6 @@ subroutine checksetup
    print*,"Error from gridset"
    stop
   end if
-  if(dim/=2) write_other_vel = .false.
   if(dim/=3) write_other_slice = .false.
   if(crdnt/=2) write_mc = .false.
 

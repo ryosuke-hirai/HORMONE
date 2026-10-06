@@ -2,7 +2,7 @@ module profiler_mod
  implicit none
 
  public:: init_profiler,profiler_output1,start_clock,stop_clock,reset_clock
- integer,parameter:: n_wt=43 ! number of profiling categories
+ integer,parameter:: n_wt=44 ! number of profiling categories
  real(8):: wtime(0:n_wt),wtime_max(0:n_wt),wtime_min(0:n_wt),wtime_avg(0:n_wt),imbalance(0:n_wt)
  integer,parameter:: &
   wtini=1 ,& ! initial conditions
@@ -34,20 +34,21 @@ module profiler_mod
   wtgs2=27,& ! MPI sweep gravity smearing
   wtsho=28,& ! shockfind
   wtrad=29,& ! radiation
-  wtmir=30,& ! MICCG solver for radiation
-  wtmra=31,& ! MICCG A matrix
-  wtper=32,& ! PETSc solver for radiation
-  wtprv=33,& ! PETSc vector assembly
-  wtpra=34,& ! PETSc A matrix
-  wtprc=35,& ! PETSc A matrix coefficients
-  wtprm=36,& ! PETSc A matrix MPI
-  wtopc=37,& ! opacity
-  wtrfl=38,& ! radiative flux
-  wtsnk=39,& ! sink motion
-  wtacc=40,& ! sink accretion
-  wtout=41,& ! output
-  wtmpi=42,& ! mpi exchange
-  wtwai=43,& ! mpi wait
+  wtrfo=30,& ! radiative force
+  wtmir=31,& ! MICCG solver for radiation
+  wtmra=32,& ! MICCG A matrix
+  wtper=33,& ! PETSc solver for radiation
+  wtprv=34,& ! PETSc vector assembly
+  wtpra=35,& ! PETSc A matrix
+  wtprc=36,& ! PETSc A matrix coefficients
+  wtprm=37,& ! PETSc A matrix MPI
+  wtopc=38,& ! opacity
+  wtrhc=39,& ! rad-gas coupling
+  wtsnk=40,& ! sink motion
+  wtacc=41,& ! sink accretion
+  wtout=42,& ! output
+  wtmpi=43,& ! mpi exchange
+  wtwai=44,& ! mpi wait
   wttot=0    ! total
  integer,public:: parent(0:n_wt),maxlbl
  character(len=30),public:: routine_name(0:n_wt)
@@ -100,6 +101,7 @@ subroutine init_profiler
  parent(wtout) = wtlop ! output
  parent(wtsho) = wtlop ! shockfind
  parent(wtrad) = wtlop ! radiation
+ parent(wtrfo) = wtrad ! radiative force
  parent(wtmir) = wtrad ! MICCG solver for radiation
  parent(wtmra) = wtrad ! MICCG A matrix
  parent(wtper) = wtrad ! PETSc solver for radiation
@@ -108,7 +110,7 @@ subroutine init_profiler
  parent(wtprc) = wtpra ! PETSc A coefficients
  parent(wtprm) = wtpra ! PETSc A MPI assembly
  parent(wtopc) = wtrad ! opacity
- parent(wtrfl) = wtrad ! radiative flux
+ parent(wtrhc) = wtrad ! rad-gas coupling
  parent(wtsnk) = wtlop ! sink motion
  parent(wtacc) = wtlop ! sink accretion
  parent(wtmpi) = wtlop ! mpi exchange
@@ -146,6 +148,7 @@ subroutine init_profiler
  routine_name(wtout) = 'Output'      ! output
  routine_name(wtsho) = 'Shockfind'   ! shockfind
  routine_name(wtrad) = 'Radiation'   ! radiation
+ routine_name(wtrfo) = 'Rad force'   ! radiative force
  routine_name(wtmir) = 'MICCG solve' ! MICCG solver for radiation
  routine_name(wtmra) = 'A assembly'  ! MICCG A matrix
  routine_name(wtper) = 'PETSc solve' ! PETSc solver for radiation
@@ -154,7 +157,7 @@ subroutine init_profiler
  routine_name(wtprc) = 'Coeffs'      ! PETSc A matrix coefficients
  routine_name(wtprm) = 'Mat MPI'     ! PETSc A matrix MPI
  routine_name(wtopc) = 'Opacity'     ! opacity
- routine_name(wtrfl) = 'Rad flux'    ! radiative flux
+ routine_name(wtrhc) = 'Heat/Cool'   ! rad-gas coupling
  routine_name(wtsnk) = 'Sink motion' ! sink motion
  routine_name(wtacc) = 'Accretion'   ! sink motion
  routine_name(wtmpi) = 'MPI exchange'! MPI exchange

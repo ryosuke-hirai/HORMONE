@@ -45,7 +45,9 @@ jobs:
 
         - name: Set up OpenMPI
           if: matrix.mpi == 'yes'
-          run: sudo apt-get install -y openmpi-bin libopenmpi-dev
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y openmpi-bin libopenmpi-dev
 
         - name: Set up PETSc
           if: matrix.petsc == 'yes'
@@ -343,7 +345,9 @@ jobs:
 
     - name: Set up OpenMPI
       if: matrix.mpi == 'yes'
-      run: sudo apt-get install -y openmpi-bin libopenmpi-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openmpi-bin libopenmpi-dev
 
     - name: Set up PETSc
       if: matrix.petsc == 'yes'

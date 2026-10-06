@@ -31,7 +31,7 @@ subroutine restart
 !-----------------------------------------------------------------------------
 
  starttime = dble(start)*dt_unit_in_sec
- call set_file_name('bin',start,starttime,startfile)
+ call set_file_name(prefix_bin,start,starttime,startfile)
 
  call readbin(startfile)
 

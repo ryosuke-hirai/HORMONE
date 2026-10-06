@@ -123,7 +123,8 @@ subroutine read_parameters(filename)
                     tnlim, t_end, dt_out, tn_out, tn_evo, dt_unit, &
                     sigfig, outres, output_ascii, write_other_vel, &
                     write_shock, write_evo, write_other_slice, write_temp, &
-                    write_mc
+                    write_mc, &
+                    prefix_bin, prefix_ascii, prefix_xzslice, prefix_yzslice
  namelist /eos_con/ eostype, gamma, eoserr, compswitch, muconst, spn, &
                     X_uniform, Y_uniform, Z_uniform
  namelist /simucon/ crdnt, courant, rktype, mag_on, flux_limiter, alpha9wave,&
