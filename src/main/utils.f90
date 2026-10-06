@@ -253,7 +253,7 @@ contains
 
  subroutine get_grad(u,i,j,k,gradu)
 
-  use settings,only:solve_i,solve_j,solve_k
+  use settings,only:crdnt,solve_i,solve_j,solve_k
   use grid,only:grad_c1,grad_c2,grad_c3,sx1,sisin
 
   integer,intent(in):: i,j,k
@@ -263,14 +263,18 @@ contains
 !-----------------------------------------------------------------------------
 
   gradu = 0d0
-  if(solve_i)&
+  if(solve_i)then
    gradu(1) = sum(grad_c1(-2:2,i)*u(i-2:i+2,j,k))
+  end if
 
-  if(solve_j)&
+  if(solve_j)then
    gradu(2) = sum(grad_c2(-2:2,j)*u(i,j-2:j+2,k)) * sx1(i)
+  end if
 
-  if(solve_k)&
-   gradu(3) = sum(grad_c3(-2:2,k)*u(i,j,k-2:k+2)) * sx1(i)*sisin(j)
+  if(solve_k)then
+   gradu(3) = sum(grad_c3(-2:2,k)*u(i,j,k-2:k+2))
+   if(crdnt==2)gradu(3) = gradu(3) * sx1(i)*sisin(j)
+  end if
 
  end subroutine get_grad
 

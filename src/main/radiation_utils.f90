@@ -140,15 +140,18 @@ function update_Tgas(X,Z,d,erad,T,dt) result(Tnew)
 ! PURPOSE: Update Tgas based on linear approximation (Commercon et al. 2011)
  use constants,only:a=>arad,c=>clight,Cv
  use opacity_mod,only:kappa_p
+ use composition_mod,only:get_imu
 
  real(8),intent(in):: X,Z,d,erad,T,dt
- real(8):: Tnew,kappap
+ real(8):: Tnew,kappap,imu
 
 !-----------------------------------------------------------------------------
 
  kappap = kappa_p(X,Z,d,T)
+ imu = get_imu([X,1d0-Z])
 
- Tnew = (kappap*c*(3d0*a*T**4+erad)*dt+Cv*T)/(Cv+4d0*kappap*c*a*T**3*dt)
+ Tnew = (kappap*c*(3d0*a*T**4+erad)*dt+Cv*imu*T)&
+      / (Cv*imu+4d0*kappap*c*a*T**3*dt)
 
 end function update_Tgas
 
