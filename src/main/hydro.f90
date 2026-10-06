@@ -181,6 +181,8 @@ subroutine radhydro_imex_step
  end if
 !$omp end parallel
 
+ call primitive
+
  ! Then do implicit diffusion for half a step
  dt = dt_global
  call exchange_mpi
@@ -202,6 +204,7 @@ subroutine radhydro_imex_step
 
  end do
 !$omp end parallel do
+ call primitive
 
  ! Finally do an explicit step from n+1/2
  dt = dt_global

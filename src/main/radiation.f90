@@ -75,8 +75,11 @@ subroutine radiative_diffusion
  do ll = 1, size(x)
   l = map_rad(ll)
   call ijk_from_l(l,is_global,js_global,ks_global,in_global,jn_global,i,j,k)
+  e(i,j,k) = e(i,j,k) - erad(i,j,k)
   erad(i,j,k) = x(ll)
+  e(i,j,k) = e(i,j,k) + erad(i,j,k)
   u(i,j,k,irad) = erad(i,j,k)
+  u(i,j,k,iene) = e(i,j,k)
   if(radswitch==1)then
    ! update gas values if using Commercon et al. 2011 method
    call get_XZ(i,j,k,XX,ZZ)
@@ -147,9 +150,6 @@ subroutine get_diffusion_coeff
 
 !-----------------------------------------------------------------------------
 
- call exchange_grad(gradE)
- call exchange_scalar(d)
-
 !$omp parallel do private(i,j,k,RR,ll,kappar,X,Z) collapse(3)
  do k = ks-kbs, ke+kbe
   do j = js-jbs, je+jbe
@@ -171,6 +171,8 @@ subroutine get_diffusion_coeff
   end do
  end do
 !$omp end parallel do
+
+ call exchange_scalar(radK)
 
 return
 end subroutine get_diffusion_coeff
@@ -272,8 +274,9 @@ end subroutine radiation_setup
 
 subroutine radiative_force
 
+ use settings,only:crdnt
  use utils,only:get_grad
- use grid,only:is,ie,js,je,ks,ke
+ use grid,only:is,ie,js,je,ks,ke,sx1,scot
  use physval,only:d,v1,v2,v3,T,erad,imo1,imo2,imo3,iene,irad,get_XZ,src
  use eos_mod,only:pressure
  use profiler_mod
@@ -307,6 +310,20 @@ subroutine radiative_force
     call get_grad(v1,i,j,k,gradv1)
     call get_grad(v2,i,j,k,gradv2)
     call get_grad(v3,i,j,k,gradv3)
+
+    ! Add geometrical terms for non-Cartesian coordinates
+    select case(crdnt)
+    case(1) ! cylindrical coordinates
+     gradv1(2) = gradv1(2) - v2(i,j,k)*sx1(i)
+     gradv2(2) = gradv2(2) + v1(i,j,k)*sx1(i)
+    case(2) ! spherical coordinates
+     gradv1(2) = gradv1(2) - v2(i,j,k)*sx1(i)
+     gradv1(3) = gradv1(3) - v3(i,j,k)*sx1(i)
+     gradv2(2) = gradv2(2) + v1(i,j,k)*sx1(i)
+     gradv2(3) = gradv2(3) - v3(i,j,k)*sx1(i)*scot(j)
+     gradv3(3) = gradv3(3) &
+               + (v1(i,j,k) + v2(i,j,k)*scot(j))*sx1(i)
+    end select
 
     nn(1:3) = gradE(1:3,i,j,k)/max(norm2(gradE(1:3,i,j,k)),epsilon(erad(i,j,k)))
     do m = 1, 3
