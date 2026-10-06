@@ -29,7 +29,7 @@ subroutine radiative_diffusion
  use physval
  use miccg_mod,only:miccg
  use profiler_mod
- use eos_mod,only:Trad,get_etot_from_eint
+ use eos_mod,only:Trad,get_etot_from_eint,pressure
  use matrix_solver_mod,only:write_A_rad,solve_system_rad
  use matrix_utils,only:ijk_from_l,l_from_ijk
  use matrix_vars,only:map_rad
@@ -83,7 +83,7 @@ subroutine radiative_diffusion
   if(radswitch==1)then
    ! update gas values if using Commercon et al. 2011 method
    call get_XZ(i,j,k,XX,ZZ)
-   T   (i,j,k) = update_Tgas(XX,ZZ,d(i,j,k),erad(i,j,k),T(i,j,k),dt)
+   T   (i,j,k) = update_Tgas(XX,ZZ,d(i,j,k),erad(i,j,k),T(i,j,k),imu(i,j,k),dt)
    eint(i,j,k) = Cv  *d(i,j,k)*T(i,j,k)*imu(i,j,k)
    p   (i,j,k) = Rgas*d(i,j,k)*T(i,j,k)*imu(i,j,k)
    e   (i,j,k) = get_etot_from_eint(i,j,k)
@@ -91,6 +91,8 @@ subroutine radiative_diffusion
   end if
  end do
 !$omp end parallel do
+
+ call pressure
 
  call stop_clock(wtrad)
 
@@ -192,7 +194,7 @@ subroutine get_radb
 
  use constants,only:clight,arad
  use grid,only:dt,dvol,is_global,js_global,ks_global,ie_global,je_global,ke_global
- use physval,only:d,T,erad,get_XZ
+ use physval,only:d,T,erad,imu,get_XZ
  use matrix_utils,only:ijk_from_l
  use matrix_vars,only:map_rad
 
@@ -215,8 +217,8 @@ subroutine get_radb
    rsrc(ll) = erad(i,j,k)*dvol(i,j,k)/dt
    if(radswitch==1) &
     rsrc(ll) = rsrc(ll) + clight*d(i,j,k)*kappap*dvol(i,j,k)*arad &
-                          * (4d0*T(i,j,k)**3&
-                             *update_Tgas(X,Z,d(i,j,k),0d0,T(i,j,k),dt)&
+                         *(4d0*T(i,j,k)**3&
+                          *update_Tgas(X,Z,d(i,j,k),0d0,T(i,j,k),imu(i,j,k),dt)&
                             - 3d0*T(i,j,k)**4)
   end do
 !$omp end parallel do
