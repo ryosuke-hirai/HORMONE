@@ -92,7 +92,7 @@ subroutine radhydro_imex_step
 
  use settings,only:dirichlet_on,spn,compswitch
  use grid,only:dt,is,ie,js,je,ks,ke
- use physval,only:u,uorg,d,spc,spcorg,irad,ufnmax
+ use physval,only:u,uorg,d,spc,spcorg,irad,iene,ufnmax
  use boundary_mod,only:boundarycondition
  use numflux_mod,only:numflux
  use source_mod,only:source
@@ -219,7 +219,7 @@ subroutine radhydro_imex_step
     do i = is,ie
      G_ex_half = u(i,j,k,ufn) - u_half(i,j,k,ufn)
      u(i,j,k,ufn) = uorg(i,j,k,ufn) + G_ex_half
-     if(ufn==irad)u(i,j,k,ufn) = u(i,j,k,ufn) + G_im_half(i,j,k)
+     if(ufn==irad.or.ufn==iene)u(i,j,k,ufn) = u(i,j,k,ufn) + G_im_half(i,j,k)
     end do
    end do
   end do
@@ -242,10 +242,10 @@ subroutine radhydro_imex_step
  end if
 !$omp end parallel
 
+ call primitive
+
  deallocate(u_half,u_half_plus,G_im_half)
  if(compswitch>=2)deallocate(spc_half)
-
- call primitive
 
  return
 end subroutine radhydro_imex_step
